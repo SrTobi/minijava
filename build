@@ -1,0 +1,19 @@
+#! /bin/sh -eu
+#! -*- coding:utf-8; mode:shell-script; -*-
+
+rootdir='.'
+tagfile="${rootdir}/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag"
+builddir="${rootdir}/bld"
+
+die() {
+	echo "build: error: $@" >&2
+	exit 1
+}
+
+test -f "${tagfile}" || die "Cannot find root directory"
+
+rm -rf "${builddir}/" || die "Cannot remove old build directory"
+mkdir -p "${builddir}/" || die "Cannot create build directory"
+
+(cd "${rootdir}/${builddir}/" && cmake ..) || die "Cannot configure project"
+(cd "${rootdir}/${builddir}/" && make) || die "Cannot build project"
