@@ -9,7 +9,7 @@ add_subdirectory("extras/buildx")
 #buildx_enable_debug(all)
 buildx_set_default_prefixes()
 buildx_set_default_output_dirs()
-buildx_activate_cpp11()
+buildx_activate_cpp14()
 #buildx_enable_pch()
 
 
