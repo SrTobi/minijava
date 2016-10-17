@@ -1,4 +1,3 @@
-
 set(_BUILDX_TESTX_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/testx/include" PARENT_SCOPE)
 set(_BUILDX_TESTX_MODULE_CONFIG_FILE "${CMAKE_CURRENT_LIST_DIR}/configs/test-module-config.cpp" PARENT_SCOPE)
 
@@ -7,27 +6,22 @@ function(buildx_add_boost_test_framework _target_name)
 	find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 	target_link_libraries(${_target_name} ${Boost_LIBRARIES})
 	target_include_directories(${_target_name} PRIVATE ${Boost_INCLUDE_DIRS})
-
 endfunction(buildx_add_boost_test_framework)
 
-
-# buildx_add_external_test(	test_target
-#							test_path
-#							TEST_TARGETS targets
-#							DEFINITIONS defs
-#							)
+# buildx_add_external_test( test_target
+#                           test_path
+#                           TEST_TARGETS targets
+#                           DEFINITIONS defs )
+#
 macro(buildx_add_external_test _target_name _test_path)
-
 	set(options)
 	set(oneValueArgs)
 	set(multiValueArgs TEST_TARGETS DEFINITIONS)
 	cmake_parse_arguments(_arg "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-
 	# configure module file
 	set(TESTX_MODULE_NAME ${_target_name})
 	set(config_file_target ${CMAKE_CURRENT_BINARY_DIR}/${_target_name}-module.cpp)
 	configure_file(${_BUILDX_TESTX_MODULE_CONFIG_FILE} ${config_file_target} @ONLY)
-	
 	set(_BUILDX_TMP_TEST_SOURCE "")
 	buildx_scan(_BUILDX_TMP_TEST_SOURCE ${_test_path} "hpp;cpp")
 	buildx_auto_group(${_BUILDX_TMP_TEST_SOURCE} BASE_PATH ${_test_path} PREFIX tests)	
@@ -38,15 +32,13 @@ macro(buildx_add_external_test _target_name _test_path)
 	target_link_libraries(${_target_name} ${_arg_TEST_TARGETS})
 	target_include_directories(${_target_name} PRIVATE ${_BUILDX_TESTX_INCLUDE_DIR})
 	buildx_add_boost_test_framework(${target_name})
-
 endmacro(buildx_add_external_test)
 
-
-# buildx_add_internal_test(	test_target
-#							test_path
-#							TEST_TARGET target
-#							DEFINITIONS defs
-#							)
+# buildx_add_internal_test( test_target
+#                           test_path
+#                           TEST_TARGET target
+#                           DEFINITIONS defs )
+#
 macro(buildx_add_internal_test _target_name _test_path)
 
 	set(options)
@@ -57,7 +49,6 @@ macro(buildx_add_internal_test _target_name _test_path)
 	if(NOT _arg_TEST_TARGET)
 		message(FATAL_ERROR "TEST_TARGET not specified!")
 	endif(NOT _arg_TEST_TARGET)
-	
 	
 	# configure module file
 	set(TESTX_MODULE_NAME ${_target_name})

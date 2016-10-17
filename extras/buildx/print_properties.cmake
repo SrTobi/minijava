@@ -1,4 +1,3 @@
-
 function(buildx_print_target_property tgt prop)
 	# v for value, d for defined, s for set
 	get_property(v TARGET ${tgt} PROPERTY ${prop})
@@ -13,13 +12,12 @@ function(buildx_print_target_property tgt prop)
 		message("")
 	endif()
 endfunction()
- 
+
 function(buildx_print_target_properties tgt)
 	if(NOT TARGET ${tgt})
 		message("There is no target named '${tgt}'")
 		return()
 	endif()
-
 	set(props
 		ALIASED_TARGET
 		ARCHIVE_OUTPUT_DIRECTORY_DEBUG
@@ -187,8 +185,7 @@ function(buildx_print_target_properties tgt)
 		VS_WINRT_EXTENSIONS
 		VS_WINRT_REFERENCES
 		WIN32_EXECUTABLE
-	)
-
+		)
 	message("======================== ${tgt} ========================")
 	foreach(p ${props})
 		buildx_print_target_property("${tgt}" "${p}")
