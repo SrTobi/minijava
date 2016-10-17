@@ -18,7 +18,7 @@ if(WIN32)
 	SET(Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost COMPONENTS system thread regex filesystem program_options REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
