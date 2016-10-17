@@ -35,7 +35,7 @@ macro(buildx_set_default_output_dirs)
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
-endmacro()
+endmacro(buildx_set_default_output_dirs)
 
 
 macro(buildx_activate_cpp14)
@@ -49,6 +49,6 @@ macro(buildx_activate_cpp14)
 	else()
 			message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
 	endif()
-endmacro(buildx_activate_cpp11)
+endmacro(buildx_activate_cpp14)
 
 
