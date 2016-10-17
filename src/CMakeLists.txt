@@ -7,7 +7,6 @@ buildx_debug("source: ${MINIJAVA_SOURCE}" proj)
 buildx_auto_group("${MINIJAVA_SOURCE}")
 
 add_executable(minijava ${MINIJAVA_SOURCE})
-#buildx_pch(axion "includes.hpp")
 target_link_libraries(minijava ${Boost_LIBRARIES})
 
 # Add an internal test

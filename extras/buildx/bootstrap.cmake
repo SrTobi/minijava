@@ -17,7 +17,6 @@ if(NOT DEFINED PROJECT_PREFIX)
 endif(NOT DEFINED PROJECT_PREFIX)
 
 include("print_properties.cmake")
-include("pch.cmake")
 include("src_scanner.cmake")
 include("library.cmake")
 include("install.cmake")

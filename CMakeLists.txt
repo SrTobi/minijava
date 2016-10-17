@@ -10,7 +10,6 @@ add_subdirectory("extras/buildx")
 buildx_set_default_prefixes()
 buildx_set_default_output_dirs()
 buildx_activate_cpp14()
-#buildx_enable_pch()
 
 # find packages
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extras/cmake/Modules")
