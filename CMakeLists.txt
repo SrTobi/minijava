@@ -25,19 +25,23 @@
 #     for some arguments.  In addition, it helps ensuring that each
 #     component has indeed the three required files.
 #
-#  2. Create the file `src/feature.hpp` with the interface of your
+#	  You may also place your feature into a subdirectory.
+#	  Put a `<dir>/` before the components name in the
+#	  COMPONENTS variable.
+#
+#  2. Create the file `src/<dir>/feature.hpp` with the interface of your
 #     component.  You don't have to put everything into a single
 #     header file, as long as `src/feature.hpp` `#include`s all other
 #     files.
 #
-#  3. Create the file `src/feature.cpp` with the implementation of
+#  3. Create the file `src/<dir>/feature.cpp` with the implementation of
 #     your component.  It should `#include "feature.hpp"` as its first
 #     dependency to make sure it compiles stand-alone.  Do this even
 #     if the source file is otherwise empty.
 #
-#  4. Create the file `tests/feature.cpp` with the unit-tests for your
+#  4. Create the file `tests/<dir>/feature.cpp` with the unit-tests for your
 #     component.  It will be linked against `libconvenience`.  In this
-#     file, you should also `#include "feature.hpp"`.
+#     file, you should also `#include "<dir>/feature.hpp"`.
 #
 # Assuming you're using CMake with the Make backend, you can build the
 # compiler via `make` and run all unit tests via `make test`.
