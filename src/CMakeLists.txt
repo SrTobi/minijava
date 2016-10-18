@@ -1,22 +1,10 @@
+add_library(core ${COMPONENTS})
 
-################### setup include directories ###################
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(core
+	LINK_PUBLIC ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+)
 
-
-
-################### scan for source ##################
-
-buildx_scan_here(MINIJAVA_SOURCE "cpp;hpp")
-buildx_debug("source: ${MINIJAVA_SOURCE}" proj)
-buildx_auto_group("${MINIJAVA_SOURCE}")
-
-add_executable(minijava ${MINIJAVA_SOURCE})
-#buildx_pch(axion "includes.hpp")
-target_link_libraries(minijava ${Boost_LIBRARIES})
-
-
-# add an internal test 
-buildx_add_internal_test(test-minijava ${PROJECT_SOURCE_DIR}/tests
-							TEST_TARGET minijava
-							DEFINITIONS MINIJAVA_TEST)
-target_link_libraries(test-minijava ${Boost_LIBRARIES})
+add_executable(minijava minijava.cpp)
+target_include_directories(minijava PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(minijava LINK_PRIVATE core)
