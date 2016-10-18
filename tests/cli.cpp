@@ -29,6 +29,20 @@ BOOST_AUTO_TEST_CASE(calling_real_main_with_help_option_does_something)
 }
 
 
+BOOST_AUTO_TEST_CASE(calling_real_main_with_no_option_displays_help)
+{
+	using namespace std::string_literals;
+	std::ostringstream defaultstdout{};
+	std::ostringstream defaultstderr{};
+	minijava::real_main({""}, defaultstdout, defaultstderr);
+	std::ostringstream helpstdout{};
+	std::ostringstream helpstderr{};
+	minijava::real_main({"", "--help"}, helpstdout, helpstderr);
+	BOOST_REQUIRE_EQUAL(defaultstdout.str(), helpstdout.str());
+	BOOST_REQUIRE_EQUAL(defaultstderr.str(), helpstderr.str());
+}
+
+
 BOOST_AUTO_TEST_CASE(calling_real_main_with_version_option_does_something)
 {
 	using namespace std::string_literals;

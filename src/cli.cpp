@@ -53,7 +53,7 @@ namespace minijava
 		po::store(po::command_line_parser(args.size(), args.data())
 				  .options(optdesc).positional(argdesc).run(), varmap);
 		po::notify(varmap);
-		if (varmap.count("help")) {
+		if (varmap.count("help") || args.size() == 1) {
 			thestdout << optdesc;
 			return;
 		}
