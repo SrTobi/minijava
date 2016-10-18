@@ -39,7 +39,7 @@ namespace minijava
 
 	void real_main(const std::vector<const char *>& args,
 				   std::ostream& thestdout,
-				   std::ostream& thestderr)
+				   std::ostream& /* thestderr */)
 	{
 		namespace po = boost::program_options;
 		auto optdesc = po::options_description{"Options"};

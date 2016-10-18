@@ -1,0 +1,5 @@
+macro(buildx_enable_diagnostics)
+if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic")
+endif()
+endmacro(buildx_enable_diagnostics)
