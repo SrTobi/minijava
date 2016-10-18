@@ -12,7 +12,7 @@ foreach(comp ${COMPONENTS})
 		PRIVATE MINIJAVA_TEST
 	)
 	target_link_libraries(${comp-target}
-		LINK_PRIVATE convenience
+		LINK_PRIVATE core
 		LINK_PRIVATE testaux
 		LINK_PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARIES}
 	)

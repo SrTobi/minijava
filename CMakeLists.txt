@@ -2,11 +2,11 @@
 # overview of the physical layout of this project.
 #
 # The compiler is built from the single source file `src/minijava.cpp`
-# which is statically linked against a convenience library
-# `libconvenience` that provides the actual features.  The convenience
-# library is made up of *components*.  A component is a triple of a
-# header file, source file and unit test.  (This terminology is
-# borrowed from John Lakos.)
+# which is statically linked against a convenience library `libcore`
+# that provides the actual features.  The convenience library is made
+# up of *components*.  A component is a triple of a header file,
+# source file and unit test.  (This terminology is borrowed from John
+# Lakos.)
 #
 #  Each component has a name.  Whenever you add a new component, say,
 # `feature`, exercise the following steps.
@@ -39,9 +39,9 @@
 #     dependency to make sure it compiles stand-alone.  Do this even
 #     if the source file is otherwise empty.
 #
-#  4. Create the file `tests/<dir>/feature.cpp` with the unit-tests for your
-#     component.  It will be linked against `libconvenience`.  In this
-#     file, you should also `#include "<dir>/feature.hpp"`.
+#  4. Create the file `tests/<dir>/feature.cpp` with the unit-tests
+#     for your component.  It will be linked against `libcore`.  In
+#     this file, you should also `#include "<dir>/feature.hpp"`.
 #
 # Assuming you're using CMake with the Make backend, you can build the
 # compiler via `make` and run all unit tests via `make test`.
