@@ -57,7 +57,8 @@ namespace testaux
 		 *         filename of the temporary file
 		 *
 		 */
-		std::string filename() const {
+		std::string filename() const
+		{
 			return _filename;
 		}
 

@@ -7,7 +7,8 @@
 #include "cli.hpp"
 
 
-int main(int argc, char * * argv) {
+int main(int argc, char * * argv)
+{
 	try {
 		const auto args = std::vector<const char *>{argv, argv + argc};
 		std::cin.exceptions(std::iostream::badbit);

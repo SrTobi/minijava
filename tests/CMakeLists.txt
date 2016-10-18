@@ -9,9 +9,11 @@ foreach(comp ${COMPONENTS})
 	target_include_directories(${comp-target} PRIVATE testaux)
 	target_compile_definitions(${comp-target}
 		PRIVATE BOOST_TEST_DYN_LINK=1
-		PRIVATE MINIJAVA_TEST)
+		PRIVATE MINIJAVA_TEST
+	)
 	target_link_libraries(${comp-target}
 		LINK_PRIVATE convenience
 		LINK_PRIVATE testaux
-		LINK_PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARIES})
+		LINK_PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARIES}
+	)
 endforeach(comp)

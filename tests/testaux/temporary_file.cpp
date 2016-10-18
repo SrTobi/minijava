@@ -12,7 +12,8 @@
 namespace testaux
 {
 
-	temporary_file::temporary_file(const std::string& text) {
+	temporary_file::temporary_file(const std::string& text)
+	{
 		namespace fs = boost::filesystem;
 		const auto path = fs::unique_path(fs::temp_directory_path() / "%%%%%%%%");
 		_filename = path.string();
@@ -21,7 +22,8 @@ namespace testaux
 		stream << text << std::flush;
 	}
 
-	temporary_file::~temporary_file() {
+	temporary_file::~temporary_file()
+	{
 		namespace fs = boost::filesystem;
 		const auto path = fs::path{_filename};
 		auto ec = boost::system::error_code{};

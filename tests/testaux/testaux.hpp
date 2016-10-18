@@ -35,11 +35,16 @@ namespace testaux
 	 */
 	template <typename CharT>
 	constexpr std::enable_if_t<std::is_integral<CharT>{}, std::size_t>
-	cx_strlen(const CharT *const str) noexcept {
+	cx_strlen(const CharT *const str) noexcept
+	{
 		auto last = str;
 		while (*last) { ++last; }
 		return last - str;
 	}
+
+	static_assert(cx_strlen("") == 0, "self-test failed");
+	static_assert(cx_strlen("a") == 1, "self-test failed");
+	static_assert(cx_strlen("abc") == 3, "self-test failed");
 
 
 	/**
@@ -80,7 +85,8 @@ namespace testaux
 	 */
 	template <typename T>
 	std::ostream& operator<<(std::ostream& os,
-							 const you_can_print_me<T>& val) {
+							 const you_can_print_me<T>& val)
+	{
 		return os << "{" << std::addressof(val) << "}";
 	}
 

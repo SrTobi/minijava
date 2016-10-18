@@ -19,7 +19,8 @@ namespace minijava
 	namespace /* anonymous */
 	{
 
-		void echo_file(const std::string& filename, std::ostream& dst) {
+		void echo_file(const std::string& filename, std::ostream& dst)
+		{
 			auto buffer = std::vector<char>(std::size_t{1} << 2);
 			std::ifstream src{filename};
 			do {
@@ -38,7 +39,8 @@ namespace minijava
 
 	void real_main(const std::vector<const char *>& args,
 				   std::ostream& thestdout,
-				   std::ostream& thestderr) {
+				   std::ostream& thestderr)
+	{
 		namespace po = boost::program_options;
 		auto optdesc = po::options_description{"Options"};
 		optdesc.add_options()
