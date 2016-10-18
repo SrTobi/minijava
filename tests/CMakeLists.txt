@@ -1,6 +1,7 @@
 add_subdirectory("testaux")
 
 foreach(comp ${COMPONENTS})
+	# replace `/` with a `.` so cmake accepts the target name
 	string(REPLACE "/" "." comp-id ${comp})
 	set(comp-target test-${comp-id})
 
