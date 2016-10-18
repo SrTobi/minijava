@@ -1,17 +1,8 @@
-# Setup include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_library(convenience ${COMPONENTS})
 
-# Scan for sources
-buildx_scan_here(MINIJAVA_SOURCE "cpp;hpp")
-buildx_debug("source: ${MINIJAVA_SOURCE}" proj)
-buildx_auto_group("${MINIJAVA_SOURCE}")
+target_include_directories(convenience PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(convenience)
 
-add_executable(minijava ${MINIJAVA_SOURCE})
-target_link_libraries(minijava ${Boost_LIBRARIES})
-
-# Add an internal test
-buildx_add_internal_test(
-	test-minijava ${PROJECT_SOURCE_DIR}/tests
-	TEST_TARGET minijava
-	DEFINITIONS MINIJAVA_TEST)
-target_link_libraries(test-minijava ${Boost_LIBRARIES})
+add_executable(minijava minijava.cpp)
+target_include_directories(minijava PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(minijava LINK_PRIVATE convenience)

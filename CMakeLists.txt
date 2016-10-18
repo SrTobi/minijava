@@ -1,25 +1,71 @@
+# Welcome to the top-level `CMakeLists.txt` file!  Here is a quick
+# overview of the physical layout of this project.
+#
+# The compiler is built from the single source file `src/minijava.cpp`
+# which is statically linked against a convenience library
+# `libconvenience` that provides the actual features.  The convenience
+# library is made up of *components*.  A component is a triple of a
+# header file, source file and unit test.  (This terminology is
+# borrowed from John Lakos.)
+#
+#  Each component has a name.  Whenever you add a new component, say,
+# `feature`, exercise the following steps.
+#
+#  1. Add `feature` to the definition of the variable `COMPONENTS`
+#     further down below in this file.  Please put one name per line
+#     and keep the list sorted.
+#
+#     We maintain this list manually instead of scanning the
+#     file-system because this allows CMake to determine correctly
+#     when the generated build-tools are outdated.  See the discussion
+#     about `GLOB` here
+#
+#         https://cmake.org/cmake/help/v3.0/command/file.html
+#
+#     for some arguments.  In addition, it helps ensuring that each
+#     component has indeed the three required files.
+#
+#  2. Create the file `src/feature.hpp` with the interface of your
+#     component.  You don't have to put everything into a single
+#     header file, as long as `src/feature.hpp` `#include`s all other
+#     files.
+#
+#  3. Create the file `src/feature.cpp` with the implementation of
+#     your component.  It should `#include "feature.hpp"` as its first
+#     dependency to make sure it compiles stand-alone.  Do this even
+#     if the source file is otherwise empty.
+#
+#  4. Create the file `tests/feature.cpp` with the unit-tests for your
+#     component.  It will be linked against `libconvenience`.  In this
+#     file, you should also `#include "feature.hpp"`.
+#
+# Assuming you're using CMake with the Make backend, you can build the
+# compiler via `make` and run all unit tests via `make test`.
+#
+# A grab bag of utility features that were considered useful for
+# writing unit tests can be found in `tests/testaux/*.hppp`.  At the
+# moment, this is a header-only "library" but we might build another
+# convenience library `libtestaux` in the future, should we determine
+# a need for it.
+
 cmake_minimum_required(VERSION 3.0)
 
 project(MiniJava VERSION 0.1)
-set(Project_SHORTCUT "cp")
-set(Project_PREFIX "cp")
-set(Project_MEDIA_DIR "media")
+enable_testing()
 
-add_subdirectory("extras/buildx")
-#buildx_enable_debug(all)
-buildx_set_default_prefixes()
-buildx_set_default_output_dirs()
+include("extras/cmake/cpp14.cmake")
 buildx_activate_cpp14()
 
-# find packages
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extras/cmake/Modules")
+find_package(Boost REQUIRED COMPONENTS
+	unit_test_framework
+	program_options)
 
-if(WIN32)
-	SET(Boost_USE_STATIC_LIBS ON)
-endif()
-
-find_package(Boost COMPONENTS program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+set(COMPONENTS
+	cli
+	dummy)
+
 add_subdirectory("src")
+add_subdirectory("tests")
