@@ -60,8 +60,11 @@ include("extras/cmake/cpp14.cmake")
 buildx_activate_cpp14()
 
 find_package(Boost REQUIRED COMPONENTS
+	filesystem
+	program_options
+	system
 	unit_test_framework
-	program_options)
+)
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})

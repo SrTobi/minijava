@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE >= 200809L  // for mkstemp
-
 #include "temporary_file.hpp"
 
 #include <cerrno>
@@ -7,27 +5,30 @@
 #include <iostream>
 #include <system_error>
 
-#include <unistd.h>
+#include <boost/filesystem.hpp>
+#include <boost/system/error_code.hpp>
 
 
 namespace testaux
 {
 
 	temporary_file::temporary_file(const std::string& text) {
-		_filename = "tempfile-XXXXXX";
-		const auto fd = mkstemp(&_filename.front());
-		if ((fd < 0) || (close(fd) < 0)) {
-			const auto ec = std::error_code{errno, std::system_category()};
-			throw std::system_error{ec};
-		}
+		namespace fs = boost::filesystem;
+		const auto path = fs::unique_path(fs::temp_directory_path() / "%%%%%%%%");
+		_filename = path.string();
 		std::ofstream stream{_filename};
 		stream.exceptions(std::iostream::failbit);
 		stream << text << std::flush;
 	}
 
 	temporary_file::~temporary_file() {
-		if (unlink(_filename.c_str()) < 0) {
-			std::cerr << "Cannot unlink temporary file: " << _filename << "\n";
+		namespace fs = boost::filesystem;
+		const auto path = fs::path{_filename};
+		auto ec = boost::system::error_code{};
+		if (fs::remove(path, ec) && ec) {
+			// We cannot throw an exception from a destructor.
+			std::cerr << "Cannot remove temporary file: " << _filename
+					  << ": " << ec.message() << "\n";
 		}
 	}
 

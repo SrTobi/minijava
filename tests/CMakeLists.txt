@@ -4,7 +4,6 @@ foreach(comp ${COMPONENTS})
 	# replace `/` with a `.` so cmake accepts the target name
 	string(REPLACE "/" "." comp-id ${comp})
 	set(comp-target test-${comp-id})
-
 	add_test(${comp-id} ${comp-target})
 	add_executable(${comp-target} ${comp}.cpp)
 	target_include_directories(${comp-target} PRIVATE testaux)
