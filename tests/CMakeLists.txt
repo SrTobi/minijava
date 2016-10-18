@@ -8,7 +8,7 @@ foreach(comp ${COMPONENTS})
 	add_executable(${comp-target} ${comp}.cpp)
 	target_include_directories(${comp-target} PRIVATE testaux)
 	target_compile_definitions(${comp-target}
-		PRIVATE $<$<STREQUAL:${Boost_USE_STATIC_LIBS},OFF>:BOOST_TEST_DYN_LINK=1>
+		PRIVATE $<$<NOT:$<BOOL:${Boost_USE_STATIC_LIBS}>>:BOOST_TEST_DYN_LINK=1>
 		PRIVATE MINIJAVA_TEST
 	)
 	target_link_libraries(${comp-target}
