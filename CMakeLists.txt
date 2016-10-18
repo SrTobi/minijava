@@ -79,3 +79,8 @@ set(COMPONENTS
 
 add_subdirectory("src")
 add_subdirectory("tests")
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/config.h.in"
+	"${PROJECT_BINARY_DIR}/config.h"
+)
