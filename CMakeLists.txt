@@ -56,8 +56,11 @@ cmake_minimum_required(VERSION 3.0)
 project(MiniJava VERSION 0.1)
 enable_testing()
 
-include("extras/cmake/cpp14.cmake")
+include("extras/cmake/activate_cpp14.cmake")
+include("extras/cmake/enable_diagnostics.cmake")
+
 buildx_activate_cpp14()
+buildx_enable_diagnostics()
 
 find_package(Boost REQUIRED COMPONENTS
 	filesystem
@@ -76,3 +79,8 @@ set(COMPONENTS
 
 add_subdirectory("src")
 add_subdirectory("tests")
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/config.h.in"
+	"${PROJECT_BINARY_DIR}/config.h"
+)

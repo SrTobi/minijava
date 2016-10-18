@@ -11,10 +11,4 @@
 #pragma once
 
 
-// TODO: These macros should be substituted from CMake...
-
-/** @brief Project name. */
-#define MINIJAVA_PROJECT_NAME "minijava"
-
-/** @brief Project version string. */
-#define MINIJAVA_PROJECT_VERSION "0.0"
+#include "config.h"
