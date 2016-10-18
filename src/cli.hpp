@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <iosfwd>
 #include <vector>
 
 namespace minijava
@@ -12,12 +12,23 @@ namespace minijava
 	 *         arguments.
 	 *
 	 * @param args
-	 *         command-line arguments (starting at `argv[1]`)
+	 *         command-line arguments
+	 *
+	 * @param thestdout
+	 *         destination for regular output
+	 *
+	 * @param thestderr
+	 *         destination for error output
 	 *
 	 * @throws std::exception
 	 *         on failure to successfully complete the requested task
 	 *
 	 */
-	void real_main(const std::vector<std::string>& args);
+	void real_main(const std::vector<const char *>& args,
+				   std::ostream& thestdout,
+				   std::ostream& thestderr);
+
+	// `stdout` and `stderr` are standard-library macros so we cannot
+	// use them as parameter names.
 
 }  // namespace minijava

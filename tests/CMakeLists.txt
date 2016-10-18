@@ -1,3 +1,5 @@
+add_subdirectory("testaux")
+
 foreach(comp ${COMPONENTS})
 	add_test(${comp} test-${comp})
 	add_executable(test-${comp} ${comp}.cpp)
@@ -7,5 +9,6 @@ foreach(comp ${COMPONENTS})
 		PRIVATE MINIJAVA_TEST)
 	target_link_libraries(test-${comp}
 		LINK_PRIVATE convenience
+		LINK_PRIVATE testaux
 		LINK_PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARIES})
 endforeach(comp)

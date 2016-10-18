@@ -43,10 +43,9 @@
 # compiler via `make` and run all unit tests via `make test`.
 #
 # A grab bag of utility features that were considered useful for
-# writing unit tests can be found in `tests/testaux/*.hppp`.  At the
-# moment, this is a header-only "library" but we might build another
-# convenience library `libtestaux` in the future, should we determine
-# a need for it.
+# writing unit tests can be found in `tests/testaux/`.  If you add new
+# compiled source files to it, don't forget to mention them in
+# `tests/testaux/CMakeLists.txt`.
 
 cmake_minimum_required(VERSION 3.0)
 
@@ -65,7 +64,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
 	cli
-	dummy)
+	dummy
+	global
+)
 
 add_subdirectory("src")
 add_subdirectory("tests")

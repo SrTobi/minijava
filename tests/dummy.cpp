@@ -1,11 +1,10 @@
 #include "dummy.hpp"
 
-#define BOOST_TEST_MODULE  dummy
+#include "testaux/testaux.hpp"
 
+#define BOOST_TEST_MODULE  dummy
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
-
-#include "testaux/testaux.hpp"
 
 
 BOOST_AUTO_TEST_CASE(four_more_than_zero_is_four)
