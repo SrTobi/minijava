@@ -19,11 +19,6 @@
 namespace testaux
 {
 
-	template <typename T>
-	T maybe_not_that_useful(T&& arg) {
-		return std::forward<T>(arg);
-	}
-
 	/**
 	 * @brief
 	 *         A `constexpr` version of `strlen`.

@@ -64,7 +64,6 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
 	cli
-	dummy
 	global
 )
 
