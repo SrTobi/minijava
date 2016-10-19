@@ -18,5 +18,5 @@ rm -rf "${builddir}/" || die "Cannot remove old build directory"
 mkdir -p "${builddir}/" || die "Cannot create build directory"
 
 (cd "${builddir}/" && cmake ..) || die "Cannot configure project"
-(cd "${builddir}/" && make) || die "Cannot build project"
-(cd "${builddir}/" && make test) || die "Unit tests failed"
+(cd "${builddir}/" && cmake --build .) || die "Cannot build project"
+(cd "${builddir}/" && cmake --build . --target test) || die "Unit tests failed"
