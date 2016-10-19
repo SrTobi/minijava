@@ -64,7 +64,7 @@ namespace testaux
 	template <typename T>
 	struct you_can_print_me
 	{
-		/* @brief The wrapped value. */
+		/** @brief The wrapped value. */
 		T value;
 	};
 
@@ -82,10 +82,13 @@ namespace testaux
 	 * @param val
 	 *         wrapped value to print
 	 *
+	 * @returns
+	 *         a reference to `os`
+	 *
 	 */
 	template <typename T>
 	std::ostream& operator<<(std::ostream& os,
-							 const you_can_print_me<T>& val)
+	                         const you_can_print_me<T>& val)
 	{
 		return os << "{" << std::addressof(val) << "}";
 	}
