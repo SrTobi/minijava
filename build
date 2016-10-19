@@ -1,7 +1,7 @@
 #! /bin/sh -eu
 #! -*- coding:utf-8; mode:shell-script; -*-
 
-rootdir='.'
+rootdir=$(dirname $(readlink -f "${0}"))
 tagfile="${rootdir}/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag"
 builddir="${rootdir}/stage"
 
