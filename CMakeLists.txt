@@ -105,9 +105,9 @@ find_package(Doxygen QUIET)
 if(DOXYGEN_FOUND)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.in ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
 	add_custom_target(docs
-						${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
-						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-						COMMENT "Generating API documentation with Doxygen" VERBATIM)
+	                  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+	                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	                  COMMENT "Generating API documentation with Doxygen" VERBATIM)
 else(DOXYGEN_FOUND)
 	message(STATUS "Doxygen was not found. You may want to consider installing it to generate html docs for minijava.")
 endif(DOXYGEN_FOUND)
