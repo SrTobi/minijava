@@ -3,7 +3,7 @@
 
 rootdir='.'
 tagfile="${rootdir}/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag"
-minijava="${rootdir}/bld/src/minijava"
+minijava="${rootdir}/stage/src/minijava"
 
 die() {
 	echo "run: error: $@" >&2

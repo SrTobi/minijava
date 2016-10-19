@@ -3,12 +3,14 @@
 
 rootdir='.'
 tagfile="${rootdir}/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag"
-builddir="${rootdir}/bld"
+builddir="${rootdir}/stage"
 
 die() {
 	echo "build: error: $@" >&2
 	exit 1
 }
+
+test $# -eq 0 || die "Too many arguments"
 
 test -f "${tagfile}" || die "Cannot find root directory"
 
