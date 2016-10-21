@@ -42,16 +42,16 @@ def maybe_open(filename, mode='r'):
 	in which case a `NullContext` is `returned.
 
 	@param filename : str
-			name of the file to open or `None`
+		name of the file to open or `None`
 
 	@param mode : str
-			file-open mode (forwarded to `open`)
+		file-open mode (forwarded to `open`)
 
 	@returns file-like | NullContext
-			open file or `NullContext`
+		open file or `NullContext`
 
 	@raises OSError
-			if `raise`d by `open`
+		if `raise`d by `open`
 
 	"""
 	if filename is None:
@@ -66,13 +66,13 @@ def make_backup_file_name(filename):
 	file.
 
 	@param filename : str
-			file name for the original file
+		file name for the original file
 
 	@returns str
-			file name for the backup file
+		file name for the backup file
 
 	@raises ValueError
-			if the file name already looks like a backup file name
+		if the file name already looks like a backup file name
 
 	"""
 	backup_suffix = '~' if os.name == 'posix' else '.backup'
@@ -87,10 +87,10 @@ def is_regular_file(filename):
 	symbolic link.
 
 	@param filename : str
-			file name to check
+		file name to check
 
 	@returns bool
-			whether `filename` is a regular file
+		whether `filename` is a regular file
 
 	"""
 	return os.path.isfile(filename) and not os.path.islink(filename)
@@ -102,10 +102,10 @@ def git_ls_files():
 	`git ls-files` filtered to contain only regular files.
 
 	@returns [str]
-			list of file names
+		list of file names
 
 	@raises OSError
-			if running Git fails
+		if running Git fails
 
 	"""
 	proc = subprocess.Popen(
@@ -126,10 +126,10 @@ def check_line(line):
 	Checks a single line for conformance with the style guide.
 
 	@param line : str
-			line to check
+		line to check
 
 	@raises StyleError
-			if the line is non-conforming
+		if the line is non-conforming
 
 	"""
 	if not line.endswith('\n'):
@@ -146,13 +146,13 @@ def untabify(line, tabwidth):
 	Expands all but leading tabs to spaces.
 
 	@param line : str
-			line to untabify
+		line to untabify
 
 	@param tabwidth : int
-			characters per tab
+		characters per tab
 
 	@returns str
-			untabified line
+		untabified line
 
 	"""
 	assert tabwidth > 0
@@ -165,7 +165,6 @@ def untabify(line, tabwidth):
 		if line[i] == '\t':
 			skip = tabwidth - (len(body) % tabwidth)
 			body.extend(' ' for i in range(skip))
-			assert len(body) % tabwidth == 0
 		else:
 			body.append(line[i])
 		i += 1
@@ -181,10 +180,10 @@ def fix_line(line):
 	`check_line(fix_line(text) + '\n')` totally can fail.
 
 	@param line : str
-			line to fix
+		line to fix
 
 	@returns str
-			fixed line without trailing new-line character
+		fixed line without trailing new-line character
 
 	"""
 	line = line.rstrip()
@@ -198,16 +197,16 @@ def check_file(filename, fix, verboseout):
 	of) them in-place.
 
 	@param filename : str
-			name of the file
+		name of the file
 
 	@param fix : bool
-			whether to fix violations inline
+		whether to fix violations inline
 
 	@param verboseout : file-like
-			terminal to print violations to
+		terminal to print violations to
 
 	@returns : int
-			number of violations found
+		number of violations found
 
 	"""
 	violations = 0
@@ -222,8 +221,8 @@ def check_file(filename, fix, verboseout):
 					check_line(line)
 				except StyleError as e:
 					violations += 1
-					print("{:s}:{:d}: {:s}".format(
-						filename, i + 1, str(e)), file=verboseout)
+					msg = "{:s}:{:d}: {:s}".format(filename, i + 1, str(e))
+					print(msg, file=verboseout)
 				if fix:
 					print(fix_line(line), file=ostr)
 	return violations
@@ -235,19 +234,19 @@ def check_files(filenames, fix, verboseout, summaryout):
 	them in-place.
 
 	@param filenames : [str]
-			file names of the files to check
+		file names of the files to check
 
 	@param fix : bool
-			whether to fix violations inline
+		whether to fix violations inline
 
 	@param verboseout : file-like
-			terminal to print per-line violations to
+		terminal to print per-line violations to
 
 	@param summaryout : file-like
-			terminal to print per-file violations to
+		terminal to print per-file violations to
 
 	@returns : int
-			number of non-conforming files
+		number of non-conforming files
 
 	"""
 	for fn in filenames:
@@ -258,8 +257,8 @@ def check_files(filenames, fix, verboseout, summaryout):
 		violations = check_file(fn, fix, verboseout)
 		if violations > 0:
 			bad_files += 1
-			print("{:s}: {:d} violations found".format(
-				fn, violations), file=summaryout)
+			msg = "{:s}: {:d} violations found".format(fn, violations)
+			print(msg, file=summaryout)
 		else:
 			print("{:s}: ok".format(fn), file=summaryout)
 	return bad_files
@@ -271,13 +270,13 @@ def real_file_name(filename):
 	`ValueError` is `raise`d.
 
 	@param filename : str
-			file name to check
+		file name to check
 
 	@returns str
-			filename
+		filename
 
 	@raises ValueError
-			if `filename` is `-`
+		if `filename` is `-`
 
 	"""
 	if filename == '-':
@@ -290,15 +289,15 @@ def main(args):
 	Runs the program.
 
 	@param args : [str]
-			command-line arguments (without program name)
+		command-line arguments (without program name)
 
 	@returns : int
-			exit status
+		exit status
 
 	"""
 	ap = argparse.ArgumentParser(
 		prog='whitespace',
-		usage='%(prog)s [--directory=DIR] [--summary | --quiet] [--fix] [--] [FILE...]',
+		usage="%(prog)s [--directory=DIR] [--summary | --quiet] [--fix] [--] [FILE...]",
 		description=(
 			"Checks white-space in files for conformance with the style"
 			+ " guide.  If no files are specified, all regular files reported"
@@ -319,17 +318,26 @@ def main(args):
 			+ " or generate a diff."
 		).format('foo.txt', make_backup_file_name('foo.txt'))
 	)
-	ap.add_argument('filenames', metavar='FILE', nargs='*',
-					type=real_file_name,
-					help="regular file to check")
-	ap.add_argument('-s', '--summary', action='store_true',
-					help="print only one line per file")
-	ap.add_argument('-q', '--quiet', action='store_true',
-					help="don't produce any output")
-	ap.add_argument('-f', '--fix', action='store_true',
-					help="Automatically fix some issues")
-	ap.add_argument('-C', '--directory', metavar='DIR',
-					help="enter directory DIR before doing anything")
+	ap.add_argument(
+		'filenames', metavar='FILE', nargs='*',
+		type=real_file_name, help="regular file to check"
+	)
+	ap.add_argument(
+		'-s', '--summary', action='store_true',
+		help="print only one line per file"
+	)
+	ap.add_argument(
+		'-q', '--quiet', action='store_true',
+		help="don't produce any output"
+	)
+	ap.add_argument(
+		'-f', '--fix', action='store_true',
+		help="Automatically fix some issues"
+	)
+	ap.add_argument(
+		'-C', '--directory', metavar='DIR',
+		help="enter directory DIR before doing anything"
+	)
 	ns = ap.parse_args(args)
 	if ns.directory is not None:
 		os.chdir(ns.directory)
