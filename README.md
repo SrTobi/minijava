@@ -94,7 +94,7 @@ that they can be used.  All code must compile on GCC without warnings at the
 Good resources for modern coding standards can be found here.
 
  - [C++ Core Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md)
- - [&ldquo;C++ Coding Standards&rdquo; by Herb Sutter and Andrei Alexandrescu](http://www.gotw.ca/publications/c++cs.htm)
+  - [&ldquo;C++ Coding Standards&rdquo; by Herb Sutter and Andrei Alexandrescu](http://www.gotw.ca/publications/c++cs.htm)
  - [Scott Meyers &ldquo;Effective C++&rdquo; book series](http://www.aristeia.com/books.html)
 
 Ignore the [Google C++ Style

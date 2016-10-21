@@ -1,7 +1,7 @@
-*~
 .#*
-/*.iml
+*~
+/bld/
 /.idea/
+/*.iml
 /stage/
 /.vscode/
-/bld/
