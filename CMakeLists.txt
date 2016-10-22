@@ -25,9 +25,9 @@
 #     for some arguments.  In addition, it helps ensuring that each
 #     component has indeed the three required files.
 #
-#	  You may also place your feature into a subdirectory.
-#	  Put a `<dir>/` before the components name in the
-#	  COMPONENTS variable.
+#     You may also place your feature into a subdirectory.
+#     Put a `<dir>/` before the components name in the
+#     COMPONENTS variable.
 #
 #  2. Create the file `src/<dir>/feature.hpp` with the interface of your
 #     component.  You don't have to put everything into a single
@@ -52,14 +52,14 @@
 # `tests/testaux/CMakeLists.txt`.
 #
 # You can generate a html documentation with doxygen by building the
-# cmake target `docs`. This will also show you undocumented entities. 
+# cmake target `docs`. This will also show you undocumented entities.
 # With Make backend:
 #
-#	make docs
+#   make docs
 #
 # With CMake:
 #
-#	cmake --build . --target docs
+#   cmake --build . --target docs
 
 cmake_minimum_required(VERSION 3.0)
 
