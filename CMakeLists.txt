@@ -1,66 +1,3 @@
-# Welcome to the top-level `CMakeLists.txt` file!  Here is a quick
-# overview of the physical layout of this project.
-#
-# The compiler is built from the single source file `src/minijava.cpp`
-# which is statically linked against a convenience library `libcore`
-# that provides the actual features.  The convenience library is made
-# up of *components*.  A component is a triple of a header file,
-# source file and unit test.  (This terminology is borrowed from John
-# Lakos.)
-#
-#  Each component has a name.  Whenever you add a new component, say,
-# `feature`, exercise the following steps.
-#
-#  1. Add `feature` to the definition of the variable `COMPONENTS`
-#     further down below in this file.  Please put one name per line
-#     and keep the list sorted.
-#
-#     We maintain this list manually instead of scanning the
-#     file-system because this allows CMake to determine correctly
-#     when the generated build-tools are outdated.  See the discussion
-#     about `GLOB` here
-#
-#         https://cmake.org/cmake/help/v3.0/command/file.html
-#
-#     for some arguments.  In addition, it helps ensuring that each
-#     component has indeed the three required files.
-#
-#     You may also place your feature into a subdirectory.
-#     Put a `<dir>/` before the components name in the
-#     COMPONENTS variable.
-#
-#  2. Create the file `src/<dir>/feature.hpp` with the interface of your
-#     component.  You don't have to put everything into a single
-#     header file, as long as `src/feature.hpp` `#include`s all other
-#     files.
-#
-#  3. Create the file `src/<dir>/feature.cpp` with the implementation of
-#     your component.  It should `#include "feature.hpp"` as its first
-#     dependency to make sure it compiles stand-alone.  Do this even
-#     if the source file is otherwise empty.
-#
-#  4. Create the file `tests/<dir>/feature.cpp` with the unit-tests
-#     for your component.  It will be linked against `libcore`.  In
-#     this file, you should also `#include "<dir>/feature.hpp"`.
-#
-# Assuming you're using CMake with the Make backend, you can build the
-# compiler via `make` and run all unit tests via `make test`.
-#
-# A grab bag of utility features that were considered useful for
-# writing unit tests can be found in `tests/testaux/`.  If you add new
-# compiled source files to it, don't forget to mention them in
-# `tests/testaux/CMakeLists.txt`.
-#
-# You can generate a html documentation with doxygen by building the
-# cmake target `docs`. This will also show you undocumented entities.
-# With Make backend:
-#
-#   make docs
-#
-# With CMake:
-#
-#   cmake --build . --target docs
-
 cmake_minimum_required(VERSION 3.0)
 
 project(MiniJava VERSION 0.1)
@@ -99,15 +36,19 @@ configure_file(
 	"${PROJECT_BINARY_DIR}/config.h"
 )
 
-
 find_package(Doxygen QUIET)
 
 if(DOXYGEN_FOUND)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.in ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
-	add_custom_target(docs
-	                  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
-	                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	                  COMMENT "Generating API documentation with Doxygen" VERBATIM)
+	configure_file(
+		${CMAKE_CURRENT_SOURCE_DIR}/doxygen.in
+		${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY
+	)
+	add_custom_target(
+		docs
+		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Generating API documentation with Doxygen" VERBATIM
+	)
 else(DOXYGEN_FOUND)
 	message(STATUS "Doxygen was not found. You may want to consider installing it to generate html docs for minijava.")
 endif(DOXYGEN_FOUND)
