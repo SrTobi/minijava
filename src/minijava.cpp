@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "cli.hpp"
+#include "global.hpp"
 
 
 int main(int argc, char * * argv)
@@ -17,7 +18,7 @@ int main(int argc, char * * argv)
 		minijava::real_main(args, std::cout, std::cerr);
 		return EXIT_SUCCESS;
 	} catch (const std::exception& e) {
-		std::cerr << "minijava: error: " << e.what() << "\n";
+		std::cerr << MINIJAVA_PROJECT_NAME << ": error: " << e.what() << "\n";
 		return EXIT_FAILURE;
 	}
 }
