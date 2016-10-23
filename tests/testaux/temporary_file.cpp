@@ -30,7 +30,7 @@ namespace testaux
 		if (fs::remove(path, ec) && ec) {
 			// We cannot throw an exception from a destructor.
 			std::cerr << "Cannot remove temporary file: " << _filename
-					  << ": " << ec.message() << "\n";
+			          << ": " << ec.message() << "\n";
 		}
 	}
 

@@ -1,6 +1,6 @@
-// This file is configured by CMake to substitute configuration values
-// and project mata-information.  It should not be used directly but
-// only via `global.hpp`.
+// This file is configured by CMake to substitute configuration values and
+// project mata-information.  It should not be used directly but only via
+// `global.hpp`.
 
 /** @brief Project name. */
 #define MINIJAVA_PROJECT_NAME "@PROJECT_NAME@"

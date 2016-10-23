@@ -2,8 +2,8 @@
  * @file testaux.hpp
  *
  * @brief
- *         This header file provides a grab bag of auxiliary features
- *         that were considered useful for writing unit tests.
+ *     This header file provides a grab bag of auxiliary features that were
+ *     considered useful for writing unit tests.
  *
  */
 
@@ -21,16 +21,16 @@ namespace testaux
 
 	/**
 	 * @brief
-	 *         A `constexpr` version of `strlen`.
+	 *     A `constexpr` version of `strlen`.
 	 *
 	 * @tparam CharT
-	 *         character type
+	 *     character type
 	 *
 	 * @param str
-	 *         NUL terminated character string
+	 *     NUL terminated character string
 	 *
 	 * @returns
-	 *         number of characters in `str` before the first 0
+	 *     number of characters in `str` before the first NUL value
 	 *
 	 */
 	template <typename CharT>
@@ -49,16 +49,14 @@ namespace testaux
 
 	/**
 	 * @brief
-	 *         A silly printable wrapper around any type to silence
-	 *         Boost.Test.
+	 *     A silly printable wrapper around any type to silence Boost.Test.
 	 *
-	 * Boost.Test requires that types overload `operator<<` in many
-	 * cases.  If you have a type that just doesn't do so, this
-	 * wrapper can be used to mollify Boost.Test.  This type is an
-	 * aggregate.
+	 * Boost.Test requires that types overload `operator<<` in many cases.  If
+	 * you have a type that just doesn't do so, this wrapper can be used to
+	 * mollify Boost.Test.  This type is an aggregate.
 	 *
 	 * @tparam T
-	 *         type to wrap
+	 *     type to wrap
 	 *
 	 */
 	template <typename T>
@@ -70,20 +68,19 @@ namespace testaux
 
 	/**
 	 * @brief
-	 *         Inserts a barely useful character sequence into the
-	 *         stream.
+	 *     Inserts a barely useful character sequence into the stream.
 	 *
 	 * @tparam T
-	 *         wrapped type
+	 *     wrapped type
 	 *
 	 * @param os
-	 *         stream to print to
+	 *     stream to print to
 	 *
 	 * @param val
-	 *         wrapped value to print
+	 *     wrapped value to print
 	 *
 	 * @returns
-	 *         a reference to `os`
+	 *     a reference to `os`
 	 *
 	 */
 	template <typename T>
@@ -92,6 +89,5 @@ namespace testaux
 	{
 		return os << "{" << std::addressof(val) << "}";
 	}
-
 
 } // namespace testaux

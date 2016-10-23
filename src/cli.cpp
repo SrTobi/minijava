@@ -38,8 +38,8 @@ namespace minijava
 
 
 	void real_main(const std::vector<const char *>& args,
-				   std::ostream& thestdout,
-				   std::ostream& /* thestderr */)
+	               std::ostream& thestdout,
+	               std::ostream& /* thestderr */)
 	{
 		namespace po = boost::program_options;
 		auto optdesc = po::options_description{"Options"};
@@ -51,7 +51,7 @@ namespace minijava
 		auto argdesc = po::positional_options_description{};
 		auto varmap = po::variables_map{};
 		po::store(po::command_line_parser(args.size(), args.data())
-				  .options(optdesc).positional(argdesc).run(), varmap);
+		          .options(optdesc).positional(argdesc).run(), varmap);
 		po::notify(varmap);
 		if (varmap.count("help") || args.size() == 1) {
 			thestdout << optdesc;
@@ -59,9 +59,9 @@ namespace minijava
 		}
 		if (varmap.count("version")) {
 			thestdout << MINIJAVA_PROJECT_NAME << " " << MINIJAVA_PROJECT_VERSION << "\n"
-					  << "Copyright (C) 2016 T. Kahlert, P.J. Serrer, M. Baumann and M. Klammler\n"
-					  << "This is free software; see the source for copying conditions.  There is NO\n"
-					  << "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
+			          << "Copyright (C) 2016 T. Kahlert, P.J. Serrer, M. Baumann and M. Klammler\n"
+			          << "This is free software; see the source for copying conditions.  There is NO\n"
+			          << "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
 			return;
 		}
 		if (varmap.count("echo")) {

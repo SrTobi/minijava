@@ -96,7 +96,7 @@ BOOST_DATA_TEST_CASE(echo_outputs_file_to_stdout, echo_data)
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	minijava::real_main({"", "--echo", tempfile.filename().c_str()},
-						mystdout, mystderr);
+	                    mystdout, mystderr);
 	const auto actualout = mystdout.str();
 	const auto actualerr = mystderr.str();
 	BOOST_REQUIRE_EQUAL(sample, actualout);
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(if_stdout_is_not_writeable_echo_throws_exception)
 	std::ostringstream mystderr{};
 	try {
 		minijava::real_main({"", "--echo", tempfile.filename().c_str()},
-							mystdout, mystderr);
+		                    mystdout, mystderr);
 		BOOST_FAIL("No exception thrown");
 	} catch (const std::exception& e) { /* okay */ }
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
