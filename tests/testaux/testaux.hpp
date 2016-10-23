@@ -16,6 +16,11 @@
 #include <utility>
 
 
+/**
+ * @brief
+ *     Miscellaneous auxiliary features for writing unit tests.
+ *
+ */
 namespace testaux
 {
 

@@ -11,3 +11,15 @@
 #pragma once
 
 #include "config.h"
+
+
+/**
+ * @brief
+ *     Top-level `namespace` for everything in this project.
+ *
+ */
+namespace minijava
+{
+	// We open this namespace here just so we can put a DocString on it.  This
+	// file seems like a good place for this.
+}
