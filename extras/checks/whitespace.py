@@ -41,7 +41,7 @@ def maybe_open(filename, mode='r'):
 	Like the builtin `open` function except that the `filename` may be `None`
 	in which case a `NullContext` is `returned.
 
-	@param filename : str
+	@param filename : str | NoneType
 		name of the file to open or `None`
 
 	@param mode : str
@@ -304,7 +304,7 @@ def main(args):
 			+ " by 'git ls-files' are checked.  The exit status is the number"
 			+ " of non-conforming files or 1 in case of an error.  All"
 			+ " arguments after the first '--' will be interpreted as file"
-			+ " names and never as options."
+			+ " names and never as options.  '-' is not a valid argument."
 		),
 		epilog=(
 			"All checks are conservative and aim for zero false positives at"
