@@ -24,6 +24,11 @@
 #define TESTAUX_FAIL_NO_EXCEPTION()  BOOST_FAIL("No exception thrown")
 
 
+/**
+ * @brief
+ *     Miscellaneous auxiliary features for writing unit tests.
+ *
+ */
 namespace testaux
 {
 

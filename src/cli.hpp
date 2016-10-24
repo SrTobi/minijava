@@ -1,3 +1,11 @@
+/**
+ * @file cli.hpp
+ *
+ * @brief
+ *     Command-line interface for the compiler.
+ *
+ */
+
 #pragma once
 
 #include <iosfwd>

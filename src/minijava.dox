@@ -1,0 +1,14 @@
+/**
+ * @mainpage A Compiler for the MiniJava&nbsp;3.5 Language
+ *
+ * This compiler was written during the &ldquo;Compiler Engineering&rdquo;
+ * practical course at the KIT in winter 2016/17.
+ *
+ * Useful links:
+ *
+ *  - [language specification](https://pp.ipd.kit.edu/lehre/WS201617/compprakt/intern/sprachbericht.pdf)
+ *  - [competitive benchmarks](http://speedcenter.informatik.kit.edu)
+ *    (doesn't seem to work yet)
+ *  - [course web site](https://pp.ipd.kit.edu/lehre/WS201617/compprakt/)
+ *
+ */
