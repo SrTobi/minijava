@@ -9,7 +9,7 @@ include("extras/cmake/enable_diagnostics.cmake")
 buildx_activate_cpp14()
 buildx_enable_diagnostics()
 
-if(WIN32 OR CYGWIN)
+if(WIN32)
 	set(Boost_USE_STATIC_LIBS ON)
 endif()
 
