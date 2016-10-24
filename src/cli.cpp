@@ -50,7 +50,7 @@ namespace minijava
 			 "output FILE to standard output and exit");
 		auto argdesc = po::positional_options_description{};
 		auto varmap = po::variables_map{};
-		po::store(po::command_line_parser(args.size(), args.data())
+		po::store(po::command_line_parser(static_cast<int>(args.size()), args.data()) // safe cast, since size == argc
 		          .options(optdesc).positional(argdesc).run(), varmap);
 		po::notify(varmap);
 		if (varmap.count("help") || args.size() == 1) {
