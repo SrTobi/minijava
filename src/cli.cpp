@@ -21,7 +21,7 @@ namespace minijava
 
 		void echo_file(const std::string& filename, std::ostream& dst)
 		{
-			auto buffer = std::vector<char>(std::size_t{1} << 2);
+			auto buffer = std::vector<char>(std::size_t{1} << 12);
 			std::ifstream src{filename};
 			do {
 				src.read(buffer.data(), buffer.size());
