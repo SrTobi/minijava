@@ -18,6 +18,7 @@ int main(int argc, char * * argv)
 		minijava::real_main(args, std::cout, std::cerr);
 		return EXIT_SUCCESS;
 	} catch (const std::exception& e) {
+		std::cerr.exceptions(std::iostream::goodbit); // don't throw if caught exception cannot be written to stderr
 		std::cerr << MINIJAVA_PROJECT_NAME << ": error: " << e.what() << "\n";
 		return EXIT_FAILURE;
 	}
