@@ -25,6 +25,9 @@ In order to build the compiler, you will need the following.
 
  - In order to check out the sources, you'll also need Git.
 
+ - If you want to build the HTML documentation (which is purely optional), you
+   also need Doxygen.
+
 We have tested the setup on POSIX and Windows with MinGW or Cygwin and wish you
 Good Luck if you're trying anything else.
 
@@ -36,13 +39,19 @@ Good Luck if you're trying anything else.
     $ mkdir ${builddir}/
     $ cd ${builddir}/
     $ cmake ..
-    $ make
-    $ make test
+    $ cmake --build .
+    $ cmake --build . --target test
+    $ cmake --build . --target docs
 
-The `make test` is optional and will run all unit tests.
+The last two steps are optional.  They will run all unit tests and build the
+HTML documentation respectively.  The latter will also show you undocumented
+entities and you should fix those.
 
 The compiler executable can be found in `${builddir}/src/minijava`.  Running it
 with the `--help` option will give you some information how to use it.
+
+If you choose a name for `${builddir}` that matches `stage`, `stage-*` or
+`bld`, it will be `.gitignore`d.
 
 
 ## Building for Robots
@@ -52,27 +61,97 @@ with the `--help` option will give you some information how to use it.
 The top-level directory contains the shell scripts `build` and `run`.  If
 executed from the top-level directory, `build` (with no arguments) configures
 and builds the project and `run` invokes the compiler, forwarding it any and
-all arguments that were passed to it.
+all arguments that were passed to it.  (The script `exec()`s the compiler with
+all standard file descriptors left at their defaults so there is no difference
+compared to running the compiler directly.)
 
 This will only work on POSIX systems.  Since the scripts don't check who
 invokes them, they actually work for humans, too.
 
 
+## Physical Project Layout
+
+This section gives a quick overview how the files are organized in the source
+tree and how the compiler is built from them.
+
+Here is the directory hierarchy at a glance:
+
+    /                     project root
+    /src/                 C++ source code
+    /tests/               unit tests
+    /tests/testaux/       unit test support code
+    extras/               auxiliary files for the build system
+
+The compiler executable is built from the single source file
+`/src/minijava.cpp` which is statically linked against a convenience library
+`libcore` that provides the actual features.  The convenience library is made
+up of *components*.  A component is a triple of a header file, source file and
+unit test.  This terminology is borrowed from John Lakos.  (You can watch a
+talk of his here: [1<sup>st</sup>&nbsp;part](https://youtu.be/QjFpKJ8Xx78),
+[2<sup>nd</sup>&nbsp;part](https://youtu.be/fzFOLsFASjU) and
+[3<sup>rd</sup>&nbsp;part](https://youtu.be/NrARQ7rHV-c).  The first part is
+probably sufficient for this matter.)
+
+Each component has a name.  Whenever you add a new component, say, `feature`,
+exercise the following steps.
+
+ 1. Add `feature` to the definition of the variable `COMPONENTS` in
+    `/CMakeLists.txt`.  Please put one name per line and keep the list sorted.
+
+    We maintain this list manually instead of scanning the file-system because
+    this allows CMake to determine correctly when the generated build-tools are
+    outdated.  See the discussion about `GLOB`
+    [here](https://cmake.org/cmake/help/v3.0/command/file.html) for some
+    arguments.  In addition, it helps ensuring that each component has indeed
+    the three required files.
+
+    You may also place your feature into a sub-directory `${dir}/`; put
+    `${dir}/` before the components name in the `COMPONENTS` variable in this
+    case.
+
+ 2. Create the file `/src/${dir}/feature.hpp` with the interface of your
+    component.  You don't have to put everything into a single header file as
+    long as `/src/${dir}/feature.hpp` `#include`s all other files.
+
+    If you are writing `template`-heavy code, it is recommended that you only
+    put the public declarations into the `*.hpp` file and the implementation
+    into `*.tpp` files.  This will help keeping the header clean so users can
+    quickly understand it (and more easily resist the temptation to depend on
+    implementation details) and also keeps the implementation stuff out of the
+    reach of the Doxygen tool (which only processes `*.h` and `.hpp` files).
+
+ 3. Create the file `/src/${dir}/feature.cpp` with the implementation of your
+    component.  It should `#include "feature.hpp"` as its first dependency to
+    make sure it compiles stand-alone.  Do this even if the source file is
+    otherwise empty.
+
+ 4. Create the file `/tests/${dir}/feature.cpp` with the unit-tests for your
+    component.  It will be linked against `libcore`.  In this file, you should
+    also `#include "${dir}/feature.hpp"`.
+
+> *Moritz Klammler:* I actually prefer naming C++ files `*.hxx` and `*.cxx`.
+
+A grab bag of utility features that were considered useful for writing unit
+tests can be found in `/tests/testaux/`.  If you add new compiled source files
+to it, don't forget to mention them in `/tests/testaux/CMakeLists.txt`.
+
+
 ## Contributing
 
 Please develop your feature on a separate branch named
-`${yourname}/${yourfeature}`.  You can push to that branch whenever you like.
-Please keep commits clean.  A single commit should contain a single logical
-change.  Also be sure to use descriptive commit messages with a short sentence
-that summarizes your change as the first line followed by a blank line and
-possibly more text after that.
+`${yourname}/${yourfeature}`.  You can push to that branch whenever you like
+and even apply `--force` if need be.  Please keep commits clean.  A single
+commit should contain a single logical change.  Also be sure to use descriptive
+commit messages with a short sentence that summarizes your change as the first
+line followed by a blank line and possibly more text after that.
 
 > *Moritz Klammler:* I prefer to write commit messages in `ChangeLog` format.
 
 Once your feature is ready (which could be as soon as after the first commit),
 create a pull request to merge your branch with `master`.  Normally, you can
 merge if you got a single positive review but if your changes are likely to
-break things for other people, better give it more time.
+break things for other people, better give it more time.  If your feature
+branch is no longer needed, please delete it.
 
 If your change is obvious and non-breaking (fixing typos, comments, formatting,
 &hellip;) you can also push it directly to `master`.  If you do so, be careful
@@ -95,21 +174,31 @@ Good resources for modern coding standards can be found here.
 
  - [C++ Core Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md)
  - [&ldquo;C++ Coding Standards&rdquo; by Herb Sutter and Andrei Alexandrescu](http://www.gotw.ca/publications/c++cs.htm)
- - [Scott Meyers &ldquo;Effective C++&rdquo; book series](http://www.aristeia.com/books.html)
+ - [Scott Meyers' &ldquo;Effective C++&rdquo; book series](http://www.aristeia.com/books.html)
 
 Ignore the [Google C++ Style
 Guide](https://google.github.io/styleguide/cppguide.html).  While some parts of
 it are indisputable, it also contains a lot of poor advice that might work for
 Google but is undesirable in general.  Other highly respected guidelines like
 the [MISRA](http://www.programmingresearch.com/coding-standards/misra/) or
-[JSF](http://www.stroustrup.com/JSF-AV-rules.pdf) standards are full of good
-tips that anybody can profit from but too specific for their very special
+[JSF](http://www.stroustrup.com/JSF-AV-rules.pdf) standards provide many good
+tips that anybody can profit from but are too specific for their very special
 domains to be applicable in general.
 
 We have agreed to use the following non-standard extensions to C++.
 
  - Put `#pragma once` as the first line of code in a header file instead of
    traditional `#include` guards.
+
+The following third-party dependencies may be used.
+
+ - Official [Boost](http://www.boost.org/doc/libs/) libraries.  (But if the
+   same feature is also available from the C++14 standard library, use that
+   instead.)
+
+Do not depend on platform-specific features such as `<unistd.h>` or
+`<windows.h>`.  Look if there is a cross-platform abstraction in Boost,
+instead.
 
 
 ## Style Guide
@@ -123,10 +212,10 @@ pre-processor macros are prefixed with `MINIJAVA_`.  The unit-test support
 library uses the `testaux` name-space for C++ and prefixes pre-processor macros
 with `TESTAUX_`.
 
-`private` members have a single `_` prefixed to their name.  (Never use two
-consecutive underscores or a leading underscore followed by an upper-case
-character because these identifiers are reserved and using them invokes
-undefined behavior.)
+`private` members have a single &ldquo;`_`&rdquo; prefixed to their name.
+(Never use two consecutive underscores or a leading underscore followed by an
+upper-case character because these identifiers are reserved and using them
+invokes undefined behavior.)
 
 We use the same style as the
 [Firm](http://pp.ipd.kit.edu/firm/Coding_Conventions) project as far as it is
@@ -139,35 +228,38 @@ this is &ldquo;Stroustrup&rdquo; style with tabs for indentation.
 > on the pointer.  Personally, I prefer putting a space on either side of the
 > `*` (which is also not what Stroustrup recommends).
 
-Don't assume that a tab always has the same width it has in your
-editor.  (Therefore, only use tabs for indentation and spaces for
-justification.)  Try to keep lines below 80 characters where each tab counts as
-four characters for this purpose.
-Meticulously trim trailing white-space and end each file with a new-line
-character.  (Or teach your editor to do these things automatically for you.)
+Don't assume that a tab always has the same width it has in your editor.
+Therefore, only use tabs for indentation and spaces for justification.  Try to
+keep lines below 80 characters where each tab counts as four characters for
+this purpose.  Meticulously trim trailing white-space and end each file with a
+new-line character.  You can use the script `/extras/checks/whitespace.py` to
+check and eventually fix some white-space issues before you commit.  Run it
+with the `--help` option to see how it is used.
 
-Document all public parts of components with Doxygen DocStrings that
-clearly state the semantics and the contract of your functions and other
-stuff.  Use JavaDoc style with Markdown formatting that looks like this.
+Document all public parts of components with Doxygen DocStrings that clearly
+state the semantics and the contract of your functions and other stuff.  Only
+`*.h` and `*.hpp` files are scanned by Doxygen so put the documentation there.
+
+Use JavaDoc style with Markdown formatting that looks like this.
 
     /**
      * @brief
-     *         Computes the longest-common sub-string of two character strings.
+     *     Computes the longest-common sub-string of two character strings.
      *
      * If both arguments are different from zero and either of them is not a
      * NUL-terminated character string, the behavior is undefined.
      *
      * @param s1
-     *         first string
+     *     first string
      *
      * @param s2
-     *         second string
+     *     second string
      *
      * @returns
-     *         longest common sub-string of `s1` and `s2`
+     *     longest common sub-string of `s1` and `s2`
      *
      * @throws std::invalid_argument
-     *         if either `s1` or `s2` are `nullptr`s
+     *     if either `s1` or `s2` are `nullptr`s
      *
      */
      std::string lcs(const char * s1, const char * s2);
