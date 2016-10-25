@@ -25,27 +25,29 @@ BOOST_AUTO_TEST_CASE(same_pointers_compare_equal)
 }
 
 
-BOOST_AUTO_TEST_CASE(different_pointers_to_different_data_compare_unequal)
+BOOST_AUTO_TEST_CASE(different_pointers_from_different_pools_to_different_data_compare_unequal)
 {
-	minijava::symbol_pool<> pool;
+	minijava::symbol_pool<> pool1;
+	minijava::symbol_pool<> pool2;
 	const auto p1 = "The bats are in the belfry";
 	const auto p2 = "The dew is on the moor";
-	const auto s1 = pool.normalize(p1);
-	const auto s2 = pool.normalize(p2);
+	const auto s1 = pool1.normalize(p1);
+	const auto s2 = pool2.normalize(p2);
 	BOOST_REQUIRE(not (s1 == s2));
 	BOOST_REQUIRE(s1 != s2);
 }
 
 
-BOOST_AUTO_TEST_CASE(different_pointers_to_same_data_compare_unequal)
+BOOST_AUTO_TEST_CASE(different_pointers_from_different_pools_to_same_data_compare_unequal)
 {
-	minijava::symbol_pool<> pool;
+	minijava::symbol_pool<> pool1;
+	minijava::symbol_pool<> pool2;
 	using namespace std::string_literals;
 	const auto text = "Running through a graveyard"s;
 	const auto copy = text;
 	BOOST_REQUIRE(text.c_str() != copy.c_str());  // self-test
-	const auto s1 = pool.normalize(text.c_str());
-	const auto s2 = pool.normalize(copy.c_str());
+	const auto s1 = pool1.normalize(text.c_str());
+	const auto s2 = pool2.normalize(copy.c_str());
 	BOOST_REQUIRE(not (s1 == s2));
 	BOOST_REQUIRE(s1 != s2);
 	BOOST_REQUIRE(std::strcmp(s1.c_str(), s2.c_str()) == 0);
