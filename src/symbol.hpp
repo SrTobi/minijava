@@ -10,36 +10,28 @@
 
 #include <cassert>
 #include <iosfwd>
-
+#include <list>
 
 namespace minijava
 {
 
 	/**
 	 * @brief
-	 *     A non-owning read-only wrapper around a canonical pointer to a
-	 *     NUL-terminated character sequence.
+	 *     A non-owning read-only wrapper around a char sequence.
 	 *
 	 * Instances of this type have exactly one non-`static` data member which
-	 * is a pointer to a NUL-terminated character sequence.  The pointed-to
-	 * memory is not owned and must remain valid for the entire life-time of
-	 * the `string` object.  Equality on `string` objects is defined in terms
-	 * of pointer identity.  This means that in order to be useful, no two
-	 * `string` objects should be created with different pointers pointing to
-	 * buffers with the same data.  In other words, all users must agree that
-	 * for a given text, only a single pointer is used.  We call such pointer a
-	 * *canonical* pointer.  How a canonical pointer is obtained is not the
-	 * business of this `class`.  In order to avoid creating a `string` from a
-	 * non-canonical pointer by accident, there is no public constructor and
-	 * the provided factory function has a long and ugly name.  There should
-	 * probably be a central authority -- called a *pool* -- that
-	 * &ldquo;canonizes&rdquo; strings and manages the life-times of the
-	 * buffers referred to by the canonical pointers.  Mixing `string`s from
-	 * different pools is likely not going to be very useful.
-	 *
+	 * is a pointer to an internal string reperesentation.  The pointed-to
+	 * internal structure is not owned by the symbol itself, but by a so called
+	 * pool. Symbols can only be created by pools and remain only valid as long
+	 * as the pool exists. Equality on `symbol` objects is defined in terms
+	 * of pointer identity.  Two symbols created by different pools must not be
+	 * compared in any way. The properties of a symbol are stored inside the internal
+	 * symbol structure and are accessible by various methods.
 	 */
 	class symbol final
 	{
+		template<typename Inner, typename Outer>
+		friend class symbol_pool;
 	private:
 
 		/**
@@ -69,29 +61,6 @@ namespace minijava
 		constexpr const char * c_str() const noexcept
 		{
 			return _ptr;
-		}
-
-		/**
-		 * @brief
-		 *     Creates a `string` from a given canonical pointer.
-		 *
-		 * The behavior is undefined unless `s` points to a NUL-terminated
-		 * character sequence.
-		 *
-		 * The created object will compare equal to other `string` objects if
-		 * and only if they were created from the same pointer, regardless of
-		 * the contents of the pointed-to memory.
-		 *
-		 * This function has a long and ugly name to discourage people calling
-		 * it by accident.
-		 *
-		 * @param s
-		 *     pointer to a NUL-terminated character sequence
-		 *
-		 */
-		constexpr static symbol create_from_canonical_pointer(const char * s)
-		{
-			return symbol{s};
 		}
 
 	private:

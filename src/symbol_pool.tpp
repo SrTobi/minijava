@@ -13,7 +13,7 @@ namespace minijava
 	{
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
+	/*template <typename InnerAllocT, typename OuterAllocT>
 	symbol_pool<InnerAllocT, OuterAllocT>::symbol_pool(
 		const inner_allocator_type& inner,
 		const outer_allocator_type& outer
@@ -24,7 +24,7 @@ namespace minijava
 		scoped_allocator_type{outer, inner}
 	}
 	{
-	}
+	}*/
 
 	template <typename InnerAllocT, typename OuterAllocT>
 	symbol symbol_pool<InnerAllocT, OuterAllocT>::normalize(const std::string& text)
@@ -32,7 +32,7 @@ namespace minijava
 		auto pos = _pool.find(text);
 		if (pos == _pool.cend())
 			pos = _pool.insert(pos, text);
-		return symbol::create_from_canonical_pointer(pos->c_str());
+		return symbol(pos->c_str());
 	}
 
 	template <typename InnerAllocT, typename OuterAllocT>
@@ -53,7 +53,7 @@ namespace minijava
 		return _pool.empty();
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
+	/*template <typename InnerAllocT, typename OuterAllocT>
 	InnerAllocT symbol_pool<InnerAllocT, OuterAllocT>::get_inner_allocator() const
 	{
 		return _pool.get_allocator().inner_allocator();
@@ -63,6 +63,6 @@ namespace minijava
 	OuterAllocT symbol_pool<InnerAllocT, OuterAllocT>::get_outer_allocator() const
 	{
 		return _pool.get_allocator().outer_allocator();
-	}
+	}*/
 
 }  // namespace minijava

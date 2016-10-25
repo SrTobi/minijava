@@ -26,7 +26,7 @@ namespace minijava
 
 	/**
 	 * @brief
-	 *     A pool for canonical symbol representations.
+	 *     A pool for canonical string representations via symbols.
 	 *
 	 * Symbols can be added into the pool.  This process is called
 	 * *normalization*.  After a symbol has been normalized, it is contained in
@@ -46,6 +46,7 @@ namespace minijava
 	 *     allocator type used for allocating internal data structures
 	 *
 	 */
+	// work version!: do not use any specific template parameters as they are subject to change! only <>
 	template
 	<
 		typename InnerAllocT = std::allocator<char>,
@@ -101,8 +102,9 @@ namespace minijava
 		 *
 		 *
 		 */
-		symbol_pool(const inner_allocator_type& inner,
-					const outer_allocator_type& outer);
+		// this is subject to changes 
+		/*symbol_pool(const inner_allocator_type& inner,
+		            const outer_allocator_type& outer);*/
 
 		/**
 		 * @brief
@@ -166,7 +168,8 @@ namespace minijava
 		 *     copy of the inner allocator
 		 *
 		 */
-		inner_allocator_type get_inner_allocator() const;
+		// this is subject to changes
+		//inner_allocator_type get_inner_allocator() const;
 
 		/**
 		 * @brief
@@ -177,7 +180,8 @@ namespace minijava
 		 *     copy of the outer allocator
 		 *
 		 */
-		outer_allocator_type get_outer_allocator() const;
+		// this is subject to changes
+		//outer_allocator_type get_outer_allocator() const;
 
 	private:
 
