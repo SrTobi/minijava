@@ -82,7 +82,7 @@ namespace minijava
 	{
 		entry_type * entry_mem = entry_allocator_traits::allocate(_entryAlloc, 1);
 		entry_allocator_traits::construct(_entryAlloc, entry_mem, str_mem, size, hash);
-		
+
 		return entry_mem;
 	}
 
