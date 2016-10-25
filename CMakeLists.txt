@@ -26,6 +26,13 @@ link_directories(${Boost_LIBRARY_DIRS})
 set(COMPONENTS
 	cli
 	global
+	lexer/keyword
+	lexer/lexer
+	lexer/token
+	lexer/token_iterator
+	lexer/token_type
+	string
+	string_pool
 )
 
 add_subdirectory("src")

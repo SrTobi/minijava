@@ -13,6 +13,8 @@
 #include "global.hpp"
 
 
+// TODO @Moritz Klammler: Hook up the lexer here.
+
 namespace minijava
 {
 
