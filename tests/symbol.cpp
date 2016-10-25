@@ -65,6 +65,21 @@ BOOST_AUTO_TEST_CASE(stream_insertion)
 	BOOST_REQUIRE_EQUAL(text, oss.str());
 }
 
+BOOST_AUTO_TEST_CASE(hash_of_symbol_equals_hash_of_std_string)
+{
+    std::hash<std::string> str_hasher;
+    std::string test_string = "symbols love to make love";
+    std::size_t expected_hash = str_hasher(test_string);
+
+    std::hash<minijava::symbol> poolstr_hasher;
+    minijava::symbol_pool<> pool;
+    minijava::symbol pool_symbol = pool.normalize(test_string);
+    std::size_t actual_hash = poolstr_hasher(pool_symbol);
+
+    BOOST_REQUIRE_EQUAL(actual_hash, expected_hash);
+}
+
+
 BOOST_AUTO_TEST_CASE(two_normalized_symbols_with_same_origin_only_equal_each_other)
 {
     minijava::symbol_pool<> pool;

@@ -29,6 +29,7 @@ namespace minijava
 	 */
 	class symbol final
 	{
+    	friend class std::hash<symbol>;
 	public:
 		/**
 		 * @brief
@@ -384,3 +385,14 @@ namespace minijava
 	operator<<(std::ostream& os, const symbol& str);
 
 }  // namespace minijava
+
+namespace std {
+    template<>
+    struct hash<minijava::symbol>
+    {
+        constexpr std::size_t operator()(const minijava::symbol& symbol) const noexcept
+        {
+            return symbol._entry->hash;
+        }
+    };
+}
