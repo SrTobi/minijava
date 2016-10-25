@@ -31,8 +31,8 @@ set(COMPONENTS
 	lexer/token
 	lexer/token_iterator
 	lexer/token_type
-	string
-	string_pool
+	symbol
+	symbol_pool
 )
 
 add_subdirectory("src")

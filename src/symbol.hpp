@@ -1,8 +1,8 @@
 /**
- * @file string.hpp
+ * @file symbol.hpp
  *
  * @brief
- *     Canonical string representations.
+ *     Canonical symbol representations.
  *
  */
 
@@ -38,7 +38,7 @@ namespace minijava
 	 * different pools is likely not going to be very useful.
 	 *
 	 */
-	class string final
+	class symbol final
 	{
 	private:
 
@@ -50,7 +50,7 @@ namespace minijava
 		 *     pointer to a NUL-terminated character sequence
 		 *
 		 */
-		constexpr explicit string(const char * s) : _ptr{s}
+		constexpr explicit symbol(const char * s) : _ptr{s}
 		{
 			assert(s != nullptr);
 		}
@@ -89,9 +89,9 @@ namespace minijava
 		 *     pointer to a NUL-terminated character sequence
 		 *
 		 */
-		constexpr static string create_from_canonical_pointer(const char * s)
+		constexpr static symbol create_from_canonical_pointer(const char * s)
 		{
-			return string{s};
+			return symbol{s};
 		}
 
 	private:
@@ -99,7 +99,7 @@ namespace minijava
 		/** @brief The wrapped raw pointer. */
 		const char * _ptr{};
 
-	};  // class string
+	};  // class symbol
 
 
 	/**
@@ -116,7 +116,7 @@ namespace minijava
 	 *     whether `lhs` and `rhs` wrap the same canonical pointer
 	 *
 	 */
-	constexpr bool operator==(const string& lhs, const string& rhs) noexcept
+	constexpr bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 	{
 		return (lhs.c_str() == rhs.c_str());
 	}
@@ -135,7 +135,7 @@ namespace minijava
 	 *     whether `lhs` and `rhs` wrap different canonical pointers
 	 *
 	 */
-	constexpr bool operator!=(const string& lhs, const string& rhs) noexcept
+	constexpr bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
 	{
 		return !(lhs == rhs);
 	}
@@ -156,6 +156,6 @@ namespace minijava
 	 *
 	 */
 	std::ostream&
-	operator<<(std::ostream& os, const string& str);
+	operator<<(std::ostream& os, const symbol& str);
 
 }  // namespace minijava

@@ -8,14 +8,14 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_iterator.hpp"
-#include "string_pool.hpp"
+#include "symbol_pool.hpp"
 
 
 BOOST_AUTO_TEST_CASE(empty_input_starts_with_eof_and_stays_there)
 {
 	using namespace std::string_literals;
 	const auto epsilon = ""s;
-	auto pool = minijava::string_pool<>{};
+	auto pool = minijava::symbol_pool<>{};
 	auto lex = minijava::make_lexer(std::begin(epsilon), std::end(epsilon), pool);
 	for (auto i = 0; i < 100; ++i) {
 		BOOST_REQUIRE_EQUAL(minijava::token_type::eof, lex.current_token().type());
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(empty_input_starts_with_eof_and_stays_there)
 BOOST_AUTO_TEST_CASE(sequence_of_identifiers_lexed_correctly)
 {
 	using namespace std::string_literals;
-	auto pool = minijava::string_pool<>{};
+	auto pool = minijava::symbol_pool<>{};
 	const auto ids = "alpha beta gamma delta"s;
 	const minijava::token expected[] = {
 		minijava::token::create_identifier(pool.normalize("alpha")),

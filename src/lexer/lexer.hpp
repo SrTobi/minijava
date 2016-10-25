@@ -50,9 +50,9 @@ namespace minijava
 		/**
 		 * @brief
 		 *     Creates a `lexer` that will scan over the character range
-		 *     `[first, last)` and use the string pool `pool`.
+		 *     `[first, last)` and use the symbol pool `pool`.
 		 *
-		 * The range referred to by the iterators as well as the string pool
+		 * The range referred to by the iterators as well as the symbol pool
 		 * must remain valid throughout the life-time of this object.
 		 *
 		 * @param first
@@ -62,7 +62,7 @@ namespace minijava
 		 *     iterator pointing after the last character of the input
 		 *
 		 * @param pool
-		 *     string pool to use for identifiers
+		 *     symbol pool to use for identifiers
 		 *
 		 */
 		lexer(InIterT first, InIterT last, StrPoolT& pool);
@@ -121,7 +121,7 @@ namespace minijava
 		/** @brief Iterator pointing after the last character of the input. */
 		InIterT _last;
 
-		/** @brief Reference to the string-pool used for identifiers. */
+		/** @brief Reference to the symbol-pool used for identifiers. */
 		StrPoolT& _id_pool;
 
 	};  // class lexer
@@ -137,7 +137,7 @@ namespace minijava
 	 *     iterator pointing after the last character of the input
 	 *
 	 * @param pool
-	 *     string pool to use for identifiers
+	 *     symbol pool to use for identifiers
 	 *
 	 */
 	template<typename InIterT, typename StrPoolT>

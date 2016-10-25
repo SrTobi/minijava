@@ -13,7 +13,7 @@
 #include <boost/variant.hpp>
 
 #include "lexer/token_type.hpp"
-#include "string.hpp"
+#include "symbol.hpp"
 
 
 namespace minijava
@@ -29,7 +29,7 @@ namespace minijava
 	public:
 
 		/** @brief Type used to represent identifier names. */
-		using string_type = string;
+		using string_type = symbol;
 
 		/** @brief Type used to represent integer literal values. */
 		using integer_type = std::uint32_t;
