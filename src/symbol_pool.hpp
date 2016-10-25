@@ -10,6 +10,7 @@
 #include <memory>
 #include <scoped_allocator>
 #include <string>
+#include <cstring>
 #include <unordered_set>
 
 #include "symbol.hpp"
@@ -17,12 +18,25 @@
 
 namespace minijava
 {
+	namespace detail {
+		struct entryptr_hash
+		{
+			constexpr std::size_t operator()(const symbol::symbol_entry* entry) const noexcept
+			{
+				return entry->hash;
+			}
+		};
 
-	namespace detail
-	{
-		template <typename AllocT>
-		using std_char_string_t = std::basic_string<char, std::char_traits<char>, AllocT>;
+		struct entryptr_equal
+		{
+			constexpr bool operator()(const symbol::symbol_entry* lhs, const symbol::symbol_entry* rhs) const noexcept
+			{
+
+				return lhs->size == rhs->size && std::strcmp(lhs->cstr, rhs->cstr) == 0;
+			}
+		};
 	}
+
 
 	/**
 	 * @brief
@@ -47,38 +61,28 @@ namespace minijava
 	 *
 	 */
 	// work version!: do not use any specific template parameters as they are subject to change! only <>
-	template
-	<
-		typename InnerAllocT = std::allocator<char>,
-		typename OuterAllocT = std::allocator<detail::std_char_string_t<InnerAllocT>>
-	>
+	template<typename AllocT = std::allocator<char>>
 	class symbol_pool final
 	{
 	public:
 
 		/** @brief Type alias for `InnerAllocT`. */
-		using inner_allocator_type = InnerAllocT;
-
-		/** @brief Type alias for `OuterAllocT`. */
-		using outer_allocator_type = OuterAllocT;
+		using allocator_type = AllocT;
 
 	private:
+		using entry_type = symbol::symbol_entry;
 
-		/** @brief Internal symbol type. */
-		using std_string_type = detail::std_char_string_t<inner_allocator_type>;
+		using char_allocator_type = allocator_type;
+		using char_allocator_traits = std::allocator_traits<char_allocator_type>;
+		using entry_allocator_type = typename char_allocator_traits::template rebind_alloc<entry_type>;
+		using entry_allocator_traits = typename char_allocator_traits::template rebind_traits<entry_type>;
 
-		/** @brief Allocator type for the hash set. */
-		using scoped_allocator_type = std::scoped_allocator_adaptor<
-			outer_allocator_type,
-			inner_allocator_type
-		>;
 
 		/** @brief Has set type. */
 		using hash_set_type = std::unordered_set<
-			std_string_type,
-			std::hash<std_string_type>,
-			std::equal_to<std_string_type>,
-			scoped_allocator_type
+			const entry_type*,
+			detail::entryptr_hash,
+			detail::entryptr_equal
 		>;
 
 	public:
@@ -102,9 +106,7 @@ namespace minijava
 		 *
 		 *
 		 */
-		// this is subject to changes
-		/*symbol_pool(const inner_allocator_type& inner,
-		            const outer_allocator_type& outer);*/
+		symbol_pool(const allocator_type& alloc);
 
 		/**
 		 * @brief
@@ -168,25 +170,20 @@ namespace minijava
 		 *     copy of the inner allocator
 		 *
 		 */
-		// this is subject to changes
-		//inner_allocator_type get_inner_allocator() const;
-
-		/**
-		 * @brief
-		 *     `return`s a copy of the allocator used for allocating internal
-		 *     data structures.
-		 *
-		 * @returns
-		 *     copy of the outer allocator
-		 *
-		 */
-		// this is subject to changes
-		//outer_allocator_type get_outer_allocator() const;
+		allocator_type get_allocator() const;
 
 	private:
+		const char * create_string(const std::string& str);
+		const entry_type * create_entry(const char * str_mem, std::size_t size, std::size_t hash);
+	private:
+		/** allocator used to allocate memory for the symbol' string */
+		char_allocator_type _charAlloc;
+
+		/** allocator used to allocate memory for symbol entries */
+		entry_allocator_type _entryAlloc;
 
 		/** @brief Pool of symbols. */
-		hash_set_type _pool{};
+		hash_set_type _pool;
 
 	};
 

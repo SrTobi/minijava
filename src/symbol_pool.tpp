@@ -8,61 +8,82 @@
 namespace minijava
 {
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	symbol_pool<InnerAllocT, OuterAllocT>::symbol_pool()
+	template<typename AllocT >
+	symbol_pool<AllocT>::symbol_pool()
+		: symbol_pool(AllocT())
 	{
 	}
 
-	/*template <typename InnerAllocT, typename OuterAllocT>
-	symbol_pool<InnerAllocT, OuterAllocT>::symbol_pool(
-		const inner_allocator_type& inner,
-		const outer_allocator_type& outer
-	) : _pool{
-		0,
-		typename hash_set_type::hasher{},
-		typename hash_set_type::key_equal{},
-		scoped_allocator_type{outer, inner}
-	}
+	template<typename AllocT >
+	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
+		: _charAlloc(alloc)
+		, _entryAlloc(alloc)
 	{
-	}*/
-
-	template <typename InnerAllocT, typename OuterAllocT>
-	symbol symbol_pool<InnerAllocT, OuterAllocT>::normalize(const std::string& text)
-	{
-		auto pos = _pool.find(text);
-		if (pos == _pool.cend())
-			pos = _pool.insert(pos, text);
-		return symbol(pos->c_str());
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	bool symbol_pool<InnerAllocT, OuterAllocT>::contains(const std::string& text) const
+	template<typename AllocT >
+	symbol symbol_pool<AllocT>::normalize(const std::string& text)
 	{
-		return (_pool.find(text) != _pool.cend());
+		std::hash<std::string> hasher;
+		std::size_t sym_hash = hasher(text);
+
+		const entry_type find_entry(text.c_str(), text.size(), sym_hash);
+
+		auto entry_it = _pool.find(&find_entry);
+
+		if(entry_it == _pool.end())
+		{
+			const char * sym_mem = create_string(text);
+			const entry_type * insert_entry = create_entry(sym_mem, text.size(), sym_hash);
+
+			std::tie(entry_it, std::ignore) = _pool.insert(insert_entry);
+		}
+
+		return symbol(*entry_it);
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	std::size_t symbol_pool<InnerAllocT, OuterAllocT>::size() const noexcept
+	template<typename AllocT >
+	bool symbol_pool<AllocT>::contains(const std::string& text) const
+	{
+		const entry_type entry(text.c_str(), text.size(), std::hash<std::string>()(text));
+		return (_pool.find(&entry) != _pool.cend());
+	}
+
+	template<typename AllocT >
+	std::size_t symbol_pool<AllocT>::size() const noexcept
 	{
 		return _pool.size();
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	bool symbol_pool<InnerAllocT, OuterAllocT>::empty() const noexcept
+	template<typename AllocT >
+	bool symbol_pool<AllocT>::empty() const noexcept
 	{
 		return _pool.empty();
 	}
 
-	/*template <typename InnerAllocT, typename OuterAllocT>
-	InnerAllocT symbol_pool<InnerAllocT, OuterAllocT>::get_inner_allocator() const
+	template<typename AllocT >
+	AllocT symbol_pool<AllocT>::get_allocator() const
 	{
-		return _pool.get_allocator().inner_allocator();
+		return _charAlloc;
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	OuterAllocT symbol_pool<InnerAllocT, OuterAllocT>::get_outer_allocator() const
+	template<typename AllocT >
+	const char * symbol_pool<AllocT>::create_string(const std::string& str)
 	{
-		return _pool.get_allocator().outer_allocator();
-	}*/
+		char * str_mem = char_allocator_traits::allocate(_charAlloc, str.size() + 1);
+		std::copy(std::begin(str), std::end(str), str_mem);
+		str_mem[str.size()] = '\0';
+		return str_mem;
+	}
+
+	template<typename AllocT >
+	const typename symbol_pool<AllocT>::entry_type *
+		symbol_pool<AllocT>::create_entry(const char * str_mem, std::size_t size, std::size_t hash)
+	{
+		entry_type * entry_mem = entry_allocator_traits::allocate(_entryAlloc, 1);
+		entry_allocator_traits::construct(_entryAlloc, entry_mem, str_mem, size, hash);
+		
+		return entry_mem;
+	}
 
 }  // namespace minijava
