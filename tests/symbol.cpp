@@ -64,3 +64,50 @@ BOOST_AUTO_TEST_CASE(stream_insertion)
 	oss << s;
 	BOOST_REQUIRE_EQUAL(text, oss.str());
 }
+
+BOOST_AUTO_TEST_CASE(two_normalized_symbols_with_same_origin_only_equal_each_other)
+{
+    minijava::symbol_pool<> pool;
+    std::string test_string = "some test symbol looking good";
+
+    minijava::symbol not_test_symbol = pool.normalize("not");
+    minijava::symbol first = pool.normalize(test_string);
+    minijava::symbol second = pool.normalize(test_string);
+
+    BOOST_REQUIRE_EQUAL(first, second);
+    BOOST_REQUIRE_NE(first, not_test_symbol);
+    BOOST_REQUIRE_NE(second, not_test_symbol);
+}
+
+
+BOOST_AUTO_TEST_CASE(copied_symbol_equals_original_symbol)
+{
+    minijava::symbol_pool<> pool;
+
+    minijava::symbol origin = pool.normalize("another great example of a symbol");
+    minijava::symbol copy = origin;
+
+    BOOST_REQUIRE_EQUAL(origin, copy);
+}
+
+BOOST_AUTO_TEST_CASE(normalized_symbol_data_equals_origin)
+{
+    minijava::symbol_pool<> pool;
+    std::string origin = "pirate-strings do not like bananas";
+
+    minijava::symbol normalized = pool.normalize(origin);
+
+    BOOST_REQUIRE_EQUAL(normalized.c_str(), origin.c_str());
+}
+
+BOOST_AUTO_TEST_CASE(normalized_symbol_size_equals_origin_size)
+{
+    minijava::symbol_pool<> pool;
+    std::string origin = "very original string is original";
+
+    minijava::symbol normalized = pool.normalize(origin);
+
+    BOOST_REQUIRE_EQUAL(normalized.size(), origin.size());
+    auto cstr_size = std::strlen(normalized.c_str());
+    BOOST_REQUIRE_EQUAL(cstr_size, normalized.size());
+}
