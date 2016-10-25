@@ -193,6 +193,6 @@ namespace minijava
 }  // namespace minijava
 
 
-#define MINIJAVA_INCLUDED_FROM_symbol_pool_HPP
+#define MINIJAVA_INCLUDED_FROM_SYMBOL_POOL_HPP
 #include "symbol_pool.tpp"
-#undef MINIJAVA_INCLUDED_FROM_symbol_pool_HPP
+#undef MINIJAVA_INCLUDED_FROM_SYMBOL_POOL_HPP
