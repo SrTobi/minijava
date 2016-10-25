@@ -102,7 +102,7 @@ namespace minijava
 		 *
 		 *
 		 */
-		// this is subject to changes 
+		// this is subject to changes
 		/*symbol_pool(const inner_allocator_type& inner,
 		            const outer_allocator_type& outer);*/
 
