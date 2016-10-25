@@ -81,7 +81,7 @@ namespace minijava
 		 *     lexer to provide tokens
 		 *
 		 */
-		token_iterator(lexer_type& lexer);
+		explicit token_iterator(lexer_type& lexer);
 
 		/**
 		 * @brief

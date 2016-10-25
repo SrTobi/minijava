@@ -91,8 +91,6 @@ namespace minijava
 		 */
 		static token create(token_type tt);
 
-	public:
-
 		/**
 		 * @brief
 		 *     `return`s the type of the token.

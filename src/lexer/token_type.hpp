@@ -20,13 +20,13 @@ namespace minijava
 	enum class token_type : short
 	{
 		// TODO @Moritz Klammler: Complete this list.
-		identifier       = 0x1000,
-		integer_literal  = 0x2000,
-		kw_if            = 0x0001,
-		kw_else          = 0x0002,
-		left_paren       = 0x0003,
-		right_paren      = 0x0004,
-		eof              = 0x0005,
+		identifier,
+		integer_literal,
+		kw_if,
+		kw_else,
+		left_paren,
+		right_paren,
+		eof,
 		// ...
 	};
 

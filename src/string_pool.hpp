@@ -101,8 +101,8 @@ namespace minijava
 		 *
 		 *
 		 */
-		explicit string_pool(const inner_allocator_type& inner,
-							 const outer_allocator_type& outer);
+		string_pool(const inner_allocator_type& inner,
+					const outer_allocator_type& outer);
 
 		/**
 		 * @brief
