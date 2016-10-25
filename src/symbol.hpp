@@ -10,7 +10,6 @@
 
 #include <cassert>
 #include <iosfwd>
-#include <list>
 
 namespace minijava
 {
