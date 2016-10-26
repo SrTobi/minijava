@@ -4,19 +4,75 @@
 rootdir=$(dirname $(readlink -f "${0}"))
 tagfile="${rootdir}/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag"
 builddir="${rootdir}/stage"
+envfile="${builddir}/.environment"
+clean=0
+
+message() {
+	level="${1}"
+	shift
+	echo "build: ${level}: $@" >&2
+}
 
 die() {
-	echo "build: error: $@" >&2
+	message error "$@"
 	exit 1
 }
 
-test $# -eq 0 || die "Too many arguments"
+first() {
+	echo "$1"
+}
+
+need_reconfiguration() {
+	if test ${clean} -gt 0
+	then
+		message info "Reconfiguration forced by user"
+		return 0
+	fi
+	if test -d "${builddir}/" && test -r "${envfile}"
+	then
+		oldhash=$(first $(md5sum "${envfile}"))
+		newhash=$(first $(env | md5sum))
+		if test "x${oldhash}" = "x${newhash}"
+		then
+			message info "Environment did not change; no reconfiguration needed"
+			return 1
+		else
+			message info "Environment changed; reconfiguration needed"
+		fi
+	fi
+	return 0
+}
+
+for arg in "$@"
+do
+	case "${arg}"
+	in
+		--help)
+			echo "usage: build [--clean]"
+			exit
+			;;
+		--clean)
+			clean=1
+			;;
+		-*)
+			die "Unknown option: ${arg}"
+			;;
+		*)
+			die "Too many arguments"
+			;;
+	esac
+done
+unset arg
 
 test -f "${tagfile}" || die "Cannot find root directory"
 
-rm -rf "${builddir}/" || die "Cannot remove old build directory"
-mkdir -p "${builddir}/" || die "Cannot create build directory"
+if need_reconfiguration
+then
+   rm -rf "${builddir}/" || die "Cannot remove old build directory"
+   mkdir -p "${builddir}/" || die "Cannot create build directory"
+   env > "${envfile}" || die "Cannot save environment"
+   (cd "${builddir}/" && cmake ..) || die "Cannot configure project"
+fi
 
-(cd "${builddir}/" && cmake ..) || die "Cannot configure project"
 (cd "${builddir}/" && cmake --build .) || die "Cannot build project"
 (cd "${builddir}/" && cmake --build . --target test) || die "Unit tests failed"
