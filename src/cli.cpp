@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -23,10 +24,11 @@ namespace minijava
 
 		void echo_file(const std::string& filename, std::ostream& dst)
 		{
-			auto buffer = std::vector<char>(std::size_t{1} << 12);
+			const auto buffer_size = std::uint16_t{1} << 12;
+			auto buffer = std::vector<char>(buffer_size);
 			std::ifstream src{filename};
 			do {
-				src.read(buffer.data(), buffer.size());
+				src.read(buffer.data(), buffer_size);
 				dst.write(buffer.data(), src.gcount());
 			} while (src && dst);
 			dst.flush();

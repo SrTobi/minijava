@@ -35,7 +35,7 @@ namespace testaux
 	{
 		auto p = s;
 		while (*p) { ++p; }
-		return p - s;
+		return static_cast<std::size_t>(p - s);
 	}
 
 	static_assert(cx_strlen("") == 0, "");

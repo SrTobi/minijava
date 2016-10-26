@@ -20,7 +20,7 @@ find_package(Boost REQUIRED COMPONENTS
 	unit_test_framework
 )
 
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https://svn.boost.org/trac/boost/ticket/12373
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
