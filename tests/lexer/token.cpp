@@ -12,8 +12,8 @@
 
 BOOST_AUTO_TEST_CASE(token_ctor_id)
 {
-	minijava::symbol_pool<> pool;
 	using namespace std::string_literals;
+	auto pool = minijava::symbol_pool<>{};
 	const auto name = "matchstick"s;
 	const auto canonical = pool.normalize(name.c_str());
 	const auto tok = minijava::token::create_identifier(canonical);
@@ -54,8 +54,8 @@ BOOST_DATA_TEST_CASE(token_ctor_punct, token_ctor_data)
 
 BOOST_AUTO_TEST_CASE(identifiers_with_same_name_compare_equal)
 {
-	minijava::symbol_pool<> pool;
 	using namespace std::string_literals;
+	auto pool = minijava::symbol_pool<>{};
 	const auto name = "matchstick"s;
 	const auto canonical = pool.normalize(name.c_str());
 	const auto tok1 = minijava::token::create_identifier(canonical);
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(identifiers_with_same_name_compare_equal)
 
 BOOST_AUTO_TEST_CASE(identifiers_with_same_name_compare_equal_even_if_source_location_differs)
 {
-	minijava::symbol_pool<> pool;
 	using namespace std::string_literals;
+	auto pool = minijava::symbol_pool<>{};
 	const auto name = "matchstick"s;
 	const auto canonical = pool.normalize(name.c_str());
 	auto tok1 = minijava::token::create_identifier(canonical);
@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE(identifiers_with_same_name_compare_equal_even_if_source_loc
 
 BOOST_AUTO_TEST_CASE(identifiers_with_different_name_compare_not_equal)
 {
-	minijava::symbol_pool<> pool;
 	using namespace std::string_literals;
+	auto pool = minijava::symbol_pool<>{};
 	const auto name1 = "apple"s;
 	const auto name2 = "banana"s;
 	const auto canon1 = pool.normalize(name1.c_str());
@@ -93,3 +93,59 @@ BOOST_AUTO_TEST_CASE(identifiers_with_different_name_compare_not_equal)
 
 
 // TODO @Moritz Klammler: Add comprehensive unit tests for equality comparison.
+
+
+BOOST_AUTO_TEST_CASE(identifiers_are_streamed_correctly)
+{
+	auto pool = minijava::symbol_pool<>{};
+	const auto name = pool.normalize("foo");
+	const auto tok = minijava::token::create_identifier(name);
+	auto oss = std::ostringstream{};
+	oss << tok;
+	BOOST_REQUIRE_EQUAL("identifier foo", oss.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(integer_literals_are_streamed_correctly)
+{
+	const auto tok = minijava::token::create_integer_literal(42u);
+	auto oss = std::ostringstream{};
+	oss << tok;
+	BOOST_REQUIRE_EQUAL("integer literal 42", oss.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(keywords_are_streamed_correctly)
+{
+	const auto tok = minijava::token::create(minijava::token_type::kw_void);
+	auto oss = std::ostringstream{};
+	oss << tok;
+	BOOST_REQUIRE_EQUAL("void", oss.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(operators_are_streamed_correctly)
+{
+	const auto tok = minijava::token::create(minijava::token_type::logical_and);
+	auto oss = std::ostringstream{};
+	oss << tok;
+	BOOST_REQUIRE_EQUAL("&&", oss.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(semicolon_is_streamed_correctly)
+{
+	const auto tok = minijava::token::create(minijava::token_type::semicolon);
+	auto oss = std::ostringstream{};
+	oss << tok;
+	BOOST_REQUIRE_EQUAL(";", oss.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(seof_is_streamed_correctly)
+{
+	const auto tok = minijava::token::create(minijava::token_type::eof);
+	auto oss = std::ostringstream{};
+	oss << tok;
+	BOOST_REQUIRE_EQUAL("EOF", oss.str());
+}

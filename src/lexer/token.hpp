@@ -1,4 +1,6 @@
 /**
+ * @file token.hpp
+ *
  * @brief
  *     Lexical tokens.
  *
