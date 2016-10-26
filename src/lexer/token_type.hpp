@@ -147,6 +147,10 @@ namespace minijava
 	 * @brief
 	 *     `return`s the category of a token type.
 	 *
+	 * If `tt` is not a valid enumerator of `token_type`, then the `return`ed
+	 * value won't be a valid enumerator of `token_category` either.  The
+	 * behavior is well-defined in any case.
+	 *
 	 * @param tt
 	 *     `token_type` to test
 	 *
@@ -174,8 +178,15 @@ namespace minijava
 
 	/**
 	 * @brief
-	 *     `return`s a &ldquo;fancy name&rdquo; for a token type as required in
-	 *     the `--lextest` output.
+	 *     `return`s a textual representation of a token type.
+	 *
+	 * The representation will be
+	 *
+	 *  - the string `identifier` for identifiers,
+	 *  - the string `integer literal` for integer literals,
+	 *  - the name of the keyword or operator for keywords and operators,
+	 *  - the string `EOF` for end-of-input and
+	 *  - the `nullptr` for invalid token types.
 	 *
 	 * The `return`ed pointer is the address of a statically allocated
 	 * read-only buffer and must not be modified or deallocated.
@@ -184,17 +195,35 @@ namespace minijava
 	 *     token type to get the name of
 	 *
 	 * @returns
-	 *     fancy name or `nullptr` if the type is invalid
+	 *     textual representation or `nullptr`
 	 *
 	 */
-	constexpr const char * fancy_name(token_type tt) noexcept;
+	constexpr const char * name(token_type tt) noexcept;
 
 	/**
 	 * @brief
-	 *     Inserts the &ldquo;fancy name&rdquo; of a token type into an output
+	 *     `return`s a textual representation of a token category.
+	 *
+	 * The `return`ed pointer is the address of a statically allocated
+	 * read-only buffer and must not be modified or deallocated.  If the input
+	 * is not a valid enumerator, the `nullptr` will be `return`ed.
+	 *
+	 * @param cat
+	 *     token category to get the name of
+	 *
+	 * @returns
+	 *     textual representation or `nullptr`
+	 *
+	 */
+	constexpr const char * name(token_category cat) noexcept;
+
+	/**
+	 * @brief
+	 *     Inserts the textual representation of a token type into an output
 	 *     stream.
 	 *
-	 * If the token type is invalid, a not-so-fancy string will be inserted.
+	 * If the token type is invalid, a special string will be inserted that
+	 * includes the numeric value of the argument.  The `failbit` won't be set.
 	 *
 	 * @param os
 	 *     stream to write to

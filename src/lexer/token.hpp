@@ -243,8 +243,7 @@ namespace minijava
 
 	/**
 	 * @brief
-	 *     Inserts a &ldquo;fancy representation&rdquo; of a token into an
-	 *     output stream.
+	 *     Inserts a textual representation of a token into an output stream.
 	 *
 	 * @param os
 	 *     stream to write to

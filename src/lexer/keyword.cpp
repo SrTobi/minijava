@@ -24,7 +24,7 @@ namespace minijava
 			auto table = std::map<std::string, token_type>{};
 			std::transform(
 				std::begin(values), last, std::inserter(table, std::end(table)),
-				[](auto tt){ return std::pair<std::string, token_type>{fancy_name(tt), tt}; }
+				[](auto tt){ return std::pair<std::string, token_type>{name(tt), tt}; }
 			);
 			return table;
 		}

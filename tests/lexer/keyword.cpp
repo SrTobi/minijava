@@ -6,12 +6,11 @@
 #include <boost/test/unit_test.hpp>
 
 
-BOOST_AUTO_TEST_CASE(lookup_keyword)
+BOOST_AUTO_TEST_CASE(classify_word_after_name_is_identity_for_keywords)
 {
 	for (const auto tt : minijava::all_token_types()) {
 		if (category(tt) == minijava::token_category::keyword) {
-			const auto name = fancy_name(tt);
-			BOOST_REQUIRE_EQUAL(tt, minijava::classify_word(name));
+			BOOST_REQUIRE_EQUAL(tt, minijava::classify_word(name(tt)));
 		}
 	}
 }
