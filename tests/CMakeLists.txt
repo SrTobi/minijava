@@ -20,7 +20,7 @@ endforeach(comp)
 
 # add a custom test target that outputs errors of failed test cases
 add_custom_target(
-	check 
+	check
 	COMMAND ${CMAKE_COMMAND} -E echo CWD=${CMAKE_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E echo CMD=${CMAKE_CTEST_COMMAND} -C $<CONFIG>
 	COMMAND ${CMAKE_COMMAND} -E echo ----------------------------------
