@@ -100,9 +100,9 @@ namespace minijava
 		case token_type::greater_equal:                return ">=";
 		case token_type::right_shift_assign:           return ">>=";
 		case token_type::right_shift:                  return ">>";
-		case token_type::unsigned_right_shift_assign:  return ">>=";
+		case token_type::unsigned_right_shift_assign:  return ">>>=";
 		case token_type::unsigned_right_shift:         return ">>>";
-		case token_type::greater_than:                 return ">=";
+		case token_type::greater_than:                 return ">";
 		case token_type::conditional:                  return "?";
 		case token_type::modulo_assign:                return "%=";
 		case token_type::modulo:                       return "%";
