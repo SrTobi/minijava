@@ -25,6 +25,6 @@ add_custom_target(
 	COMMAND ${CMAKE_COMMAND} -E echo CMD=${CMAKE_CTEST_COMMAND} -C $<CONFIG>
 	COMMAND ${CMAKE_COMMAND} -E echo ----------------------------------
 	COMMAND ${CMAKE_COMMAND} -E env CTEST_OUTPUT_ON_FAILURE=1
-            ${CMAKE_CTEST_COMMAND} -C $<CONFIG> || true
+            ${CMAKE_CTEST_COMMAND} -C $<CONFIG>
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
