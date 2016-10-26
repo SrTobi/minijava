@@ -334,7 +334,7 @@ def main(args):
 	)
 	ap.add_argument(
 		'-f', '--fix', action='store_true',
-		help="Automatically fix some issues"
+		help="automatically fix some issues"
 	)
 	ap.add_argument(
 		'-C', '--directory', metavar='DIR',
