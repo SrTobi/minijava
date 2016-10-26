@@ -19,19 +19,50 @@
 namespace minijava
 {
 	namespace detail {
+		/**
+		 * @brief
+		 *     Hash function to access the hash value of a symbol_entry
+		 */
 		struct entryptr_hash
 		{
+			/**
+			 * @brief
+			 *     Returns the hash value of a symbol_entry
+			 *
+			 * @param entry
+			 *     A pointer to a symbol_entry for that the hash value should be returned
+			 *
+			 * @returns
+			 *     The hash value of the symbol_entry
+			 */
 			constexpr std::size_t operator()(const symbol::symbol_entry* entry) const noexcept
 			{
 				return entry->hash;
 			}
 		};
 
+		/**
+		 * @brief
+		 *     Equals function to test wether the string values of two symbol_entrys are equal
+		 */
 		struct entryptr_equal
 		{
+			/**
+			 * @brief
+			 *     Test wether the string values of two symbol_entrys are equal
+			 *
+			 * @param lhs
+			 *     The first entry
+			 *
+			 * @param rhs
+			 *     The second entry
+			 *
+			 * @returns
+			 *     `true` if the two string values are equal, `false` otherwise
+			 *
+			 */
 			constexpr bool operator()(const symbol::symbol_entry* lhs, const symbol::symbol_entry* rhs) const noexcept
 			{
-
 				return lhs->size == rhs->size && std::strcmp(lhs->cstr, rhs->cstr) == 0;
 			}
 		};
@@ -70,12 +101,12 @@ namespace minijava
 		using allocator_type = AllocT;
 
 	private:
-		using entry_type = symbol::symbol_entry;
+		using entry_type = symbol::symbol_entry;                                                           ///< symbol::symbol::entry
 
-		using char_allocator_type = allocator_type;
-		using char_allocator_traits = std::allocator_traits<char_allocator_type>;
-		using entry_allocator_type = typename char_allocator_traits::template rebind_alloc<entry_type>;
-		using entry_allocator_traits = typename char_allocator_traits::template rebind_traits<entry_type>;
+		using char_allocator_type = allocator_type;                                                        ///< Allocator for char chunks
+		using char_allocator_traits = std::allocator_traits<char_allocator_type>;                          ///< Traits for char_allocator_type
+		using entry_allocator_type = typename char_allocator_traits::template rebind_alloc<entry_type>;    ///< Allocator for symbol_entry
+		using entry_allocator_traits = typename char_allocator_traits::template rebind_traits<entry_type>; ///< Traits for entry_allocator_type
 
 
 		/** @brief Has set type. */
@@ -98,12 +129,8 @@ namespace minijava
 		 * @brief
 		 *     Constructs an empty pool with the provided allocators.
 		 *
-		 * @tparam inner
-		 *     allocator used for allocating memory for normalized symbols
-		 *
-		 * @tparam outer
-		 *     allocator used for allocating internal data structures
-		 *
+		 * @param alloc
+		 *     Allocator used to allocate internal strings and symbol_entry
 		 *
 		 */
 		symbol_pool(const allocator_type& alloc);
@@ -146,17 +173,15 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s a canonical representation of a symbol, creating one
-		 *     if necessary.
+		 *     `return`s a symbol for the given string, creating one if necessary.
 		 *
 		 * If the pool does not already contain the symbol, it is inserted.
-		 * Then its canonical address is `return`ed.
 		 *
 		 * @param text
-		 *     symbol to canonicalize
+		 *     Text value of the symbol
 		 *
 		 * @returns
-		 *     canonical representation of the symbol
+		 *     the symbol
 		 *
 		 */
 		symbol normalize(const std::string& text);
@@ -167,13 +192,40 @@ namespace minijava
 		 *     normalized symbols.
 		 *
 		 * @returns
-		 *     copy of the inner allocator
+		 *     copy of the allocator
 		 *
 		 */
 		allocator_type get_allocator() const;
 
 	private:
+	    /**
+		 * @brief
+		 *     Allocates internal memory for the string and copies its content
+		 *
+		 * @param str
+		 *     The string that should be copied to internal memory
+		 *
+		 * @returns
+		 *     a pointer to the newly created memory conaining the string with NUL-termination
+		 */
 		const char * create_string(const std::string& str);
+
+		/**
+		 * @brief
+		 *     Allocates and constructs a symbol_entry in the internal memory
+		 *
+		 * @param str_mem
+		 *     The memory containing the string of the symbol
+		 *
+		 * @param size
+		 *     The length of the string
+		 *
+		 * @param hash
+		 *     Hash value of the string
+		 *
+		 * @returns
+		 *     a pointer to the newly created symbol_entry
+		 */
 		const entry_type * create_entry(const char * str_mem, std::size_t size, std::size_t hash);
 	private:
 		/** allocator used to allocate memory for the symbol' string */
@@ -184,7 +236,6 @@ namespace minijava
 
 		/** @brief Pool of symbols. */
 		hash_set_type _pool;
-
 	};
 
 }  // namespace minijava

@@ -15,7 +15,7 @@
 namespace minijava
 {
 #ifndef NDEBUG
-#	define MINIJAVA_USE_SYMBOL_CHECKS
+#define MINIJAVA_USE_SYMBOL_CHECKS
 #endif
 
 	/**
@@ -44,6 +44,27 @@ namespace minijava
 		 */
 		struct symbol_entry
 		{
+			/**
+			 * @brief
+			 *     Constructs a symbol_entry
+			 *
+			 * @param cstr
+			 *     A pointer to a NUL-terminated string
+			 *
+			 * @param size
+			 *     Lenght of the NUL-terminated string (without the NUL)
+			 *
+			 * @param hash
+			 *     Hash value of the NUL-terminated string.
+			 *
+			 * Must be the same as the hash of the std::string version of the same string.
+			 *
+			 * @param pool
+			 *     Pointer to the pool this entry lives in.
+			 *
+			 * In debug mode it is used to verify that symbols which are about to be compared
+			 * were created by the same pool.
+			 */
 			explicit symbol_entry(const char * cstr, std::size_t size, std::size_t hash, const void* pool)
 				: cstr(cstr)
 				, size(size)
@@ -54,6 +75,7 @@ namespace minijava
 			{
 				(void) pool;
 				assert(pool != nullptr);
+				assert(std::strlen(cstr) == size);
 				assert(hash == std::hash<std::string>()(std::string(cstr, size)));
 			}
 
@@ -89,16 +111,16 @@ namespace minijava
 		}
 
 	public:
-		using value_type      = char;
-		using traits_type     = std::char_traits<char>;
-		using const_reference = const char&;
-		using reference       = const_reference;
-		using const_pointer   = const char *;
-		using pointer         = const_pointer;
-		using const_iterator  = const_pointer;
-		using iterator        = const_iterator;
-		using difference_type = std::ptrdiff_t;
-		using size_type       = std::size_t;
+		using value_type      = char;                   ///< char
+		using traits_type     = std::char_traits<char>; ///< char_traits<char>
+		using const_reference = const char&;            ///< const char&
+		using reference       = const_reference;        ///< const char&
+		using const_pointer   = const char *;           ///< const char *
+		using pointer         = const_pointer;          ///< const char *
+		using const_iterator  = const_pointer;          ///< const char *
+		using iterator        = const_iterator;         ///< const char *
+		using difference_type = std::ptrdiff_t;         ///< std::ptrdiff_t
+		using size_type       = std::size_t;            ///< std::size_t
 
 	public:
 
@@ -375,6 +397,18 @@ namespace minijava
 		}
 
 	private:
+		/**
+		 * @brief
+		 *     Asserts wether two symbols were created by the same pool
+		 *
+		 * The assert will only be performed if NDEBUG is not defined
+		 *
+		 * @param first
+		 *     The first symbol
+		 *
+		 * @param second
+		 *     The second symbol
+		 */
 		static constexpr void check_same_pool(const symbol& first, const symbol& second)
 		{
 #ifdef MINIJAVA_USE_SYMBOL_CHECKS
@@ -413,9 +447,23 @@ namespace minijava
 }  // namespace minijava
 
 namespace std {
+	/**
+	 * @brief
+	 *     Hash function to calculate the hash value of a symbol
+	 */
     template<>
     struct hash<minijava::symbol>
     {
+		/**
+		 * @brief
+		 *     Returns the hash value of a symbol
+		 *
+		 * @param symbol
+		 *     A symbol for that the hash value should be returned
+		 *
+		 * @returns
+		 *     The hash value of the symbol
+		 */
         constexpr std::size_t operator()(const minijava::symbol& symbol) const noexcept
         {
             return symbol._entry->hash;
