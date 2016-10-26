@@ -1,6 +1,6 @@
 #include "global.hpp"
 
-#include "testaux/testaux.hpp"
+#include "testaux/cx_string.hpp"
 
 #define BOOST_TEST_MODULE  global
 #include <boost/test/unit_test.hpp>

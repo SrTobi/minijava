@@ -9,11 +9,8 @@
 
 #pragma once
 
-#include <cstddef>
 #include <iostream>
 #include <memory>
-#include <type_traits>
-#include <utility>
 
 
 /**
@@ -31,75 +28,6 @@
  */
 namespace testaux
 {
-
-	/**
-	 * @brief
-	 *     A `constexpr` version of `strlen`.
-	 *
-	 * @tparam CharT
-	 *     character type
-	 *
-	 * @param str
-	 *     NUL terminated character string
-	 *
-	 * @returns
-	 *     number of characters in `str` before the first NUL value
-	 *
-	 */
-	template <typename CharT>
-	constexpr std::enable_if_t<std::is_integral<CharT>{}, std::size_t>
-	cx_strlen(const CharT *const str) noexcept
-	{
-		auto last = str;
-		while (*last) { ++last; }
-		return last - str;
-	}
-
-	static_assert(cx_strlen("") == 0, "self-test failed");
-	static_assert(cx_strlen("a") == 1, "self-test failed");
-	static_assert(cx_strlen("abc") == 3, "self-test failed");
-
-	/**
-	 * @brief
-	 *     A `constexpr` version of `strcmp`.
-	 *
-	 * @tparam CharT
-	 *     character type
-	 *
-	 * @param s1
-	 *     first NUL terminated character string
-	 *
-	 * @param s2
-	 *     second NUL terminated character string
-	 *
-	 * @returns
-	 *     a value less than, equal to or greater than zero depending on
-	 *     whether `s1` is lexicographically less than, equal to or greater
-	 *     than `s2`
-	 *
-	 */
-	template <typename CharT>
-	constexpr std::enable_if_t<std::is_integral<CharT>{}, int>
-		cx_strcmp(const CharT * s1, const CharT * s2) noexcept
-	{
-		if ((s1 == nullptr) && (s2 == nullptr)) { return true; }
-		if ((s1 == nullptr) || (s2 == nullptr)) { return false; }
-		while ((*s1 != '\0' && *s2 != '\0') && (*s1 == *s2)) {
-			++s1;
-			++s2;
-		}
-		return *s1 - *s2;
-	}
-
-	static_assert(cx_strcmp("a", "b") < 0, "self-test failed");
-	static_assert(cx_strcmp("abc", "axc") < 0, "self-test failed");
-	static_assert(cx_strcmp("aa", "aaa") < 0, "self-test failed");
-	static_assert(cx_strcmp("", "") == 0, "self-test failed");
-	static_assert(cx_strcmp("a", "a") == 0, "self-test failed");
-	static_assert(cx_strcmp("abc", "abc") == 0, "self-test failed");
-	static_assert(cx_strcmp("a", "") > 0, "self-test failed");
-	static_assert(cx_strcmp("b", "a") > 0, "self-test failed");
-	static_assert(cx_strcmp("abc", "ab") > 0, "self-test failed");
 
 	/**
 	 * @brief
