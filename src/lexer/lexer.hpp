@@ -124,6 +124,41 @@ namespace minijava
 		/** @brief Reference to the symbol-pool used for identifiers. */
 		StrPoolT& _id_pool;
 
+		/** @brief Stores the current line number. */
+		size_t _line;
+
+		/** @brief Stores the current column of the current line. */
+		size_t _column;
+
+		/**
+		 * @brief Moves the iterator to the next value and returns the char.
+		 * @return The char at the new iterator position.
+		 * */
+		inline char next() {
+			_column++;
+			return *(++_next);
+		}
+
+		/** @brief Moves the iterator to the next value. */
+		inline void skip() {
+			_next++;
+			_column++;
+		}
+
+		/**
+		 * @brief Returns the current char of the iterator.
+		 * @return The current char.
+		 */
+		inline char current() {
+			return *_next;
+		}
+
+		void scan_identifier();
+
+		void scan_integer();
+
+		void consume_block_comment();
+
 	};  // class lexer
 
 	/**
