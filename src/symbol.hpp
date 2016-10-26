@@ -14,6 +14,10 @@
 
 namespace minijava
 {
+#ifndef NDEBUG
+#	define MINIJAVA_USE_SYMBOL_CHECKS
+#endif
+
 	/**
 	 * @brief
 	 *     A non-owning read-only wrapper around a char sequence.
@@ -40,23 +44,33 @@ namespace minijava
 		 */
 		struct symbol_entry
 		{
-			explicit symbol_entry(const char * cstr, std::size_t size, std::size_t hash)
+			explicit symbol_entry(const char * cstr, std::size_t size, std::size_t hash, const void* pool)
 				: cstr(cstr)
 				, size(size)
 				, hash(hash)
+#ifdef MINIJAVA_USE_SYMBOL_CHECKS
+				, pool(pool)
+#endif
 			{
+				(void) pool;
+				assert(pool != nullptr);
 				assert(hash == std::hash<std::string>()(std::string(cstr, size)));
 			}
 
 
 			/** Pointer to the actual string. Must be NUL-terminated */
-			const char * cstr;
+			char const * const cstr;
 
 			/** Size of the symbol's string */
 			const std::size_t size;
 
 			/** The precomputed hash of the symbol */
 			const std::size_t hash;
+
+#ifdef MINIJAVA_USE_SYMBOL_CHECKS
+			/** The pool the symbol was created in */
+			void const * const pool;
+#endif
 		};
 
 		/**
@@ -336,6 +350,7 @@ namespace minijava
 		*/
 		friend constexpr bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
+			check_same_pool(lhs, rhs);
 			return (lhs._entry == rhs._entry);
 		}
 
@@ -355,9 +370,20 @@ namespace minijava
 		*/
 		friend constexpr bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
 		{
+			check_same_pool(lhs, rhs);
 			return !(lhs == rhs);
 		}
 
+	private:
+		static constexpr void check_same_pool(const symbol& first, const symbol& second)
+		{
+#ifdef MINIJAVA_USE_SYMBOL_CHECKS
+			assert(first._entry->pool == second._entry->pool);
+#else
+			(void)first;
+			(void)second;
+#endif
+		}
 
 	private:
 

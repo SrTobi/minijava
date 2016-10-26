@@ -27,7 +27,7 @@ namespace minijava
 		std::hash<std::string> hasher;
 		std::size_t sym_hash = hasher(text);
 
-		const entry_type find_entry(text.c_str(), text.size(), sym_hash);
+		const auto find_entry = entry_type(text.c_str(), text.size(), sym_hash, this);
 
 		auto entry_it = _pool.find(&find_entry);
 
@@ -45,7 +45,9 @@ namespace minijava
 	template<typename AllocT >
 	bool symbol_pool<AllocT>::contains(const std::string& text) const
 	{
-		const entry_type entry(text.c_str(), text.size(), std::hash<std::string>()(text));
+		const auto hash_fn = std::hash<std::string>();
+		const auto hash = hash_fn(text);
+		const auto entry = entry_type(text.c_str(), text.size(), hash, this);
 		return (_pool.find(&entry) != _pool.cend());
 	}
 
@@ -81,7 +83,7 @@ namespace minijava
 		symbol_pool<AllocT>::create_entry(const char * str_mem, std::size_t size, std::size_t hash)
 	{
 		entry_type * entry_mem = entry_allocator_traits::allocate(_entryAlloc, 1);
-		entry_allocator_traits::construct(_entryAlloc, entry_mem, str_mem, size, hash);
+		entry_allocator_traits::construct(_entryAlloc, entry_mem, str_mem, size, hash, this);
 
 		return entry_mem;
 	}
