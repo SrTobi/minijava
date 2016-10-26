@@ -217,14 +217,16 @@ def check_file(filename, fix, verboseout):
 	with maybe_open(filename if fix else None, 'w') as ostr:
 		with open(infilename, 'r') as istr:
 			for (i, line) in enumerate(istr):
+				candidate = line
+				if fix:
+					candidate = fix_line(line) + '\n'
+					print(candidate, end='', file=ostr)
 				try:
-					check_line(line)
+					check_line(candidate)
 				except StyleError as e:
 					violations += 1
 					msg = "{:s}:{:d}: {:s}".format(filename, i + 1, str(e))
 					print(msg, file=verboseout)
-				if fix:
-					print(fix_line(line), file=ostr)
 	return violations
 
 
