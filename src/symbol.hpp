@@ -29,7 +29,7 @@ namespace minijava
 	 */
 	class symbol final
 	{
-    	friend class std::hash<symbol>;
+		friend class std::hash<symbol>;
 	public:
 		/**
 		 * @brief
