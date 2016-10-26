@@ -9,7 +9,11 @@ import subprocess
 import sys
 
 
-default_tab_width = 4
+# Number of spaces a tab is expanded to.
+tab_width = 4
+
+# Maximum allowed number of consecutive blank lines.
+max_vskip = 2
 
 
 class StyleError(Exception):
@@ -170,18 +174,16 @@ def check_vertical(lines):
 		if vertical white-space issues are found
 
 	"""
-	first = lambda pair : pair[0]
-	second = lambda pair : pair[1]
-	count = lambda seq : sum(1 for x in seq)
-	filtergroup = lambda pred, key, seq : filter(pred, it.groupby(seq, key))
-	for blank in it.takewhile(is_blank, lines):
+	blank_eh = list(map(is_blank, lines))
+	filtergroup = lambda pred, seq : filter(pred, it.groupby(seq))
+	for blank in it.takewhile(identity, blank_eh):
 		raise StyleError("Blank lines at beginning of file")
-	for blank in it.takewhile(is_blank, reversed(lines)):
+	for blank in it.takewhile(identity, reversed(blank_eh)):
 		raise StyleError("Blank lines at end of file")
+	if max(map(count, map(second, filtergroup(first, blank_eh))), default=0) > max_vskip:
+		raise StyleError("File contains excessive vertical white-space")
 	if lines and not lines[-1].endswith('\n'):
 		raise StyleError("No new-line character at end of last line")
-	if max(map(count, map(second, filtergroup(first, is_blank, lines))), default=0) > 3:
-		raise StyleError("File contains excessive vertical white-space")
 
 
 def check_horizontal(line):
@@ -213,8 +215,27 @@ def fix_vertical(lines):
 		fixed lines
 
 	"""
-	trim = lambda l : list(it.dropwhile(is_blank, l))
-	return trim(reversed(trim(reversed(lines))))
+	tag = lambda pred, seq : zip(map(pred, seq), seq)
+	flatten = it.chain.from_iterable
+	flatmap = lambda func, seq : flatten(map(func, seq))
+	listmap = lambda func, seq : list(map(func, seq))
+	revlist = lambda seq : reversed(list(seq))
+	dwf = lambda seq : it.dropwhile(first, seq)
+	return listmap(
+		# Strip the enumerator and predicate off again.
+		lambda x : second(second(x)),
+		filter(
+			# Pick all lines from non-blank groups and the first max_vskip
+			# lines from blank groups.
+			lambda x : not first(second(x)) or first(x) < max_vskip,
+			flatmap(
+				second,
+				map(
+					lambda pair : (pair[0], enumerate(pair[1])),
+					it.groupby(
+						# Trim leading and trailing blank lines.
+						dwf(revlist(dwf(revlist(tag(is_blank, lines))))),
+						first)))))
 
 
 def fix_horizontal(line):
@@ -229,7 +250,7 @@ def fix_horizontal(line):
 
 	"""
 	line = line.rstrip()
-	line = untabify(line, default_tab_width)
+	line = untabify(line, tab_width)
 	return line + '\n'
 
 
@@ -386,6 +407,37 @@ def reasonable_file_name(filename):
 	if filename == '-':
 		raise ValueError("Not a valid file name: " + filename)
 	return filename
+
+
+def identity(x):
+	"""
+	`return`s its argument.
+	"""
+	return x
+
+
+def first(pair):
+	"""
+	Obtains the first element in a pair.
+
+	"""
+	return pair[0]
+
+
+def second(pair):
+	"""
+	Obtains the second element in a pair.
+
+	"""
+	return pair[1]
+
+
+def count(seq):
+	"""
+	Counts the elements in a sequence.
+
+	"""
+	return sum(1 for x in seq)
 
 
 if __name__ == '__main__':
