@@ -5,7 +5,7 @@
 #define BOOST_TEST_MODULE  lexer_token_type
 #include <boost/test/unit_test.hpp>
 
-#include "../testaux/testaux.hpp"
+#include "../testaux/cx_string.hpp"
 
 
 BOOST_AUTO_TEST_CASE(fancy_name_valid)
