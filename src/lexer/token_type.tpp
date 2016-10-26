@@ -17,6 +17,7 @@ namespace minijava
 		case token_type::left_paren: return "(";
 		case token_type::right_paren: return ")";
 		case token_type::eof: return "EOF";
+		case token_type::unknown: return "UNKNOWN";
 			// ...
 		}
 		return nullptr;

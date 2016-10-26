@@ -27,6 +27,7 @@ namespace minijava
 		left_paren,
 		right_paren,
 		eof,
+        unknown,
 		// ...
 	};
 
