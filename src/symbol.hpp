@@ -102,21 +102,21 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Creates a `string` from a symbol_entry.
+		 *     Creates a `symbol` from a symbol_entry.
 		 *
-		 * The symbol_entry must be created and owned by some kind of factory.
+		 * The symbol_entry must be created and owned by some kind of pool.
 		 *
-		 * @param s
-		 *     pointer to a NUL-terminated character sequence
+		 * @param entry
+		 *     The entry, this symbol will point to
 		 *
 		 */
-		explicit symbol(const symbol_entry * s)
-			: _entry{s}
+		explicit symbol(const symbol_entry * entry)
+			: _entry(entry)
 		{
 #ifdef MINIJAVA_USE_SYMBOL_CHECKS
 			_entry->refcount++;
 #endif
-			assert(s != nullptr);
+			assert(entry != nullptr);
 		}
 
 	public:
