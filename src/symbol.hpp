@@ -76,7 +76,6 @@ namespace minijava
 #endif
 			{
 				(void) pool;
-				assert(pool != nullptr);
 				assert(std::strlen(cstr) == size);
 				assert(hash == std::hash<std::string>()(std::string(cstr, size)));
 			}
