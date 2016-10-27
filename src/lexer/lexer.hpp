@@ -145,7 +145,7 @@ namespace minijava
 			return c;
 		}
 
-		/** 
+		/**
 		 * @brief
 		 *     If the current char is equal to `c`, the current_token is set
 		 *     to the token_type `type` and the iterator moves to the next char
