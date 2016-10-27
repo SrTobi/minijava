@@ -58,70 +58,68 @@ namespace minijava
 				return;
 			} else if (next_char == '=') {
 				// /= token
-				_current_token = token::create(token_type::unknown);
+				_current_token = token::create(token_type::divides_assign);
 				_skip();
 			} else {
 				// / token
-				_current_token = token::create(token_type::unknown);
+				_current_token = token::create(token_type::divides);
 			}
 		}
-		else if (_maybe_token('[', token_type::unknown)) {}
-		else if (_maybe_token(']', token_type::unknown)) {}
-		else if (_maybe_token(']', token_type::unknown)) {}
-		else if (_maybe_token('(', token_type::unknown)) {}
-		else if (_maybe_token(')', token_type::unknown)) {}
-		else if (_maybe_token('{', token_type::unknown)) {}
-		else if (_maybe_token('}', token_type::unknown)) {}
-		else if (_maybe_token('.', token_type::unknown)) {}
-		else if (_maybe_token(':', token_type::unknown)) {}
-		else if (_maybe_token(';', token_type::unknown)) {}
-		else if (_maybe_token('?', token_type::unknown)) {}
-		else if (_maybe_token('~', token_type::unknown)) {}
-		else if (_maybe_token('!', token_type::unknown)) { // !
-			_maybe_token('=', token_type::unknown); // !=
-		} else if (_maybe_token('*', token_type::unknown)) { // *
-			_maybe_token('=', token_type::unknown); // *=
+		else if (_maybe_token('[', token_type::left_bracket)) {}
+		else if (_maybe_token(']', token_type::right_bracket)) {}
+		else if (_maybe_token('(', token_type::left_paren)) {}
+		else if (_maybe_token(')', token_type::right_paren)) {}
+		else if (_maybe_token('{', token_type::left_brace)) {}
+		else if (_maybe_token('}', token_type::right_brace)) {}
+		else if (_maybe_token('.', token_type::dot)) {}
+		else if (_maybe_token(':', token_type::colon)) {}
+		else if (_maybe_token(';', token_type::semicolon)) {}
+		else if (_maybe_token('?', token_type::conditional)) {}
+		else if (_maybe_token('~', token_type::bit_not)) {}
+		else if (_maybe_token('!', token_type::logical_not)) { // !
+			_maybe_token('=', token_type::not_equal); // !=
+		} else if (_maybe_token('*', token_type::multiply)) { // *
+			_maybe_token('=', token_type::multiply_assign); // *=
 		}
-		else if (_maybe_token('+', token_type::unknown)) { // +
-			if (_maybe_token('+', token_type::unknown)); // ++
-			else _maybe_token('=', token_type::unknown); // +=
+		else if (_maybe_token('+', token_type::plus)) { // +
+			if (_maybe_token('+', token_type::increment)); // ++
+			else _maybe_token('=', token_type::plus_assign); // +=
 		}
-		else if (_maybe_token('-', token_type::unknown)) { // -
-			if (_maybe_token('-', token_type::unknown)); // --
-			else _maybe_token('=', token_type::unknown); // -=
+		else if (_maybe_token('-', token_type::minus)) { // -
+			if (_maybe_token('-', token_type::decrement)); // --
+			else _maybe_token('=', token_type::minus_assign); // -=
 		}
-		else if (_maybe_token('<', token_type::unknown)) { // <
-			if (_maybe_token('<', token_type::unknown)) { // <<
-				if (_maybe_token('<', token_type::unknown)); // <<<
-				else _maybe_token('=', token_type::unknown); // <<=
+		else if (_maybe_token('<', token_type::less_than)) { // <
+			if (_maybe_token('<', token_type::left_shift)) { // <<
+				_maybe_token('=', token_type::left_shift_assign); // <<=
 			}
-			else _maybe_token('=', token_type::unknown); // <=
+			else _maybe_token('=', token_type::less_equal); // <=
 		}
-		else if (_maybe_token('=', token_type::unknown)) { // =
-			_maybe_token('=', token_type::unknown); // ==
+		else if (_maybe_token('=', token_type::assign)) { // =
+			_maybe_token('=', token_type::equal); // ==
 		}
-		else if (_maybe_token('>', token_type::unknown)) { // >
-			if (_maybe_token('>', token_type::unknown)) { // >>
-				if (_maybe_token('>', token_type::unknown)) { // >>>
-					_maybe_token('=', token_type::unknown); // >>>=
+		else if (_maybe_token('>', token_type::greater_than)) { // >
+			if (_maybe_token('>', token_type::right_shift)) { // >>
+				if (_maybe_token('>', token_type::unsigned_right_shift)) { // >>>
+					_maybe_token('=', token_type::unsigned_right_shift_assign); // >>>=
 				}
-				else _maybe_token('=', token_type::unknown); // >>=
+				else _maybe_token('=', token_type::right_shift_assign); // >>=
 			}
-			else _maybe_token('=', token_type::unknown); // >=
+			else _maybe_token('=', token_type::greater_equal); // >=
 		}
-		else if (_maybe_token('%', token_type::unknown)) { // %
-			_maybe_token('=', token_type::unknown); // %=
+		else if (_maybe_token('%', token_type::modulo)) { // %
+			_maybe_token('=', token_type::modulo_assign); // %=
 		}
-		else if (_maybe_token('&', token_type::unknown)) { // &
-			if (_maybe_token('&', token_type::unknown)); // &&
-			else _maybe_token('=', token_type::unknown); // &=
+		else if (_maybe_token('&', token_type::bit_and)) { // &
+			if (_maybe_token('&', token_type::logical_and)); // &&
+			else _maybe_token('=', token_type::bit_and_assign); // &=
 		}
-		else if (_maybe_token('^', token_type::unknown)) { // ^
-			_maybe_token('=', token_type::unknown); // ^=
+		else if (_maybe_token('^', token_type::bit_xor)) { // ^
+			_maybe_token('=', token_type::bit_xor_assign); // ^=
 		}
-		else if (_maybe_token('|', token_type::unknown)) { // |
-			if (_maybe_token('|', token_type::unknown)); // ||
-			else _maybe_token('=', token_type::unknown); // |=
+		else if (_maybe_token('|', token_type::bit_or)) { // |
+			if (_maybe_token('|', token_type::logical_or)); // ||
+			else _maybe_token('=', token_type::bit_or_assign); // |=
 		}
 		else {
 			throw lexical_error();
