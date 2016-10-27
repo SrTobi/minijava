@@ -11,6 +11,7 @@
 #include <cassert>
 #include <iosfwd>
 #include <functional>
+#include <cstring>
 
 namespace minijava
 {
