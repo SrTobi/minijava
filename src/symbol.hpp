@@ -503,7 +503,7 @@ namespace minijava
 		 * @returns
 		 *     wether the two symbols were creaded by the same pool
 		 */
-		static bool _have_same_pool(const symbol& first, const symbol& second)
+		static bool _have_same_pool(const symbol& first, const symbol& second) noexcept
 		{
 			return first._entry->pool == second._entry->pool;
 		}
