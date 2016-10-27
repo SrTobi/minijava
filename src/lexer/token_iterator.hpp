@@ -1,4 +1,6 @@
 /**
+ * @file token_iterator.hpp
+ *
  * @brief
  *     Standard input iterator interface to token streams produced by a lexer.
  *

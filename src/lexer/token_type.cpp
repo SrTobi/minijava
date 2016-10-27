@@ -1,17 +1,43 @@
 #include "token_type.hpp"
 
 #include <ostream>
+#include <type_traits>
+#include <utility>
 
 
 namespace minijava
 {
 
+	namespace /* anonymous */
+	{
+
+		template <std::size_t... Is>
+		constexpr auto make_all_token_types_array(std::index_sequence<Is...> iseq) noexcept
+		{
+			constexpr auto r = detail::get_token_type_info_table();
+			static_assert(r.second - r.first == iseq.size(), "wrong array size");
+			std::array<token_type, total_token_type_count> array = {{ (r.first[Is].first)... }};
+			return array;
+		}
+
+	}
+
+
+	const std::array<token_type, total_token_type_count>& all_token_types() noexcept
+	{
+		using idxseq_type = std::make_index_sequence<total_token_type_count>;
+		static constexpr auto array = make_all_token_types_array(idxseq_type{});
+		return array;
+	}
+
+
 	std::ostream& operator<<(std::ostream& os, const token_type tt)
 	{
-		if (const auto fancy = fancy_name(tt)) {
-			os << fancy;
+		using raw_type = std::underlying_type_t<token_type>;
+		if (const auto text = name(tt)) {
+			os << text;
 		} else {
-			os << "invalid token type " << static_cast<int>(tt);
+			os << "token_type(" << static_cast<raw_type>(tt) << ")";
 		}
 		return os;
 	}
