@@ -128,6 +128,8 @@ namespace minijava
 		using pointer         = const_pointer;          ///< const char *
 		using const_iterator  = const_pointer;          ///< const char *
 		using iterator        = const_iterator;         ///< const char *
+		using reverse_iterator = std::reverse_iterator<iterator>;
+		using const_reverse_iterator = std::reverse_iterator<iterator>;
 		using difference_type = std::ptrdiff_t;         ///< std::ptrdiff_t
 		using size_type       = std::size_t;            ///< std::size_t
 
@@ -290,6 +292,66 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Return a reverse iterator to end
+		 *
+		 * Returns a reverse iterator pointing to the last character of the symbol.
+		 *
+		 * @returns
+		 *     A reverse iterator to the end of the symbol.
+		 *
+		 */
+		const_reverse_iterator rbegin() const noexcept
+		{
+			return crbegin();
+		}
+
+		/**
+		 * @brief
+		 *     Return a reverse iterator to the beginning
+		 *
+		 * Returns an iterator pointing to the before-the-begin character of the symbol.
+		 *
+		 * @returns
+		 *     A reverse iterator to the beginning of the symbol.
+		 *
+		 */
+		const_reverse_iterator rend() const noexcept
+		{
+			return crend();
+		}
+
+		/**
+		 * @brief
+		 *     Return reverse iterator to end
+		 *
+		 * Returns a reverse iterator pointing to the last character of the symbol.
+		 *
+		 * @returns
+		 *     A reverse iterator to the end of the symbol.
+		 *
+		 */
+		const_reverse_iterator crbegin() const noexcept
+		{
+			return const_reverse_iterator(cend());
+		}
+
+		/**
+		 * @brief
+		 *     Return a reverse iterator to the beginning
+		 *
+		 * Returns an iterator pointing to the before-the-begin character of the symbol.
+		 *
+		 * @returns
+		 *     A reverse iterator to the beginning of the symbol.
+		 *
+		 */
+		const_reverse_iterator crend() const noexcept
+		{
+			return const_reverse_iterator(cbegin());
+		}
+
+		/**
+		 * @brief
 		 *     Test if symbol is empty.
 		 *
 		 * Returns whether the symbol is the empty symbol (i.e. whether its length is 0).
@@ -384,7 +446,7 @@ namespace minijava
 		char back() const
 		{
 			assert(size() > 0);
-			return *(cend() - 1);
+			return *crend();
 		}
 
 		/**
