@@ -403,7 +403,7 @@ namespace minijava
 		*/
 		friend constexpr bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
-			check_same_pool(lhs, rhs);
+			assert(_have_same_pool(lhs, rhs));
 			return (lhs._entry == rhs._entry);
 		}
 
@@ -423,31 +423,27 @@ namespace minijava
 		*/
 		friend constexpr bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
 		{
-			check_same_pool(lhs, rhs);
+			assert(_have_same_pool(lhs, rhs));
 			return !(lhs == rhs);
 		}
 
 	private:
 		/**
 		 * @brief
-		 *     Asserts wether two symbols were created by the same pool
-		 *
-		 * The assert will only be performed if NDEBUG is not defined
+		 *     Returns wether two symbols were created by the same pool
 		 *
 		 * @param first
 		 *     The first symbol
 		 *
 		 * @param second
 		 *     The second symbol
+		 *
+		 * @returns
+		 *     wether the two symbols were creaded by the same pool
 		 */
-		static constexpr void check_same_pool(const symbol& first, const symbol& second)
+		static constexpr bool _have_same_pool(const symbol& first, const symbol& second)
 		{
-#ifdef MINIJAVA_USE_SYMBOL_CHECKS
-			assert(first._entry->pool == second._entry->pool);
-#else
-			(void)first;
-			(void)second;
-#endif
+			return first._entry->pool == second._entry->pool;
 		}
 
 	private:
