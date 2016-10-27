@@ -38,7 +38,7 @@ namespace minijava
 		std::hash<std::string> hasher;
 		std::size_t sym_hash = hasher(text);
 
-		const auto find_entry = entry_type(text.c_str(), text.size(), sym_hash, this);
+		const entry_type find_entry(text.c_str(), text.size(), sym_hash, this);
 
 		auto entry_it = _pool.find(&find_entry);
 
@@ -58,7 +58,7 @@ namespace minijava
 	{
 		const auto hash_fn = std::hash<std::string>();
 		const auto hash = hash_fn(text);
-		const auto entry = entry_type(text.c_str(), text.size(), hash, this);
+		const entry_type entry(text.c_str(), text.size(), hash, this);
 		return (_pool.find(&entry) != _pool.cend());
 	}
 

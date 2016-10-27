@@ -12,6 +12,7 @@
 #include <iosfwd>
 #include <functional>
 #include <cstring>
+#include <atomic>
 
 namespace minijava
 {
@@ -95,7 +96,7 @@ namespace minijava
 			void const * const pool;
 
 			/** Number of symbols referencing this entry */
-			mutable std::size_t refcount;
+			mutable std::atomic<std::size_t> refcount;
 #endif
 		};
 
