@@ -115,11 +115,11 @@ namespace minijava
 		/** @brief Current token. */
 		token _current_token;
 
-		/** @brief Iterator pointing to the next character of the input. */
-		InIterT _next;
+		/** @brief Iterator pointing to the current character of the input. */
+		InIterT _current_it;
 
 		/** @brief Iterator pointing after the last character of the input. */
-		InIterT _last;
+		InIterT _last_it;
 
 		/** @brief Reference to the symbol-pool used for identifiers. */
 		StrPoolT& _id_pool;
@@ -134,30 +134,42 @@ namespace minijava
 		 * @brief Moves the iterator to the next value and returns the char.
 		 * @return The char at the new iterator position.
 		 * */
-		inline char next() {
+		int32_t _next() {
+			if (_is_eof_iterator()) return -1;
 			_column++;
-			return *(++_next);
+			auto c = *(++_current_it);
+			if (c == '\n') {
+				_column = 1;
+				_line++;
+			}
+			return c;
 		}
 
 		/** @brief Moves the iterator to the next value. */
-		inline void skip() {
-			_next++;
+		void _skip() {
+			if (_is_eof_iterator()) return;
 			_column++;
+			if (*(++_current_it) == '\n') {
+				_column = 1;
+				_line++;
+			}
 		}
 
 		/**
 		 * @brief Returns the current char of the iterator.
 		 * @return The current char.
 		 */
-		inline char current() {
-			return *_next;
+		char _current() {
+			return *_current_it;
 		}
 
-		void scan_identifier();
+		void _scan_identifier();
 
-		void scan_integer();
+		void _scan_integer();
 
-		void consume_block_comment();
+		void _consume_block_comment();
+
+		bool _is_eof_iterator();
 
 	};  // class lexer
 
