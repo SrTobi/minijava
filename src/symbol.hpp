@@ -110,7 +110,7 @@ namespace minijava
 		 *     pointer to a NUL-terminated character sequence
 		 *
 		 */
-		constexpr explicit symbol(const symbol_entry * s)
+		explicit symbol(const symbol_entry * s)
 			: _entry{s}
 		{
 #ifdef MINIJAVA_USE_SYMBOL_CHECKS
@@ -401,7 +401,7 @@ namespace minijava
 		*     whether `lhs` and `rhs` point to the same internal symbol entry
 		*
 		*/
-		friend constexpr bool operator==(const symbol& lhs, const symbol& rhs) noexcept
+		friend bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
 			assert(_have_same_pool(lhs, rhs));
 			return (lhs._entry == rhs._entry);
@@ -421,7 +421,7 @@ namespace minijava
 		*     whether `lhs` and `rhs` wrap different canonical pointers
 		*
 		*/
-		friend constexpr bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
+		friend bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
 		{
 			assert(_have_same_pool(lhs, rhs));
 			return !(lhs == rhs);
@@ -441,7 +441,7 @@ namespace minijava
 		 * @returns
 		 *     wether the two symbols were creaded by the same pool
 		 */
-		static constexpr bool _have_same_pool(const symbol& first, const symbol& second)
+		static bool _have_same_pool(const symbol& first, const symbol& second)
 		{
 			return first._entry->pool == second._entry->pool;
 		}
