@@ -145,6 +145,24 @@ namespace minijava
 			return c;
 		}
 
+		/** 
+		 * @brief
+		 *     If the current char is equal to `c`, the current_token is set
+		 *     to the token_type `type` and the iterator moves to the next char
+		 *
+		 * @returns
+		 *     true, if the current char is equal to `c`
+		 */
+		bool _maybe_token(char c, token_type type) {
+			if (_current() != c) {
+				return false;
+			}
+
+			_current_token = token::create(type);
+			_skip();
+			return true;
+		}
+
 		/** @brief Moves the iterator to the next value. */
 		void _skip() {
 			if (_is_eof_iterator()) return;

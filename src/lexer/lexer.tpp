@@ -4,12 +4,6 @@
 
 #include <cctype>
 
-#define TOKEN(t) token::create(token_type::t)
-#define SINGLE_CHAR_TOKEN(char, t) if (c == char) {\
-	_current_token = token::create(t);\
-	_skip();\
-	}
-
 namespace minijava
 {
 
@@ -35,7 +29,7 @@ namespace minijava
 	void lexer<InIterT, StrPoolT>::advance()
 	{
 		if (_is_eof_iterator()) {
-			_current_token = TOKEN(eof);
+			_current_token = token::create(token_type::eof);
 			return;
 		}
 
@@ -64,181 +58,72 @@ namespace minijava
 				return;
 			} else if (next_char == '=') {
 				// /= token
-				_current_token = TOKEN(unknown);
+				_current_token = token::create(token_type::unknown);
 				_skip();
 			} else {
 				// / token
-				_current_token = TOKEN(unknown);
+				_current_token = token::create(token_type::unknown);
 			}
 		}
-		else SINGLE_CHAR_TOKEN('[', token_type::unknown)
-		else SINGLE_CHAR_TOKEN(']', token_type::unknown)
-		else SINGLE_CHAR_TOKEN('(', token_type::unknown)
-		else SINGLE_CHAR_TOKEN(')', token_type::unknown)
-		else SINGLE_CHAR_TOKEN('{', token_type::unknown)
-		else SINGLE_CHAR_TOKEN('}', token_type::unknown)
-		else SINGLE_CHAR_TOKEN('.', token_type::unknown)
-		else SINGLE_CHAR_TOKEN(':', token_type::unknown)
-		else SINGLE_CHAR_TOKEN(';', token_type::unknown)
-		else SINGLE_CHAR_TOKEN('?', token_type::unknown)
-		else SINGLE_CHAR_TOKEN('~', token_type::unknown)
-		else if (c == '!') {
-			auto next_char = _next();
-			if (next_char == '=') {
-				// != token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// ! token
-				_current_token = TOKEN(unknown);
+		else if (_maybe_token('[', token_type::unknown)) {}
+		else if (_maybe_token(']', token_type::unknown)) {}
+		else if (_maybe_token(']', token_type::unknown)) {}
+		else if (_maybe_token('(', token_type::unknown)) {}
+		else if (_maybe_token(')', token_type::unknown)) {}
+		else if (_maybe_token('{', token_type::unknown)) {}
+		else if (_maybe_token('}', token_type::unknown)) {}
+		else if (_maybe_token('.', token_type::unknown)) {}
+		else if (_maybe_token(':', token_type::unknown)) {}
+		else if (_maybe_token(';', token_type::unknown)) {}
+		else if (_maybe_token('?', token_type::unknown)) {}
+		else if (_maybe_token('~', token_type::unknown)) {}
+		else if (_maybe_token('!', token_type::unknown)) { // !
+			_maybe_token('=', token_type::unknown); // !=
+		} else if (_maybe_token('*', token_type::unknown)) { // *
+			_maybe_token('=', token_type::unknown); // *=
+		}
+		else if (_maybe_token('+', token_type::unknown)) { // +
+			if (_maybe_token('+', token_type::unknown)); // ++
+			else _maybe_token('=', token_type::unknown); // +=
+		}
+		else if (_maybe_token('-', token_type::unknown)) { // -
+			if (_maybe_token('-', token_type::unknown)); // --
+			else _maybe_token('=', token_type::unknown); // -=
+		}
+		else if (_maybe_token('<', token_type::unknown)) { // <
+			if (_maybe_token('<', token_type::unknown)) { // <<
+				if (_maybe_token('<', token_type::unknown)); // <<<
+				else _maybe_token('=', token_type::unknown); // <<=
 			}
-		} else if (c == '*') {
-			auto next_char = _next();
-			if (next_char == '=') {
-				// *= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// * token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '+') {
-			auto next_char = _next();
-			if (next_char == '+') {
-				// ++ token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else if (next_char == '=') {
-				// += token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// + token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '-') {
-			auto next_char = _next();
-			if (next_char == '-') {
-				// -- token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else if (next_char == '=') {
-				// -= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// - token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '<') {
-			auto next_char = _next();
-			if (next_char == '<') {
-				auto n2 = _next();
-				if (n2 == '=') {
-					// <<= token
-					_current_token = TOKEN(unknown);
-					_skip();
-				} else {
-					// << token
-					_current_token = TOKEN(unknown);
+			else _maybe_token('=', token_type::unknown); // <=
+		}
+		else if (_maybe_token('=', token_type::unknown)) { // =
+			_maybe_token('=', token_type::unknown); // ==
+		}
+		else if (_maybe_token('>', token_type::unknown)) { // >
+			if (_maybe_token('>', token_type::unknown)) { // >>
+				if (_maybe_token('>', token_type::unknown)) { // >>>
+					_maybe_token('=', token_type::unknown); // >>>=
 				}
-			} else if (next_char == '=') {
-				// <= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// < token
-				_current_token = TOKEN(unknown);
+				else _maybe_token('=', token_type::unknown); // >>=
 			}
-		} else if (c == '=') {
-			auto next_char = _next();
-			if (next_char == '=') {
-				// == token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// = token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '>') {
-			auto next_char = _next();
-			if (next_char == '>') {
-				auto n2 = _next();
-				if (n2 == '>') {
-					auto n3 = _next();
-					if (n3 == '=') {
-						// >>>= token
-						_current_token = TOKEN(unknown);
-						_skip();
-					} else {
-						// >>> token
-						_current_token = TOKEN(unknown);
-					}
-				} else if (n2 == '=') {
-					// >>= token
-					_current_token = TOKEN(unknown);
-					_skip();
-				} else {
-					// >> token
-					_current_token = TOKEN(unknown);
-				}
-			} else if (next_char == '=') {
-				// >= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// > token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '%') {
-			auto next_char = _next();
-			if (next_char == '=') {
-				// %= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// % token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '&') {
-			auto next_char = _next();
-			if (next_char == '&') {
-				// && token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else if (next_char == '=') {
-				// &= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// & token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '^') {
-			auto next_char = _next();
-			if (next_char == '^') {
-				// ^ token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// ^ token
-				_current_token = TOKEN(unknown);
-			}
-		} else if (c == '|') {
-			auto next_char = _next();
-			if (next_char == '|') {
-				// || token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else if (next_char == '=') {
-				// |= token
-				_current_token = TOKEN(unknown);
-				_skip();
-			} else {
-				// | token
-				_current_token = TOKEN(unknown);
-			}
-		} else {
+			else _maybe_token('=', token_type::unknown); // >=
+		}
+		else if (_maybe_token('%', token_type::unknown)) { // %
+			_maybe_token('=', token_type::unknown); // %=
+		}
+		else if (_maybe_token('&', token_type::unknown)) { // &
+			if (_maybe_token('&', token_type::unknown)); // &&
+			else _maybe_token('=', token_type::unknown); // &=
+		}
+		else if (_maybe_token('^', token_type::unknown)) { // ^
+			_maybe_token('=', token_type::unknown); // ^=
+		}
+		else if (_maybe_token('|', token_type::unknown)) { // |
+			if (_maybe_token('|', token_type::unknown)); // ||
+			else _maybe_token('=', token_type::unknown); // |=
+		}
+		else {
 			throw lexical_error();
 		}
 
