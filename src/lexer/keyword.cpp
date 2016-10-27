@@ -16,16 +16,13 @@ namespace minijava
 
 		std::map<std::string, token_type> make_lookup_table()
 		{
-			auto values = all_token_types();
-			const auto last = std::remove_if(
-				std::begin(values), std::end(values),
-				[](auto tt){ return category(tt) != token_category::keyword; }
-			);
 			auto table = std::map<std::string, token_type>{};
-			std::transform(
-				std::begin(values), last, std::inserter(table, std::end(table)),
-				[](auto tt){ return std::pair<std::string, token_type>{name(tt), tt}; }
-			);
+			const auto tti = detail::get_token_type_info_table();
+			for (auto it = tti.first; it != tti.second; ++it) {
+				if (category(it->first) == token_category::keyword) {
+					table[it->second] = it->first;
+				}
+			}
 			return table;
 		}
 

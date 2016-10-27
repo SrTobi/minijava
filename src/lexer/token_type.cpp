@@ -16,16 +16,16 @@ namespace minijava
 		{
 			constexpr auto r = detail::get_token_type_info_table();
 			static_assert(r.second - r.first == iseq.size(), "wrong array size");
-			std::array<token_type, 102> array = {{ (r.first[Is].type)... }};
+			std::array<token_type, total_token_type_count> array = {{ (r.first[Is].first)... }};
 			return array;
 		}
 
 	}
 
 
-	const std::array<token_type, 102>& all_token_types() noexcept
+	const std::array<token_type, total_token_type_count>& all_token_types() noexcept
 	{
-		using idxseq_type = std::make_index_sequence<102>;
+		using idxseq_type = std::make_index_sequence<total_token_type_count>;
 		static constexpr auto array = make_all_token_types_array(idxseq_type{});
 		return array;
 	}

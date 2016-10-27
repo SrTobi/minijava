@@ -9,17 +9,11 @@ namespace minijava
 	namespace detail
 	{
 
-		struct token_type_info
-		{
-			token_type type;
-			const char * name;
-		};
-
 		// NB: Never ever make ODR-use of this array or the world will catch
 		// fire and explode.  To be on the safe-side, only use it in constexpr
 		// functions.  For run-time stuff, a copy should be made.
 
-		constexpr token_type_info token_type_info_table[] = {
+		constexpr std::pair<token_type, const char*> token_type_info_table[] = {
 			{token_type::identifier,                   "identifier"},
 			{token_type::integer_literal,              "integer literal"},
 			{token_type::kw_abstract,                  "abstract"},
@@ -137,12 +131,13 @@ namespace minijava
 
 	constexpr token_category category(const token_type tt) noexcept
 	{
-		using raw_type = std::underlying_type_t<token_type>;
-		static_assert(std::is_same<raw_type, std::uint16_t>{}, "");
-		const auto rawtt = static_cast<raw_type>(tt);
-		const auto rawcat = (rawtt >> 12);
-		const auto cat = static_cast<token_category>(rawcat);
-		return cat;
+		using raw_type_t = std::underlying_type_t<token_type>;
+		using raw_cat_t = std::underlying_type_t<token_category>;
+		static_assert(std::is_same<raw_type_t, raw_cat_t>{}, "");
+		const auto bitmask = raw_cat_t{0xf000};
+		const auto raw_type = static_cast<raw_type_t>(tt);
+		const auto raw_cat = raw_type & bitmask;
+		return static_cast<token_category>(raw_cat);
 	}
 
 
@@ -151,12 +146,12 @@ namespace minijava
 		auto r = detail::get_token_type_info_table();
 		while (r.first != r.second) {
 			const auto bisect = r.first + (r.second - r.first) / 2;
-			if (bisect->type > tt) {
+			if (bisect->first > tt) {
 				r.second = bisect;
-			} else if (bisect->type < tt) {
+			} else if (bisect->first < tt) {
 				r.first = bisect;
 			} else {
-				return bisect->name;
+				return bisect->second;
 			}
 		}
 		return nullptr;

@@ -20,27 +20,32 @@ namespace minijava
 	 * @brief
 	 *     Categories for token types.
 	 *
+	 * The numeric values of the enumerator constants should be regarded as an
+	 * implementation detail that might change.
+	 *
 	 */
 	enum class token_category : std::uint16_t
 	{
-		identifier    = 1,  ///< identifiers
-		literal       = 2,  ///< literals
-		keyword       = 3,  ///< keywords
-		punctuation   = 4,  ///< operators and other punctuation symbols
-		synthetic     = 5,  ///< end-of-input, error, and the like
+		identifier    = 0x1000,  ///< identifiers
+		literal       = 0x2000,  ///< literals
+		keyword       = 0x3000,  ///< keywords
+		punctuation   = 0x4000,  ///< operators and other punctuation symbols
+		synthetic     = 0x5000,  ///< end-of-input, error, and the like
 	};
 
 	/**
 	 * @brief
 	 *     Types of recognized tokens.
 	 *
+	 * The numeric values of the enumerator constants should be regarded as an
+	 * implementation detail that might change.
+	 *
 	 */
 	enum class token_type : std::uint16_t
 	{
-		// The four most significant bits are used to encode the token category.
-		identifier          = 0x1000,  ///< identifier (for example &ldquo;`foo`&rdquo;)
-		integer_literal     = 0x2000,  ///< integer literal (for example &ldquo;`42`&rdquo;)
-		kw_abstract         = 0x3000,  ///< keyword &ldquo;`abstract`&rdquo;
+		identifier = static_cast<std::uint16_t>(token_category::identifier),  ///< identifier (for example &ldquo;`foo`&rdquo;)
+		integer_literal = static_cast<std::uint16_t>(token_category::literal),  ///< integer literal (for example &ldquo;`42`&rdquo;)
+		kw_abstract = static_cast<std::uint16_t>(token_category::keyword),  ///< keyword &ldquo;`abstract`&rdquo;
 		kw_assert,                     ///< keyword &ldquo;`assert`&rdquo;
 		kw_boolean,                    ///< keyword &ldquo;`boolean`&rdquo;
 		kw_break,                      ///< keyword &ldquo;`break`&rdquo;
@@ -97,7 +102,7 @@ namespace minijava
 		logical_not,                   ///< logical not &ldquo;`!`&rdquo; operator &ldquo;`!`&rdquo;
 		left_paren,                    ///< left parenthesis &ldquo;`(`&rdquo;
 		right_paren,                   ///< right parenthesis &ldquo;`)`&rdquo;
-		multiply_assign     = 0x4000,  ///< multiply-assignment operator &ldquo;`*=`&rdquo;
+		multiply_assign = static_cast<std::uint16_t>(token_category::punctuation),  ///< multiply-assignment operator &ldquo;`*=`&rdquo;
 		multiply,                      ///< multiplication operator &ldquo;`*`&rdquo;
 		increment,                     ///< increment operator &ldquo;`++`&rdquo;
 		plus_assign,                   ///< plus-assignment operator &ldquo;`+=`&rdquo;
@@ -139,8 +144,12 @@ namespace minijava
 		bit_or_assign,                 ///< bit-wise or-assignment-operator operator &ldquo;`|=`&rdquo;
 		logical_or,                    ///< logical or operator operator &ldquo;`||`&rdquo;
 		bit_or,                        ///< bit-wise or operator &ldquo;`|`&rdquo;
-		eof                 = 0x5000,  ///< end of input
+		eof = static_cast<std::uint16_t>(token_category::synthetic),  ///< end of input
 	};
+
+
+	/** @brief Number of defined `token_type`s. */
+	constexpr auto total_token_type_count = std::size_t{102};
 
 
 	/**
@@ -173,7 +182,7 @@ namespace minijava
 	 *     reference to array with all enumerator values
 	 *
 	 */
-	const std::array<token_type, 102>& all_token_types() noexcept;
+	const std::array<token_type, total_token_type_count>& all_token_types() noexcept;
 
 
 	/**
