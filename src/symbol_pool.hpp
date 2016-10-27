@@ -137,6 +137,14 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Destructs the symbol pool.
+		 *
+		 * If NDEBUG is not defined this asserts that no symbols created by this pool exist anymore
+		 */
+		~symbol_pool();
+
+		/**
+		 * @brief
 		 *     `return`s the number of symbols in the pool.
 		 *
 		 * @returns

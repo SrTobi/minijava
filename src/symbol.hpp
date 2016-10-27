@@ -72,6 +72,7 @@ namespace minijava
 				, hash(hash)
 #ifdef MINIJAVA_USE_SYMBOL_CHECKS
 				, pool(pool)
+				, refcount(0)
 #endif
 			{
 				(void) pool;
@@ -93,6 +94,9 @@ namespace minijava
 #ifdef MINIJAVA_USE_SYMBOL_CHECKS
 			/** The pool the symbol was created in */
 			void const * const pool;
+
+			/** Number of symbols referencing this entry */
+			mutable std::size_t refcount;
 #endif
 		};
 
@@ -106,8 +110,12 @@ namespace minijava
 		 *     pointer to a NUL-terminated character sequence
 		 *
 		 */
-		constexpr explicit symbol(const symbol_entry * s) : _entry{s}
+		constexpr explicit symbol(const symbol_entry * s)
+			: _entry{s}
 		{
+#ifdef MINIJAVA_USE_SYMBOL_CHECKS
+			_entry->refcount++;
+#endif
 			assert(s != nullptr);
 		}
 
@@ -124,6 +132,28 @@ namespace minijava
 		using size_type       = std::size_t;            ///< std::size_t
 
 	public:
+#ifdef MINIJAVA_USE_SYMBOL_CHECKS
+		symbol(const symbol& other) noexcept
+			: symbol(other._entry)
+		{
+		}
+
+		~symbol() noexcept
+		{
+			assert(_entry->refcount > 0);
+			_entry->refcount--;
+		}
+
+		symbol& operator=(const symbol& other) noexcept
+		{
+			assert(_entry->refcount > 0);
+			assert(other._entry->refcount > 0);
+			_entry->refcount--;
+			_entry = other._entry;
+			_entry->refcount++;
+			return (*this);
+		}
+#endif
 
 		/**
 		 * @brief
@@ -134,7 +164,7 @@ namespace minijava
 		 *     canonical pointer
 		 *
 		 */
-		constexpr const char * c_str() const noexcept
+		const char * c_str() const noexcept
 		{
 			return _entry->cstr;
 		}
@@ -154,7 +184,7 @@ namespace minijava
 		 *     The number of bytes in the string.
 		 *
 		 */
-		constexpr size_type size() const noexcept
+		size_type size() const noexcept
 		{
 			return _entry->size;
 		}
@@ -174,7 +204,7 @@ namespace minijava
 		 *     The number of bytes in the string.
 		 *
 		 */
-		constexpr size_type length() const noexcept
+		size_type length() const noexcept
 		{
 			return size();
 		}
@@ -193,7 +223,7 @@ namespace minijava
 		 *     A pointer to the c-string representation of the symbol's value.
 		 *
 		 */
-		constexpr const char * data() const noexcept
+		const char * data() const noexcept
 		{
 			return _entry->cstr;
 		}
@@ -208,7 +238,7 @@ namespace minijava
 		 *     An iterator to the beginning of the symbol.
 		 *
 		 */
-		constexpr const_iterator begin() const noexcept
+		const_iterator begin() const noexcept
 		{
 			return cbegin();
 		}
@@ -223,7 +253,7 @@ namespace minijava
 		 *     An iterator to the beginning of the symbol.
 		 *
 		 */
-		constexpr const_iterator end() const noexcept
+		const_iterator end() const noexcept
 		{
 			return cend();
 		}
@@ -238,7 +268,7 @@ namespace minijava
 		 *     An iterator to the beginning of the symbol.
 		 *
 		 */
-		constexpr const_iterator cbegin() const noexcept
+		const_iterator cbegin() const noexcept
 		{
 			return _entry->cstr;
 		}
@@ -253,7 +283,7 @@ namespace minijava
 		 *     An iterator to the beginning of the symbol.
 		 *
 		 */
-		constexpr const_iterator cend() const noexcept
+		const_iterator cend() const noexcept
 		{
 			return cbegin() + size();
 		}
@@ -268,7 +298,7 @@ namespace minijava
 		 *     `true` if the symbol length is 0, `false` otherwise.
 		 *
 		 */
-		constexpr bool empty() const noexcept
+		bool empty() const noexcept
 		{
 			return _entry->size == 0;
 		}
@@ -290,7 +320,7 @@ namespace minijava
 		 *     The character at the specified position in the symbol.
 		 *
 		 */
-		constexpr char operator[](std::size_t pos) const
+		char operator[](std::size_t pos) const
 		{
 			assert(pos < size());
 			return _entry->cstr[pos];
@@ -316,7 +346,7 @@ namespace minijava
 		 *     If `pos` is not less than the symbol's length.
 		 *
 		 */
-		constexpr char at(std::size_t pos) const
+		char at(std::size_t pos) const
 		{
 			if(pos >= size())
 				throw std::out_of_range("invalid position in symbol");
@@ -334,7 +364,7 @@ namespace minijava
 		 *     The first charactor of the symbol.
 		 *
 		 */
-		constexpr char front() const
+		char front() const
 		{
 			assert(size() > 0);
 			return *cbegin();
@@ -351,7 +381,7 @@ namespace minijava
 		 *     The last charactor of the symbol.
 		 *
 		 */
-		constexpr char back() const
+		char back() const
 		{
 			assert(size() > 0);
 			return *(cend() - 1);

@@ -21,6 +21,17 @@ namespace minijava
 	{
 	}
 
+	template<typename AllocT>
+	symbol_pool<AllocT>::~symbol_pool()
+	{
+#ifdef MINIJAVA_USE_SYMBOL_CHECKS
+		for(auto& entry: _pool)
+		{
+			assert(entry->refcount == 0);
+		}
+#endif
+	}
+
 	template<typename AllocT >
 	symbol symbol_pool<AllocT>::normalize(const std::string& text)
 	{
