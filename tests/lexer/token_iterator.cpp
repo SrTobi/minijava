@@ -1,6 +1,7 @@
 #include "lexer/token_iterator.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 #include <utility>
 
 #define BOOST_TEST_MODULE  lexer_token_iterator
