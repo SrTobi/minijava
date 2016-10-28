@@ -21,7 +21,12 @@ namespace minijava
 {
 	struct symbol_debug_pool_anchor
 	{
-		bool empty_symbol_pool = false;
+		symbol_debug_pool_anchor(const void* tag)
+			: tag(tag)
+		{
+		}
+
+		const void* tag;
 	};
 
 	/**
@@ -59,7 +64,9 @@ namespace minijava
 			, size(size)
 			, hash(hash)
 		{
+			assert(size > 0);
 			assert(std::strlen(cstr) == size);
+			assert(hash == std::hash<std::string>()(std::string(cstr)));
 		}
 
 
@@ -85,15 +92,7 @@ namespace minijava
 
 			static inline bool have_compatible_pool(const symbol_assertion_base& lhs, const symbol_assertion_base& rhs) noexcept
 			{
-				return lhs._debugAnchor == rhs._debugAnchor
-				    || lhs.is_empty_symbol_pool()
-				    || rhs.is_empty_symbol_pool();
-			}
-
-		private:
-			bool is_empty_symbol_pool() const
-			{
-				return _debugAnchor->empty_symbol_pool;
+				return lhs._debugAnchor->tag == rhs._debugAnchor->tag;
 			}
 
 		private:
@@ -135,6 +134,11 @@ namespace minijava
 	{
 		friend struct std::hash<symbol>;
 	public:
+
+		symbol()
+			: symbol(_get_empty_symbol())
+		{
+		}
 
 		/**
 		 * @brief
@@ -477,6 +481,9 @@ namespace minijava
 		*/
 		friend bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
+			if(lhs.empty() || rhs.empty())
+				return true;
+
 			assert(have_compatible_pool(lhs, rhs));
 			return (lhs._entry == rhs._entry);
 		}
@@ -497,16 +504,58 @@ namespace minijava
 		*/
 		friend bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
 		{
-			assert(have_compatible_pool(lhs, rhs));
 			return !(lhs == rhs);
 		}
 
 
 	private:
+		static symbol _get_empty_symbol()
+		{
+			const auto cstr = "";
+			const auto hash = std::hash<std::string>()(std::string(cstr));
+			const static symbol_entry empty_symbol_entry(cstr, 0, hash);
+			const static auto anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
+
+			return symbol(&empty_symbol_entry, anchor);
+		}
 
 		/** @brief The internal entry. */
 		const symbol_entry * _entry;
 	};  // class symbol
+
+
+	class static_symbol_pool
+	{
+	public:
+		static_symbol_pool(std::string str)
+			: _symbolString(std::move(str))
+		{
+			const auto cstr = _symbolString.c_str();
+			const auto size = _symbolString.size();
+			const auto hash = std::hash<std::string>()(_symbolString);
+
+			_entry = std::make_unique<symbol_entry>(cstr, size, hash);
+
+			// create anchor with nullptr tag, so all symbols from a static_symbol_pool have the same tag
+			_anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
+		}
+
+		~static_symbol_pool()
+		{
+			assert(_anchor.unique());
+		}
+
+		symbol get() const
+		{
+			return symbol(_entry.get(), _anchor);
+		}
+
+	private:
+		std::shared_ptr<symbol_debug_pool_anchor> _anchor;
+		std::unique_ptr<symbol_entry> _entry;
+		const std::string _symbolString;
+	};
+
 
 	/**
 	 * @brief

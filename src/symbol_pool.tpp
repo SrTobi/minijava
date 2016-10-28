@@ -18,7 +18,7 @@ namespace minijava
 	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
 		: _charAlloc(alloc)
 		, _entryAlloc(alloc)
-		, _anchor(std::make_shared<symbol_debug_pool_anchor>())
+		, _anchor(std::make_shared<symbol_debug_pool_anchor>(this))
 	{
 	}
 
