@@ -5,11 +5,11 @@ die() {
 	exit 1
 }
 
-readonly basedir=$(dirname "$0")
-readonly rootdir=$(realpath "$basedir/../..")
-readonly githookdir=$(realpath "$rootdir/.git/hooks")
-readonly sourcedir=$(realpath "$basedir")
-readonly tagfile=$(realpath "$rootdir/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag")
+basedir=$(dirname "$0")
+rootdir=$(realpath "$basedir/../..")
+githookdir=$(realpath "$rootdir/.git/hooks")
+sourcedir=$(realpath "$basedir")
+tagfile=$(realpath "$rootdir/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag")
 
 test -f "${tagfile}" || die "Cannot find root directory ($rootdir)"
 
@@ -18,10 +18,10 @@ echo "source dir: $sourcedir"
 echo "hook dir:   $githookdir"
 
 install_hook() {
-    readonly target="$sourcedir/$1.hook"
-    readonly link="$githookdir/$1"
-    readonly target_out=$(realpath --relative-to="$rootdir" "$target")
-    readonly link_out=$(realpath --relative-to="$rootdir" "$link")
+    target="$sourcedir/$1.hook"
+    link="$githookdir/$1"
+    target_out=$(realpath --relative-to="$rootdir" "$target")
+    link_out=$(realpath --relative-to="$rootdir" "$link")
 
     if test -f "$link";
     then

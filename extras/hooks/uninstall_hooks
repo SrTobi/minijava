@@ -5,10 +5,10 @@ die() {
 	exit 1
 }
 
-readonly basedir=$(dirname "$0")
-readonly rootdir=$(realpath "$basedir/../..")
-readonly githookdir=$(realpath "$rootdir/.git/hooks")
-readonly tagfile=$(realpath "$rootdir/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag")
+basedir=$(dirname "$0")
+rootdir=$(realpath "$basedir/../..")
+githookdir=$(realpath "$rootdir/.git/hooks")
+tagfile=$(realpath "$rootdir/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag")
 
 test -f "${tagfile}" || die "Cannot find root directory ($rootdir)"
 
@@ -16,8 +16,8 @@ echo "repo dir:   $rootdir"
 echo "hook dir:   $githookdir"
 
 uninstall_hook() {
-    readonly link="$githookdir/$1"
-    readonly link_out=$(realpath --relative-to="$rootdir" "$link")
+    link="$githookdir/$1"
+    link_out=$(realpath --relative-to="$rootdir" "$link")
 
     if test -f "$link";
     then
