@@ -129,8 +129,6 @@ exercise the following steps.
     component.  It will be linked against `libcore`.  In this file, you should
     also `#include "${dir}/feature.hpp"`.
 
-> *Moritz Klammler:* I actually prefer naming C++ files `*.hxx` and `*.cxx`.
-
 A grab bag of utility features that were considered useful for writing unit
 tests can be found in `/tests/testaux/`.  If you add new compiled source files
 to it, don't forget to mention them in `/tests/testaux/CMakeLists.txt`.
