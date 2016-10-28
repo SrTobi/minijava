@@ -116,8 +116,8 @@ def check_files(filenames, fix, verboseout, summaryout):
 		number of non-conforming files
 
 	"""
-	okmsg = "no issues found" if not fix else "fixed"
-	badmsg = "issues found"
+	okmsg = "OK" if not fix else "fixed"
+	badmsg = "non-conforming"
 	bad_files = 0
 	for fn in filenames:
 		lines = read_file_and_maybe_fix_it(fn, fix)
