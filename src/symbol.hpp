@@ -12,14 +12,112 @@
 #include <iosfwd>
 #include <functional>
 #include <cstring>
-#include <atomic>
+#include <type_traits>
+#include <memory>
+
+#include "global.hpp"
 
 namespace minijava
 {
-#ifndef NDEBUG
-#define MINIJAVA_USE_SYMBOL_CHECKS
-#endif
+	struct symbol_debug_pool_anchor
+	{
+		bool empty_symbol_pool = false;
+	};
 
+	/**
+		* @brief
+		*     Underlying entry for a symbol.
+		*
+		* Must be provided and owned by an external factory.
+		* If the symbols lifetime exceeds the factory the behaviour is undefined.
+		*/
+	struct symbol_entry
+	{
+		/**
+			* @brief
+			*     Constructs a symbol_entry
+			*
+			* @param cstr
+			*     A pointer to a NUL-terminated string
+			*
+			* @param size
+			*     Lenght of the NUL-terminated string (without the NUL)
+			*
+			* @param hash
+			*     Hash value of the NUL-terminated string.
+			*
+			* Must be the same as the hash of the std::string version of the same string.
+			*
+			* @param pool
+			*     Pointer to the pool this entry lives in.
+			*
+			* In debug mode it is used to verify that symbols which are about to be compared
+			* were created by the same pool.
+			*/
+		explicit symbol_entry(const char * cstr, std::size_t size, std::size_t hash)
+			: cstr(cstr)
+			, size(size)
+			, hash(hash)
+		{
+			assert(std::strlen(cstr) == size);
+		}
+
+
+		/** Pointer to the actual string. Must be NUL-terminated */
+		char const * const cstr;
+
+		/** Size of the symbol's string */
+		const std::size_t size;
+
+		/** The precomputed hash of the symbol */
+		const std::size_t hash;
+	};
+
+	namespace detail {
+
+		struct symbol_assertion_base
+		{
+			symbol_assertion_base(const std::shared_ptr<const symbol_debug_pool_anchor>& anchor)
+				: _debugAnchor(anchor)
+			{
+				assert(anchor != nullptr);
+			}
+
+			static inline bool have_compatible_pool(const symbol_assertion_base& lhs, const symbol_assertion_base& rhs) noexcept
+			{
+				return lhs._debugAnchor == rhs._debugAnchor
+				    || lhs.is_empty_symbol_pool()
+				    || rhs.is_empty_symbol_pool();
+			}
+
+		private:
+			bool is_empty_symbol_pool() const
+			{
+				return _debugAnchor->empty_symbol_pool;
+			}
+
+		private:
+			/** @brief Reference to a pool anchor for some checks */
+			std::shared_ptr<const symbol_debug_pool_anchor> _debugAnchor;
+		};
+
+		struct symbol_release_base
+		{
+			symbol_release_base(const std::shared_ptr<const symbol_debug_pool_anchor>& anchor)
+			{
+				(void) anchor;
+			}
+
+			static inline bool have_compatible_pool(const symbol_release_base& lhs, const symbol_release_base& rhs) noexcept
+			{
+				(void) lhs;
+				(void) rhs;
+				return true;
+			}
+		};
+
+		using symbol_base = std::conditional<MINIJAVA_ASSERT_ACTIVE, symbol_assertion_base, symbol_release_base>::type;
+	}
 	/**
 	 * @brief
 	 *     A non-owning read-only wrapper around a char sequence.
@@ -33,72 +131,10 @@ namespace minijava
 	 * compared in any way. The properties of a symbol are stored inside the internal
 	 * symbol structure and are accessible by various methods.
 	 */
-	class symbol final
+	class symbol final: protected detail::symbol_base
 	{
 		friend struct std::hash<symbol>;
 	public:
-		/**
-		 * @brief
-		 *     Underlying entry for a symbol.
-		 *
-		 * Must be provided and owned by an external factory.
-		 * If the symbols lifetime exceeds the factory the behaviour is undefined.
-		 */
-		struct symbol_entry
-		{
-			/**
-			 * @brief
-			 *     Constructs a symbol_entry
-			 *
-			 * @param cstr
-			 *     A pointer to a NUL-terminated string
-			 *
-			 * @param size
-			 *     Lenght of the NUL-terminated string (without the NUL)
-			 *
-			 * @param hash
-			 *     Hash value of the NUL-terminated string.
-			 *
-			 * Must be the same as the hash of the std::string version of the same string.
-			 *
-			 * @param pool
-			 *     Pointer to the pool this entry lives in.
-			 *
-			 * In debug mode it is used to verify that symbols which are about to be compared
-			 * were created by the same pool.
-			 */
-			explicit symbol_entry(const char * cstr, std::size_t size, std::size_t hash, const void* pool)
-				: cstr(cstr)
-				, size(size)
-				, hash(hash)
-#ifdef MINIJAVA_USE_SYMBOL_CHECKS
-				, pool(pool)
-				, refcount(0)
-#endif
-			{
-				(void) pool;
-				assert(std::strlen(cstr) == size);
-				assert(hash == std::hash<std::string>()(std::string(cstr, size)));
-			}
-
-
-			/** Pointer to the actual string. Must be NUL-terminated */
-			char const * const cstr;
-
-			/** Size of the symbol's string */
-			const std::size_t size;
-
-			/** The precomputed hash of the symbol */
-			const std::size_t hash;
-
-#ifdef MINIJAVA_USE_SYMBOL_CHECKS
-			/** The pool the symbol was created in */
-			void const * const pool;
-
-			/** Number of symbols referencing this entry */
-			mutable std::atomic<std::size_t> refcount;
-#endif
-		};
 
 		/**
 		 * @brief
@@ -110,12 +146,10 @@ namespace minijava
 		 *     The entry, this symbol will point to
 		 *
 		 */
-		explicit symbol(const symbol_entry * entry)
-			: _entry(entry)
+		explicit symbol(const symbol_entry * entry, const std::shared_ptr<const symbol_debug_pool_anchor>& anchor)
+			: detail::symbol_base(anchor)
+			, _entry(entry)
 		{
-#ifdef MINIJAVA_USE_SYMBOL_CHECKS
-			_entry->refcount++;
-#endif
 			assert(entry != nullptr);
 		}
 
@@ -134,28 +168,6 @@ namespace minijava
 		using size_type       = std::size_t;            ///< std::size_t
 
 	public:
-#ifdef MINIJAVA_USE_SYMBOL_CHECKS
-		symbol(const symbol& other) noexcept
-			: symbol(other._entry)
-		{
-		}
-
-		~symbol() noexcept
-		{
-			assert(_entry->refcount > 0);
-			_entry->refcount--;
-		}
-
-		symbol& operator=(const symbol& other) noexcept
-		{
-			assert(_entry->refcount > 0);
-			assert(other._entry->refcount > 0);
-			_entry->refcount--;
-			_entry = other._entry;
-			_entry->refcount++;
-			return (*this);
-		}
-#endif
 
 		/**
 		 * @brief
@@ -465,7 +477,7 @@ namespace minijava
 		*/
 		friend bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
-			assert(_have_same_pool(lhs, rhs));
+			assert(have_compatible_pool(lhs, rhs));
 			return (lhs._entry == rhs._entry);
 		}
 
@@ -485,34 +497,15 @@ namespace minijava
 		*/
 		friend bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
 		{
-			assert(_have_same_pool(lhs, rhs));
+			assert(have_compatible_pool(lhs, rhs));
 			return !(lhs == rhs);
 		}
 
-	private:
-		/**
-		 * @brief
-		 *     Returns wether two symbols were created by the same pool
-		 *
-		 * @param first
-		 *     The first symbol
-		 *
-		 * @param second
-		 *     The second symbol
-		 *
-		 * @returns
-		 *     wether the two symbols were creaded by the same pool
-		 */
-		static bool _have_same_pool(const symbol& first, const symbol& second) noexcept
-		{
-			return first._entry->pool == second._entry->pool;
-		}
 
 	private:
 
 		/** @brief The internal entry. */
 		const symbol_entry * _entry;
-
 	};  // class symbol
 
 	/**

@@ -13,6 +13,8 @@
 #include <cstring>
 #include <unordered_set>
 
+#include <boost/core/noncopyable.hpp>
+
 #include "symbol.hpp"
 
 
@@ -35,7 +37,7 @@ namespace minijava
 			 * @returns
 			 *     The hash value of the symbol_entry
 			 */
-			constexpr std::size_t operator()(const symbol::symbol_entry* entry) const noexcept
+			constexpr std::size_t operator()(const symbol_entry* entry) const noexcept
 			{
 				return entry->hash;
 			}
@@ -61,7 +63,7 @@ namespace minijava
 			 *     `true` if the two string values are equal, `false` otherwise
 			 *
 			 */
-			constexpr bool operator()(const symbol::symbol_entry* lhs, const symbol::symbol_entry* rhs) const noexcept
+			constexpr bool operator()(const symbol_entry* lhs, const symbol_entry* rhs) const noexcept
 			{
 				return lhs->size == rhs->size && std::strcmp(lhs->cstr, rhs->cstr) == 0;
 			}
@@ -93,7 +95,7 @@ namespace minijava
 	 */
 	// work version!: do not use any specific template parameters as they are subject to change! only <>
 	template<typename AllocT = std::allocator<char>>
-	class symbol_pool final
+	class symbol_pool final: private boost::noncopyable
 	{
 	public:
 
@@ -101,7 +103,7 @@ namespace minijava
 		using allocator_type = AllocT;
 
 	private:
-		using entry_type = symbol::symbol_entry;                                                           ///< symbol::symbol::entry
+		using entry_type = symbol_entry;                                                           ///< symbol::symbol::entry
 
 		using char_allocator_type = allocator_type;                                                        ///< Allocator for char chunks
 		using char_allocator_traits = std::allocator_traits<char_allocator_type>;                          ///< Traits for char_allocator_type
@@ -134,6 +136,8 @@ namespace minijava
 		 *
 		 */
 		symbol_pool(const allocator_type& alloc);
+
+		symbol_pool(symbol_pool&&);
 
 		/**
 		 * @brief
@@ -244,6 +248,9 @@ namespace minijava
 
 		/** @brief Pool of symbols. */
 		hash_set_type _pool;
+
+		/** @brief Pool anchor for some checks */
+		std::shared_ptr<symbol_debug_pool_anchor> _anchor;
 	};
 
 }  // namespace minijava

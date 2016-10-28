@@ -18,18 +18,22 @@ namespace minijava
 	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
 		: _charAlloc(alloc)
 		, _entryAlloc(alloc)
+		, _anchor(std::make_shared<symbol_debug_pool_anchor>())
+	{
+	}
+
+	template<typename AllocT >
+	symbol_pool<AllocT>::symbol_pool(symbol_pool&& old)
+		: _charAlloc(std::move(old._charAlloc))
+		, _entryAlloc(std::move(old._entryAlloc))
+		, _pool(std::move(old._pool))
 	{
 	}
 
 	template<typename AllocT>
 	symbol_pool<AllocT>::~symbol_pool()
 	{
-#ifdef MINIJAVA_USE_SYMBOL_CHECKS
-		for(auto& entry: _pool)
-		{
-			assert(entry->refcount == 0);
-		}
-#endif
+		assert(_anchor.unique());
 
 		for(auto& entry: _pool)
 		{
@@ -44,7 +48,7 @@ namespace minijava
 		std::hash<std::string> hasher;
 		std::size_t sym_hash = hasher(text);
 
-		const entry_type find_entry(text.c_str(), text.size(), sym_hash, this);
+		const entry_type find_entry(text.c_str(), text.size(), sym_hash);
 
 		auto entry_it = _pool.find(&find_entry);
 
@@ -56,7 +60,7 @@ namespace minijava
 			std::tie(entry_it, std::ignore) = _pool.insert(insert_entry);
 		}
 
-		return symbol(*entry_it);
+		return symbol(*entry_it, _anchor);
 	}
 
 	template<typename AllocT >
@@ -64,7 +68,7 @@ namespace minijava
 	{
 		const auto hash_fn = std::hash<std::string>();
 		const auto hash = hash_fn(text);
-		const entry_type entry(text.c_str(), text.size(), hash, this);
+		const entry_type entry(text.c_str(), text.size(), hash);
 		return (_pool.find(&entry) != _pool.cend());
 	}
 
@@ -100,7 +104,7 @@ namespace minijava
 		symbol_pool<AllocT>::create_entry(const char * str_mem, std::size_t size, std::size_t hash)
 	{
 		entry_type * entry_mem = entry_allocator_traits::allocate(_entryAlloc, 1);
-		entry_allocator_traits::construct(_entryAlloc, entry_mem, str_mem, size, hash, this);
+		entry_allocator_traits::construct(_entryAlloc, entry_mem, str_mem, size, hash);
 
 		return entry_mem;
 	}
