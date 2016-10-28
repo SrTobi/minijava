@@ -8,12 +8,6 @@
 #define BOOST_TEST_MODULE  symbol
 #include <boost/test/unit_test.hpp>
 
-
-BOOST_AUTO_TEST_CASE(symbols_have_the_same_size_as_pointers)
-{
-	static_assert(sizeof(minijava::symbol) == sizeof(void*), "");
-}
-
 BOOST_AUTO_TEST_CASE(same_pointers_compare_equal)
 {
 	minijava::symbol_pool<> pool;
