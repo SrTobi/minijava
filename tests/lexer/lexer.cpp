@@ -186,6 +186,48 @@ BOOST_DATA_TEST_CASE(input_lexed_correctly, success_data)
 {
 	auto s = sample.get();
 	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool);
-	BOOST_REQUIRE(std::equal(std::begin(s.expected), std::end(s.expected),
-	              minijava::token_begin(lex), minijava::token_end(lex)));
+	BOOST_CHECK(std::equal(std::begin(s.expected), std::end(s.expected),
+	            minijava::token_begin(lex), minijava::token_end(lex)));
+}
+
+
+static const failure_test failure_data[] = {
+		// invalid spaces
+		{"*\v=", tt::multiply},
+		{"*\f=", tt::multiply},
+
+		// random null bytes are not misinterpreted as EOF and token before is returned correctly
+		// TODO @Moritz Baumann: write another test that makes sure null bytes not lost between real_main and the lexer when reading from files
+		{"1234 \0 false", std::uint32_t{1234}},
+		{"1234\0 false", std::uint32_t{1234}},
+		{"ident\0 false", "ident"},
+		{">\0 false", tt::greater_than},
+		{":\0 false", tt::colon},
+
+		// other bad characters in various environments
+		{"\b"},
+		{"asdfghewr\\0a", "asdfghewr"},
+		{"void\"", tt::kw_void},
+		{"1234\x7F", std::uint32_t{1234}},
+
+		// invalid integer literals
+		{"*012356--", tt::multiply},
+		{"<001true", tt::less_than},
+
+		// invalid comments
+		{"/*/**/*/"},
+		{"/*"},
+};
+
+BOOST_DATA_TEST_CASE(incorrect_input_lexed_correctly, failure_data)
+{
+	auto s = sample.get();
+	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool);
+
+	for (std::size_t i = 0; i < s.expected.size() - 1; ++i, lex.advance()) {
+		BOOST_CHECK_EQUAL(s.expected[i], lex.current_token());
+	}
+
+	BOOST_CHECK_EQUAL(s.expected.back(), lex.current_token());
+	BOOST_CHECK_THROW(lex.advance(), minijava::lexical_error);
 }
