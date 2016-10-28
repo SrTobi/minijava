@@ -5,6 +5,7 @@
 import argparse
 import itertools as it
 import os
+import shutil
 import subprocess
 import sys
 
@@ -322,7 +323,7 @@ def read_file_and_maybe_fix_it(filename, fix):
 	if fix:
 		lines = list(map(fix_horizontal, fix_vertical(lines)))
 		backupname = make_backup_file_name(filename)
-		os.replace(filename, backupname)
+		shutil.copy(filename, backupname)
 		with open(filename, 'w') as ostr:
 			ostr.writelines(lines)
 	return lines
