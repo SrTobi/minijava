@@ -25,6 +25,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
 	cli
+	exceptions
 	global
 	lexer/keyword
 	lexer/lexer
