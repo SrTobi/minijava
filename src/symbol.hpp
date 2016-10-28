@@ -15,11 +15,13 @@
 #include <type_traits>
 #include <memory>
 
+#include <boost/core/noncopyable.hpp>
+
 #include "global.hpp"
 
 namespace minijava
 {
-	struct symbol_debug_pool_anchor
+	struct symbol_debug_pool_anchor: private boost::noncopyable
 	{
 		symbol_debug_pool_anchor(const void* tag)
 			: tag(tag)
@@ -36,49 +38,66 @@ namespace minijava
 		* Must be provided and owned by an external factory.
 		* If the symbols lifetime exceeds the factory the behaviour is undefined.
 		*/
-	struct symbol_entry
+	struct symbol_entry final: private boost::noncopyable
 	{
-		/**
-			* @brief
-			*     Constructs a symbol_entry
-			*
-			* @param cstr
-			*     A pointer to a NUL-terminated string
-			*
-			* @param size
-			*     Lenght of the NUL-terminated string (without the NUL)
-			*
-			* @param hash
-			*     Hash value of the NUL-terminated string.
-			*
-			* Must be the same as the hash of the std::string version of the same string.
-			*
-			* @param pool
-			*     Pointer to the pool this entry lives in.
-			*
-			* In debug mode it is used to verify that symbols which are about to be compared
-			* were created by the same pool.
-			*/
-		explicit symbol_entry(const char * cstr, std::size_t size, std::size_t hash)
-			: cstr(cstr)
-			, size(size)
-			, hash(hash)
-		{
-			assert(size > 0);
-			assert(std::strlen(cstr) == size);
-			assert(hash == std::hash<std::string>()(std::string(cstr)));
-		}
-
-
-		/** Pointer to the actual string. Must be NUL-terminated */
-		char const * const cstr;
+		/** The precomputed hash of the symbol */
+		std::size_t hash;
 
 		/** Size of the symbol's string */
-		const std::size_t size;
+		std::size_t size;
 
-		/** The precomputed hash of the symbol */
-		const std::size_t hash;
+		/** The actual string. Must be NUL-terminated */
+		char cstr[1];
+
+
+		template<typename AllocT>
+		static const symbol_entry * allocate(AllocT& alloc, const std::string& str)
+		{
+			using alloc_traits = std::allocator_traits<AllocT>;
+			static_assert(std::is_same<char, typename alloc_traits::value_type>::value, "Allocator does not allocate char!");
+
+			std::hash<std::string> hash_fn;
+			auto hash = hash_fn(str);
+
+			const auto mem_size = _struct_size(str.size());
+			symbol_entry * entry = reinterpret_cast<symbol_entry*>(alloc_traits::allocate(alloc, mem_size));
+
+			entry->hash = hash;
+			entry->size = str.size();
+			std::copy(str.begin(), str.end(), entry->cstr);
+			entry->cstr[str.size()] = '\0';
+
+			return entry;
+		}
+
+		template<typename AllocT>
+		static void deallocate(AllocT& alloc, const symbol_entry* entry)
+		{
+			using alloc_traits = std::allocator_traits<AllocT>;
+			static_assert(std::is_same<char, typename alloc_traits::value_type>::value, "Allocator does not allocate char!");
+
+			const char * mem = reinterpret_cast<const char*>(entry);
+			const auto mem_size = _struct_size(entry->size);
+			alloc_traits::deallocate(alloc, const_cast<char*>(mem), mem_size);
+		}
+
+		static const symbol_entry * get_empty_symbol_entry()
+		{
+			const auto hash = std::hash<std::string>()(std::string(""));
+			static symbol_entry entry;
+			entry.cstr[0] = '\0';
+			entry.size = 0;
+			entry.hash = hash;
+			return &entry;
+		}
+
+	private:
+		static std::size_t _struct_size(std::size_t length) noexcept
+		{
+			return sizeof(symbol_entry) + length;
+		}
 	};
+	static_assert(std::is_pod<symbol_entry>::value, "");
 
 	namespace detail {
 
@@ -509,14 +528,13 @@ namespace minijava
 
 
 	private:
+
 		static symbol _get_empty_symbol()
 		{
-			const auto cstr = "";
-			const auto hash = std::hash<std::string>()(std::string(cstr));
-			const static symbol_entry empty_symbol_entry(cstr, 0, hash);
-			const static auto anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
+			static const symbol_entry * empty_symbol_entry_ptr = symbol_entry::get_empty_symbol_entry();
+			static const auto anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
 
-			return symbol(&empty_symbol_entry, anchor);
+			return symbol(empty_symbol_entry_ptr, anchor);
 		}
 
 		/** @brief The internal entry. */
@@ -524,17 +542,19 @@ namespace minijava
 	};  // class symbol
 
 
-	class static_symbol_pool
+	class static_symbol_pool: private boost::noncopyable
 	{
 	public:
-		static_symbol_pool(std::string str)
-			: _symbolString(std::move(str))
+		using entryptr_type = std::unique_ptr<const symbol_entry, std::function<void(const symbol_entry*)>>;
+	public:
+		static_symbol_pool(const std::string& str)
 		{
-			const auto cstr = _symbolString.c_str();
-			const auto size = _symbolString.size();
-			const auto hash = std::hash<std::string>()(_symbolString);
+			std::function<void(const symbol_entry*)> deleter = [this](const symbol_entry* entry)
+			{
+				symbol_entry::deallocate(_allocator, entry);
+			};
 
-			_entry = std::make_unique<symbol_entry>(cstr, size, hash);
+			_entry = entryptr_type(symbol_entry::allocate(_allocator, str), deleter);
 
 			// create anchor with nullptr tag, so all symbols from a static_symbol_pool have the same tag
 			_anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
@@ -551,9 +571,9 @@ namespace minijava
 		}
 
 	private:
+		std::allocator<char> _allocator;
 		std::shared_ptr<symbol_debug_pool_anchor> _anchor;
-		std::unique_ptr<symbol_entry> _entry;
-		const std::string _symbolString;
+		entryptr_type _entry;
 	};
 
 

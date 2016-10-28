@@ -11,7 +11,7 @@
 #include <scoped_allocator>
 #include <string>
 #include <cstring>
-#include <unordered_set>
+#include <boost/unordered_set.hpp>
 
 #include <boost/core/noncopyable.hpp>
 
@@ -103,20 +103,20 @@ namespace minijava
 		using allocator_type = AllocT;
 
 	private:
-		using entry_type = symbol_entry;                                                           ///< symbol::symbol::entry
+		using entry_type = symbol_entry;                                                 ///< symbol::symbol::entry
 
-		using char_allocator_type = allocator_type;                                                        ///< Allocator for char chunks
-		using char_allocator_traits = std::allocator_traits<char_allocator_type>;                          ///< Traits for char_allocator_type
-		using entry_allocator_type = typename char_allocator_traits::template rebind_alloc<entry_type>;    ///< Allocator for symbol_entry
-		using entry_allocator_traits = typename char_allocator_traits::template rebind_traits<entry_type>; ///< Traits for entry_allocator_type
+		using allocator_traits = std::allocator_traits<allocator_type>;             ///< Traits for allocator_type
 
+		static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
 
 		/** @brief Has set type. */
-		using hash_set_type = std::unordered_set<
+		using hash_set_type = boost::unordered_set<
 			const entry_type*,
 			detail::entryptr_hash,
 			detail::entryptr_equal
 		>;
+
+		struct symbol_entry_string_cmp;
 
 	public:
 
@@ -146,6 +146,9 @@ namespace minijava
 		 * If NDEBUG is not defined this asserts that no symbols created by this pool exist anymore
 		 */
 		~symbol_pool();
+
+		symbol_pool& operator=(symbol_pool&& old);
+
 
 		/**
 		 * @brief
@@ -210,41 +213,11 @@ namespace minijava
 		allocator_type get_allocator() const;
 
 	private:
-	    /**
-		 * @brief
-		 *     Allocates internal memory for the string and copies its content
-		 *
-		 * @param str
-		 *     The string that should be copied to internal memory
-		 *
-		 * @returns
-		 *     a pointer to the newly created memory conaining the string with NUL-termination
-		 */
-		const char * create_string(const std::string& str);
+		void _clear_pool();
 
-		/**
-		 * @brief
-		 *     Allocates and constructs a symbol_entry in the internal memory
-		 *
-		 * @param str_mem
-		 *     The memory containing the string of the symbol
-		 *
-		 * @param size
-		 *     The length of the string
-		 *
-		 * @param hash
-		 *     Hash value of the string
-		 *
-		 * @returns
-		 *     a pointer to the newly created symbol_entry
-		 */
-		const entry_type * create_entry(const char * str_mem, std::size_t size, std::size_t hash);
 	private:
-		/** allocator used to allocate memory for the symbol' string */
-		char_allocator_type _charAlloc;
-
-		/** allocator used to allocate memory for symbol entries */
-		entry_allocator_type _entryAlloc;
+		/** allocator used to allocate memory for symbol_entry  */
+		allocator_type _alloc;
 
 		/** @brief Pool of symbols. */
 		hash_set_type _pool;

@@ -1,5 +1,4 @@
 #include "symbol.hpp"
-#include "symbol_pool.hpp"
 
 #include <cstring>
 #include <sstream>
