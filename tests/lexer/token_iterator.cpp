@@ -5,7 +5,8 @@
 
 #define BOOST_TEST_MODULE  lexer_token_iterator
 #include <boost/test/unit_test.hpp>
-#include <lexer/lexer.hpp>
+
+#include "lexer/lexer.hpp"
 
 namespace /* anonymous */
 {
