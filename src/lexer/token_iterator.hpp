@@ -29,8 +29,8 @@ namespace minijava
 	 *     struct LexerConcept
 	 *     {
 	 *         void advance();
-	 *         const TokenT& current_token() const noexcept;
-	 *         bool current_token_is_eof() const noexcept;
+	 *         const TokenT& current_token() const;
+	 *         bool current_token_is_eof() const;
 	 *     };
 	 *
 	 * There are no requirements on the `TokenT` type except that it must be a
