@@ -1,0 +1,35 @@
+#!/bin/sh -eu
+
+die() {
+	echo "$@"
+	exit 1
+}
+
+basedir=$(dirname "$0")
+rootdir=$(realpath "$basedir/../..")
+githookdir=$(realpath "$rootdir/.git/hooks")
+sourcedir=$(realpath "$basedir")
+tagfile=$(realpath "$rootdir/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag")
+
+test -f "${tagfile}" || die "Cannot find root directory ($rootdir)"
+
+echo "repo dir:   $rootdir"
+echo "source dir: $sourcedir"
+echo "hook dir:   $githookdir"
+
+install_hook() {
+    target="$sourcedir/$1.hook"
+    link="$githookdir/$1"
+    target_out=$(realpath --relative-to="$rootdir" "$target")
+    link_out=$(realpath --relative-to="$rootdir" "$link")
+
+    if test -f "$link";
+    then
+        echo "Hook $1 already installed ($link_out)"
+    else
+        echo "Install hook $1 (ln $link_out -> $target_out)"
+        ln -s -f "$target" "$link"
+    fi
+}
+
+install_hook "pre-commit"

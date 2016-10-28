@@ -1,0 +1,37 @@
+#!/bin/sh -eu
+
+die() {
+	echo "$@"
+	exit 1
+}
+
+basedir=$(dirname "$0")
+rootdir=$(realpath "$basedir/../..")
+githookdir=$(realpath "$rootdir/.git/hooks")
+tagfile=$(realpath "$rootdir/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag")
+
+test -f "${tagfile}" || die "Cannot find root directory ($rootdir)"
+
+echo "repo dir:   $rootdir"
+echo "hook dir:   $githookdir"
+
+uninstall_hook() {
+    link="$githookdir/$1"
+    link_out=$(realpath --relative-to="$rootdir" "$link")
+
+    if test -f "$link";
+    then
+        if [ -L "$link" ];
+        then
+            echo "Uninstall hook $1 (rm $link_out)"
+            rm "$link"
+        else
+            echo "External hook $1 found! ($link_out)"
+            echo "Remove manually!!!"
+        fi
+    else
+        echo "Hook $1 not installed ($link_out)"
+    fi
+}
+
+uninstall_hook "pre-commit"

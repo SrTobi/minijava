@@ -1,0 +1,21 @@
+#!/bin/bash
+
+failed=false
+
+while read status file;
+do
+	# skip deleted files
+	if [ "$status" == 'D' ]; then
+		continue;
+	fi
+
+	# do a check files
+	if ! ./extras/checks/whitespace.py $file; then
+		failed=true;
+	fi
+done < <(git diff --cached --name-status)
+
+if [ "$failed" = true ] ; then
+	echo "Pre commit hook failed!"
+	exit 1
+fi
