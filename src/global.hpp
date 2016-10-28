@@ -22,4 +22,10 @@ namespace minijava
 {
 	// We open this namespace here just so we can put a DocString on it.  This
 	// file seems like a good place for this.
+
+#ifdef NDEBUG
+#   define MINIJAVA_ASSERT_ACTIVE 0
+#else
+#   define MINIJAVA_ASSERT_ACTIVE 1
+#endif
 }
