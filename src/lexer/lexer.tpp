@@ -72,6 +72,7 @@ namespace minijava
 		else if (_maybe_token('{', token_type::left_brace)) {}
 		else if (_maybe_token('}', token_type::right_brace)) {}
 		else if (_maybe_token('.', token_type::dot)) {}
+		else if (_maybe_token(',', token_type::comma)) {}
 		else if (_maybe_token(':', token_type::colon)) {}
 		else if (_maybe_token(';', token_type::semicolon)) {}
 		else if (_maybe_token('?', token_type::conditional)) {}
