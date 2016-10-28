@@ -30,6 +30,12 @@ namespace minijava
 			assert(entry->refcount == 0);
 		}
 #endif
+
+		for(auto& entry: _pool)
+		{
+			char_allocator_traits::deallocate(_charAlloc, const_cast<char*>(entry->cstr), entry->size);
+			entry_allocator_traits::deallocate(_entryAlloc, const_cast<entry_type*>(entry), 1);
+		}
 	}
 
 	template<typename AllocT >
