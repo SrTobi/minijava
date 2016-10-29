@@ -178,7 +178,7 @@ BOOST_DATA_TEST_CASE(garbage_throws, garbage_data)
 	std::ostringstream mystderr{};
 	BOOST_REQUIRE_EXCEPTION(
 			minijava::real_main(sample.value, mystdin, mystdout, mystderr)
-	, std::exception, exception_is_empty);
+	, std::exception, exception_is_not_empty);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
