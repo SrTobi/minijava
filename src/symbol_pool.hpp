@@ -45,13 +45,13 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Equals function to test wether the string values of two symbol_entrys are equal
+		 *     Equals function to test whether the string values of two symbol_entrys are equal
 		 */
 		struct entryptr_equal
 		{
 			/**
 			 * @brief
-			 *     Test wether the string values of two symbol_entrys are equal
+			 *     Test whether the string values of two symbol_entrys are equal
 			 *
 			 * @param lhs
 			 *     The first entry

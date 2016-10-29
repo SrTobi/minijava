@@ -28,7 +28,7 @@ namespace minijava
 	 * Should be created via a shared_ptr by a pool and given to symbols created by the same pool.
 	 * The symbols will then hold a reference to this anchor as long as they exist.
 	 * If the pool is destroyed it sets the pool_available property to false.
-	 * This way a symbol can check wether it's pool still exists.
+	 * This way a symbol can check whether it's pool still exists.
 	 *
 	 * The `tag` is used to compare if two symbols come from the same pool.
 	 */
@@ -57,7 +57,7 @@ namespace minijava
 		/** @brief Tag to compare if two symbols come from the same pool */
 		const void* tag;
 
-		/** @brief Indicates wether the pool is still constructed */
+		/** @brief Indicates whether the pool is still constructed */
 		bool pool_available = true;
 	};
 
