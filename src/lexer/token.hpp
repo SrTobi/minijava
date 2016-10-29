@@ -9,7 +9,6 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <iosfwd>
 
 #include <boost/variant.hpp>
@@ -25,34 +24,29 @@ namespace minijava
 	 * @brief
 	 *     A lexical token.
 	 *
+	 * A `token` may store a `symbol`.  The behavior of any operation on a
+	 * token All operations that are defined on multiple `token`s (such as
+	 * comparison) have undefined behavior if the involved `token`s store
+	 * `symbol`s from different pools.  The only exception to this rule is the
+	 * assignment operator.
+	 *
 	 */
 	class token final
 	{
-	public:
-
-		/** @brief Type used to represent identifier names. */
-		using string_type = symbol;
-
-		/** @brief Type used to represent integer literal values. */
-		using integer_type = std::uint32_t;
-
 	private:
 
 		/**
 		 * @brief
 		 *     Unchecked constructor.
 		 *
-		 * If a token of this type does not actually hold data of that type,
-		 * the behavior is undefined.
-		 *
 		 * @tparam DataT
-		 *     type of the data the token holds
+		 *     `symbol` or `boost::blank`
 		 *
 		 * @param type
 		 *     token type
 		 *
 		 * @param data
-		 *     data held by this token
+		 *     lexical value or instance of `boost::blank`
 		 *
 		 */
 		template <typename DataT>
@@ -64,28 +58,33 @@ namespace minijava
 		 * @brief
 		 *     Creates a token for an identifier.
 		 *
-		 * @param name
+		 * If `lexval` is not a valid identifier, the behavior is undefined.
+		 *
+		 * @param lexval
 		 *     name of the identifier
 		 *
 		 */
-		static token create_identifier(string_type name);
+		static token create_identifier(symbol lexval);
 
 		/**
 		 * @brief
 		 *     Creates a token for an integer literal.
 		 *
-		 * @param value
-		 *     value of the literal
+		 * If `lexval` is not a valid integer literal, the behavior is
+		 * undefined.
+		 *
+		 * @param lexval
+		 *     digits of the integer literal
 		 *
 		 */
-		static token create_integer_literal(integer_type value);
+		static token create_integer_literal(symbol lexval);
 
 		/**
 		 * @brief
-		 *     Creates any other token that holds no data.
+		 *     Creates a token without an associated lexical value.
 		 *
-		 * If `tt` is `token_type::identifier` or
-		 * `token_type::integer_literal`, the behavior is undefined.
+		 * If tokens of type `tt` actually have an associated lexical value,
+		 * the behavior is undefined.
 		 *
 		 * @param tt
 		 *     type of the token
@@ -105,28 +104,29 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s the name of an identifier token.
+		 *     `return`s the associated lexical value of the token.
 		 *
-		 * The behavior is undefined unless `type() == token_type::identifier`.
+		 * If the token is of a type that does not have an associated lexical
+		 * value, the behavior is undefined.
 		 *
 		 * @returns
-		 *     name of the identifier
+		 *     lexical value
 		 *
 		 */
-		string_type name() const;
+		symbol lexval() const;
 
 		/**
 		 * @brief
-		 *     `return`s the value of an integer literal token.
+		 *     `return`s whether the token has an associated lexical value.
 		 *
-		 * The behavior is undefined unless `type() ==
-		 * token_type::integer_literal`.
+		 * This function `return`s `true` only if the `token_category` of
+		 * `type()` is `identifier` or `literal`.
 		 *
 		 * @returns
-		 *     value of the integer
+		 *     whether the token has an associated lexical value
 		 *
 		 */
-		integer_type value() const;
+		bool has_lexval() const noexcept;
 
 		/**
 		 * @brief
@@ -176,9 +176,11 @@ namespace minijava
 		 * @brief
 		 *     Tests whether two tokens are equal.
 		 *
-		 * Two tokens are considered equal if they are of the same type and
-		 * their data compares equal, too.  The source code location (line and
-		 * column number) does not participate in the comparison.
+		 * Two tokens are considered equal if they are of the same type and --
+		 * if tokens of that type have an associated lexical value -- their
+		 * associated lexical values compare equal, too.  The source code
+		 * location (line and column number) does not participate in the
+		 * comparison.
 		 *
 		 * @param lhs
 		 *     first token to comare
@@ -197,8 +199,8 @@ namespace minijava
 		/** @brief Type of the token. */
 		token_type _type {};
 
-		/** @brief Data held by the token. */
-		boost::variant<boost::blank, string_type, integer_type> _data {};
+		/** @brief Lexical value associated with the token. */
+		boost::variant<boost::blank, symbol> _data {};
 
 		/** @brief Line number where the token was found. */
 		std::size_t _line {};
@@ -245,6 +247,10 @@ namespace minijava
 	 * @brief
 	 *     Inserts a textual representation of a token into an output stream.
 	 *
+	 * The textual representation consists of the textual representation of the
+	 * `token`'s type and -- if the token has an associated lexical value -- is
+	 * followed by a single space character and the lexical value.
+	 *
 	 * @param os
 	 *     stream to write to
 	 *
@@ -256,7 +262,6 @@ namespace minijava
 	 *
 	 */
 	std::ostream& operator<<(std::ostream& os, const token& tok);
-
 
 }  // namespace minijava
 
