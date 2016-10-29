@@ -29,12 +29,11 @@ namespace minijava
 	{
 
 		// Used to select the stage at which the compilation should be
-		// intercepted.  `unspecified` means to run until the end.
+		// intercepted.
 		enum class compilation_stage
 		{
-			unspecified,
-			input,
-			lexer,
+			input = 1,
+			lexer = 2,
 		};
 
 
@@ -55,7 +54,7 @@ namespace minijava
 		// Checks that at most one option from `group` is set in `varmap` and
 		// `throw`s a `po::error` with an appropriate message otherwise.
 		void check_mutex_option_group(const po::options_description& group,
-									  const po::variables_map& varmap)
+		                              const po::variables_map& varmap)
 		{
 			using namespace std::string_literals;
 			auto seen = std::vector<std::string>{};
@@ -82,7 +81,7 @@ namespace minijava
 		// the value of `setup` is unspecified.  Otherwise, `true` is
 		// `return`ed and `setup` contains the parsed values.
 		bool parse_cmd_options(const std::vector<const char *>& args,
-							   std::ostream& out, program_setup& setup)
+		                       std::ostream& out, program_setup& setup)
 		{
 			auto generic = po::options_description{"Generic Options"};
 			generic.add_options()
@@ -105,20 +104,24 @@ namespace minijava
 			auto varmap = po::variables_map{};
 			const int argc = static_cast<int>(args.size());  // safe cast
 			po::store(po::command_line_parser(argc, args.data())
-					  .options(options).positional(positional).run(), varmap);
+			         .options(options).positional(positional).run(), varmap);
 			po::notify(varmap);
 			check_mutex_option_group(interception, varmap);
 			if (varmap.count("help")) {
 				out << "usage: " << MINIJAVA_PROJECT_NAME << " [OPTIONS] FILE\n"
-					<< '\n' << generic
-					<< '\n' << interception;
+				    << '\n' << generic
+				    << '\n' << interception
+				    << '\n' << other
+					<< '\n'
+					<< "Anywhere a file name is expected, '-' can be used to refer to the standard\n"
+					<< "input or output stream respectively\n";
 				return false;
 			}
 			if (varmap.count("version")) {
 				out << MINIJAVA_PROJECT_NAME << " " << MINIJAVA_PROJECT_VERSION << "\n"
-					<< "Copyright (C) 2016 T. Kahlert, P.J. Serrer, M. Baumann and M. Klammler\n"
-					<< "This is free software; see the source for copying conditions.  There is NO\n"
-					<< "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
+				    << "Copyright (C) 2016 T. Kahlert, P.J. Serrer, M. Baumann and M. Klammler\n"
+				    << "This is free software; see the source for copying conditions.  There is NO\n"
+				    << "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
 				return false;
 			}
 			// If you know a better solution for this, please share your
@@ -136,7 +139,7 @@ namespace minijava
 		// Runs the compiler reading input from `istr`, writing output to
 		// `ostr` and optionally intercepting compilation at `stage`.
 		void run_compiler(std::istream& istr, std::ostream& ostr,
-						  const compilation_stage stage)
+		                  const compilation_stage stage)
 		{
 			const auto infirst = std::istreambuf_iterator<char>{istr};
 			const auto inlast = std::istreambuf_iterator<char>{};
@@ -161,6 +164,7 @@ namespace minijava
 		// exception if needed.
 		void finalize_stream(std::istream& istr)
 		{
+			// Don't test `!istr` because `istr.eof()` is perfectly reasonable.
 			if (istr.bad()) {
 				throw std::ios_base::failure{"Input not readable"};
 			}
@@ -171,8 +175,7 @@ namespace minijava
 		// `throw`s an exception if needed.
 		void finalize_stream(std::ostream& ostr)
 		{
-			ostr.flush();
-			if (!ostr) {
+			if (!ostr.flush()) {
 				throw std::ios_base::failure{"Output not writeable"};
 			}
 		}
@@ -182,8 +185,8 @@ namespace minijava
 		// the streams whether input was fully consumed, is not in error and
 		// output is good; if not, `throw`s an exception.
 		void run_compiler_with_streams(std::istream& istr,
-									   std::ostream& ostr,
-									   const compilation_stage stage)
+		                               std::ostream& ostr,
+		                               const compilation_stage stage)
 		{
 			istr.exceptions(std::ios_base::badbit);
 			ostr.exceptions(std::ios_base::failbit);
@@ -223,9 +226,10 @@ namespace minijava
 				throw std::system_error{ec, "Cannot open output file: " + setup.output};
 			}
 		}
-		run_compiler_with_streams((usestdin ? thestdin :  istr),
-								  (usestdout ? thestdout :  ostr),
-								  setup.stage);
+		run_compiler_with_streams(
+			(usestdin ? thestdin :  istr), (usestdout ? thestdout :  ostr),
+			setup.stage
+		);
 	}
 
 }  // namespace minijava

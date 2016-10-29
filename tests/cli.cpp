@@ -34,7 +34,7 @@ namespace /* anonymous */
 
 	// Tests whether the file `filename` has the `expected` content.
 	bool file_has_content(const std::string& filename,
-						  const std::string& expected)
+	                      const std::string& expected)
 	{
 		std::ifstream istr{filename};
 		if (!istr) {
@@ -49,7 +49,7 @@ namespace /* anonymous */
 	}
 
 	// Creates a string with `n` uniformyly distributed random bytes.  The seed
-	// is deterministic so the test behaves the same evers time.
+	// is deterministic so the test behaves the same every time.
 	std::string make_random_string(const std::size_t n)
 	{
 		auto rndeng = std::default_random_engine{};
@@ -104,7 +104,7 @@ static const std::string valid_program_data = R"java(
 
 
 BOOST_DATA_TEST_CASE(diagnostic_options_produce_output_on_stdout,
-					 all_diagnostic_options)
+                     all_diagnostic_options)
 {
 	using namespace std::string_literals;
 	std::istringstream mystdin{};
@@ -120,7 +120,7 @@ BOOST_DATA_TEST_CASE(diagnostic_options_produce_output_on_stdout,
 
 
 BOOST_DATA_TEST_CASE(if_stdout_not_writable_diagnostic_options_throw,
-					 all_diagnostic_options)
+                     all_diagnostic_options)
 {
 	using namespace std::string_literals;
 	std::istringstream mystdin{};
@@ -153,6 +153,11 @@ BOOST_AUTO_TEST_CASE(calling_real_main_with_no_arguments_is_not_implemented)
 static const testaux::you_can_print_me<std::vector<const char *>> garbage_data[] = {
 	{{"", "--ergo"}},
 	{{"", "--echo", "--echo"}},
+	{{"", "--echo=arg"}},
+	{{"", "--lextest=arg"}},
+	{{"", "--echo=arg", "-"}},
+	{{"", "--output"}},
+	{{"", "--output", "--lextest"}},
 	{{"", "--echo", "--lextest"}},
 	{{"", "--echo", "foo", "bar", "baz"}},
 	{{"", "--lextest", "foo", "bar", "baz"}},
@@ -371,7 +376,7 @@ BOOST_DATA_TEST_CASE(if_file_is_not_readable_all_actions_throw_and_output_nothin
 
 
 BOOST_DATA_TEST_CASE(if_stdin_is_not_readable_all_actions_throw_and_output_nothing,
-					 all_action_options)
+                     all_action_options)
 {
 	using namespace std::string_literals;
 	std::ifstream mystdin{};
@@ -387,7 +392,7 @@ BOOST_DATA_TEST_CASE(if_stdin_is_not_readable_all_actions_throw_and_output_nothi
 
 
 BOOST_DATA_TEST_CASE(if_stdout_is_not_writeable_all_actions_throw,
-					 all_action_options)
+                     all_action_options)
 {
 	using namespace std::string_literals;
 	std::istringstream mystdin{valid_program_data};

@@ -35,7 +35,7 @@ namespace minijava
 	 *
 	 */
 	void real_main(const std::vector<const char *>& args,
-				   std::istream& thestdin,
+	               std::istream& thestdin,
 	               std::ostream& thestdout,
 	               std::ostream& thestderr);
 
