@@ -21,6 +21,9 @@ namespace minijava
 	 * @param args
 	 *     command-line arguments
 	 *
+	 * @param thestdin
+	 *     source for input
+	 *
 	 * @param thestdout
 	 *     destination for regular output
 	 *
@@ -32,10 +35,11 @@ namespace minijava
 	 *
 	 */
 	void real_main(const std::vector<const char *>& args,
+				   std::istream& thestdin,
 	               std::ostream& thestdout,
 	               std::ostream& thestderr);
 
-	// `stdout` and `stderr` are standard-library macros so we cannot use them
-	// as parameter names.
+	// `stdin`, `stdout` and `stderr` are standard-library macros so we cannot
+	// use them as parameter names.
 
 }  // namespace minijava
