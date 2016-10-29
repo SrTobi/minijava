@@ -21,27 +21,49 @@
 
 namespace minijava
 {
+	/**
+	 * @brief
+	 *     A structure to ensure the connection beween a symbol and it's pool.
+	 *
+	 * Should be created via a shared_ptr by a pool and given to symbols created by the same pool.
+	 * The symbols will then hold a reference to this anchor as long as they exist.
+	 * This way the pool can ensure that all symbols have gone out of scope when he is destroyed.
+	 *
+	 * The `tag` is used to compare if two symbols come from the same pool.
+	 */
 	struct symbol_debug_pool_anchor: private boost::noncopyable
 	{
+		/**
+		 * @brief
+		 *     Creates an anchor with a unique tag.
+		 */
 		symbol_debug_pool_anchor()
 			: tag(this)
 		{}
 
+		/**
+		 * @brief
+		 *     Creates an anchor with a custom tag.
+		 *
+		 * @param tag
+		 *     The tag of this anchor
+		 */
 		symbol_debug_pool_anchor(const void* tag)
 			: tag(tag)
 		{
 		}
 
+		/** @brief Tag to compare if two symbols come from the same pool */
 		const void* tag;
 	};
 
 	/**
-		* @brief
-		*     Underlying entry for a symbol.
-		*
-		* Must be provided and owned by an external factory.
-		* If the symbols lifetime exceeds the factory the behaviour is undefined.
-		*/
+	 * @brief
+	 *     Underlying entry for a symbol.
+	 *
+	 * Must be provided and owned by an external factory.
+	 * If the symbols lifetime exceeds the factory the behaviour is undefined.
+	 */
 	struct symbol_entry final: private boost::noncopyable
 	{
 		/** The precomputed hash of the symbol */
@@ -53,7 +75,22 @@ namespace minijava
 		/** The actual string. Must be NUL-terminated */
 		char cstr[1];
 
-
+		/**
+		 * @brief
+		 *     Allocates a symbol_entry
+		 *
+		 * This will allocate one continuous chunk of memory and copy
+		 * all necessary data into it.
+		 *
+		 * @param alloc
+		 *     The allocator that should be used to allocate the memory
+		 *
+		 * @param str
+		 *     The string value of the symbol.
+		 *
+		 * @returns
+		 *     The newly created symbol_entry
+		 */
 		template<typename AllocT>
 		static const symbol_entry * allocate(AllocT& alloc, const std::string& str)
 		{
@@ -74,6 +111,19 @@ namespace minijava
 			return entry;
 		}
 
+		/**
+		 * @brief
+		 *     Deallocates a given symbol_entry
+		 *
+		 * @param alloc
+		 *     The allocator that should be used to deallocate the memory.
+		 *
+		 * This should be the same that was used to create the symbol_entry.
+		 *
+		 * @param entry
+		 *     The entry that should be deallocated.
+		 *
+		 */
 		template<typename AllocT>
 		static void deallocate(AllocT& alloc, const symbol_entry* entry)
 		{
@@ -85,6 +135,14 @@ namespace minijava
 			alloc_traits::deallocate(alloc, const_cast<char*>(mem), mem_size);
 		}
 
+		/**
+		 * @brief
+		 *     Returns a spcial entry for the empty symbol.
+		 *
+		 * @returns
+		 *     Entry to the empty symbol
+		 *
+		 */
 		static const symbol_entry * get_empty_symbol_entry()
 		{
 			const auto hash = std::hash<std::string>()(std::string(""));
@@ -96,6 +154,16 @@ namespace minijava
 		}
 
 	private:
+		/**
+		 * @brief
+		 *     Calculates the needed size for an entry.
+		 *
+		 * @param length
+		 *     The length of the symbol string
+		 *
+		 * @returns
+		 *     The needed size for an entry with the given string.
+		 */
 		static std::size_t _struct_size(std::size_t length) noexcept
 		{
 			return sizeof(symbol_entry) + length;
@@ -532,7 +600,13 @@ namespace minijava
 
 
 	private:
-
+		/**
+		 * @brief
+		 *     Returns a static allocated empty symbol
+		 *
+		 * @returns
+		 *     The empty symbol
+		 */
 		static symbol _get_empty_symbol()
 		{
 			static const symbol_entry * empty_symbol_entry_ptr = symbol_entry::get_empty_symbol_entry();
@@ -545,12 +619,30 @@ namespace minijava
 		const symbol_entry * _entry;
 	};  // class symbol
 
-
+	/**
+	 * @brief
+	 *     Used to allocate one symbol.
+	 *
+	 * The static_symbol_pool can be used to create a single symbol.
+	 * It's special property however is, that it's created symbols,
+	 * are allowed to be create within one another.
+	 * The programmer has to take care that only one static_symbol_pool
+	 * is created per possible string value! Two symbols with the same
+	 * content from different static_symbol_pools will NOT compare equal!
+	 * The only exception to this rule is the empty symbol.
+	 */
 	class static_symbol_pool: private boost::noncopyable
 	{
-	public:
+	private:
 		using entryptr_type = std::unique_ptr<const symbol_entry, std::function<void(const symbol_entry*)>>;
 	public:
+		/**
+		 * @brief
+		 *     Constructs the static_symbol_pool with a given string
+		 *
+		 * @param str
+		 *     The content for the symbol that is created by this pool.
+		 */
 		static_symbol_pool(const std::string& str)
 		{
 			std::function<void(const symbol_entry*)> deleter = [this](const symbol_entry* entry)
@@ -564,11 +656,22 @@ namespace minijava
 			_anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
 		}
 
+		/**
+		 * @brief
+		 *     Destructs the static_symbol_pool.
+		 */
 		~static_symbol_pool()
 		{
 			assert(_anchor.unique());
 		}
 
+		/**
+		 * @brief
+		 *     Returns the pool's symbol
+		 *
+		 * @returns
+		 *     the one and only symbol of this pool.
+		 */
 		symbol get() const
 		{
 			return symbol(_entry.get(), _anchor);
