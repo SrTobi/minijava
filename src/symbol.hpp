@@ -481,7 +481,7 @@ namespace minijava
 		char back() const
 		{
 			assert(size() > 0);
-			return *crend();
+			return *crbegin();
 		}
 
 		/**
