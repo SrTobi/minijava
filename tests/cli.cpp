@@ -167,17 +167,18 @@ static const testaux::you_can_print_me<std::vector<const char *>> garbage_data[]
 BOOST_DATA_TEST_CASE(garbage_throws, garbage_data)
 {
 	using namespace std::string_literals;
+
+	auto exception_is_empty = [](const std::exception& e)
+	{
+		return e.what()[0] != '\0';
+	};
+
 	std::istringstream mystdin{};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
-	BOOST_REQUIRE_THROW(
-		try {
-			minijava::real_main(sample.value, mystdin, mystdout, mystderr);
-		} catch (const std::exception& e) {
-			BOOST_REQUIRE(e.what()[0] != '\0');
-			throw;
-		}
-	, std::exception);
+	BOOST_REQUIRE_EXCEPTION(
+			minijava::real_main(sample.value, mystdin, mystdout, mystderr)
+	, std::exception, exception_is_empty);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
