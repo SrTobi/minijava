@@ -24,7 +24,7 @@ namespace minijava
 	{
 	}
 
-	explicit internal_compiler_error::internal_compiler_error(const std::string& msg) :
+	internal_compiler_error::internal_compiler_error(const std::string& msg) :
 		std::runtime_error{msg}
 	{
 	}
