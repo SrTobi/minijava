@@ -9,26 +9,43 @@
 namespace minijava
 {
 
+	namespace detail
+	{
+
+		bool is_valid_identifier(symbol lexval) noexcept;
+
+		bool is_valid_integer_literal(symbol lexval) noexcept;
+
+		constexpr bool has_lexval(const token_type tt) noexcept
+		{
+			const auto cat = category(tt);
+			return (cat == token_category::identifier)
+				|| (cat == token_category::literal);
+		}
+
+	}
+
 	template <typename DataT>
 	token::token(const token_type type, DataT&& data) :
 		_type{type}, _data{std::forward<DataT>(data)}
 	{
 	}
 
-	inline token token::create_identifier(string_type name)
+	inline token token::create_identifier(symbol lexval)
 	{
-		return token{token_type::identifier, std::move(name)};
+		assert(detail::is_valid_identifier(lexval));
+		return token{token_type::identifier, std::move(lexval)};
 	}
 
-	inline token token::create_integer_literal(integer_type value)
+	inline token token::create_integer_literal(symbol lexval)
 	{
-		return token{token_type::integer_literal, std::move(value)};
+		assert(detail::is_valid_integer_literal(lexval));
+		return token{token_type::integer_literal, std::move(lexval)};
 	}
 
 	inline token token::create(const token_type tt)
 	{
-		assert(tt != token_type::identifier);
-		assert(tt != token_type::integer_literal);
+		assert(!detail::has_lexval(tt));
 		return token{tt, boost::blank{}};
 	}
 
@@ -37,16 +54,15 @@ namespace minijava
 		return _type;
 	}
 
-	inline token::string_type token::name() const
+	inline symbol token::lexval() const
 	{
-		assert(_type == token_type::identifier);
-		return boost::get<string_type>(_data);
+		assert(has_lexval());
+		return boost::get<symbol>(_data);
 	}
 
-	inline token::integer_type token::value() const
+	inline bool token::has_lexval() const noexcept
 	{
-		assert(_type == token_type::integer_literal);
-		return boost::get<integer_type>(_data);
+		return detail::has_lexval(type());
 	}
 
 	inline std::size_t token::line() const noexcept
@@ -71,7 +87,7 @@ namespace minijava
 
 	inline bool token::equal(const token& lhs, const token& rhs) noexcept
 	{
-		return (lhs._type == rhs._type) && (lhs._data == rhs._data);
+		return ((lhs._type == rhs._type) && (lhs._data == rhs._data));
 	}
 
 	inline bool operator==(const token& lhs, const token& rhs) noexcept
