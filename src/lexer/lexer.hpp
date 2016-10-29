@@ -134,10 +134,11 @@ namespace minijava
 		 * @brief Moves the iterator to the next value and returns the char.
 		 * @return The char at the new iterator position.
 		 * */
-		int32_t _next() {
-			if (_is_eof_iterator()) return -1;
+		int _next() {
+			if (_current_is_last()) return -1;
 			_column++;
-			auto c = *(++_current_it);
+			_current_it++;
+			auto c = _current_is_last() ? -1 : *_current_it;
 			if (c == '\n') {
 				_column = 1;
 				_line++;
@@ -154,7 +155,7 @@ namespace minijava
 		 *     true, if the current char is equal to `c`
 		 */
 		bool _maybe_token(char c, token_type type) {
-			if (_current() != c) {
+			if (_current_is_last() || _current() != c) {
 				return false;
 			}
 
@@ -165,12 +166,18 @@ namespace minijava
 
 		/** @brief Moves the iterator to the next value. */
 		void _skip() {
-			if (_is_eof_iterator()) return;
+			if (_current_is_last()) return;
 			_column++;
-			if (*(++_current_it) == '\n') {
+			_current_it++;
+			if (_current_it != _last_it && *_current_it == '\n') {
 				_column = 1;
 				_line++;
 			}
+		}
+
+		/** @brief Returns true, if the given char is a valid whitespace for minij */
+		bool _isspace(char c) {
+			return c == ' ' || c == '\r' || c == '\n' || c == '\t';
 		}
 
 		/**
@@ -187,7 +194,7 @@ namespace minijava
 
 		void _consume_block_comment();
 
-		bool _is_eof_iterator();
+		bool _current_is_last();
 
 	};  // class lexer
 

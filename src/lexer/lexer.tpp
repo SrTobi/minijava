@@ -28,14 +28,14 @@ namespace minijava
 	template<typename InIterT, typename StrPoolT>
 	void lexer<InIterT, StrPoolT>::advance()
 	{
-		if (_is_eof_iterator()) {
+		if (_current_is_last()) {
 			_current_token = token::create(token_type::eof);
 			return;
 		}
 
 
 		// skip whitespaces
-		while (std::isspace(_current())) _skip();
+		while (_isspace(_current())) _skip();
 
 		// store token start position
 		auto line = _line;
@@ -133,7 +133,7 @@ namespace minijava
 
 	template<typename InIterT, typename StrPoolT>
 	void lexer<InIterT, StrPoolT>::_consume_block_comment() {
-		while (!_is_eof_iterator()) {
+		while (!_current_is_last()) {
 			if (_current() == '*' && _next() == '/') {
 				_skip();
 				return;
@@ -149,7 +149,7 @@ namespace minijava
 		do {
 			buffer += _current();
 			_skip();
-		} while (!_is_eof_iterator() && std::isalnum(_current()));
+		} while (!_current_is_last() && std::isalnum(_current()));
 
 		const auto symbol = _id_pool.normalize(buffer);
 		_current_token = token::create_identifier(symbol);
@@ -181,7 +181,7 @@ namespace minijava
 	}
 
 	template<typename InIterT, typename StrPoolT>
-	bool lexer<InIterT, StrPoolT>::_is_eof_iterator() {
+	bool lexer<InIterT, StrPoolT>::_current_is_last() {
 		return _current_it == _last_it;
 	}
 
