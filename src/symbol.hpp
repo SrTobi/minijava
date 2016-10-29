@@ -23,12 +23,12 @@ namespace minijava
 {
 	/**
 	 * @brief
-	 *     A structure to ensure the connection beween a symbol and it's pool.
+	 *     A structure to ensure the connection beween a symbol and its pool.
 	 *
 	 * Should be created via a shared_ptr by a pool and given to symbols created by the same pool.
 	 * The symbols will then hold a reference to this anchor as long as they exist.
 	 * If the pool is destroyed it sets the pool_available property to false.
-	 * This way a symbol can check whether it's pool still exists.
+	 * This way a symbol can check whether its pool still exists.
 	 *
 	 * The `tag` is used to compare if two symbols come from the same pool.
 	 */
@@ -666,7 +666,7 @@ namespace minijava
 	 *     Used to allocate one symbol.
 	 *
 	 * The static_symbol_pool can be used to create a single symbol.
-	 * It's special property however is, that it's created symbols,
+	 * Its special property however is, that its created symbols,
 	 * are allowed to be compared with one another.
 	 * The programmer has to take care that only one static_symbol_pool
 	 * is created per possible string value! Two symbols with the same

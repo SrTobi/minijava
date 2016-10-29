@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(empty_symbol_is_empty)
 
 BOOST_AUTO_TEST_CASE(test_symbol_index_access)
 {
-    std::string origin = "it's good if you know what you want";
+    std::string origin = "its good if you know what you want";
     minijava::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
