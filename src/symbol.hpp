@@ -386,7 +386,7 @@ namespace minijava
 		 * Returns an iterator pointing to the past-the-end character of the symbol.
 		 *
 		 * @returns
-		 *     An iterator to the beginning of the symbol.
+		 *     An iterator to the end of the symbol.
 		 *
 		 */
 		const_iterator end() const noexcept
@@ -416,7 +416,7 @@ namespace minijava
 		 * Returns an iterator pointing to the past-the-end character of the symbol.
 		 *
 		 * @returns
-		 *     An iterator to the beginning of the symbol.
+		 *     An iterator to the end of the symbol.
 		 *
 		 */
 		const_iterator cend() const noexcept
