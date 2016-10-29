@@ -6,6 +6,8 @@ tagfile="${rootdir}/.b6353339-fae0-4c5f-83bf-66463a3bafc6.tag"
 builddir="${rootdir}/stage"
 envfile="${builddir}/.environment"
 clean=0
+force=0
+buildtype="${CMAKE_BUILD_TYPE-Release}"
 
 message() {
 	level="${1}"
@@ -22,8 +24,12 @@ first() {
 	echo "$1"
 }
 
+dumpenv() {
+	CMAKE_BUILD_TYPE="${buildtype}" env
+}
+
 need_reconfiguration() {
-	if test ${clean} -gt 0
+	if test ${force} -gt 0
 	then
 		message info "Reconfiguration forced by user"
 		return 0
@@ -31,7 +37,7 @@ need_reconfiguration() {
 	if test -d "${builddir}/" && test -r "${envfile}"
 	then
 		oldhash=$(first $(md5sum "${envfile}"))
-		newhash=$(first $(env | md5sum))
+		newhash=$(first $(dumpenv | md5sum))
 		if test "x${oldhash}" = "x${newhash}"
 		then
 			message info "Environment did not change; no reconfiguration needed"
@@ -48,8 +54,47 @@ do
 	case "${arg}"
 	in
 		--help)
-			echo "usage: build [--clean]"
+			echo "build [--force] [--build-type=TYPE]"
+			echo "build --clean"
+			echo ""
+			echo "Configures, builds and unit tests the project in the 'stage'"
+			echo "sub-directory of the source tree."
+			echo ""
+			echo "Options:"
+			echo ""
+			echo "  --build-type=TYPE   set the CMake build type to TYPE"
+			echo "  --force             always force reconfiguration and rebuild everything"
+			echo "  --clean             only remove the build-directory"
+			echo "  --help              display this text and exit"
+			echo "  --version           display version information and exit"
+			echo ""
+			echo "Options that take an argument only understand the '--option=VALUE'"
+			echo "and not the '--option VALUE' syntax.  Arguments are mandatory."
+			echo ""
+			echo "Environment Variables:"
+			echo ""
+			echo "  CMAKE_BUILD_TYPE    default CMake build type"
+			echo ""
+			echo "If the environment or the selected build type has changed since"
+			echo "the last invocation, the script will always do a clean build."
+			echo ""
+			echo "You can execute this script from any directory.  It will try"
+			echo "to find the source directory itself."
+			echo ""
+			echo "The exit status will be zero if and only if all steps completed"
+			echo "successfully."
 			exit
+			;;
+		--version)
+			echo "build 1.0"
+			echo "Configure, build and unit test the project."
+			exit
+			;;
+		--build-type=*)
+			buildtype="${arg#--build-type=}"
+			;;
+		--force)
+			force=1
 			;;
 		--clean)
 			clean=1
@@ -66,13 +111,20 @@ unset arg
 
 test -f "${tagfile}" || die "Cannot find root directory"
 
+if test ${clean} -gt 0
+then
+	rm -rf "${builddir}/" || die "Cannot remove old build directory"
+	exit
+fi
+
 if need_reconfiguration
 then
    rm -rf "${builddir}/" || die "Cannot remove old build directory"
    mkdir -p "${builddir}/" || die "Cannot create build directory"
-   env > "${envfile}" || die "Cannot save environment"
-   (cd "${builddir}/" && cmake ..) || die "Cannot configure project"
+   dumpenv > "${envfile}" || die "Cannot save environment"
+   ( cd "${builddir}/" && cmake -DCMAKE_BUILD_TYPE="${buildtype}" .. )        \
+	   || die "Cannot configure project"
 fi
 
-(cd "${builddir}/" && cmake --build .) || die "Cannot build project"
-(cd "${builddir}/" && cmake --build . --target test) || die "Unit tests failed"
+( cd "${builddir}/" && cmake --build . ) || die "Cannot build project"
+( cd "${builddir}/" && cmake --build . --target test ) || die "Unit tests failed"
