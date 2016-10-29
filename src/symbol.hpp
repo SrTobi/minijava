@@ -27,7 +27,8 @@ namespace minijava
 	 *
 	 * Should be created via a shared_ptr by a pool and given to symbols created by the same pool.
 	 * The symbols will then hold a reference to this anchor as long as they exist.
-	 * This way the pool can ensure that all symbols have gone out of scope when he is destroyed.
+	 * If the pool is destroyed it sets the pool_available property to false.
+	 * This way a symbol can check wether it's pool still exists.
 	 *
 	 * The `tag` is used to compare if two symbols come from the same pool.
 	 */
@@ -65,17 +66,17 @@ namespace minijava
 	 *     Underlying entry for a symbol.
 	 *
 	 * Must be provided and owned by an external factory.
-	 * If the symbols lifetime exceeds the factory the behaviour is undefined.
+	 * If a symbol used after the factory has been deconstructed the behaviour is undefined.
 	 */
 	struct symbol_entry final: private boost::noncopyable
 	{
-		/** The precomputed hash of the symbol */
+		/** @brief The precomputed hash of the symbol */
 		std::size_t hash;
 
-		/** Size of the symbol's string */
+		/** @brief Size of the symbol's string */
 		std::size_t size;
 
-		/** The actual string. Must be NUL-terminated */
+		/** @brief The actual string. Must be NUL-terminated */
 		char cstr[1];
 
 		/**
@@ -228,17 +229,28 @@ namespace minijava
 	 * Instances of this type have exactly one non-`static` data member which
 	 * is a pointer to an internal string reperesentation.  The pointed-to
 	 * internal structure is not owned by the symbol itself, but by a so called
-	 * pool. Symbols can only be created by pools and remain only valid as long
+	 * pool. Symbols can only be created by pools and remain only valid for use as long
 	 * as the pool exists. Equality on `symbol` objects is defined in terms
 	 * of pointer identity.  Two symbols created by different pools must not be
-	 * compared in any way. The properties of a symbol are stored inside the internal
+	 * compared in any way, if not stated anyway.
+	 * The properties of a symbol are stored inside the internal
 	 * symbol structure and are accessible by various methods.
 	 */
 	class symbol final: protected detail::symbol_base
 	{
 		friend struct std::hash<symbol>;
 	public:
-
+		/**
+		 * @brief
+		 *     Creates an empty symbol.
+		 *
+		 * The default constructed empty symbol is a special case,
+		 * that lives in a special static pool.
+		 *
+		 * It is allowed to compare two empty symbols regardless of
+		 * the pool they were created in.
+		 *
+		 */
 		symbol()
 			: symbol(_get_empty_symbol())
 		{
@@ -253,6 +265,8 @@ namespace minijava
 		 * @param entry
 		 *     The entry, this symbol will point to
 		 *
+		 * @param anchor
+		 *     An anchor that is used to check some pool properties.
 		 */
 		explicit symbol(const symbol_entry * entry, const std::shared_ptr<const symbol_debug_pool_anchor>& anchor)
 			: detail::symbol_base(anchor)
@@ -580,7 +594,7 @@ namespace minijava
 		*     second `string` to compare
 		*
 		* @returns
-		*     whether `lhs` and `rhs` point to the same internal symbol entry
+		*     whether `lhs` and `rhs` are equal
 		*
 		*/
 		friend bool operator==(const symbol& lhs, const symbol& rhs) noexcept
@@ -603,7 +617,7 @@ namespace minijava
 		*     second `string` to compare
 		*
 		* @returns
-		*     whether `lhs` and `rhs` wrap different canonical pointers
+		*     whether `lhs` and `rhs` are unequal
 		*
 		*/
 		friend bool operator!=(const symbol& lhs, const symbol& rhs) noexcept
@@ -653,7 +667,7 @@ namespace minijava
 	 *
 	 * The static_symbol_pool can be used to create a single symbol.
 	 * It's special property however is, that it's created symbols,
-	 * are allowed to be create within one another.
+	 * are allowed to be compared with one another.
 	 * The programmer has to take care that only one static_symbol_pool
 	 * is created per possible string value! Two symbols with the same
 	 * content from different static_symbol_pools will NOT compare equal!
@@ -714,7 +728,7 @@ namespace minijava
 
 	/**
 	 * @brief
-	 *     Inserts the character sequence referred to by the wrapped pointer
+	 *     Inserts the character sequence referred to by the symbol
 	 *     into an output stream.
 	 *
 	 * @param os

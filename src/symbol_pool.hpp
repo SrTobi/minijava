@@ -77,23 +77,16 @@ namespace minijava
 	 *
 	 * Symbols can be added into the pool.  This process is called
 	 * *normalization*.  After a symbol has been normalized, it is contained in
-	 * the bool for as long as it exists and has a canonical address.  Further
+	 * the pool for as long as it exists and has a canonical address.  Further
 	 * calls to `normalize` will `return` that address.  All canonical
 	 * addresses become invalid, once the pool is destroyed.
 	 *
-	 * Note that after copying a `symbol_pool` canonical pointers from the
-	 * original and the copy will mismatch.  Moving a `symbol_pool` does not
-	 * invalidate canonical pointers.  In a sense, canonical pointers can be
-	 * thought of as iterators of node-based containers.
+	 * Moving a `symbol_pool` does not invalidate canonical pointers.
 	 *
-	 * @tparam InnerAllocT
+	 * @tparam AllocT
 	 *     allocator type used for allocating memory for normalized symbols
 	 *
-	 * @tparam OuterAllocT
-	 *     allocator type used for allocating internal data structures
-	 *
 	 */
-	// work version!: do not use any specific template parameters as they are subject to change! only <>
 	template<typename AllocT = std::allocator<char>>
 	class symbol_pool final: private boost::noncopyable
 	{
@@ -137,6 +130,10 @@ namespace minijava
 		 */
 		symbol_pool(const allocator_type& alloc);
 
+		/**
+		 * @brief
+		 *     Move constructs this symbol pool
+		 */
 		symbol_pool(symbol_pool&&);
 
 		/**
@@ -147,6 +144,10 @@ namespace minijava
 		 */
 		~symbol_pool();
 
+		/**
+		 * @brief
+		 *     Move assigns this symbol pool
+		 */
 		symbol_pool& operator=(symbol_pool&& old);
 
 
