@@ -13,6 +13,9 @@
 #include "lexer/token_iterator.hpp"
 #include "symbol_pool.hpp"
 
+using namespace std::string_literals; // for strings with embedded null bytes
+using tt = minijava::token_type;
+
 
 namespace /* anonymous */
 {
@@ -40,7 +43,7 @@ namespace /* anonymous */
 			sample.input = _input;
 			for (const auto& t : _expected) {
 				auto copy = t;
-				if (t.type() == minijava::token_type::identifier) {
+				if (t.type() == tt::identifier) {
 					auto canon = sample.pool.normalize(t.name().c_str());
 					copy = minijava::token::create_identifier(canon);
 				}
@@ -62,9 +65,9 @@ namespace /* anonymous */
 			return minijava::token::create_integer_literal(value);
 		}
 
-		auto _make_expected_token(const minijava::token_type tt)
+		auto _make_expected_token(const minijava::token_type type)
 		{
-			return minijava::token::create(tt);
+			return minijava::token::create(type);
 		}
 
 		minijava::symbol_pool<> _pool{};
@@ -84,7 +87,7 @@ namespace /* anonymous */
 
 		template <typename... ArgTs>
 		success_test(std::string&& input, ArgTs&&... args)
-				: failure_test(std::move(input), std::forward<ArgTs>(args)..., minijava::token_type::eof) { }
+				: failure_test(std::move(input), std::forward<ArgTs>(args)..., tt::eof) { }
 	};
 
 }  // namespace /* anonymous */
@@ -92,12 +95,11 @@ namespace /* anonymous */
 
 BOOST_AUTO_TEST_CASE(empty_input_starts_with_eof_and_stays_there)
 {
-	using namespace std::string_literals;
 	const auto epsilon = ""s;
 	auto pool = minijava::symbol_pool<>{};
 	auto lex = minijava::make_lexer(std::begin(epsilon), std::end(epsilon), pool);
 	for (auto i = 0; i < 100; ++i) {
-		BOOST_REQUIRE_EQUAL(minijava::token_type::eof, lex.current_token().type());
+		BOOST_REQUIRE_EQUAL(tt::eof, lex.current_token().type());
 		BOOST_REQUIRE(lex.current_token_is_eof());
 	}
 }
@@ -126,9 +128,6 @@ BOOST_DATA_TEST_CASE(single_tokens_are_lexed_correctly, single_token_data)
 	}
 }
 
-
-using namespace std::string_literals; // for strings with null bytes in the middle
-using tt = minijava::token_type;
 
 static const success_test success_data[] = {
 		// empty input
