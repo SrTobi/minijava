@@ -159,7 +159,7 @@ namespace minijava
 	template<typename InIterT, typename SymPoolT>
 	void lexer<InIterT, SymPoolT>::_scan_integer() {
 		if (_current() == '0') {
-			if (_next() == '0') {
+			if (std::isdigit(_next())) {
 				throw lexical_error{"invalid integer literal"};
 			}
 
