@@ -55,6 +55,9 @@ namespace minijava
 
 		/** @brief Tag to compare if two symbols come from the same pool */
 		const void* tag;
+
+		/** @brief Indicates wether the pool is still constructed */
+		bool pool_available = true;
 	};
 
 	/**
@@ -186,6 +189,11 @@ namespace minijava
 				return lhs._debugAnchor->tag == rhs._debugAnchor->tag;
 			}
 
+			inline bool is_pool_available() const
+			{
+				return _debugAnchor->pool_available;
+			}
+
 		private:
 			/** @brief Reference to a pool anchor for some checks */
 			std::shared_ptr<const symbol_debug_pool_anchor> _debugAnchor;
@@ -202,6 +210,11 @@ namespace minijava
 			{
 				(void) lhs;
 				(void) rhs;
+				return true;
+			}
+
+			inline bool is_pool_available() const noexcept
+			{
 				return true;
 			}
 		};
@@ -275,7 +288,7 @@ namespace minijava
 		 */
 		const char * c_str() const noexcept
 		{
-			return _entry->cstr;
+			return entry()->cstr;
 		}
 
 		/**
@@ -295,7 +308,7 @@ namespace minijava
 		 */
 		size_type size() const noexcept
 		{
-			return _entry->size;
+			return entry()->size;
 		}
 
 		/**
@@ -334,7 +347,7 @@ namespace minijava
 		 */
 		const char * data() const noexcept
 		{
-			return _entry->cstr;
+			return entry()->cstr;
 		}
 
 		/**
@@ -379,7 +392,7 @@ namespace minijava
 		 */
 		const_iterator cbegin() const noexcept
 		{
-			return _entry->cstr;
+			return entry()->cstr;
 		}
 
 		/**
@@ -469,7 +482,7 @@ namespace minijava
 		 */
 		bool empty() const noexcept
 		{
-			return _entry->size == 0;
+			return entry()->size == 0;
 		}
 
 		/**
@@ -492,7 +505,7 @@ namespace minijava
 		char operator[](std::size_t pos) const
 		{
 			assert(pos < size());
-			return _entry->cstr[pos];
+			return entry()->cstr[pos];
 		}
 
 		/**
@@ -519,7 +532,7 @@ namespace minijava
 		{
 			if(pos >= size())
 				throw std::out_of_range("invalid position in symbol");
-			return _entry->cstr[pos];
+			return entry()->cstr[pos];
 		}
 
 		/**
@@ -615,6 +628,21 @@ namespace minijava
 			return symbol(empty_symbol_entry_ptr, anchor);
 		}
 
+		/**
+		 * @brief
+		 *     Returns if the internal entry.
+		 *
+		 * In debug mode this checks if the pool is still constructed.
+		 *
+		 * @returns
+		 *     The internal entry.
+		 */
+		inline const symbol_entry * entry() const
+		{
+			assert(is_pool_available());
+			return _entry;
+		}
+
 		/** @brief The internal entry. */
 		const symbol_entry * _entry;
 	};  // class symbol
@@ -662,7 +690,7 @@ namespace minijava
 		 */
 		~static_symbol_pool()
 		{
-			assert(_anchor.unique());
+			_anchor->pool_available = false;
 		}
 
 		/**

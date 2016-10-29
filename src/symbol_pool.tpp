@@ -35,6 +35,7 @@ namespace minijava
 		, _pool(std::move(old._pool))
 		, _anchor(std::move(old._anchor))
 	{
+		old._anchor = std::make_shared<symbol_debug_pool_anchor>();
 	}
 
 	template<typename AllocT>
@@ -50,6 +51,7 @@ namespace minijava
 		_alloc = std::move(old._alloc);
 		_pool = std::move(old._pool);
 		_anchor = std::move(old._anchor);
+		old._anchor = std::make_shared<symbol_debug_pool_anchor>();
 
 		return *this;
 	}
@@ -98,7 +100,7 @@ namespace minijava
 	template<typename AllocT >
 	void symbol_pool<AllocT>::_clear_pool()
 	{
-		assert(_anchor.unique());
+		_anchor->pool_available = false;
 
 		for(auto& entry: _pool)
 		{
