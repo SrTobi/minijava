@@ -500,7 +500,7 @@ namespace minijava
 		*/
 		friend bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
-			if(lhs.empty() || rhs.empty())
+			if(lhs.empty() && rhs.empty())
 				return true;
 
 			assert(have_compatible_pool(lhs, rhs));
