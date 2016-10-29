@@ -168,7 +168,7 @@ BOOST_DATA_TEST_CASE(garbage_throws, garbage_data)
 {
 	using namespace std::string_literals;
 
-	auto exception_is_empty = [](const std::exception& e)
+	auto exception_is_not_empty = [](const std::exception& e)
 	{
 		return e.what()[0] != '\0';
 	};
