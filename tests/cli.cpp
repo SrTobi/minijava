@@ -127,10 +127,9 @@ BOOST_DATA_TEST_CASE(if_stdout_not_writable_diagnostic_options_throw,
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	mystdout.setstate(std::ios_base::failbit);
-	try {
-		minijava::real_main({"", sample.c_str()}, mystdin, mystdout, mystderr);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const std::exception&) { /* good */ }
+	BOOST_REQUIRE_THROW(
+		minijava::real_main({"", sample.c_str()}, mystdin, mystdout, mystderr)
+	, std::exception);
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
 
@@ -141,10 +140,9 @@ BOOST_AUTO_TEST_CASE(calling_real_main_with_no_arguments_is_not_implemented)
 	std::istringstream mystdin{};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
-	try {
-		minijava::real_main({""}, mystdin, mystdout, mystderr);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const minijava::not_implemented_error&) { /* good, kinda */ }
+	BOOST_REQUIRE_THROW(
+		minijava::real_main({""}, mystdin, mystdout, mystderr)
+	, std::exception);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
@@ -172,12 +170,14 @@ BOOST_DATA_TEST_CASE(garbage_throws, garbage_data)
 	std::istringstream mystdin{};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
-	try {
-		minijava::real_main(sample.value, mystdin, mystdout, mystderr);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const std::exception& e) {
-		BOOST_REQUIRE(e.what()[0] != '\0');
-	}
+	BOOST_REQUIRE_THROW(
+		try {
+			minijava::real_main(sample.value, mystdin, mystdout, mystderr);
+		} catch (const std::exception& e) {
+			BOOST_REQUIRE(e.what()[0] != '\0');
+			throw;
+		}
+	, std::exception);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
@@ -363,13 +363,14 @@ BOOST_DATA_TEST_CASE(if_file_is_not_readable_all_actions_throw_and_output_nothin
 	std::istringstream mystdin{};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
-	try {
+
+	BOOST_REQUIRE_THROW(
 		minijava::real_main(
 			{"", sample.c_str(), filename.c_str()},
 			mystdin, mystdout, mystderr
-		);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const std::exception& e) { /* okay */ }
+		)
+	, std::exception);
+
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
@@ -383,10 +384,10 @@ BOOST_DATA_TEST_CASE(if_stdin_is_not_readable_all_actions_throw_and_output_nothi
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	mystdin.setstate(std::ios_base::badbit);
-	try {
-		minijava::real_main({"", sample.c_str()}, mystdin, mystdout, mystderr);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const std::exception& e) { /* okay */ }
+
+	BOOST_REQUIRE_THROW(
+		minijava::real_main({"", sample.c_str()}, mystdin, mystdout, mystderr)
+	, std::exception);
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
 
@@ -399,10 +400,10 @@ BOOST_DATA_TEST_CASE(if_stdout_is_not_writeable_all_actions_throw,
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	mystdout.setstate(std::ios_base::failbit);
-	try {
+
+	BOOST_REQUIRE_THROW(
 		minijava::real_main({"", sample.c_str()}, mystdin, mystdout, mystderr);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const std::exception& e) { /* okay */ }
+	, std::exception);
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
 
@@ -440,10 +441,9 @@ BOOST_AUTO_TEST_CASE(lextest_for_invalid_token_sequence_throws_exception)
 	std::istringstream mystdin{"int nan = 034g7;"};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
-	try {
-		minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr);
-		TESTAUX_FAIL_NO_EXCEPTION();
-	} catch (const std::exception& e) { /* okay */ }
+	BOOST_REQUIRE_THROW(
+		minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr)
+	, std::exception);
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 	// It is unspecified what will be written to standard output in this case.
 }
