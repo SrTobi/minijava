@@ -71,7 +71,7 @@ namespace minijava
 		 *     error message
 		 *
 		 */
-		internal_compiler_error(const std::string& msg);
+		explicit internal_compiler_error(const std::string& msg);
 
 		/**
 		 * @brief
