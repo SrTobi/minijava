@@ -25,7 +25,7 @@ namespace minijava
 	template<typename AllocT >
 	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
 		: _alloc(alloc)
-		, _anchor(std::make_shared<symbol_debug_pool_anchor>(this))
+		, _anchor(std::make_shared<symbol_debug_pool_anchor>())
 	{
 	}
 

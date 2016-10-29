@@ -23,6 +23,10 @@ namespace minijava
 {
 	struct symbol_debug_pool_anchor: private boost::noncopyable
 	{
+		symbol_debug_pool_anchor()
+			: tag(this)
+		{}
+
 		symbol_debug_pool_anchor(const void* tag)
 			: tag(tag)
 		{
