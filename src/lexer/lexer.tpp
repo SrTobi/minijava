@@ -164,7 +164,7 @@ namespace minijava
 			}
 
 			const auto symbol = _lit_pool.normalize("0");
-			_current_token = token::create_identifier(symbol);
+			_current_token = token::create_integer_literal(symbol);
 		} else {
 			auto buffer = std::string{};
 
@@ -174,7 +174,7 @@ namespace minijava
 			} while (!_current_is_last() && std::isdigit(_current()));
 
 			const auto symbol = _lit_pool.normalize(buffer);
-			_current_token = token::create_identifier(symbol);
+			_current_token = token::create_integer_literal(symbol);
 		}
 	}
 
