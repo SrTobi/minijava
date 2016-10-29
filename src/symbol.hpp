@@ -185,12 +185,12 @@ namespace minijava
 				assert(anchor != nullptr);
 			}
 
-			static inline bool have_compatible_pool(const symbol_assertion_base& lhs, const symbol_assertion_base& rhs) noexcept
+			static bool have_compatible_pool(const symbol_assertion_base& lhs, const symbol_assertion_base& rhs) noexcept
 			{
 				return lhs._debugAnchor->tag == rhs._debugAnchor->tag;
 			}
 
-			inline bool is_pool_available() const
+			bool is_pool_available() const
 			{
 				return _debugAnchor->pool_available;
 			}
@@ -207,14 +207,14 @@ namespace minijava
 				(void) anchor;
 			}
 
-			static inline bool have_compatible_pool(const symbol_release_base& lhs, const symbol_release_base& rhs) noexcept
+			static bool have_compatible_pool(const symbol_release_base& lhs, const symbol_release_base& rhs) noexcept
 			{
 				(void) lhs;
 				(void) rhs;
 				return true;
 			}
 
-			inline bool is_pool_available() const noexcept
+			bool is_pool_available() const noexcept
 			{
 				return true;
 			}
