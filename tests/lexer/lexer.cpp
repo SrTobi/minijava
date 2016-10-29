@@ -223,10 +223,13 @@ BOOST_DATA_TEST_CASE(incorrect_input_lexed_correctly, failure_data)
 	auto s = sample.get();
 	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool);
 
-	for (std::size_t i = 0; i < s.expected.size() - 1; ++i, lex.advance()) {
-		BOOST_CHECK_EQUAL(s.expected[i], lex.current_token());
+	if (!s.expected.empty()) {
+		for (std::size_t i = 0; i < s.expected.size() - 1; ++i, lex.advance()) {
+			BOOST_CHECK_EQUAL(s.expected[i], lex.current_token());
+		}
+
+		BOOST_CHECK_EQUAL(s.expected.back(), lex.current_token());
 	}
 
-	BOOST_CHECK_EQUAL(s.expected.back(), lex.current_token());
 	BOOST_CHECK_THROW(lex.advance(), minijava::lexical_error);
 }
