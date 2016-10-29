@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <forward_list>
 #include <string>
+#include <iostream>
 
 #define BOOST_TEST_MODULE  lexer_lexer
 #include <boost/test/unit_test.hpp>
@@ -12,35 +13,95 @@
 #include "lexer/token_iterator.hpp"
 #include "symbol_pool.hpp"
 
+using namespace std::string_literals; // for strings with embedded null bytes
+using tt = minijava::token_type;
+
+
+namespace /* anonymous */
+{
+
+	struct lexer_test_data
+	{
+		std::string input{};
+		minijava::symbol_pool<> pool{};
+		std::vector<minijava::token> expected{};
+	};
+
+	class failure_test
+	{
+	public:
+
+		template <typename... ArgTs>
+		failure_test(std::string&& input, ArgTs&&... args) : _input{std::move(input)}
+		{
+			_expected = {_make_expected_token(std::forward<ArgTs>(args))...};
+		}
+
+		lexer_test_data get() const
+		{
+			auto sample = lexer_test_data{};
+			sample.input = _input;
+			for (const auto& t : _expected) {
+				auto copy = t;
+				if (t.type() == tt::identifier) {
+					auto canon = sample.pool.normalize(t.name().c_str());
+					copy = minijava::token::create_identifier(canon);
+				}
+				sample.expected.push_back(std::move(copy));
+			}
+			return sample;
+		}
+
+	private:
+
+		auto _make_expected_token(const char *const name)
+		{
+			const auto canon = _pool.normalize(name);
+			return minijava::token::create_identifier(canon);
+		}
+
+		auto _make_expected_token(const std::uint32_t value)
+		{
+			return minijava::token::create_integer_literal(value);
+		}
+
+		auto _make_expected_token(const minijava::token_type type)
+		{
+			return minijava::token::create(type);
+		}
+
+		minijava::symbol_pool<> _pool{};
+		std::string _input;
+		std::vector<minijava::token> _expected{};
+
+		friend std::ostream& operator<<(std::ostream& os, const failure_test& test)
+		{
+			return os << test._input;
+		}
+
+	};
+
+	class success_test : public failure_test
+	{
+	public:
+
+		template <typename... ArgTs>
+		success_test(std::string&& input, ArgTs&&... args)
+				: failure_test(std::move(input), std::forward<ArgTs>(args)..., tt::eof) { }
+	};
+
+}  // namespace /* anonymous */
+
 
 BOOST_AUTO_TEST_CASE(empty_input_starts_with_eof_and_stays_there)
 {
-	using namespace std::string_literals;
 	const auto epsilon = ""s;
 	auto pool = minijava::symbol_pool<>{};
 	auto lex = minijava::make_lexer(std::begin(epsilon), std::end(epsilon), pool);
 	for (auto i = 0; i < 100; ++i) {
-		BOOST_REQUIRE_EQUAL(minijava::token_type::eof, lex.current_token().type());
+		BOOST_REQUIRE_EQUAL(tt::eof, lex.current_token().type());
 		BOOST_REQUIRE(lex.current_token_is_eof());
 	}
-}
-
-
-BOOST_AUTO_TEST_CASE(sequence_of_identifiers_lexed_correctly)
-{
-	using namespace std::string_literals;
-	auto pool = minijava::symbol_pool<>{};
-	const auto ids = "alpha beta gamma delta"s;
-	const minijava::token expected[] = {
-		minijava::token::create_identifier(pool.normalize("alpha")),
-		minijava::token::create_identifier(pool.normalize("beta")),
-		minijava::token::create_identifier(pool.normalize("gamma")),
-		minijava::token::create_identifier(pool.normalize("delta")),
-		minijava::token::create(minijava::token_type::eof),
-	};
-	auto lex = minijava::make_lexer(std::begin(ids), std::end(ids), pool);
-	BOOST_REQUIRE(std::equal(std::begin(expected), std::end(expected),
-							 minijava::token_begin(lex), minijava::token_end(lex)));
 }
 
 
@@ -49,10 +110,10 @@ static const auto single_token_data = minijava::all_token_types();
 BOOST_DATA_TEST_CASE(single_tokens_are_lexed_correctly, single_token_data)
 {
 	const auto punct = minijava::token_category::punctuation;
-	/* const auto kw = minijava::token_category::keyword; */
-	const auto cat = category(sample);
-	if ((cat == punct) /* || (cat == kw) */) {
-		const auto text = std::string{name(sample)};
+	const auto kw = minijava::token_category::keyword;
+	const auto cat = minijava::category(sample);
+	if ((cat == punct) || (cat == kw)) {
+		const auto text = std::string{minijava::name(sample)};
 		const auto input = std::forward_list<char>{std::begin(text), std::end(text)};
 		auto pool = minijava::symbol_pool<>{};
 		try {
@@ -61,13 +122,111 @@ BOOST_DATA_TEST_CASE(single_tokens_are_lexed_correctly, single_token_data)
 			lex.advance();
 			BOOST_REQUIRE(lex.current_token_is_eof());
 		} catch (const minijava::lexical_error& e) {
-			BOOST_FAIL(
-				 "Unexpected lexical error for input '" << text << "'"
-				 << " (" << text.length() << " characters): " << e.what()
-			);
+			BOOST_FAIL("Unexpected lexical error for input '" << text << "'" << " (" << text.length()
+															  << " characters): " << e.what());
 		}
 	}
 }
 
 
-// TODO @Moritz Baumann: Beef this file up with thorough unit tests.
+static const success_test success_data[] = {
+		// empty input
+		{""},
+
+		// identifiers
+		{"alpha", "alpha"},
+		{"alpha beta", "alpha", "beta"},
+		{"alpha beta gamma delta", "alpha" "beta" "gamma" "delta"},
+		{"alpha6_b3ta123_", "alpha6_b3ta123_"},
+
+		// comments
+		{"/**/"},
+		{"/* * / */"},
+		{"**/*= */*", tt::multiply, tt::multiply, tt::multiply},
+		{"false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="s, tt::kw_false, tt::assign},
+
+		// integer literals
+		{"0", std::uint32_t{0}},
+		{"15", std::uint32_t{15}},
+		{"0/**/509720", std::uint32_t{0}, std::uint32_t{509720}},
+		{"-42 -0 --15", tt::minus, std::uint32_t{42}, tt::minus, std::uint32_t{0}, tt::decrement, std::uint32_t{15}},
+		// TODO @Moritz Baumann: Add large integer test as soon as the token implementation is fixed
+		//{"102984084080850832452705977991283408000810923847581234123412341234123412341242134", ?},
+
+		// combinations of identifier, keyword, number and operator
+		{
+				"constauto static0void private_break _public do1 44true 0for while.if synchronized[] (abstract)",
+				// checks that keywords are recognized correctly
+				"constauto", "static0void", "private_break", "_public", "do1", std::uint32_t{44}, tt::kw_true,
+				std::uint32_t{0}, tt::kw_for, tt::kw_while, tt::dot, tt::kw_if, tt::kw_synchronized, tt::left_bracket,
+				tt::right_bracket, tt::left_paren, tt::kw_abstract, tt::right_paren
+		},
+		{
+				"asdf00001 0myvar< test4>=",
+				// checks that identifiers are recognized correctly in combination with numbers and operators
+				"asdf00001", std::uint32_t{0}, "myvar", tt::less_than, "test4", tt::greater_equal
+		},
+
+		// operators and space types
+		{
+				">>>>===----=**&&&&&===>>>=&&=&&&>><<<",
+				tt::unsigned_right_shift, tt::greater_equal, tt::equal, tt::decrement, tt::decrement, tt::assign,
+				tt::multiply, tt::multiply, tt::logical_and, tt::logical_and, tt::bit_and_assign, tt::equal,
+				tt::unsigned_right_shift_assign, tt::logical_and, tt::assign, tt::logical_and, tt::bit_and,
+				tt::right_shift, tt::left_shift, tt::less_than
+		},
+		{">/*>>>=*/>>=", tt::greater_than, tt::right_shift_assign},
+		{"*\t= =\r=\n=\t\r\n=", tt::multiply, tt::assign, tt::assign, tt::assign, tt::assign, tt::assign},
+};
+
+BOOST_DATA_TEST_CASE(input_lexed_correctly, success_data)
+{
+	auto s = sample.get();
+	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool);
+	BOOST_CHECK(std::equal(std::begin(s.expected), std::end(s.expected),
+	            minijava::token_begin(lex), minijava::token_end(lex)));
+}
+
+
+static const failure_test failure_data[] = {
+		// invalid spaces
+		{"*\v=", tt::multiply},
+		{"*\f=", tt::multiply},
+
+		// random null bytes are not misinterpreted as EOF and token before is returned correctly
+		// TODO @Moritz Baumann: write another test that makes sure null bytes not lost between real_main and the lexer when reading from files
+		{"1234 \0 false"s, std::uint32_t{1234}},
+		{"1234\0 false"s, std::uint32_t{1234}},
+		{"ident\0 false"s, "ident"},
+		{">\0 false"s, tt::greater_than},
+		{":\0 false"s, tt::colon},
+
+		// other bad characters in various environments
+		{"\b"},
+		{"asdfghewr\\0a", "asdfghewr"},
+		{"void\"", tt::kw_void},
+		{"1234\x7F", std::uint32_t{1234}},
+
+		// invalid integer literals
+		{"00"},
+		{"000"},
+		{"*012356--", tt::multiply},
+		{"<001true", tt::less_than},
+
+		// invalid comments
+		{"/*/**/*/"},
+		{"/*"},
+};
+
+BOOST_DATA_TEST_CASE(incorrect_input_lexed_correctly, failure_data)
+{
+	auto s = sample.get();
+	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool);
+
+	for (std::size_t i = 0; i < s.expected.size() - 1; ++i, lex.advance()) {
+		BOOST_CHECK_EQUAL(s.expected[i], lex.current_token());
+	}
+
+	BOOST_CHECK_EQUAL(s.expected.back(), lex.current_token());
+	BOOST_CHECK_THROW(lex.advance(), minijava::lexical_error);
+}

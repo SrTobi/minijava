@@ -5,6 +5,7 @@
 import argparse
 import itertools as it
 import os
+import shutil
 import subprocess
 import sys
 
@@ -115,8 +116,8 @@ def check_files(filenames, fix, verboseout, summaryout):
 		number of non-conforming files
 
 	"""
-	okmsg = "no issues found" if not fix else "fixed"
-	badmsg = "issues found"
+	okmsg = "OK" if not fix else "fixed"
+	badmsg = "non-conforming"
 	bad_files = 0
 	for fn in filenames:
 		lines = read_file_and_maybe_fix_it(fn, fix)
@@ -322,7 +323,7 @@ def read_file_and_maybe_fix_it(filename, fix):
 	if fix:
 		lines = list(map(fix_horizontal, fix_vertical(lines)))
 		backupname = make_backup_file_name(filename)
-		os.replace(filename, backupname)
+		shutil.copy(filename, backupname)
 		with open(filename, 'w') as ostr:
 			ostr.writelines(lines)
 	return lines
