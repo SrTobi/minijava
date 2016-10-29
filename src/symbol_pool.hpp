@@ -37,7 +37,8 @@ namespace minijava
 			 * @returns
 			 *     The hash value of the symbol_entry
 			 */
-			constexpr std::size_t operator()(const symbol_entry* entry) const noexcept
+			template<typename DeleterT>
+			constexpr std::size_t operator()(const std::unique_ptr<const symbol_entry, DeleterT>& entry) const noexcept
 			{
 				return entry->hash;
 			}
@@ -63,7 +64,8 @@ namespace minijava
 			 *     `true` if the two string values are equal, `false` otherwise
 			 *
 			 */
-			constexpr bool operator()(const symbol_entry* lhs, const symbol_entry* rhs) const noexcept
+			template<typename DeleterT>
+			constexpr bool operator()(const std::unique_ptr<const symbol_entry, DeleterT>& lhs, const std::unique_ptr<const symbol_entry, DeleterT>& rhs) const noexcept
 			{
 				return lhs->size == rhs->size && std::strcmp(lhs->cstr, rhs->cstr) == 0;
 			}
@@ -102,9 +104,19 @@ namespace minijava
 
 		static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
 
+		struct entry_deleter
+		{
+			entry_deleter(const allocator_type&);
+			void operator()(const entry_type*);
+		private:
+			allocator_type _alloc;
+		};
+
+		using entryptr_type = std::unique_ptr<const entry_type, entry_deleter>;
+
 		/** @brief Has set type. */
 		using hash_set_type = boost::unordered_set<
-			const entry_type*,
+			entryptr_type,
 			detail::entryptr_hash,
 			detail::entryptr_equal
 		>;
@@ -115,14 +127,14 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Constructs an empty pool with default-constructed allocators.
+		 *     Constructs an empty pool with default-constructed allocator.
 		 *
 		 */
 		symbol_pool();
 
 		/**
 		 * @brief
-		 *     Constructs an empty pool with the provided allocators.
+		 *     Constructs an empty pool with the provided allocator.
 		 *
 		 * @param alloc
 		 *     Allocator used to allocate internal strings and symbol_entry
@@ -214,7 +226,7 @@ namespace minijava
 		allocator_type get_allocator() const;
 
 	private:
-		void _clear_pool();
+		void _invalidate_pool();
 
 	private:
 		/** allocator used to allocate memory for symbol_entry  */

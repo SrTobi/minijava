@@ -10,11 +10,23 @@ namespace minijava
 	template<typename AllocT>
 	struct symbol_pool<AllocT>::symbol_entry_string_cmp
 	{
-		bool operator()(const std::string& str, const entry_type* entry) const
+		bool operator()(const std::string& str, const entryptr_type& entry) const
 		{
 			return entry->size == str.size() && str == entry->cstr;
 		}
 	};
+
+	template<typename AllocT>
+	symbol_pool<AllocT>::entry_deleter::entry_deleter(const allocator_type& alloc)
+		: _alloc(alloc)
+	{
+	}
+
+	template<typename AllocT>
+	void symbol_pool<AllocT>::entry_deleter::operator()(const entry_type* entry)
+	{
+		symbol_entry::deallocate(_alloc, entry);
+	}
 
 	template<typename AllocT >
 	symbol_pool<AllocT>::symbol_pool()
@@ -41,13 +53,13 @@ namespace minijava
 	template<typename AllocT>
 	symbol_pool<AllocT>::~symbol_pool()
 	{
-		_clear_pool();
+		_invalidate_pool();
 	}
 
 	template<typename AllocT>
 	symbol_pool<AllocT>& symbol_pool<AllocT>::operator=(symbol_pool&& old)
 	{
-		_clear_pool();
+		_invalidate_pool();
 		_alloc = std::move(old._alloc);
 		_pool = std::move(old._pool);
 		_anchor = std::move(old._anchor);
@@ -66,10 +78,10 @@ namespace minijava
 		{
 			const entry_type * insert_entry = symbol_entry::allocate(_alloc, text);
 
-			std::tie(entry_it, std::ignore) = _pool.insert(insert_entry);
+			std::tie(entry_it, std::ignore) = _pool.insert({insert_entry, entry_deleter(_alloc)});
 		}
 
-		return symbol(*entry_it, _anchor);
+		return symbol(entry_it->get(), _anchor);
 	}
 
 	template<typename AllocT >
@@ -98,14 +110,9 @@ namespace minijava
 	}
 
 	template<typename AllocT >
-	void symbol_pool<AllocT>::_clear_pool()
+	void symbol_pool<AllocT>::_invalidate_pool()
 	{
 		_anchor->pool_available = false;
-
-		for(auto& entry: _pool)
-		{
-			symbol_entry::deallocate(_alloc, entry);
-		}
 	}
 
 
