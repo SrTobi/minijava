@@ -55,7 +55,7 @@ namespace minijava
 		}
 
 		/** @brief Tag to compare if two symbols come from the same pool */
-		const void* tag;
+		void const * const tag;
 
 		/** @brief Indicates whether the pool is still constructed */
 		bool pool_available = true;
