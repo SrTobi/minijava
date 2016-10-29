@@ -36,6 +36,10 @@ namespace minijava
 	 * There are no requirements on the `TokenT` type except that it must be a
 	 * regular type.
 	 *
+	 * This iterator will not throw exceptions thrown by the lexer until it is
+	 * advanced past the last token successfully extracted from the lexer via
+	 * `current_token()`.
+	 *
 	 * @tparam LexerT
 	 *     type of the lexer
 	 *
