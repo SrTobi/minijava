@@ -16,18 +16,6 @@ namespace minijava
 		}
 	};
 
-	template<typename AllocT>
-	symbol_pool<AllocT>::entry_deleter::entry_deleter(const allocator_type& alloc)
-		: _alloc(alloc)
-	{
-	}
-
-	template<typename AllocT>
-	void symbol_pool<AllocT>::entry_deleter::operator()(const entry_type* entry)
-	{
-		symbol_entry::deallocate(_alloc, entry);
-	}
-
 	template<typename AllocT >
 	symbol_pool<AllocT>::symbol_pool()
 		: symbol_pool(AllocT())
@@ -76,9 +64,9 @@ namespace minijava
 
 		if(entry_it == _pool.end())
 		{
-			const entry_type * insert_entry = symbol_entry::allocate(_alloc, text);
+			auto insert_entry = symbol_entry::allocate(_alloc, text);
 
-			std::tie(entry_it, std::ignore) = _pool.insert({insert_entry, entry_deleter(_alloc)});
+			std::tie(entry_it, std::ignore) = _pool.insert(std::move(insert_entry));
 		}
 
 		return symbol(entry_it->get(), _anchor);

@@ -104,15 +104,7 @@ namespace minijava
 
 		static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
 
-		struct entry_deleter
-		{
-			entry_deleter(const allocator_type&);
-			void operator()(const entry_type*);
-		private:
-			allocator_type _alloc;
-		};
-
-		using entryptr_type = std::unique_ptr<const entry_type, entry_deleter>;
+		using entryptr_type = symbol_entry::ptr<allocator_type>;
 
 		/** @brief Has set type. */
 		using hash_set_type = boost::unordered_set<

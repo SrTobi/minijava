@@ -70,6 +70,38 @@ namespace minijava
 	 */
 	struct symbol_entry final: private boost::noncopyable
 	{
+	public:
+		/**
+		 * @brief
+		 *     Deleter functor for symbol_entrys
+		 */
+		template<typename AllocT>
+		struct entry_deleter
+		{
+			using allocator_type = AllocT;
+			using allocator_traits = std::allocator_traits<allocator_type>;
+			static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
+
+			entry_deleter(const allocator_type& alloc)
+				: _alloc(alloc)
+			{
+			}
+
+			void operator()(const symbol_entry* entry)
+			{
+				const char * mem = reinterpret_cast<const char*>(entry);
+				const auto mem_size = _struct_size(entry->size);
+				allocator_traits::deallocate(_alloc, const_cast<char*>(mem), mem_size);
+			}
+		private:
+			allocator_type _alloc;
+		};
+
+		template<typename AllocT>
+		using ptr = std::unique_ptr<const symbol_entry, entry_deleter<AllocT>>;
+
+	public:
+
 		/** @brief The precomputed hash of the symbol */
 		std::size_t hash;
 
@@ -96,7 +128,7 @@ namespace minijava
 		 *     The newly created symbol_entry
 		 */
 		template<typename AllocT>
-		static const symbol_entry * allocate(AllocT& alloc, const std::string& str)
+		static ptr<AllocT> allocate(AllocT& alloc, const std::string& str)
 		{
 			using alloc_traits = std::allocator_traits<AllocT>;
 			static_assert(std::is_same<char, typename alloc_traits::value_type>::value, "Allocator does not allocate char!");
@@ -112,32 +144,9 @@ namespace minijava
 			std::copy(str.begin(), str.end(), entry->cstr);
 			entry->cstr[str.size()] = '\0';
 
-			return entry;
+			return ptr<AllocT>(entry, entry_deleter<AllocT>(alloc));//, entry_deleter<AllocT>(alloc)};
 		}
 
-		/**
-		 * @brief
-		 *     Deallocates a given symbol_entry
-		 *
-		 * @param alloc
-		 *     The allocator that should be used to deallocate the memory.
-		 *
-		 * This should be the same that was used to create the symbol_entry.
-		 *
-		 * @param entry
-		 *     The entry that should be deallocated.
-		 *
-		 */
-		template<typename AllocT>
-		static void deallocate(AllocT& alloc, const symbol_entry* entry)
-		{
-			using alloc_traits = std::allocator_traits<AllocT>;
-			static_assert(std::is_same<char, typename alloc_traits::value_type>::value, "Allocator does not allocate char!");
-
-			const char * mem = reinterpret_cast<const char*>(entry);
-			const auto mem_size = _struct_size(entry->size);
-			alloc_traits::deallocate(alloc, const_cast<char*>(mem), mem_size);
-		}
 
 		/**
 		 * @brief
@@ -676,7 +685,7 @@ namespace minijava
 	class static_symbol_pool: private boost::noncopyable
 	{
 	private:
-		using entryptr_type = std::unique_ptr<const symbol_entry, std::function<void(const symbol_entry*)>>;
+		using entryptr_type = symbol_entry::ptr<std::allocator<char>>;
 	public:
 		/**
 		 * @brief
@@ -686,14 +695,8 @@ namespace minijava
 		 *     The content for the symbol that is created by this pool.
 		 */
 		static_symbol_pool(const std::string& str)
+			: _entry(symbol_entry::allocate(_allocator, str))
 		{
-			std::function<void(const symbol_entry*)> deleter = [this](const symbol_entry* entry)
-			{
-				symbol_entry::deallocate(_allocator, entry);
-			};
-
-			_entry = entryptr_type(symbol_entry::allocate(_allocator, str), deleter);
-
 			// create anchor with nullptr tag, so all symbols from a static_symbol_pool have the same tag
 			_anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
 		}
