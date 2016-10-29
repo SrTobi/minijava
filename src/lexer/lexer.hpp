@@ -36,8 +36,11 @@ namespace minijava
 	 * @tparam InIterT
 	 *     type of the character iterator for reading the source
 	 *
+	 * @tparam SymPoolT
+	 *     type of the symbol pool
+	 *
 	 */
-	template<typename InIterT, typename StrPoolT>
+	template<typename InIterT, typename SymPoolT>
 	class lexer final
 	{
 
@@ -61,11 +64,14 @@ namespace minijava
 		 * @param last
 		 *     iterator pointing after the last character of the input
 		 *
-		 * @param pool
+		 * @param id_pool
 		 *     symbol pool to use for identifiers
 		 *
+		 * @param lit_pool
+		 *     symbol pool to use for integer literals
+		 *
 		 */
-		lexer(InIterT first, InIterT last, StrPoolT& pool);
+		lexer(InIterT first, InIterT last, SymPoolT& id_pool, SymPoolT& lit_pool);
 
 		/**
 		 * @brief
@@ -121,8 +127,11 @@ namespace minijava
 		/** @brief Iterator pointing after the last character of the input. */
 		InIterT _last_it;
 
-		/** @brief Reference to the symbol-pool used for identifiers. */
-		StrPoolT& _id_pool;
+		/** @brief Reference to the symbol pool used for identifiers. */
+		SymPoolT& _id_pool;
+
+		/** @brief Reference to the symbol pool used for integer literals. */
+		SymPoolT& _lit_pool;
 
 		/** @brief Stores the current line number. */
 		size_t _line;
@@ -212,10 +221,10 @@ namespace minijava
 	 *     symbol pool to use for identifiers
 	 *
 	 */
-	template<typename InIterT, typename StrPoolT>
-	lexer<InIterT, StrPoolT> make_lexer(InIterT first,
+	template<typename InIterT, typename SymPoolT>
+	lexer<InIterT, SymPoolT> make_lexer(InIterT first,
 										InIterT last,
-										StrPoolT& pool);
+										SymPoolT& pool);
 
 }  // namespace minijava
 

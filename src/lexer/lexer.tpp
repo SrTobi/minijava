@@ -7,26 +7,27 @@
 namespace minijava
 {
 
-	template<typename InIterT, typename StrPoolT>
-	lexer<InIterT, StrPoolT>::lexer(const InIterT first,
+	template<typename InIterT, typename SymPoolT>
+	lexer<InIterT, SymPoolT>::lexer(const InIterT first,
 									const InIterT last,
-									StrPoolT& pool) :
+									SymPoolT& id_pool,
+									SymPoolT& lit_pool) :
 		_current_token{token::create(token_type::eof)},
-		_current_it{first}, _last_it{last}, _id_pool{pool}
+		_current_it{first}, _last_it{last}, _id_pool{id_pool}, _lit_pool{lit_pool}
 	{
 		advance();
 		_line = 1;
 		_column = 1;
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	const token& lexer<InIterT, StrPoolT>::current_token() const noexcept
+	template<typename InIterT, typename SymPoolT>
+	const token& lexer<InIterT, SymPoolT>::current_token() const noexcept
 	{
 		return _current_token;
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	void lexer<InIterT, StrPoolT>::advance()
+	template<typename InIterT, typename SymPoolT>
+	void lexer<InIterT, SymPoolT>::advance()
 	{
 		if (_current_is_last()) {
 			_current_token = token::create(token_type::eof);
@@ -131,8 +132,8 @@ namespace minijava
 		_current_token.set_column(column);
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	void lexer<InIterT, StrPoolT>::_consume_block_comment() {
+	template<typename InIterT, typename SymPoolT>
+	void lexer<InIterT, SymPoolT>::_consume_block_comment() {
 		while (!_current_is_last()) {
 			if (_current() == '*' && _next() == '/') {
 				_skip();
@@ -142,8 +143,8 @@ namespace minijava
 		}
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	void lexer<InIterT, StrPoolT>::_scan_identifier() {
+	template<typename InIterT, typename SymPoolT>
+	void lexer<InIterT, SymPoolT>::_scan_identifier() {
 		auto buffer = std::string{};
 
 		do {
@@ -155,48 +156,46 @@ namespace minijava
 		_current_token = token::create_identifier(symbol);
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	void lexer<InIterT, StrPoolT>::_scan_integer() {
-		int32_t number = 0;
-		int32_t old;
-		bool overflow = false;
-
-		do {
-			old = number;
-			number = number * 10 + (_current() - '0');
-			if (old > number) {
-				// overflow..
-				overflow = true;
+	template<typename InIterT, typename SymPoolT>
+	void lexer<InIterT, SymPoolT>::_scan_integer() {
+		if (_current() == '0') {
+			if (_next() == '0') {
+				throw lexical_error{"invalid integer literal"};
 			}
-			_skip();
-		} while (std::isdigit(_current()));
 
-		// overflow, or a alpha char apears somewhere => error
-		if (std::isalpha(_current()) || overflow) {
-			throw lexical_error{};
-			return;
+			const auto symbol = _lit_pool.normalize("0");
+			_current_token = token::create_identifier(symbol);
+		} else {
+			auto buffer = std::string{};
+
+			do {
+				buffer += _current();
+				_skip();
+			} while (!_current_is_last() && std::isdigit(_current()));
+
+			const auto symbol = _lit_pool.normalize(buffer);
+			_current_token = token::create_identifier(symbol);
 		}
-
-		_current_token = token::create_integer_literal((uint32_t) number);
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	bool lexer<InIterT, StrPoolT>::_current_is_last() {
+	template<typename InIterT, typename SymPoolT>
+	bool lexer<InIterT, SymPoolT>::_current_is_last() {
 		return _current_it == _last_it;
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	bool lexer<InIterT, StrPoolT>::current_token_is_eof() const noexcept
+	template<typename InIterT, typename SymPoolT>
+	bool lexer<InIterT, SymPoolT>::current_token_is_eof() const noexcept
 	{
 		return (current_token().type() == token_type::eof);
 	}
 
-	template<typename InIterT, typename StrPoolT>
-	lexer<InIterT, StrPoolT> make_lexer(const InIterT first,
+	template<typename InIterT, typename SymPoolT>
+	lexer<InIterT, SymPoolT> make_lexer(const InIterT first,
 										const InIterT last,
-										StrPoolT& pool)
+										SymPoolT& id_pool,
+										SymPoolT& lit_pool)
 	{
-		return lexer<InIterT, StrPoolT>{first, last, pool};
+		return lexer<InIterT, SymPoolT>{first, last, id_pool, lit_pool};
 	}
 
 }  // namespace minijava
