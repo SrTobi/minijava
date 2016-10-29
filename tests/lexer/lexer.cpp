@@ -31,8 +31,7 @@ namespace /* anonymous */
 		template <typename... ArgTs>
 		failure_test(std::string&& input, ArgTs&&... args) : _input{std::move(input)}
 		{
-			_expected = {_make_expected_token(std::forward<ArgTs>(args))...,
-						 minijava::token::create(minijava::token_type::eof)};
+			_expected = {_make_expected_token(std::forward<ArgTs>(args))...};
 		}
 
 		lexer_test_data get() const
@@ -121,15 +120,14 @@ BOOST_DATA_TEST_CASE(single_tokens_are_lexed_correctly, single_token_data)
 			lex.advance();
 			BOOST_REQUIRE(lex.current_token_is_eof());
 		} catch (const minijava::lexical_error& e) {
-			BOOST_FAIL(
-					"Unexpected lexical error for input '" << text << "'"
-														   << " (" << text.length() << " characters): " << e.what()
-			);
+			BOOST_FAIL("Unexpected lexical error for input '" << text << "'" << " (" << text.length()
+															  << " characters): " << e.what());
 		}
 	}
 }
 
 
+using namespace std::string_literals; // for strings with null bytes in the middle
 using tt = minijava::token_type;
 
 static const success_test success_data[] = {
@@ -146,7 +144,7 @@ static const success_test success_data[] = {
 		{"/**/"},
 		{"/* * / */"},
 		{"**/*= */*", tt::multiply, tt::multiply, tt::multiply},
-		{std::string("false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="), tt::kw_false, tt::assign},
+		{"false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="s, tt::kw_false, tt::assign},
 
 		// integer literals
 		{"0", std::uint32_t{0}},
@@ -178,7 +176,7 @@ static const success_test success_data[] = {
 				tt::unsigned_right_shift_assign, tt::logical_and, tt::assign, tt::logical_and, tt::bit_and,
 				tt::right_shift, tt::left_shift, tt::less_than
 		},
-		{">/*>>>=*/>>=", tt::greater_than, tt::left_shift_assign},
+		{">/*>>>=*/>>=", tt::greater_than, tt::right_shift_assign},
 		{"*\t= =\r=\n=\t\r\n=", tt::multiply, tt::assign, tt::assign, tt::assign, tt::assign, tt::assign},
 };
 
@@ -198,11 +196,11 @@ static const failure_test failure_data[] = {
 
 		// random null bytes are not misinterpreted as EOF and token before is returned correctly
 		// TODO @Moritz Baumann: write another test that makes sure null bytes not lost between real_main and the lexer when reading from files
-		{"1234 \0 false", std::uint32_t{1234}},
-		{"1234\0 false", std::uint32_t{1234}},
-		{"ident\0 false", "ident"},
-		{">\0 false", tt::greater_than},
-		{":\0 false", tt::colon},
+		{"1234 \0 false"s, std::uint32_t{1234}},
+		{"1234\0 false"s, std::uint32_t{1234}},
+		{"ident\0 false"s, "ident"},
+		{">\0 false"s, tt::greater_than},
+		{":\0 false"s, tt::colon},
 
 		// other bad characters in various environments
 		{"\b"},
@@ -211,6 +209,8 @@ static const failure_test failure_data[] = {
 		{"1234\x7F", std::uint32_t{1234}},
 
 		// invalid integer literals
+		{"00"},
+		{"000"},
 		{"*012356--", tt::multiply},
 		{"<001true", tt::less_than},
 
