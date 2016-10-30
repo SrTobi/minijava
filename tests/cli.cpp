@@ -403,7 +403,7 @@ BOOST_DATA_TEST_CASE(if_stdout_is_not_writeable_all_actions_throw,
 BOOST_AUTO_TEST_CASE(lextest_for_valid_token_sequence_produces_correct_output)
 {
 	using namespace std::string_literals;
-	std::istringstream mystdin{"42 abstract classes throw 1 + 3 mice."s};
+	std::istringstream mystdin{"42 abstract classes throw 1 + 3 mice."};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	const auto expected_output = ""s
@@ -441,7 +441,8 @@ BOOST_AUTO_TEST_CASE(lextest_for_invalid_token_sequence_throws_exception)
 }
 
 
-const auto official_lexer_test = R"java(
+// official example: http://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/Prog1.java
+static const auto official_lexer_test = R"java(
 /**
  * A classic class
  * @author Beate Best
@@ -455,7 +456,8 @@ class classic {
 }
 )java";
 
-const auto official_lexer_test_result = R"lex(class
+// official example: http://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/Prog1.java.lex
+static const auto official_lexer_test_result = R"lex(class
 identifier classic
 {
 public
