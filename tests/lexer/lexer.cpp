@@ -49,9 +49,12 @@ namespace /* anonymous */
 			for (const auto& t : _expected) {
 				auto copy = t;
 				// move symbols to correct pools
-				if (t.has_lexval()) {
+				if (t.type() == tt::identifier) {
 					auto canon = sample.pool.normalize(t.lexval().c_str());
 					copy = minijava::token::create_identifier(canon);
+				} else if (t.type() == tt::integer_literal) {
+					auto canon = sample.pool.normalize(t.lexval().c_str());
+					copy = minijava::token::create_integer_literal(canon);
 				}
 				sample.expected.push_back(std::move(copy));
 			}
