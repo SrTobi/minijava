@@ -110,8 +110,8 @@ namespace minijava
 		 */
 		bool current_token_is_eof() const noexcept;
 
-		lexer(lexer&&) noexcept = default;
-		lexer& operator=(lexer&&) noexcept = default;
+		lexer(lexer&&) = default;
+		lexer& operator=(lexer&&) = default;
 
 		lexer(const lexer&) = delete;
 		lexer& operator=(const lexer&) = delete;
