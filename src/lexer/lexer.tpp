@@ -4,8 +4,24 @@
 
 #include <cctype>
 
+#include "lexer/keyword.hpp"
+
+
 namespace minijava
 {
+
+	namespace detail
+	{
+
+		inline bool isidhead(const int c) noexcept {
+			return ((c == '_') || std::isalpha(c));
+		}
+
+		inline bool isidtail(const int c) noexcept {
+			return ((c == '_') || std::isalnum(c));
+		}
+
+	}
 
 	template<typename InIterT, typename SymPoolT>
 	lexer<InIterT, SymPoolT>::lexer(const InIterT first,
@@ -43,7 +59,7 @@ namespace minijava
 		auto column = _column;
 
 		auto c = _current();
-		if (std::isalpha(c)) {
+		if (detail::isidhead(c)) {
 			// scan identifier
 			_scan_identifier();
 		} else if (std::isdigit(c)) {
@@ -134,45 +150,63 @@ namespace minijava
 
 	template<typename InIterT, typename SymPoolT>
 	void lexer<InIterT, SymPoolT>::_consume_block_comment() {
-		while (!_current_is_last()) {
-			if (_current() == '*' && _next() == '/') {
-				_skip();
-				return;
+		assert(*_current_it == '*');
+		++_current_it;
+		auto state = 0;
+		while (_current_it != _last_it) {
+			if (state == 1) {
+				if (*_current_it == '/') {
+					++_current_it;
+					state = 2;
+					break;
+				}
+				state = 0;
 			}
-			_skip();
+			if (*_current_it == '*') {
+				state = 1;
+			}
+			++_current_it;
+		}
+		if (state != 2) {
+			throw lexical_error{"File ended before '*/' closing comment"};
 		}
 	}
 
 	template<typename InIterT, typename SymPoolT>
-	void lexer<InIterT, SymPoolT>::_scan_identifier() {
+	void lexer<InIterT, SymPoolT>::_scan_identifier()
+	{
 		auto buffer = std::string{};
-
 		do {
-			buffer += _current();
-			_skip();
-		} while (!_current_is_last() && std::isalnum(_current()));
-
-		const auto symbol = _id_pool.normalize(buffer);
-		_current_token = token::create_identifier(symbol);
+			buffer += *_current_it;
+			++_current_it;
+		} while ((_current_it != _last_it) && detail::isidtail(*_current_it));
+		const auto tt = classify_word(buffer);
+		if (tt == token_type::identifier) {
+			const auto symbol = _id_pool.normalize(buffer);
+			_current_token = token::create_identifier(symbol);
+		} else {
+			assert(category(tt) == token_category::keyword);
+			_current_token = token::create(tt);
+		}
 	}
 
 	template<typename InIterT, typename SymPoolT>
-	void lexer<InIterT, SymPoolT>::_scan_integer() {
+	void lexer<InIterT, SymPoolT>::_scan_integer()
+	{
+		assert(std::isdigit(_current()));
 		if (_current() == '0') {
-			if (std::isdigit(_next())) {
-				throw lexical_error{"invalid integer literal"};
+			_skip();
+			if (!_current_is_last() && std::isdigit(_current())) {
+				throw lexical_error{"Invalid integer literal: leading zeros are not allowed"};
 			}
-
 			const auto symbol = _lit_pool.normalize("0");
 			_current_token = token::create_integer_literal(symbol);
 		} else {
 			auto buffer = std::string{};
-
 			do {
 				buffer += _current();
 				_skip();
 			} while (!_current_is_last() && std::isdigit(_current()));
-
 			const auto symbol = _lit_pool.normalize(buffer);
 			_current_token = token::create_integer_literal(symbol);
 		}

@@ -131,7 +131,11 @@ static const success_test success_data[] = {
 
 		// comments
 		{"/**/"},
+		{"/**/alpha beta", id("alpha"), id("beta")},
+		{"alpha/**/beta", id("alpha"), id("beta")},
+		{"alpha beta/**/", id("alpha"), id("beta")},
 		{"/* * / */"},
+		{"/*/**/*/", tt::multiply, tt::divides},
 		{"**/*= */*", tt::multiply, tt::multiply, tt::multiply},
 		{"false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="s, tt::kw_false, tt::assign},
 
@@ -176,7 +180,7 @@ BOOST_DATA_TEST_CASE(input_lexed_correctly, success_data)
 	auto s = sample.get();
 	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool, s.pool);
 	BOOST_CHECK(std::equal(std::begin(s.expected), std::end(s.expected),
-	            minijava::token_begin(lex), minijava::token_end(lex)));
+						   minijava::token_begin(lex), minijava::token_end(lex)));
 }
 
 
@@ -205,22 +209,23 @@ static const failure_test failure_data[] = {
 		{"<001true", tt::less_than},
 
 		// invalid comments
-		{"/*/**/*/"},
 		{"/*"},
 };
 
 BOOST_DATA_TEST_CASE(incorrect_input_lexed_correctly, failure_data)
 {
 	auto s = sample.get();
-	auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool, s.pool);
-
-	if (!s.expected.empty()) {
+	if (s.expected.empty()) {
+		BOOST_CHECK_THROW(
+			minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool, s.pool),
+			minijava::lexical_error
+		);
+	} else {
+		auto lex = minijava::make_lexer(std::begin(s.input), std::end(s.input), s.pool, s.pool);
 		for (std::size_t i = 0; i < s.expected.size() - 1; ++i, lex.advance()) {
 			BOOST_CHECK_EQUAL(s.expected[i], lex.current_token());
 		}
-
 		BOOST_CHECK_EQUAL(s.expected.back(), lex.current_token());
+		BOOST_CHECK_THROW(lex.advance(), minijava::lexical_error);
 	}
-
-	BOOST_CHECK_THROW(lex.advance(), minijava::lexical_error);
 }
