@@ -134,8 +134,11 @@ namespace minijava
 		 * @brief Moves the iterator to the next value and returns the char.
 		 * @return The char at the new iterator position.
 		 * */
-		int _next() {
-			if (_current_is_last()) return -1;
+		int _next()
+		{
+			if (_current_is_last()) {
+				return -1;
+			}
 			_column++;
 			_current_it++;
 			auto c = _current_is_last() ? -1 : *_current_it;
