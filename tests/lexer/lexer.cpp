@@ -122,6 +122,32 @@ BOOST_DATA_TEST_CASE(single_tokens_are_lexed_correctly, single_token_data)
 }
 
 
+BOOST_AUTO_TEST_CASE(identifiers_are_put_into_the_correct_pool)
+{
+	const auto input = "foo"s;
+	auto id_pool = minijava::symbol_pool<>{};
+	auto lit_pool = minijava::symbol_pool<>{};
+	auto lex = minijava::make_lexer(std::begin(input), std::end(input),
+	                                id_pool, lit_pool);
+	const auto tok = lex.current_token();
+	BOOST_REQUIRE(id_pool.contains(tok.lexval().c_str()));
+	BOOST_REQUIRE(!lit_pool.contains(tok.lexval().c_str()));
+}
+
+
+BOOST_AUTO_TEST_CASE(integer_literals_are_put_into_the_correct_pool)
+{
+	const auto input = "42"s;
+	auto id_pool = minijava::symbol_pool<>{};
+	auto lit_pool = minijava::symbol_pool<>{};
+	auto lex = minijava::make_lexer(std::begin(input), std::end(input),
+	                                id_pool, lit_pool);
+	const auto tok = lex.current_token();
+	BOOST_REQUIRE(!id_pool.contains(tok.lexval().c_str()));
+	BOOST_REQUIRE(lit_pool.contains(tok.lexval().c_str()));
+}
+
+
 static const success_test success_data[] = {
 		// empty input
 		{""},

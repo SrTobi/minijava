@@ -65,30 +65,74 @@ namespace minijava
 		 *     iterator pointing after the last character of the input
 		 *
 		 * @param id_pool
-		 *     symbol pool to use for identifiers
+		 *     `symbol_pool` to use for identifiers
 		 *
 		 * @param lit_pool
-		 *     symbol pool to use for integer literals
+		 *     `symbol_pool` to use for integer literals
+		 *
+		 * @throws lexical_error
+		 *     if the input does not start with a valid token
 		 *
 		 */
 		lexer(InIterT first, InIterT last, SymPoolT& id_pool, SymPoolT& lit_pool);
 
 		/**
 		 * @brief
-		 *     Scans the next token.
+		 *     `default`ed move constructor.
 		 *
-		 * If the scanner is already beyon the end of the file, this function
-		 * has no effect.
+		 * The moved-away-from `lexer` is left in an invalid state and calling
+		 * any member function except for the destructor or assignment-operator
+		 * on it will invoke undefined behavior.
 		 *
-		 * If an exception is `throw`n, subsequent calls to `current_token()`
-		 * will `return` a reference to a token in a valid but unspecified
-		 * state.  This lexer does not recover from this.
-		 *
-		 * @throws lexical_error
-		 *     if the following characters do not form a valid token
+		 * @param other
+		 *     `lexer` object to move away from
 		 *
 		 */
-		void advance();
+		lexer(lexer&& other) = default;
+
+		/**
+		 * @brief
+		 *     `default`ed move-assignment operator.
+		 *
+		 * The moved-away-from `lexer` is left in an invalid state and calling
+		 * any member function except for the destructor or assignment-operator
+		 * on it will invoke undefined behavior.
+		 *
+		 * @param other
+		 *     `lexer` object to move away from
+		 *
+		 * @returns
+		 *     a reference to `*this`
+		 *
+		 */
+		lexer& operator=(lexer&& other) = default;
+
+		/**
+		 * @brief
+		 *     `delete`d copy constructor.
+		 *
+		 * `lexer` objects are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		lexer(const lexer& other) = delete;
+
+		/**
+		 * @brief
+		 *     `delete`d copy-assignment operator.
+		 *
+		 * `lexer` objects are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 * @returns
+		 *     *N/A*
+		 *
+		 */
+		lexer& operator=(const lexer& other) = delete;
 
 		/**
 		 * @brief
@@ -110,11 +154,22 @@ namespace minijava
 		 */
 		bool current_token_is_eof() const noexcept;
 
-		lexer(lexer&&) = default;
-		lexer& operator=(lexer&&) = default;
-
-		lexer(const lexer&) = delete;
-		lexer& operator=(const lexer&) = delete;
+		/**
+		 * @brief
+		 *     Scans the next token.
+		 *
+		 * If the scanner is already beyon the end of the file, this function
+		 * has no effect.
+		 *
+		 * If an exception is `throw`n, subsequent calls to `current_token()`
+		 * will `return` a reference to a token in a valid but unspecified
+		 * state.  This lexer does not recover from this.
+		 *
+		 * @throws lexical_error
+		 *     if the following characters do not form a valid token
+		 *
+		 */
+		void advance();
 
 	private:
 
@@ -133,82 +188,166 @@ namespace minijava
 		/** @brief Reference to the symbol pool used for integer literals. */
 		SymPoolT& _lit_pool;
 
-		/** @brief Stores the current line number. */
+		/** @brief Line number of the character referred to by `*_current_it`. */
 		size_t _line;
 
-		/** @brief Stores the current column of the current line. */
+		/** @brief Column number of the character referred to by `*_current_it`. */
 		size_t _column;
 
 		/**
-		 * @brief Moves the iterator to the next value and returns the char.
-		 * @return The char at the new iterator position.
-		 * */
-		int _next()
+		 * @brief
+		 *     If the current input character is `c`, sets `_current_token` to
+		 *     that token and advances the input iterator.  Otherwise, the
+		 *     function has no effect.
+		 *
+		 * @tparam c
+		 *     character that would cause us to lex the token
+		 *
+		 * @param tt
+		 *     `token_type` of the token to scan
+		 *
+		 * @returns
+		 *     whether the token was scanned
+		 *
+		 */
+		bool _maybe_token(const int c, const token_type tt)
 		{
-			if (_current_is_last()) {
+			if (_current() != c) {
+				return false;
+			}
+			_current_token = token::create(tt);
+			_skip();
+			return true;
+		}
+
+		/**
+		 * @brief
+		 *     `return`s the current input character.
+		 *
+		 * If the input sequence is not yet exhausted, the current character is
+		 * `return`ed.  Otherwise, if if the end of the input was already
+		 * reached, &minus;1 is `return`ed.
+		 *
+		 * @returns
+		 *     current input character
+		 *
+		 */
+		int _current() const noexcept
+		{
+			return (_current_it != _last_it)
+				? static_cast<unsigned char>(*_current_it)
+				: -1;
+		}
+
+		/**
+		 * @brief
+		 *     `return`s the next input character.
+		 *
+		 * If the input sequence is already exhausted on entry, this function
+		 * has no effect.  Otherwise, the input iterator is advanced and the
+		 * line and column numbers updated.  Then `_current()` is `return`ed.
+		 *
+		 * @returns
+		 *     next input character
+		 *
+		 */
+		int _next() noexcept
+		{
+			if (_current_it == _last_it) {
 				return -1;
 			}
-			_column++;
-			_current_it++;
-			auto c = _current_is_last() ? -1 : *_current_it;
+			++_current_it;
+			const auto c = _current();
 			if (c == '\n') {
-				_column = 1;
-				_line++;
+				_line += 1;
+				_column = 0;
+			} else {
+				_column += 1;
 			}
 			return c;
 		}
 
 		/**
 		 * @brief
-		 *     If the current char is equal to `c`, the current_token is set
-		 *     to the token_type `type` and the iterator moves to the next char
+		 *     Discards the current input character.
 		 *
-		 * @returns
-		 *     true, if the current char is equal to `c`
+		 * This function has the exact same effect as `_next` but a name that
+		 * might be samantically more appropriate in certain situations.
+		 *
 		 */
-		bool _maybe_token(char c, token_type type) {
-			if (_current_is_last() || _current() != c) {
-				return false;
-			}
-
-			_current_token = token::create(type);
-			_skip();
-			return true;
-		}
-
-		/** @brief Moves the iterator to the next value. */
-		void _skip() {
-			if (_current_is_last()) return;
-			_column++;
-			_current_it++;
-			if (_current_it != _last_it && *_current_it == '\n') {
-				_column = 1;
-				_line++;
-			}
-		}
-
-		/** @brief Returns true, if the given char is a valid whitespace for minij */
-		bool _isspace(char c) {
-			return c == ' ' || c == '\r' || c == '\n' || c == '\t';
+		void _skip() noexcept
+		{
+			_next();
 		}
 
 		/**
-		 * @brief Returns the current char of the iterator.
-		 * @return The current char.
+		 * @brief
+		 *     Scans an identifier or keyword (word) token.
+		 *
+		 * On entry, `_current()` must be a valid begin of a word.  Otherwise,
+		 * the behavior is undefined.
+		 *
+		 * The `_current_token` is set to the scanned word and the input
+		 * iterator advanced to the character past the last character that was
+		 * part of the scanned token.
+		 *
 		 */
-		char _current() {
-			return *_current_it;
-		}
-
 		void _scan_identifier();
 
-		void _scan_integer();
+		/**
+		 * @brief
+		 *     Scans an integer literal token.
+		 *
+		 * On entry, `_current()` must be a valid begin of an integer literal.
+		 * Otherwise, the behavior is undefined.
+		 *
+		 * The `_current_token` is set to the scanned integer literal and the
+		 * input iterator advanced to the character past the last character
+		 * that was part of the scanned token.
+		 *
+		 */
+		void _scan_integer_literal();
 
-		void _consume_block_comment();
+		/**
+		 * @brief
+		 *     Skips over a block
+		 *     <code>&#x2f;&#x2a;&nbsp;&hellip;&nbsp;&hx2a;&#x2f;</code>
+		 *     comment.
+		 *
+		 * The input iterator is advanced to the first character after the next
+		 * <code>&#x2a;&#x2f;</code> and its value `return`ed.  This means that
+		 * on entry, the current character must already be the character
+		 * following the <code>&#x2f;&#x2a;</code> that opened the
+		 * block-comment or it will be mis.interpreted as part of a potential
+		 * closing <code>&#x2a;&#x2f;</code> sequence.
+		 *
+		 * @returns
+		 *     first character after the skipped region
+		 *
+		 * @throws lexical_error
+		 *     if input ended before <code>&#x2a;&#x2f;</code> was seen
+		 *
+		 */
+		int _skip_block_comment();
 
-		bool _current_is_last();
+		/**
+		 * @brief
+		 *     Skips over white-space.
+		 *
+		 * The input iterator is advanced to the next character that is not
+		 * considered white-space.  The value of that character is `return`ed.
+		 *
+		 * If the current input character is not white-space, then this
+		 * function has no effect and `return`s `_current()`.
+		 *
+		 * @returns
+		 *     first character after the skipped region
+		 *
+		 */
+		int _skip_white_space() noexcept;
 
 	};  // class lexer
+
 
 	/**
 	 * @brief
