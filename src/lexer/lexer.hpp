@@ -38,8 +38,11 @@ namespace minijava
 	 * @tparam InIterT
 	 *     type of the character iterator for reading the source
 	 *
-	 * @tparam SymPoolT
-	 *     type of the symbol pool
+	 * @tparam IdPoolT
+	 *     type of the symbol pool used for identifiers
+	 *
+	 * @tparam LitPoolT
+	 *     type of the symbol pool used for literals
 	 *
 	 * @tparam AllocT
 	 *     allocator used to allocate internal working buffers
@@ -48,7 +51,8 @@ namespace minijava
 	template
 	<
 		typename InIterT,
-		typename SymPoolT,
+		typename IdPoolT,
+		typename LitPoolT,
 		typename AllocT = std::allocator<char>
 	>
 	class lexer final
@@ -88,7 +92,7 @@ namespace minijava
 		 *
 		 */
 		lexer(InIterT first, InIterT last,
-			  SymPoolT& id_pool, SymPoolT& lit_pool,
+			  IdPoolT& id_pool, LitPoolT& lit_pool,
 			  const AllocT& alloc);
 
 		/**
@@ -198,10 +202,10 @@ namespace minijava
 		InIterT _last_it;
 
 		/** @brief Reference to the symbol pool used for identifiers. */
-		SymPoolT& _id_pool;
+		IdPoolT& _id_pool;
 
 		/** @brief Reference to the symbol pool used for integer literals. */
-		SymPoolT& _lit_pool;
+		LitPoolT& _lit_pool;
 
 		/** @brief Line number of the character referred to by `*_current_it`. */
 		size_t _line;
@@ -225,8 +229,11 @@ namespace minijava
 	 * @tparam InIterT
 	 *     type of the character iterator for reading the source
 	 *
-	 * @tparam SymPoolT
-	 *     type of the symbol pool
+	 * @tparam IdPoolT
+	 *     type of the symbol pool used for identifiers
+	 *
+	 * @tparam LitPoolT
+	 *     type of the symbol pool used for literals
 	 *
 	 * @tparam AllocT
 	 *     allocator used to allocate internal working buffers
@@ -253,13 +260,14 @@ namespace minijava
 	template
 	<
 		typename InIterT,
-		typename SymPoolT,
+		typename IdPoolT,
+		typename LitPoolT,
 		typename AllocT = std::allocator<char>
 	>
-	lexer<InIterT, SymPoolT, AllocT>
+	lexer<InIterT, IdPoolT, LitPoolT, AllocT>
 	make_lexer(
 		InIterT first, InIterT last,
-		SymPoolT& id_pool, SymPoolT& lit_pool,
+		IdPoolT& id_pool, LitPoolT& lit_pool,
 		const AllocT& = AllocT{}
 	);
 

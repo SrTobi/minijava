@@ -45,12 +45,12 @@ namespace minijava
 	// `lexer`.  The only difference to an ordinary member function is that we
 	// don't have a `this` pointer so all functions get the `lexer` object
 	// passed as their first argument.
-	template <typename InIterT, typename SymPoolT, typename AllocT>
-	struct lexer<InIterT, SymPoolT, AllocT>::lexer_impl
+	template <typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	struct lexer<InIterT, IdPoolT, LitPoolT, AllocT>::lexer_impl
 	{
 
 		// Type alias for the outer `class`.
-		using lexer_type = lexer<InIterT, SymPoolT, AllocT>;
+		using lexer_type = lexer<InIterT, IdPoolT, LitPoolT, AllocT>;
 
 		// Like the public `lexer::advance` function but has to be called in a
 		// loop until it succeeds.
@@ -277,10 +277,10 @@ namespace minijava
 	};  // struct lexer_impl
 
 
-	template<typename InIterT, typename SymPoolT, typename AllocT>
-	lexer<InIterT, SymPoolT, AllocT>::lexer(
+	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	lexer<InIterT, IdPoolT, LitPoolT, AllocT>::lexer(
 		const InIterT first, const InIterT last,
-		SymPoolT& id_pool, SymPoolT& lit_pool,
+		IdPoolT& id_pool, LitPoolT& lit_pool,
 		const AllocT& alloc) :
 		_current_token{token::create(token_type::eof)},
 		_current_it{first}, _last_it{last},
@@ -291,34 +291,36 @@ namespace minijava
 		advance();
 	}
 
-	template<typename InIterT, typename SymPoolT, typename AllocT>
-	const token& lexer<InIterT, SymPoolT, AllocT>::current_token() const noexcept
+	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	const token& lexer<InIterT, IdPoolT, LitPoolT, AllocT>::current_token() const noexcept
 	{
 		return _current_token;
 	}
 
-	template<typename InIterT, typename SymPoolT, typename AllocT>
-	bool lexer<InIterT, SymPoolT, AllocT>::current_token_is_eof() const noexcept
+	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	bool lexer<InIterT, IdPoolT, LitPoolT, AllocT>::current_token_is_eof() const noexcept
 	{
 		return (current_token().type() == token_type::eof);
 	}
 
-	template<typename InIterT, typename SymPoolT, typename AllocT>
-	void lexer<InIterT, SymPoolT, AllocT>::advance()
+	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	void lexer<InIterT, IdPoolT, LitPoolT, AllocT>::advance()
 	{
 		while (!lexer_impl::do_advance(*this)) {
 			// Try again, eh?
 		}
 	}
 
-	template<typename InIterT, typename SymPoolT, typename AllocT>
-	lexer<InIterT, SymPoolT, AllocT>
+	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	lexer<InIterT, IdPoolT, LitPoolT, AllocT>
 	make_lexer(
 		const InIterT first, const InIterT last,
-		SymPoolT& id_pool, SymPoolT& lit_pool,
+		IdPoolT& id_pool, LitPoolT& lit_pool,
 		const AllocT& alloc)
 	{
-		return lexer<InIterT, SymPoolT, AllocT>{first, last, id_pool, lit_pool, alloc};
+		return lexer<InIterT, IdPoolT, LitPoolT, AllocT>{
+			first, last, id_pool, lit_pool, alloc
+		};
 	}
 
 }  // namespace minijava
