@@ -9,7 +9,9 @@
 #pragma once
 
 #include <iterator>
+#include <memory>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 #include "lexer/token.hpp"
@@ -36,11 +38,23 @@ namespace minijava
 	 * @tparam InIterT
 	 *     type of the character iterator for reading the source
 	 *
-	 * @tparam SymPoolT
-	 *     type of the symbol pool
+	 * @tparam IdPoolT
+	 *     type of the symbol pool used for identifiers
+	 *
+	 * @tparam LitPoolT
+	 *     type of the symbol pool used for literals
+	 *
+	 * @tparam AllocT
+	 *     allocator used to allocate internal working buffers
 	 *
 	 */
-	template<typename InIterT, typename SymPoolT>
+	template
+	<
+		typename InIterT,
+		typename IdPoolT,
+		typename LitPoolT,
+		typename AllocT = std::allocator<char>
+	>
 	class lexer final
 	{
 
@@ -65,30 +79,79 @@ namespace minijava
 		 *     iterator pointing after the last character of the input
 		 *
 		 * @param id_pool
-		 *     symbol pool to use for identifiers
+		 *     `symbol_pool` to use for identifiers
 		 *
 		 * @param lit_pool
-		 *     symbol pool to use for integer literals
+		 *     `symbol_pool` to use for integer literals
+		 *
+		 * @param alloc
+		 *     allocator to use for allocating internal working buffers
+		 *
+		 * @throws lexical_error
+		 *     if the input does not start with a valid token
 		 *
 		 */
-		lexer(InIterT first, InIterT last, SymPoolT& id_pool, SymPoolT& lit_pool);
+		lexer(InIterT first, InIterT last,
+			  IdPoolT& id_pool, LitPoolT& lit_pool,
+			  const AllocT& alloc);
 
 		/**
 		 * @brief
-		 *     Scans the next token.
+		 *     `default`ed move constructor.
 		 *
-		 * If the scanner is already beyon the end of the file, this function
-		 * has no effect.
+		 * The moved-away-from `lexer` is left in an invalid state and calling
+		 * any member function except for the destructor or assignment-operator
+		 * on it will invoke undefined behavior.
 		 *
-		 * If an exception is `throw`n, subsequent calls to `current_token()`
-		 * will `return` a reference to a token in a valid but unspecified
-		 * state.  This lexer does not recover from this.
-		 *
-		 * @throws lexical_error
-		 *     if the following characters do not form a valid token
+		 * @param other
+		 *     `lexer` object to move away from
 		 *
 		 */
-		void advance();
+		lexer(lexer&& other) = default;
+
+		/**
+		 * @brief
+		 *     `default`ed move-assignment operator.
+		 *
+		 * The moved-away-from `lexer` is left in an invalid state and calling
+		 * any member function except for the destructor or assignment-operator
+		 * on it will invoke undefined behavior.
+		 *
+		 * @param other
+		 *     `lexer` object to move away from
+		 *
+		 * @returns
+		 *     a reference to `*this`
+		 *
+		 */
+		lexer& operator=(lexer&& other) = default;
+
+		/**
+		 * @brief
+		 *     `delete`d copy constructor.
+		 *
+		 * `lexer` objects are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		lexer(const lexer& other) = delete;
+
+		/**
+		 * @brief
+		 *     `delete`d copy-assignment operator.
+		 *
+		 * `lexer` objects are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 * @returns
+		 *     *N/A*
+		 *
+		 */
+		lexer& operator=(const lexer& other) = delete;
 
 		/**
 		 * @brief
@@ -110,11 +173,22 @@ namespace minijava
 		 */
 		bool current_token_is_eof() const noexcept;
 
-		lexer(lexer&&) = default;
-		lexer& operator=(lexer&&) = default;
-
-		lexer(const lexer&) = delete;
-		lexer& operator=(const lexer&) = delete;
+		/**
+		 * @brief
+		 *     Scans the next token.
+		 *
+		 * If the scanner is already beyon the end of the file, this function
+		 * has no effect.
+		 *
+		 * If an exception is `throw`n, subsequent calls to `current_token()`
+		 * will `return` a reference to a token in a valid but unspecified
+		 * state.  This lexer does not recover from this.
+		 *
+		 * @throws lexical_error
+		 *     if the following characters do not form a valid token
+		 *
+		 */
+		void advance();
 
 	private:
 
@@ -128,91 +202,41 @@ namespace minijava
 		InIterT _last_it;
 
 		/** @brief Reference to the symbol pool used for identifiers. */
-		SymPoolT& _id_pool;
+		IdPoolT& _id_pool;
 
 		/** @brief Reference to the symbol pool used for integer literals. */
-		SymPoolT& _lit_pool;
+		LitPoolT& _lit_pool;
 
-		/** @brief Stores the current line number. */
+		/** @brief Line number of the character referred to by `*_current_it`. */
 		size_t _line;
 
-		/** @brief Stores the current column of the current line. */
+		/** @brief Column number of the character referred to by `*_current_it`. */
 		size_t _column;
 
-		/**
-		 * @brief Moves the iterator to the next value and returns the char.
-		 * @return The char at the new iterator position.
-		 * */
-		int _next()
-		{
-			if (_current_is_last()) {
-				return -1;
-			}
-			_column++;
-			_current_it++;
-			auto c = _current_is_last() ? -1 : *_current_it;
-			if (c == '\n') {
-				_column = 1;
-				_line++;
-			}
-			return c;
-		}
+		/** @brief Scratch buffer used by some internal lexing routines. */
+		std::basic_string<char, std::char_traits<char>, AllocT> _lexbuf;
 
-		/**
-		 * @brief
-		 *     If the current char is equal to `c`, the current_token is set
-		 *     to the token_type `type` and the iterator moves to the next char
-		 *
-		 * @returns
-		 *     true, if the current char is equal to `c`
-		 */
-		bool _maybe_token(char c, token_type type) {
-			if (_current_is_last() || _current() != c) {
-				return false;
-			}
-
-			_current_token = token::create(type);
-			_skip();
-			return true;
-		}
-
-		/** @brief Moves the iterator to the next value. */
-		void _skip() {
-			if (_current_is_last()) return;
-			_column++;
-			_current_it++;
-			if (_current_it != _last_it && *_current_it == '\n') {
-				_column = 1;
-				_line++;
-			}
-		}
-
-		/** @brief Returns true, if the given char is a valid whitespace for minij */
-		bool _isspace(char c) {
-			return c == ' ' || c == '\r' || c == '\n' || c == '\t';
-		}
-
-		/**
-		 * @brief Returns the current char of the iterator.
-		 * @return The current char.
-		 */
-		char _current() {
-			return *_current_it;
-		}
-
-		void _scan_identifier();
-
-		void _scan_integer();
-
-		void _consume_block_comment();
-
-		bool _current_is_last();
+		/** @brief Helper-`struct` with private implementation details. */
+		struct lexer_impl;
 
 	};  // class lexer
+
 
 	/**
 	 * @brief
 	 *     Convenience function for construction a `lexer` object.
+	 *
+	 * @tparam InIterT
+	 *     type of the character iterator for reading the source
+	 *
+	 * @tparam IdPoolT
+	 *     type of the symbol pool used for identifiers
+	 *
+	 * @tparam LitPoolT
+	 *     type of the symbol pool used for literals
+	 *
+	 * @tparam AllocT
+	 *     allocator used to allocate internal working buffers
 	 *
 	 * @param first
 	 *     iterator pointing to the first character of the input
@@ -220,14 +244,32 @@ namespace minijava
 	 * @param last
 	 *     iterator pointing after the last character of the input
 	 *
-	 * @param pool
-	 *     symbol pool to use for identifiers
+	 * @param id_pool
+	 *     `symbol_pool` to use for identifiers
+	 *
+	 * @param lit_pool
+	 *     `symbol_pool` to use for integer literals
+	 *
+	 * @param alloc
+	 *     allocator to use for allocating internal working buffers
+	 *
+	 * @throws lexical_error
+	 *     if the input does not start with a valid token
 	 *
 	 */
-	template<typename InIterT, typename SymPoolT>
-	lexer<InIterT, SymPoolT> make_lexer(InIterT first,
-										InIterT last,
-										SymPoolT& pool);
+	template
+	<
+		typename InIterT,
+		typename IdPoolT,
+		typename LitPoolT,
+		typename AllocT = std::allocator<char>
+	>
+	lexer<InIterT, IdPoolT, LitPoolT, AllocT>
+	make_lexer(
+		InIterT first, InIterT last,
+		IdPoolT& id_pool, LitPoolT& lit_pool,
+		const AllocT& = AllocT{}
+	);
 
 }  // namespace minijava
 
