@@ -131,20 +131,22 @@ namespace minijava
 		static ptr<AllocT> allocate(AllocT& alloc, const std::string& str)
 		{
 			using alloc_traits = std::allocator_traits<AllocT>;
+			using deleter = entry_deleter<AllocT>;
+			using non_const_ptr = std::unique_ptr<symbol_entry, deleter>;
 			static_assert(std::is_same<char, typename alloc_traits::value_type>::value, "Allocator does not allocate char!");
 
 			std::hash<std::string> hash_fn;
 			auto hash = hash_fn(str);
 
 			const auto mem_size = _struct_size(str.size());
-			symbol_entry * entry = reinterpret_cast<symbol_entry*>(alloc_traits::allocate(alloc, mem_size));
+			auto entry = non_const_ptr(reinterpret_cast<symbol_entry*>(alloc_traits::allocate(alloc, mem_size)), deleter(alloc));
 
 			entry->hash = hash;
 			entry->size = str.size();
 			std::copy(str.begin(), str.end(), entry->cstr);
 			entry->cstr[str.size()] = '\0';
 
-			return ptr<AllocT>(entry, entry_deleter<AllocT>(alloc));//, entry_deleter<AllocT>(alloc)};
+			return entry;
 		}
 
 
