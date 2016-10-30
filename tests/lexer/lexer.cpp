@@ -259,3 +259,17 @@ BOOST_DATA_TEST_CASE(incorrect_input_lexed_correctly, failure_data)
 		BOOST_CHECK_THROW(lex.advance(), minijava::lexical_error);
 	}
 }
+
+
+BOOST_AUTO_TEST_CASE(excessive_sequence_of_block_comments_does_not_crash_lexer)
+{
+	const auto input = [](){
+		auto in = ""s;
+		for (auto i = 0L; i < 10'000'000L; ++i) { in += "/**/"; }
+		in += ";";
+		return in;
+	}();
+	auto pool = minijava::symbol_pool<>{};
+	auto lex = minijava::make_lexer(std::begin(input), std::end(input), pool, pool);
+	BOOST_REQUIRE_EQUAL(tt::semicolon, lex.current_token().type());
+}
