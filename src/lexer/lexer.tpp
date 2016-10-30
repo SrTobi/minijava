@@ -2,40 +2,12 @@
 #error "Never `#include <lexer/lexer.tpp>` directly; `#include <lexer.hpp>` instead."
 #endif
 
-#include <cctype>
-
+#include "lexer/character.hpp"
 #include "lexer/keyword.hpp"
 
 
 namespace minijava
 {
-
-	namespace detail
-	{
-
-		inline bool isspace(int c) noexcept
-		{
-			return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t');
-		}
-
-		inline bool isdigit(const int c) noexcept
-		{
-			return std::isdigit(c);
-		}
-
-		inline bool isidhead(const int c) noexcept
-		{
-			return ((c == '_') || std::isalpha(c));
-		}
-
-		inline bool isidtail(const int c) noexcept
-		{
-			return ((c == '_') || std::isalnum(c));
-		}
-
-
-	}  // namespace detail
-
 
 	// This `struct` has a collection of `static` member functions that are
 	// used to implement the `lexer`.  By defining them in this nested `class`,
@@ -60,9 +32,9 @@ namespace minijava
 			const auto c = lexer_impl::skip_white_space(lex);
 			if (c < 0) {
 				lex._current_token = token::create(token_type::eof);
-			} else if (detail::isidhead(c)) {
+			} else if (is_word_head(c)) {
 				scan_identifier(lex);
-			} else if (detail::isdigit(c)) {
+			} else if (is_digit(c)) {
 				scan_integer_literal(lex);
 			} else if (c == '/') {
 				const auto after = next(lex);
@@ -160,11 +132,11 @@ namespace minijava
 		{
 			lex._lexbuf.clear();
 			auto c = current(lex);
-			assert(detail::isidhead(c));
+			assert(is_word_head(c));
 			do {
 				lex._lexbuf.push_back(static_cast<char>(c));
 				c = next(lex);
-			} while (detail::isidtail(c));
+			} while (is_word_tail(c));
 			const auto tt = classify_word(lex._lexbuf);
 			if (tt == token_type::identifier) {
 				const auto lexval = lex._id_pool.normalize(lex._lexbuf);
@@ -184,11 +156,11 @@ namespace minijava
 		{
 			lex._lexbuf.clear();
 			auto c = current(lex);
-			assert(detail::isdigit(c));
+			assert(is_digit(c));
 			do {
 				lex._lexbuf.push_back(static_cast<char>(c));
 				c = next(lex);
-			} while (detail::isdigit(c));
+			} while (is_digit(c));
 			if ((lex._lexbuf.front() == '0') && (lex._lexbuf.size() > 1)) {
 				throw lexical_error{"Invalid integer literal: leading zeros are not allowed"};
 			}
@@ -238,7 +210,7 @@ namespace minijava
 		static int skip_white_space(lexer_type& lex) noexcept
 		{
 			auto c = current(lex);
-			while (detail::isspace(c)) {
+			while (is_space(c)) {
 				c = next(lex);
 			}
 			return c;

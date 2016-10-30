@@ -27,6 +27,7 @@ set(COMPONENTS
 	cli
 	exceptions
 	global
+	lexer/character
 	lexer/keyword
 	lexer/lexer
 	lexer/token
