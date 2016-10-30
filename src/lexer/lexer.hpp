@@ -36,8 +36,11 @@ namespace minijava
 	 * @tparam InIterT
 	 *     type of the character iterator for reading the source
 	 *
+	 * @tparam SymPoolT
+	 *     type of the symbol pool
+	 *
 	 */
-	template<typename InIterT, typename StrPoolT>
+	template<typename InIterT, typename SymPoolT>
 	class lexer final
 	{
 
@@ -61,11 +64,14 @@ namespace minijava
 		 * @param last
 		 *     iterator pointing after the last character of the input
 		 *
-		 * @param pool
+		 * @param id_pool
 		 *     symbol pool to use for identifiers
 		 *
+		 * @param lit_pool
+		 *     symbol pool to use for integer literals
+		 *
 		 */
-		lexer(InIterT first, InIterT last, StrPoolT& pool);
+		lexer(InIterT first, InIterT last, SymPoolT& id_pool, SymPoolT& lit_pool);
 
 		/**
 		 * @brief
@@ -115,14 +121,92 @@ namespace minijava
 		/** @brief Current token. */
 		token _current_token;
 
-		/** @brief Iterator pointing to the next character of the input. */
-		InIterT _next;
+		/** @brief Iterator pointing to the current character of the input. */
+		InIterT _current_it;
 
 		/** @brief Iterator pointing after the last character of the input. */
-		InIterT _last;
+		InIterT _last_it;
 
-		/** @brief Reference to the symbol-pool used for identifiers. */
-		StrPoolT& _id_pool;
+		/** @brief Reference to the symbol pool used for identifiers. */
+		SymPoolT& _id_pool;
+
+		/** @brief Reference to the symbol pool used for integer literals. */
+		SymPoolT& _lit_pool;
+
+		/** @brief Stores the current line number. */
+		size_t _line;
+
+		/** @brief Stores the current column of the current line. */
+		size_t _column;
+
+		/**
+		 * @brief Moves the iterator to the next value and returns the char.
+		 * @return The char at the new iterator position.
+		 * */
+		int _next()
+		{
+			if (_current_is_last()) {
+				return -1;
+			}
+			_column++;
+			_current_it++;
+			auto c = _current_is_last() ? -1 : *_current_it;
+			if (c == '\n') {
+				_column = 1;
+				_line++;
+			}
+			return c;
+		}
+
+		/**
+		 * @brief
+		 *     If the current char is equal to `c`, the current_token is set
+		 *     to the token_type `type` and the iterator moves to the next char
+		 *
+		 * @returns
+		 *     true, if the current char is equal to `c`
+		 */
+		bool _maybe_token(char c, token_type type) {
+			if (_current_is_last() || _current() != c) {
+				return false;
+			}
+
+			_current_token = token::create(type);
+			_skip();
+			return true;
+		}
+
+		/** @brief Moves the iterator to the next value. */
+		void _skip() {
+			if (_current_is_last()) return;
+			_column++;
+			_current_it++;
+			if (_current_it != _last_it && *_current_it == '\n') {
+				_column = 1;
+				_line++;
+			}
+		}
+
+		/** @brief Returns true, if the given char is a valid whitespace for minij */
+		bool _isspace(char c) {
+			return c == ' ' || c == '\r' || c == '\n' || c == '\t';
+		}
+
+		/**
+		 * @brief Returns the current char of the iterator.
+		 * @return The current char.
+		 */
+		char _current() {
+			return *_current_it;
+		}
+
+		void _scan_identifier();
+
+		void _scan_integer();
+
+		void _consume_block_comment();
+
+		bool _current_is_last();
 
 	};  // class lexer
 
@@ -140,10 +224,10 @@ namespace minijava
 	 *     symbol pool to use for identifiers
 	 *
 	 */
-	template<typename InIterT, typename StrPoolT>
-	lexer<InIterT, StrPoolT> make_lexer(InIterT first,
+	template<typename InIterT, typename SymPoolT>
+	lexer<InIterT, SymPoolT> make_lexer(InIterT first,
 										InIterT last,
-										StrPoolT& pool);
+										SymPoolT& pool);
 
 }  // namespace minijava
 

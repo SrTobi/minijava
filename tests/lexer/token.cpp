@@ -12,27 +12,15 @@
 #include "symbol.hpp"
 #include "symbol_pool.hpp"
 
+#include "../testaux/token_string.hpp"
 
+
+using testaux::id;
+using testaux::lit;
 using tt = minijava::token_type;
 
 namespace /* anonymous */
 {
-
-	template <tt TokenType>
-	struct tagged_string
-	{
-		std::string s{};
-	};
-
-	auto id(std::string text)
-	{
-		return tagged_string<tt::identifier> {std::move(text)};
-	}
-
-	auto lit(std::string text)
-	{
-		return tagged_string<tt::integer_literal> {std::move(text)};
-	}
 
 	class token_pair
 	{
@@ -44,8 +32,8 @@ namespace /* anonymous */
 		template <typename T1, typename T2>
 		token_pair(T1&& arg1, T2&& arg2)
 		{
-			this->first = _make_token(std::forward<T1>(arg1));
-			this->second = _make_token(std::forward<T2>(arg2));
+			this->first = testaux::make_token(_pool, std::forward<T1>(arg1));
+			this->second = testaux::make_token(_pool, std::forward<T2>(arg2));
 		}
 
 		friend std::ostream& operator<<(std::ostream& os, const token_pair& tp)
@@ -57,20 +45,6 @@ namespace /* anonymous */
 
 		minijava::symbol_pool<> _pool{};
 
-		minijava::token _make_token(const tagged_string<tt::identifier>& text)
-		{
-			return minijava::token::create_identifier(_pool.normalize(text.s));
-		}
-
-		minijava::token _make_token(const tagged_string<tt::integer_literal>& text)
-		{
-			return minijava::token::create_integer_literal(_pool.normalize(text.s));
-		}
-
-		minijava::token _make_token(const tt typ)
-		{
-			return minijava::token::create(typ);
-		}
 	};
 
 }
@@ -81,7 +55,7 @@ BOOST_AUTO_TEST_CASE(token_ctor_id)
 	using namespace std::string_literals;
 	auto pool = minijava::symbol_pool<>{};
 	const auto text = "matchstick"s;
-	const auto canon = pool.normalize(text.c_str());
+	const auto canon = pool.normalize(text);
 	const auto tok = minijava::token::create_identifier(canon);
 	BOOST_REQUIRE_EQUAL(tt::identifier, tok.type());
 	BOOST_REQUIRE_EQUAL(canon, tok.lexval());
@@ -96,7 +70,7 @@ BOOST_AUTO_TEST_CASE(token_ctor_integer_literal)
 	using namespace std::string_literals;
 	auto pool = minijava::symbol_pool<>{};
 	const auto text = "42"s;
-	const auto canon = pool.normalize(text.c_str());
+	const auto canon = pool.normalize(text);
 	const auto tok = minijava::token::create_integer_literal(canon);
 	BOOST_REQUIRE_EQUAL(tt::integer_literal, tok.type());
 	BOOST_REQUIRE_EQUAL(canon, tok.lexval());

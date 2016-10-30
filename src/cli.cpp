@@ -148,7 +148,7 @@ namespace minijava
 				return;
 			}
 			auto pool = symbol_pool<>{};  // TODO: Use an appropriate allocator
-			auto lex = make_lexer(infirst, inlast, pool);
+			auto lex = make_lexer(infirst, inlast, pool, pool);
 			const auto tokfirst = token_begin(lex);
 			const auto toklast = token_end(lex);
 			if (stage == compilation_stage::lexer) {
