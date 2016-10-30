@@ -19,9 +19,8 @@
  * by accident from inside the `minijava` `namespace`.
  *
  */
-#pragma once
 
-#include <cctype>
+#pragma once
 
 
 namespace minijava
@@ -39,10 +38,7 @@ namespace minijava
 	 *     whether `c` is a space character
 	 *
 	 */
-	inline bool is_space(int c) noexcept
-	{
-		return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t');
-	}
+	bool is_space(int c) noexcept;
 
 	/**
 	 * @brief
@@ -56,10 +52,7 @@ namespace minijava
 	 *     whether `c` is a decimal digit
 	 *
 	 */
-	inline bool is_digit(const int c) noexcept
-	{
-		return std::isdigit(c);
-	}
+	bool is_digit(int c) noexcept;
 
 	/**
 	 * @brief
@@ -73,10 +66,7 @@ namespace minijava
 	 *     whether `c` is a valid first character of a word
 	 *
 	 */
-	inline bool is_word_head(const int c) noexcept
-	{
-		return ((c == '_') || std::isalpha(c));
-	}
+	bool is_word_head(int c) noexcept;
 
 	/**
 	 * @brief
@@ -90,9 +80,11 @@ namespace minijava
 	 *     whether `c` is a valid following character of a word
 	 *
 	 */
-	inline bool is_word_tail(const int c) noexcept
-	{
-		return ((c == '_') || std::isalnum(c));
-	}
+	bool is_word_tail(int c) noexcept;
 
 }  // namespace minijava
+
+
+#define MINIJAVA_INCLUDED_FROM_LEXER_CHARACTER_HPP
+#include "lexer/character.tpp"
+#undef MINIJAVA_INCLUDED_FROM_LEXER_CHARACTER_HPP
