@@ -1,11 +1,3 @@
-// Important Note: This file contains specially commented-out code that should
-// be un-commented again, once the lexer is powerful enough not to produce
-// false errors.  The relevant sections of code are readily identified by
-// beeing commented-out with four "////" leading slashes.
-
-// TODO: Uncomment some code once the lexer is ready.
-
-
 #include "cli.hpp"
 
 #include <algorithm>
@@ -346,8 +338,7 @@ BOOST_DATA_TEST_CASE(all_actions_succeed_for_valid_arguments_and_valid_input,
                      all_action_options)
 {
 	using namespace std::string_literals;
-	//// std::istringstream mystdin{valid_program_data};
-	std::istringstream mystdin{"alpha beta gamma delta"};
+	std::istringstream mystdin{valid_program_data};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	minijava::real_main({"", sample.c_str()}, mystdin, mystdout, mystderr);
@@ -412,23 +403,19 @@ BOOST_DATA_TEST_CASE(if_stdout_is_not_writeable_all_actions_throw,
 BOOST_AUTO_TEST_CASE(lextest_for_valid_token_sequence_produces_correct_output)
 {
 	using namespace std::string_literals;
-	//// std::istringstream mystdin{"42 abstract classes throw 1 + 3 mice."};
-	std::istringstream mystdin{"alpha beta gamma"};
+	std::istringstream mystdin{"42 abstract classes throw 1 + 3 mice."};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	const auto expected_output = ""s
-		+ "identifier alpha\n"
-		+ "identifier beta\n"
-		+ "identifier gamma\n"
-		//// + "integer literal 42\n"
-		//// + "abstract\n"
-		//// + "identifier classes\n"
-		//// + "throw\n"
-		//// + "integer literal 1\n"
-		//// + "+\n"
-		//// + "integer literal 3\n"
-		//// + "identifier mice\n"
-		//// + ".\n"
+		+ "integer literal 42\n"
+		+ "abstract\n"
+		+ "identifier classes\n"
+		+ "throw\n"
+		+ "integer literal 1\n"
+		+ "+\n"
+		+ "integer literal 3\n"
+		+ "identifier mice\n"
+		+ ".\n"
 		+ "EOF\n";
 	minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr);
 	BOOST_REQUIRE_EQUAL(expected_output, mystdout.str());

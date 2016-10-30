@@ -45,14 +45,13 @@ namespace minijava
 	template<typename InIterT, typename SymPoolT>
 	void lexer<InIterT, SymPoolT>::advance()
 	{
+		// skip whitespaces
+		while (!_current_is_last() && _isspace(_current())) _skip();
+
 		if (_current_is_last()) {
 			_current_token = token::create(token_type::eof);
 			return;
 		}
-
-
-		// skip whitespaces
-		while (_isspace(_current())) _skip();
 
 		// store token start position
 		auto line = _line;

@@ -125,6 +125,7 @@ BOOST_DATA_TEST_CASE(single_tokens_are_lexed_correctly, single_token_data)
 static const success_test success_data[] = {
 		// empty input
 		{""},
+		{" \t\r\n"},
 
 		// identifiers
 		{"alpha", id("alpha")},
