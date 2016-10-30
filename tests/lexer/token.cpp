@@ -88,7 +88,7 @@ static const auto monostate_token_data = [](){
 		std::begin(minijava::all_token_types()),
 		std::end(minijava::all_token_types()),
 		std::back_inserter(vec),
-		[](auto t){
+		[idcat,litcat](auto t){
 			const auto cat = category(t);
 			return ((cat != idcat) && (cat != litcat));
 		});
