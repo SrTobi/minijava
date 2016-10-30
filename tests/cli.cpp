@@ -403,7 +403,7 @@ BOOST_DATA_TEST_CASE(if_stdout_is_not_writeable_all_actions_throw,
 BOOST_AUTO_TEST_CASE(lextest_for_valid_token_sequence_produces_correct_output)
 {
 	using namespace std::string_literals;
-	std::istringstream mystdin{"42 abstract classes throw 1 + 3 mice."};
+	std::istringstream mystdin{"42 abstract classes throw 1 + 3 mice."s};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	const auto expected_output = ""s
@@ -429,9 +429,103 @@ BOOST_AUTO_TEST_CASE(lextest_for_invalid_token_sequence_throws_exception)
 	std::istringstream mystdin{"int nan = 034g7;"};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
+	const auto expected_output = ""s
+		+ "int\n"
+		+ "identifier nan\n"
+		+ "=\n";
 	BOOST_REQUIRE_THROW(
-		minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr)
+			minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr)
 	, std::exception);
+	BOOST_REQUIRE_EQUAL(expected_output, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
-	// It is unspecified what will be written to standard output in this case.
+}
+
+
+const auto official_lexer_test = R"java(
+/**
+ * A classic class
+ * @author Beate Best
+ */
+class classic {
+	public int method(int arg) {
+		int res = arg+42;
+		res >>= 4;
+	    return res;
+	}
+}
+)java";
+
+const auto official_lexer_test_result = R"lex(class
+identifier classic
+{
+public
+int
+identifier method
+(
+int
+identifier arg
+)
+{
+int
+identifier res
+=
+identifier arg
++
+integer literal 42
+;
+identifier res
+>>=
+integer literal 4
+;
+return
+identifier res
+;
+}
+}
+EOF
+)lex";
+
+BOOST_AUTO_TEST_CASE(lextest_passes_example_test)
+{
+	using namespace std::string_literals;
+	std::istringstream mystdin{official_lexer_test};
+	std::ostringstream mystdout{};
+	std::ostringstream mystderr{};
+	minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr);
+	BOOST_REQUIRE_EQUAL(official_lexer_test_result, mystdout.str());
+	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(lextest_does_not_eat_null_bytes)
+{
+	using namespace std::string_literals;
+	std::istringstream mystdin{"I /* \0 */ am a sentence."s};
+	std::ostringstream mystdout{};
+	std::ostringstream mystderr{};
+	const auto expected_output = ""s
+		+ "identifier I\n"
+		+ "identifier am\n"
+		+ "identifier a\n"
+		+ "identifier sentence\n"
+		+ ".\n"
+		+ "EOF\n";
+	minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr);
+	BOOST_REQUIRE_EQUAL(expected_output, mystdout.str());
+	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
+}
+
+
+BOOST_AUTO_TEST_CASE(lextest_does_not_eat_null_bytes_on_error)
+{
+	using namespace std::string_literals;
+	std::istringstream mystdin{"I \0 am an error."s};
+	std::ostringstream mystdout{};
+	std::ostringstream mystderr{};
+	const auto expected_output = "identifier I\n"s;
+	BOOST_REQUIRE_THROW(
+			minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr)
+	, std::exception);
+	BOOST_REQUIRE_EQUAL(expected_output, mystdout.str());
+	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
