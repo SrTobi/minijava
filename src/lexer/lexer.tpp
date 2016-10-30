@@ -61,6 +61,14 @@ namespace minijava
 	template<typename InIterT, typename SymPoolT>
 	void lexer<InIterT, SymPoolT>::advance()
 	{
+		while (!_maybe_advance()) {
+			// Try again, eh?
+		}
+	}
+
+	template<typename InIterT, typename SymPoolT>
+	bool lexer<InIterT, SymPoolT>::_maybe_advance()
+	{
 		const auto c = _skip_white_space();
 		if (c < 0) {
 			_current_token = token::create(token_type::eof);
@@ -74,8 +82,7 @@ namespace minijava
 				// Skip '*' from opening '/*' to not confuse it as part of closing '*/'.
 				_skip();
 				_skip_block_comment();
-				advance();
-				return;
+				return false;
 			} else if (next == '=') {
 				_current_token = token::create(token_type::divides_assign);
 				_skip();
@@ -139,6 +146,7 @@ namespace minijava
 		} else {
 			throw lexical_error{};
 		}
+		return true;
 	}
 
 	template<typename InIterT, typename SymPoolT>

@@ -269,6 +269,17 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Like the public `advance` function but has to be called in a
+		 *     loop until it succeeds.
+		 *
+		 * @returns
+		 *     whether the next token was scanned successfully
+		 *
+		 */
+		bool _maybe_advance();
+
+		/**
+		 * @brief
 		 *     Discards the current input character.
 		 *
 		 * This function has the exact same effect as `_next` but a name that
