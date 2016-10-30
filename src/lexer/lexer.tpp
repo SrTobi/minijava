@@ -45,12 +45,12 @@ namespace minijava
 	// `lexer`.  The only difference to an ordinary member function is that we
 	// don't have a `this` pointer so all functions get the `lexer` object
 	// passed as their first argument.
-	template <typename InIterT, typename SymPoolT>
-	struct lexer<InIterT, SymPoolT>::lexer_impl
+	template <typename InIterT, typename SymPoolT, typename AllocT>
+	struct lexer<InIterT, SymPoolT, AllocT>::lexer_impl
 	{
 
 		// Type alias for the outer `class`.
-		using lexer_type = lexer<InIterT, SymPoolT>;
+		using lexer_type = lexer<InIterT, SymPoolT, AllocT>;
 
 		// Like the public `lexer::advance` function but has to be called in a
 		// loop until it succeeds.
@@ -158,16 +158,16 @@ namespace minijava
 		// token.
 		static void scan_identifier(lexer_type& lex)
 		{
-			auto buffer = std::string{};
+			lex._lexbuf.clear();
 			auto c = current(lex);
 			assert(detail::isidhead(c));
 			do {
-				buffer.push_back(static_cast<char>(c));
+				lex._lexbuf.push_back(static_cast<char>(c));
 				c = next(lex);
 			} while (detail::isidtail(c));
-			const auto tt = classify_word(buffer);
+			const auto tt = classify_word(lex._lexbuf);
 			if (tt == token_type::identifier) {
-				const auto lexval = lex._id_pool.normalize(buffer);
+				const auto lexval = lex._id_pool.normalize(lex._lexbuf);
 				lex._current_token = token::create_identifier(lexval);
 			} else {
 				assert(category(tt) == token_category::keyword);
@@ -182,17 +182,17 @@ namespace minijava
 		// last character that was part of the scanned token.
 		static void scan_integer_literal(lexer_type& lex)
 		{
-			auto buffer = std::string{};
+			lex._lexbuf.clear();
 			auto c = current(lex);
 			assert(detail::isdigit(c));
 			do {
-				buffer.push_back(static_cast<char>(c));
+				lex._lexbuf.push_back(static_cast<char>(c));
 				c = next(lex);
 			} while (detail::isdigit(c));
-			if ((buffer.front() == '0') && (buffer.size() > 1)) {
+			if ((lex._lexbuf.front() == '0') && (lex._lexbuf.size() > 1)) {
 				throw lexical_error{"Invalid integer literal: leading zeros are not allowed"};
 			}
-			const auto lexval = lex._lit_pool.normalize(buffer);
+			const auto lexval = lex._lit_pool.normalize(lex._lexbuf);
 			lex._current_token = token::create_integer_literal(lexval);
 		}
 
@@ -277,44 +277,48 @@ namespace minijava
 	};  // struct lexer_impl
 
 
-	template<typename InIterT, typename SymPoolT>
-	lexer<InIterT, SymPoolT>::lexer(const InIterT first,
-									const InIterT last,
-									SymPoolT& id_pool,
-									SymPoolT& lit_pool) :
+	template<typename InIterT, typename SymPoolT, typename AllocT>
+	lexer<InIterT, SymPoolT, AllocT>::lexer(
+		const InIterT first, const InIterT last,
+		SymPoolT& id_pool, SymPoolT& lit_pool,
+		const AllocT& alloc) :
 		_current_token{token::create(token_type::eof)},
-		_current_it{first}, _last_it{last}, _id_pool{id_pool}, _lit_pool{lit_pool}
+		_current_it{first}, _last_it{last},
+		_id_pool{id_pool}, _lit_pool{lit_pool},
+		_line{0}, _column{0},
+		_lexbuf{alloc}
 	{
 		advance();
 	}
 
-	template<typename InIterT, typename SymPoolT>
-	const token& lexer<InIterT, SymPoolT>::current_token() const noexcept
+	template<typename InIterT, typename SymPoolT, typename AllocT>
+	const token& lexer<InIterT, SymPoolT, AllocT>::current_token() const noexcept
 	{
 		return _current_token;
 	}
 
-	template<typename InIterT, typename SymPoolT>
-	bool lexer<InIterT, SymPoolT>::current_token_is_eof() const noexcept
+	template<typename InIterT, typename SymPoolT, typename AllocT>
+	bool lexer<InIterT, SymPoolT, AllocT>::current_token_is_eof() const noexcept
 	{
 		return (current_token().type() == token_type::eof);
 	}
 
-	template<typename InIterT, typename SymPoolT>
-	void lexer<InIterT, SymPoolT>::advance()
+	template<typename InIterT, typename SymPoolT, typename AllocT>
+	void lexer<InIterT, SymPoolT, AllocT>::advance()
 	{
 		while (!lexer_impl::do_advance(*this)) {
 			// Try again, eh?
 		}
 	}
 
-	template<typename InIterT, typename SymPoolT>
-	lexer<InIterT, SymPoolT> make_lexer(const InIterT first,
-										const InIterT last,
-										SymPoolT& id_pool,
-										SymPoolT& lit_pool)
+	template<typename InIterT, typename SymPoolT, typename AllocT>
+	lexer<InIterT, SymPoolT, AllocT>
+	make_lexer(
+		const InIterT first, const InIterT last,
+		SymPoolT& id_pool, SymPoolT& lit_pool,
+		const AllocT& alloc)
 	{
-		return lexer<InIterT, SymPoolT>{first, last, id_pool, lit_pool};
+		return lexer<InIterT, SymPoolT, AllocT>{first, last, id_pool, lit_pool, alloc};
 	}
 
 }  // namespace minijava

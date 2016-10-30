@@ -9,7 +9,9 @@
 #pragma once
 
 #include <iterator>
+#include <memory>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 #include "lexer/token.hpp"
@@ -39,8 +41,16 @@ namespace minijava
 	 * @tparam SymPoolT
 	 *     type of the symbol pool
 	 *
+	 * @tparam AllocT
+	 *     allocator used to allocate internal working buffers
+	 *
 	 */
-	template<typename InIterT, typename SymPoolT>
+	template
+	<
+		typename InIterT,
+		typename SymPoolT,
+		typename AllocT = std::allocator<char>
+	>
 	class lexer final
 	{
 
@@ -70,11 +80,16 @@ namespace minijava
 		 * @param lit_pool
 		 *     `symbol_pool` to use for integer literals
 		 *
+		 * @param alloc
+		 *     allocator to use for allocating internal working buffers
+		 *
 		 * @throws lexical_error
 		 *     if the input does not start with a valid token
 		 *
 		 */
-		lexer(InIterT first, InIterT last, SymPoolT& id_pool, SymPoolT& lit_pool);
+		lexer(InIterT first, InIterT last,
+			  SymPoolT& id_pool, SymPoolT& lit_pool,
+			  const AllocT& alloc);
 
 		/**
 		 * @brief
@@ -194,6 +209,9 @@ namespace minijava
 		/** @brief Column number of the character referred to by `*_current_it`. */
 		size_t _column;
 
+		/** @brief Scratch buffer used by some internal lexing routines. */
+		std::basic_string<char, std::char_traits<char>, AllocT> _lexbuf;
+
 		/** @brief Helper-`struct` with private implementation details. */
 		struct lexer_impl;
 
@@ -204,20 +222,46 @@ namespace minijava
 	 * @brief
 	 *     Convenience function for construction a `lexer` object.
 	 *
+	 * @tparam InIterT
+	 *     type of the character iterator for reading the source
+	 *
+	 * @tparam SymPoolT
+	 *     type of the symbol pool
+	 *
+	 * @tparam AllocT
+	 *     allocator used to allocate internal working buffers
+	 *
 	 * @param first
 	 *     iterator pointing to the first character of the input
 	 *
 	 * @param last
 	 *     iterator pointing after the last character of the input
 	 *
-	 * @param pool
-	 *     symbol pool to use for identifiers
+	 * @param id_pool
+	 *     `symbol_pool` to use for identifiers
+	 *
+	 * @param lit_pool
+	 *     `symbol_pool` to use for integer literals
+	 *
+	 * @param alloc
+	 *     allocator to use for allocating internal working buffers
+	 *
+	 * @throws lexical_error
+	 *     if the input does not start with a valid token
 	 *
 	 */
-	template<typename InIterT, typename SymPoolT>
-	lexer<InIterT, SymPoolT> make_lexer(InIterT first,
-										InIterT last,
-										SymPoolT& pool);
+	template
+	<
+		typename InIterT,
+		typename SymPoolT,
+		typename AllocT = std::allocator<char>
+	>
+	lexer<InIterT, SymPoolT, AllocT>
+	make_lexer(
+		InIterT first, InIterT last,
+		SymPoolT& id_pool, SymPoolT& lit_pool,
+		const AllocT& = AllocT{}
+	);
 
 }  // namespace minijava
 
