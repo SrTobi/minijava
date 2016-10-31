@@ -2,7 +2,7 @@
 #error "Never `#include <symbol_pool.tpp>` directly; `#include <symbol_pool.hpp>` instead."
 #endif
 
-// TODO @Tobias Kahlert: Replace this stub implementation by an efficient one.
+#include <algorithm>
 
 
 namespace minijava
@@ -12,14 +12,7 @@ namespace minijava
 	{
 		bool operator()(const std::string& str, const entryptr_type& entry) const
 		{
-			// 5gon12eder: This doesn't work for strings with embedded NUL
-			// bytes but
-			//
-			//     std::equal(str.begin(), str.end(), entry->cstr, entry->cstr + entry->size)
-			//
-			// would and (besides being simpler) should conceptually be at
-			// least as fast if not faster.
-			return entry->size == str.size() && str == entry->cstr;
+			return std::equal(str.begin(), str.end(), entry->cstr, entry->cstr + entry->size);
 		}
 	};
 
@@ -32,13 +25,12 @@ namespace minijava
 	template<typename AllocT >
 	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
 		: _alloc(alloc)
-		  // 5gon12eder: Should only create the anchor in debug mode.
 		, _anchor(std::make_shared<symbol_debug_pool_anchor>())
 	{
 	}
 
 	template<typename AllocT >
-	symbol_pool<AllocT>::symbol_pool(symbol_pool&& old)
+	symbol_pool<AllocT>::symbol_pool(symbol_pool&& old) noexcept
 		: _alloc(std::move(old._alloc))
 		, _pool(std::move(old._pool))
 		, _anchor(std::move(old._anchor))
@@ -47,19 +39,12 @@ namespace minijava
 	}
 
 	template<typename AllocT>
-	symbol_pool<AllocT>::~symbol_pool()
+	symbol_pool<AllocT>& symbol_pool<AllocT>::operator=(symbol_pool&& old) noexcept
 	{
-		_invalidate_pool();
-	}
-
-	template<typename AllocT>
-	symbol_pool<AllocT>& symbol_pool<AllocT>::operator=(symbol_pool&& old)
-	{
-		_invalidate_pool();
 		_alloc = std::move(old._alloc);
 		_pool = std::move(old._pool);
 		_anchor = std::move(old._anchor);
-		// 5gon12eder: The old anchor could be left in an empty state.
+
 		old._anchor = std::make_shared<symbol_debug_pool_anchor>();
 
 		return *this;
@@ -68,6 +53,10 @@ namespace minijava
 	template<typename AllocT >
 	symbol symbol_pool<AllocT>::normalize(const std::string& text)
 	{
+		if(text.empty()) {
+			return symbol{};
+		}
+
 		std::hash<std::string> hash_fn;
 		auto entry_it = _pool.find(text, hash_fn, symbol_entry_string_cmp());
 
@@ -105,12 +94,4 @@ namespace minijava
 	{
 		return _alloc;
 	}
-
-	template<typename AllocT >
-	void symbol_pool<AllocT>::_invalidate_pool()
-	{
-		_anchor->pool_available = false;
-	}
-
-
 }  // namespace minijava

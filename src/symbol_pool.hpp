@@ -14,8 +14,8 @@
 #include <scoped_allocator>
 #include <string>
 #include <cstring>
-#include <boost/unordered_set.hpp>
 
+#include <boost/unordered_set.hpp>
 #include <boost/core/noncopyable.hpp>
 
 #include "symbol.hpp"
@@ -93,10 +93,6 @@ namespace minijava
 	 *
 	 */
 	template<typename AllocT = std::allocator<char>>
-
-	// 5gon12eder: Is inheriting from `boost::noncopyable` really needed these
-	// days where we can just say `= delete` for the copy operations?
-
 	class symbol_pool final: private boost::noncopyable
 	{
 	public:
@@ -148,24 +144,13 @@ namespace minijava
 		 * @brief
 		 *     Move constructs this symbol pool
 		 */
-
-		// 5gon12eder: Move operations should be `noexcept`.
-
-		symbol_pool(symbol_pool&&);
-
-		/**
-		 * @brief
-		 *     Destructs the symbol pool.
-		 *
-		 * If NDEBUG is not defined this asserts that no symbols created by this pool exist anymore
-		 */
-		~symbol_pool();
+		symbol_pool(symbol_pool&&) noexcept;
 
 		/**
 		 * @brief
 		 *     Move assigns this symbol pool
 		 */
-		symbol_pool& operator=(symbol_pool&& old);
+		symbol_pool& operator=(symbol_pool&& old) noexcept;
 
 
 		/**
@@ -229,9 +214,6 @@ namespace minijava
 		 *
 		 */
 		allocator_type get_allocator() const;
-
-	private:
-		void _invalidate_pool();
 
 	private:
 		/** allocator used to allocate memory for symbol_entry  */

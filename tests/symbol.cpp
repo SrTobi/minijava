@@ -1,5 +1,7 @@
 #include "symbol.hpp"
 
+#include "testaux/static_symbol_pool.hpp"
+
 #include <cstring>
 #include <sstream>
 #include <string>
@@ -9,7 +11,7 @@
 
 BOOST_AUTO_TEST_CASE(same_pointers_compare_equal)
 {
-	minijava::static_symbol_pool p("You're innocent when you dream");
+	testaux::static_symbol_pool p("You're innocent when you dream");
 	const auto s1 = p.get();
 	const auto s2 = p.get();
 	BOOST_REQUIRE(s1 == s2);
@@ -20,7 +22,7 @@ BOOST_AUTO_TEST_CASE(stream_insertion)
 {
 	using namespace std::string_literals;
     const auto text = "We laughed, my friends and I"s;
-	minijava::static_symbol_pool pool(text);
+	testaux::static_symbol_pool pool(text);
 	const auto s = pool.get();
 	auto oss = std::ostringstream{};
 	oss << s;
@@ -34,7 +36,7 @@ BOOST_AUTO_TEST_CASE(hash_of_symbol_equals_hash_of_std_string)
     std::size_t expected_hash = str_hasher(test_string);
 
     std::hash<minijava::symbol> poolstr_hasher;
-    minijava::static_symbol_pool pool(test_string);
+    testaux::static_symbol_pool pool(test_string);
     minijava::symbol pool_symbol = pool.get();
     std::size_t actual_hash = poolstr_hasher(pool_symbol);
 
@@ -46,8 +48,8 @@ BOOST_AUTO_TEST_CASE(test_empty_symbol)
 {
     std::string empty = "";
     std::string origin = "non empty";
-    minijava::static_symbol_pool empty_pool(empty);
-    minijava::static_symbol_pool full_pool(origin);
+    testaux::static_symbol_pool empty_pool(empty);
+    testaux::static_symbol_pool full_pool(origin);
 
     minijava::symbol stdctor_sym;
     minijava::symbol empty_normalized = empty_pool.get();
@@ -72,17 +74,16 @@ BOOST_AUTO_TEST_CASE(test_empty_symbol)
 
     // check hash
     std::hash<minijava::symbol> hash_fn;
-    std::hash<std::string> strhash_fn;
     BOOST_REQUIRE_EQUAL(hash_fn(stdctor_sym), hash_fn(empty_normalized));
-    BOOST_REQUIRE_EQUAL(hash_fn(stdctor_sym), strhash_fn(empty));
+    BOOST_REQUIRE_EQUAL(hash_fn(stdctor_sym), 0);
 }
 
 
 BOOST_AUTO_TEST_CASE(two_normalized_symbols_with_same_origin_only_equal_each_other)
 {
     std::string test_string = "some test symbol looking good";
-    minijava::static_symbol_pool pool(test_string);
-    minijava::static_symbol_pool not_pool("not");
+    testaux::static_symbol_pool pool(test_string);
+    testaux::static_symbol_pool not_pool("not");
 
     minijava::symbol not_test_symbol = not_pool.get();
     minijava::symbol first = pool.get();
@@ -96,7 +97,7 @@ BOOST_AUTO_TEST_CASE(two_normalized_symbols_with_same_origin_only_equal_each_oth
 
 BOOST_AUTO_TEST_CASE(copied_symbol_equals_original_symbol)
 {
-    minijava::static_symbol_pool pool("another great example of a symbol");
+    testaux::static_symbol_pool pool("another great example of a symbol");
 
     minijava::symbol origin = pool.get();
     minijava::symbol copy = origin;
@@ -107,7 +108,7 @@ BOOST_AUTO_TEST_CASE(copied_symbol_equals_original_symbol)
 BOOST_AUTO_TEST_CASE(normalized_symbol_cstr_equals_origin)
 {
     std::string origin = "pirate-strings do not like bananas";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -117,7 +118,7 @@ BOOST_AUTO_TEST_CASE(normalized_symbol_cstr_equals_origin)
 BOOST_AUTO_TEST_CASE(normalized_symbol_size_and_lenght_equals_origin_size)
 {
     std::string origin = "very original string is original";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -130,7 +131,7 @@ BOOST_AUTO_TEST_CASE(normalized_symbol_size_and_lenght_equals_origin_size)
 BOOST_AUTO_TEST_CASE(normalized_symbol_data_equals_origin)
 {
     std::string origin = "the question is sometimes the answer";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -140,7 +141,7 @@ BOOST_AUTO_TEST_CASE(normalized_symbol_data_equals_origin)
 BOOST_AUTO_TEST_CASE(symbol_forward_directed_iterators_behave_all_the_same)
 {
     std::string origin = "it is worth an iterator";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -157,7 +158,7 @@ BOOST_AUTO_TEST_CASE(symbol_forward_directed_iterators_behave_all_the_same)
 BOOST_AUTO_TEST_CASE(symbol_reverse_directed_iterators_behave_all_the_same)
 {
     std::string origin = "going the other direction might be the answer";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -174,8 +175,8 @@ BOOST_AUTO_TEST_CASE(empty_symbol_is_empty)
 {
     std::string empty = "";
     std::string origin = "non empty";
-    minijava::static_symbol_pool empty_pool(empty);
-    minijava::static_symbol_pool full_pool(origin);
+    testaux::static_symbol_pool empty_pool(empty);
+    testaux::static_symbol_pool full_pool(origin);
 
     minijava::symbol stdctor_sym;
     minijava::symbol empty_normalized = empty_pool.get();
@@ -189,7 +190,7 @@ BOOST_AUTO_TEST_CASE(empty_symbol_is_empty)
 BOOST_AUTO_TEST_CASE(test_symbol_index_access)
 {
     std::string origin = "its good if you know what you want";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -203,7 +204,7 @@ BOOST_AUTO_TEST_CASE(test_symbol_index_access)
 BOOST_AUTO_TEST_CASE(symbol_at_throws_out_of_bound_exception)
 {
     std::string origin = "small";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 
@@ -223,7 +224,7 @@ BOOST_AUTO_TEST_CASE(symbol_at_throws_out_of_bound_exception)
 BOOST_AUTO_TEST_CASE(test_symbol_back_front)
 {
     std::string origin = "a and o";
-    minijava::static_symbol_pool pool(origin);
+    testaux::static_symbol_pool pool(origin);
 
     minijava::symbol normalized = pool.get();
 

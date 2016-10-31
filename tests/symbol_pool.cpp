@@ -23,6 +23,17 @@ BOOST_AUTO_TEST_CASE(empty_pool_contains_nothing)
 }
 
 
+BOOST_AUTO_TEST_CASE(pool_returns_empty_symbol_singlton)
+{
+	auto pool = minijava::symbol_pool<>{};
+	auto empty_symbol = pool.normalize("");
+	auto full_symbol = pool.normalize("testtest");
+	BOOST_REQUIRE(empty_symbol.empty());
+	BOOST_REQUIRE_EQUAL(empty_symbol, minijava::symbol{});
+	BOOST_REQUIRE_NE(empty_symbol, full_symbol);
+}
+
+
 BOOST_AUTO_TEST_CASE(contains_string_after_normalization)
 {
 	using namespace std::string_literals;
