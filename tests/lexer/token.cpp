@@ -22,6 +22,8 @@ using tt = minijava::token_type;
 namespace /* anonymous */
 {
 
+	minijava::symbol_pool<> g_pool{};
+
 	class token_pair
 	{
 	public:
@@ -32,20 +34,16 @@ namespace /* anonymous */
 		template <typename T1, typename T2>
 		token_pair(T1&& arg1, T2&& arg2)
 		{
-			this->first = testaux::make_token(_pool, std::forward<T1>(arg1));
-			this->second = testaux::make_token(_pool, std::forward<T2>(arg2));
+			this->first = testaux::make_token(g_pool, std::forward<T1>(arg1));
+			this->second = testaux::make_token(g_pool, std::forward<T2>(arg2));
 		}
 
 		friend std::ostream& operator<<(std::ostream& os, const token_pair& tp)
 		{
 			return os << "'" << tp.first << "' '" << tp.second << "'";
 		}
-
-	private:
-
-		minijava::symbol_pool<> _pool{};
-
 	};
+
 
 }
 
