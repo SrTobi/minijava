@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(lextest_for_valid_token_sequence_produces_correct_output)
 BOOST_AUTO_TEST_CASE(lextest_for_invalid_token_sequence_throws_exception)
 {
 	using namespace std::string_literals;
-	std::istringstream mystdin{"int nan = 034g7;"};
+	std::istringstream mystdin{"int nan = #@?/!;*"};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	const auto expected_output = ""s
