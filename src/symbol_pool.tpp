@@ -12,6 +12,13 @@ namespace minijava
 	{
 		bool operator()(const std::string& str, const entryptr_type& entry) const
 		{
+			// 5gon12eder: This doesn't work for strings with embedded NUL
+			// bytes but
+			//
+			//     std::equal(str.begin(), str.end(), entry->cstr, entry->cstr + entry->size)
+			//
+			// would and (besides being simpler) should conceptually be at
+			// least as fast if not faster.
 			return entry->size == str.size() && str == entry->cstr;
 		}
 	};
@@ -25,6 +32,7 @@ namespace minijava
 	template<typename AllocT >
 	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
 		: _alloc(alloc)
+		  // 5gon12eder: Should only create the anchor in debug mode.
 		, _anchor(std::make_shared<symbol_debug_pool_anchor>())
 	{
 	}
@@ -51,6 +59,7 @@ namespace minijava
 		_alloc = std::move(old._alloc);
 		_pool = std::move(old._pool);
 		_anchor = std::move(old._anchor);
+		// 5gon12eder: The old anchor could be left in an empty state.
 		old._anchor = std::make_shared<symbol_debug_pool_anchor>();
 
 		return *this;

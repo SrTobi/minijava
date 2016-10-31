@@ -1,5 +1,8 @@
 /**
  * @file symbol_pool.hpp
+
+ // 5gon12eder: Missing @brief tag.
+
  *     Pools for canonical string representations.
  *
  */
@@ -90,6 +93,10 @@ namespace minijava
 	 *
 	 */
 	template<typename AllocT = std::allocator<char>>
+
+	// 5gon12eder: Is inheriting from `boost::noncopyable` really needed these
+	// days where we can just say `= delete` for the copy operations?
+
 	class symbol_pool final: private boost::noncopyable
 	{
 	public:
@@ -101,6 +108,9 @@ namespace minijava
 		using entry_type = symbol_entry;                                                 ///< symbol::symbol::entry
 
 		using allocator_traits = std::allocator_traits<allocator_type>;             ///< Traits for allocator_type
+
+		// 5gon12eder: Again, the `static_assert`ion is probably overly
+		// restrictive.
 
 		static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
 
@@ -138,6 +148,9 @@ namespace minijava
 		 * @brief
 		 *     Move constructs this symbol pool
 		 */
+
+		// 5gon12eder: Move operations should be `noexcept`.
+
 		symbol_pool(symbol_pool&&);
 
 		/**

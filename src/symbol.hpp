@@ -54,8 +54,15 @@ namespace minijava
 		{
 		}
 
+		// 5gon12eder: Why is this `tag` data member needed?  Can't you just
+		// compare the address of the object directly?
+
 		/** @brief Tag to compare if two symbols come from the same pool */
 		void const * const tag;
+
+		// 5gon12eder: This data member isn't needed either.  You can get this
+		// information from the (strong) reference count of the
+		// `std::shared_ptr`.
 
 		/** @brief Indicates whether the pool is still constructed */
 		bool pool_available = true;
@@ -68,6 +75,20 @@ namespace minijava
 	 * Must be provided and owned by an external factory.
 	 * If a symbol used after the factory has been deconstructed the behaviour is undefined.
 	 */
+
+	// 5gon12eder: Why are pools now called "factories" in the above DocString?
+	//
+	// I find this allocation and deallocation logic here an unfortunate mixing
+	// of concerns.  This logic belongs into the pool implementation.  It also
+	// clutters this public header file with implementation details (that
+	// should go into a `*.tpp` file).  Implementing this here also needlessly
+	// ties all pool implementations to `std::hash<std::string>` which is
+	// particularly unfortunate as it means you always have to construct a
+	// `std::string` just to get the hash value.  I don't see any downside in
+	// making the allocation and deallocation functions free helper function in
+	// a `detail` `namespace` in `symbol_pool.tpp` ans this `struct` just three
+	// data members.
+
 	struct symbol_entry final: private boost::noncopyable
 	{
 	public:
@@ -80,6 +101,12 @@ namespace minijava
 		{
 			using allocator_type = AllocT;
 			using allocator_traits = std::allocator_traits<allocator_type>;
+
+			// 5gon12eder: I think this `static_assert`ion is overly
+			// restrictive.  It would make sense to use a
+			// `std::allocator<symbol_entry>` and it would just work fine.  All
+			// you have to to is rebind it to `char`.
+
 			static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
 
 			entry_deleter(const allocator_type& alloc)
@@ -143,6 +170,8 @@ namespace minijava
 
 			entry->hash = hash;
 			entry->size = str.size();
+			// 5gon12eder: Could be done in just one line:
+			// std::copy(str.c_str(), str.c_str() + str.size() + 1, entry->cstr);
 			std::copy(str.begin(), str.end(), entry->cstr);
 			entry->cstr[str.size()] = '\0';
 
@@ -158,6 +187,17 @@ namespace minijava
 		 *     Entry to the empty symbol
 		 *
 		 */
+
+		// 5gon12eder: The DocString should say that the `symbol_entry` is
+		// statically allocated and also, that pools *must* use this special
+		// value for the empty string.
+		//
+		// As already discussed, I would prefer to define the hash of the empty
+		// string as 0 and leave the hashes of all other values unspecified.
+		// Then this function could also be marked `noexcept` which is
+		// important if you want to restore an invariant and need just some
+		// symbol for it.
+
 		static const symbol_entry * get_empty_symbol_entry()
 		{
 			const auto hash = std::hash<std::string>()(std::string(""));
@@ -169,6 +209,11 @@ namespace minijava
 		}
 
 	private:
+
+		// 5gon12eder: This function is called exactly once and all it does is
+		// adding two numbers.  That's quite a few lines of source code for
+		// that.
+
 		/**
 		 * @brief
 		 *     Calculates the needed size for an entry.
@@ -184,32 +229,62 @@ namespace minijava
 			return sizeof(symbol_entry) + length;
 		}
 	};
+	// 5gon12eder: You can use the implicit conversion operator of
+	// `std::bool_constant` to `bool`.  Then you don't have to spell out
+	// `::value` each time.  It's also more straight-forward, IMHO.
 	static_assert(std::is_pod<symbol_entry>::value, "");
 
 	namespace detail {
+
+		// To be consistent with the nomenclature, it should be
+		// `symbol_debug_base`, though.  This `class` doesn't even do the
+		// `assert`ions.
 
 		struct symbol_assertion_base
 		{
 			symbol_assertion_base(const std::shared_ptr<const symbol_debug_pool_anchor>& anchor)
 				: _debugAnchor(anchor)
 			{
+				// 5gon12eder: `anchor.get() == nullptr` should be allowed for
+				// when there is no pool or it doesn't support refcounting.
+				// Minor: Anyway, I'd prefer to just use the contextual
+				// conversion of `std::shared_ptr` to `bool`.  Comparing with a
+				// `std::nullptr_t` doesn't make things clearer, in my opinion.
+				// (And it's more typing.)
 				assert(anchor != nullptr);
 			}
 
 			static bool have_compatible_pool(const symbol_assertion_base& lhs, const symbol_assertion_base& rhs) noexcept
 			{
+				// 5gon12eder: Could just compare the addresses as mentioned
+				// above.  But as far as I can tell, you also have to handle
+				// the case where either pool is the static "pool" for the
+				// empty string.  If the static pool's tag is identified by
+				// the `nullptr` (as suggested above) then this check becomes
+				//
+				// const auto lp = lhs._debugAnchor.get();
+				// const auto rp = rhs._debugAnchor.get();
+				// return (lp == nullptr) || (rp == nullptr) || (lp == rp);
 				return lhs._debugAnchor->tag == rhs._debugAnchor->tag;
 			}
 
+			// 5gon12eder: Should be marked `noexcept`.
 			bool is_pool_available() const
 			{
+				// 5gon12eder: Could just ask the reference count as mentioned
+				// above.
 				return _debugAnchor->pool_available;
 			}
 
 		private:
 			/** @brief Reference to a pool anchor for some checks */
+			// 5gon12eder: Should be a `std::weak_ptr`.
 			std::shared_ptr<const symbol_debug_pool_anchor> _debugAnchor;
 		};
+
+		// 5gon12eder: I dislike casting to `void` just to silence a compiler
+		// warning about unused variables.  Just don't give the parameter a
+		// name.  It's also less to type.
 
 		struct symbol_release_base
 		{
@@ -230,6 +305,9 @@ namespace minijava
 				return true;
 			}
 		};
+
+		// 5gon12eder: Good refactoring.  ;-)
+		// But could save typing by using `std::conditional_t`.
 
 		using symbol_base = std::conditional<MINIJAVA_ASSERT_ACTIVE, symbol_assertion_base, symbol_release_base>::type;
 	}
@@ -262,6 +340,10 @@ namespace minijava
 		 * the pool they were created in.
 		 *
 		 */
+
+		// 5gon12eder: With a little refactoring (as explained above) this
+		// constructor could be `noexcept` which would make it perfect.
+
 		symbol()
 			: symbol(_get_empty_symbol())
 		{
@@ -279,6 +361,15 @@ namespace minijava
 		 * @param anchor
 		 *     An anchor that is used to check some pool properties.
 		 */
+
+		// 5gon12eder: If you take the `anchor` by-value and `std::move` it
+		// into its destination, you can save two atomic operations.  But you
+		// should't store the `std::shared_ptr` anyway but a `std::weak_ptr`
+		// obtained from it as explained above.
+		//
+		// The DocString for `anchor` doesn't really tell me what parameter I
+		// should pass.
+
 		explicit symbol(const symbol_entry * entry, const std::shared_ptr<const symbol_debug_pool_anchor>& anchor)
 			: detail::symbol_base(anchor)
 			, _entry(entry)
@@ -591,6 +682,8 @@ namespace minijava
 		char back() const
 		{
 			assert(size() > 0);
+			// 5gon12eder: I hope that the compiler can see through all this
+			// indirection...
 			return *crbegin();
 		}
 
@@ -610,6 +703,20 @@ namespace minijava
 		*/
 		friend bool operator==(const symbol& lhs, const symbol& rhs) noexcept
 		{
+			// 5gon12eder: I don't think that this check is needed.  If it is
+			// meant to handle the case that empty `symbol`s can be compared
+			// with `symbol`s from any pool, then it is not sufficient because
+			// it only handles the case where both are empty.  So if this was
+			// the intention, then
+			//
+			//     if (lhs.empty() != lhs.empty()) {
+			//         return false;
+			//     }
+			//
+			// would have been the correct condition.  But I'd find it more
+			// elegant to handle this in the `have_compatible_pool` function.
+			// Well, not only more elegant but also more performant because it
+			// wouldn't bother us in release mode.
 			if(lhs.empty() && rhs.empty())
 				return true;
 
@@ -647,11 +754,19 @@ namespace minijava
 		 */
 		static symbol _get_empty_symbol()
 		{
+
+			// 5gon12eder: If applying the above suggestions then you can just
+			// use an empty (default-constructed) `std::weak_ptr` here and need
+			// no memory allocation.  And then this function can also be
+			// `noexcept` as it should.
+
 			static const symbol_entry * empty_symbol_entry_ptr = symbol_entry::get_empty_symbol_entry();
 			static const auto anchor = std::make_shared<symbol_debug_pool_anchor>(nullptr);
 
 			return symbol(empty_symbol_entry_ptr, anchor);
 		}
+
+		// 5gon12eder: This DocString didn't make sense to me.
 
 		/**
 		 * @brief
@@ -671,6 +786,11 @@ namespace minijava
 		/** @brief The internal entry. */
 		const symbol_entry * _entry;
 	};  // class symbol
+
+
+	// 5gon12eder: The `static_symbol_pool` really shouldn't be in this header
+	// file.  It should have its own and -- since there is no valid reason to
+	// ever use it in the program -- this header file should be in `testaux`.
 
 	/**
 	 * @brief
@@ -752,6 +872,9 @@ namespace minijava
 }  // namespace minijava
 
 namespace std {
+
+	// 5gon12eder: s/calculate/obtain/ since it is O(1).
+
 	/**
 	 * @brief
 	 *     Hash function to calculate the hash value of a symbol
