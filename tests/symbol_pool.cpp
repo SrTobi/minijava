@@ -15,11 +15,11 @@ BOOST_AUTO_TEST_CASE(empty_when_default_constructed)
 }
 
 
-BOOST_AUTO_TEST_CASE(empty_pool_contains_nothing)
+BOOST_AUTO_TEST_CASE(empty_pool_is_normalized_nothing)
 {
 	const auto pool = minijava::symbol_pool<>{};
-	BOOST_REQUIRE(not pool.contains(""));
-	BOOST_REQUIRE(not pool.contains("elephant"));
+	BOOST_REQUIRE(not pool.is_normalized(""));
+	BOOST_REQUIRE(not pool.is_normalized("elephant"));
 }
 
 
@@ -34,13 +34,13 @@ BOOST_AUTO_TEST_CASE(pool_returns_empty_symbol_singlton)
 }
 
 
-BOOST_AUTO_TEST_CASE(contains_string_after_normalization)
+BOOST_AUTO_TEST_CASE(is_normalized_string_after_normalization)
 {
 	using namespace std::string_literals;
 	auto pool = minijava::symbol_pool<>{};
 	const auto text = "matchstick"s;
 	pool.normalize(text);
-	BOOST_REQUIRE(pool.contains(text));
+	BOOST_REQUIRE(pool.is_normalized(text));
 }
 
 

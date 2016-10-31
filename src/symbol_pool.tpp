@@ -71,7 +71,7 @@ namespace minijava
 	}
 
 	template<typename AllocT >
-	bool symbol_pool<AllocT>::contains(const std::string& text) const
+	bool symbol_pool<AllocT>::is_normalized(const std::string& text) const
 	{
 		const auto hash_fn = std::hash<std::string>();
 		return (_pool.find(text, hash_fn, symbol_entry_string_cmp()) != _pool.cend());

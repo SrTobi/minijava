@@ -175,7 +175,7 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Tests whether the pool contains a given symbol.
+		 *     Tests whether a normalized symbol wtih this string value exists.
 		 *
 		 * If the pool does not contain the symbol, it will *not* be added.
 		 * Use `normalize` if you want to add a symbol.
@@ -184,10 +184,10 @@ namespace minijava
 		 *     symbol to look up
 		 *
 		 * @returns
-		 *     whether the pool contains the symbol
+		 *     whether the text has a normalized symbol
 		 *
 		 */
-		bool contains(const std::string& text) const;
+		bool is_normalized(const std::string& text) const;
 
 		/**
 		 * @brief
