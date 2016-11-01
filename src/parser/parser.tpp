@@ -98,11 +98,6 @@ namespace minijava
                 }
             }
 
-            void parse_field()
-            {
-
-            }
-
             void parse_main_method()
             {
                 using namespace std::string_literals;
@@ -126,11 +121,6 @@ namespace minijava
                 consume(token_type::right_paren);
                 expect(block_first);
                 return parse_block();
-            }
-
-            void parse_method()
-            {
-
             }
 
             static constexpr auto parameters_first = set_t<
@@ -182,16 +172,6 @@ namespace minijava
                 }
             }
 
-            void parse_basic_type()
-            {
-
-            }
-
-            void parse_statement()
-            {
-
-            }
-
             static constexpr auto block_first = set_t<
                 token_type::left_brace
             >{};
@@ -200,7 +180,81 @@ namespace minijava
             {
                 assert(current_is(token_type::left_brace));
                 advance();
-                consume(token_type::right_brace);
+
+                while(!current_is(token_type::right_brace))
+                {
+                    parse_statement();
+                }
+                advance();
+            }
+
+            void parse_statement()
+            {
+                switch(current().type())
+                {
+                case token_type::right_brace:
+                    return;
+                case token_type::kw_if:
+                    parse_if();
+                    break;
+                case token_type::kw_while:
+                    parse_while();
+                    break;
+                case token_type::left_brace:
+                    parse_block();
+                    break;
+                case token_type::semicolon:
+                    advance();
+                    break;
+                default:
+                    parse_expression();
+                    consume(token_type::semicolon);
+                    break;
+                }
+            }
+
+            void parse_if()
+            {
+                assert(current_is(token_type::kw_if));
+                advance();
+
+                consume(token_type::left_paren);
+                parse_expression();
+                consume(token_type::right_paren);
+
+                parse_statement();
+
+                if(current_is(token_type::kw_else))
+                {
+                    advance();
+                    parse_statement();
+                }
+            }
+
+            void parse_while()
+            {
+                assert(current_is(token_type::kw_while));
+                advance();
+
+                consume(token_type::left_paren);
+                parse_expression();
+                consume(token_type::right_paren);
+
+                parse_statement();
+            }
+
+            static constexpr auto primary_expr_first = set_t<
+                //token_type::identifier,
+                token_type::kw_null,
+                token_type::kw_true,
+                token_type::kw_false,
+                token_type::integer_literal,
+                token_type::kw_this
+            >{};
+
+            void parse_expression()
+            {
+                consume(primary_expr_first);
             }
 
             template<token_type... TTs>

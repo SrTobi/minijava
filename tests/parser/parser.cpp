@@ -95,6 +95,10 @@ namespace /* anonymous */
 #define MAIN_METHOD_TYPED(RetType, Name, Args, Body) tt::kw_public, tt::kw_static, RetType, id(Name), Args, PROTECT(Body)
 #define MAIN_METHOD(Name, ArgName, Body) MAIN_METHOD_TYPED(tt::kw_void, Name, PARAMS(ARRAY(id("String")), id(ArgName)), PROTECT(Body))
 #define METHOD(RetType, Name, Args, Body) tt::kw_public, RetType, id(Name), Args, PROTECT(Body)
+#define PROGRAM(...) CLASS("Foo", BLOCK(METHOD(tt::kw_int, "bar", EMPTY_PARAMS, BLOCK(__VA_ARGS__))))
+#define IF(Cond, Then) tt::kw_if, tt::left_paren, Cond, tt::right_paren, Then
+#define IFELSE(Cond, Then, Else) IF(PROTECT(Cond), PROTECT(Then)), tt::kw_else, Else
+#define WHILE(Cond, Body) tt::kw_while, tt::left_paren, Cond, tt::right_paren, Body
 
 static const token_sequence success_data[] = {
     {},
@@ -115,7 +119,13 @@ static const token_sequence success_data[] = {
             MAIN_METHOD("main1", "args", EMPTY_BLOCK),
             MAIN_METHOD("main2", "args", EMPTY_BLOCK)
         ))
-    }
+    },
+    {PROGRAM(tt::semicolon)},
+    {PROGRAM(EMPTY_BLOCK)},
+    {PROGRAM(IF(lit("1"), EMPTY_BLOCK))},
+    {PROGRAM(IFELSE(lit("1"), EMPTY_BLOCK, EMPTY_BLOCK))},
+    {PROGRAM(WHILE(lit("1"), EMPTY_BLOCK))},
+    {PROGRAM(WHILE(lit("1"), EMPTY_BLOCK))},
 };
 
 
@@ -144,6 +154,7 @@ static const token_sequence failure_data[] = {
     {CLASS("Foo", BLOCK(METHOD(tt::kw_int, "bar", PARAMS(PDE(tt::comma), tt::kw_int, id("x")), EMPTY_BLOCK)))},
     {CLASS("Foo", BLOCK(STMT(tt::kw_public, ARRAY(tt::kw_int), tt::left_bracket, PDE(id("array")))))},
     {CLASS("Foo", BLOCK(STMT(tt::kw_public, tt::kw_int, PDE(tt::right_bracket), id("array"))))},
+    {PROGRAM(tt::kw_if, tt::left_paren, PDE(tt::right_paren))},
 };
 
 
