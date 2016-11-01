@@ -1,3 +1,46 @@
+#pragma once
+
+#include <string>
+#include <stdexcept>
+
+#include "lexer/token.hpp"
+
+namespace minijava
+{
+    struct syntax_error: std::runtime_error
+    {
+		syntax_error() : std::runtime_error{"invalid syntax"} {}
+		syntax_error(std::string msg) : std::runtime_error{std::move(msg)} {}
+		syntax_error(const token& tok, const std::string& msg)
+            : std::runtime_error{msg}
+            , _line(tok.line())
+            , _column(tok.column())
+        {}
+
+        std::size_t line() const noexcept
+        {
+            return _line;
+        }
+
+        std::size_t column() const noexcept
+        {
+            return _column;
+        }
+    private:
+        std::size_t _line{};
+        std::size_t _column{};
+    };
+
+    template<typename InIterT>
+    void parse_program(InIterT first, InIterT last);
+}
+
+
+#define MINIJAVA_INCLUDED_FROM_PARSER_PARSER_HPP
+#include "parser/parser.tpp"
+#undef MINIJAVA_INCLUDED_FROM_PARSER_PARSER_HPP
+
+
 /*
 
 stack s (prec, expr, operator) = [];

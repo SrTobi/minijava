@@ -33,6 +33,7 @@ set(COMPONENTS
 	lexer/token
 	lexer/token_iterator
 	lexer/token_type
+	parser/parser
 	symbol
 	symbol_anchor
 	symbol_entry
