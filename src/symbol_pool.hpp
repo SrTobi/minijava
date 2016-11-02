@@ -1,8 +1,7 @@
 /**
  * @file symbol_pool.hpp
-
- // 5gon12eder: Missing @brief tag.
-
+ *
+ * @brief
  *     Pools for canonical string representations.
  *
  */
@@ -11,70 +10,18 @@
 
 #include <cstddef>
 #include <memory>
-#include <scoped_allocator>
 #include <string>
-#include <cstring>
+#include <utility>
 
 #include <boost/unordered_set.hpp>
-#include <boost/core/noncopyable.hpp>
 
 #include "symbol.hpp"
+#include "symbol_anchor.hpp"
+#include "symbol_entry.hpp"
 
 
 namespace minijava
 {
-	namespace detail {
-		/**
-		 * @brief
-		 *     Hash function to access the hash value of a symbol_entry
-		 */
-		struct entryptr_hash
-		{
-			/**
-			 * @brief
-			 *     Returns the hash value of a symbol_entry
-			 *
-			 * @param entry
-			 *     A pointer to a symbol_entry for that the hash value should be returned
-			 *
-			 * @returns
-			 *     The hash value of the symbol_entry
-			 */
-			template<typename DeleterT>
-			constexpr std::size_t operator()(const std::unique_ptr<const symbol_entry, DeleterT>& entry) const noexcept
-			{
-				return entry->hash;
-			}
-		};
-
-		/**
-		 * @brief
-		 *     Equals function to test whether the string values of two symbol_entrys are equal
-		 */
-		struct entryptr_equal
-		{
-			/**
-			 * @brief
-			 *     Test whether the string values of two symbol_entrys are equal
-			 *
-			 * @param lhs
-			 *     The first entry
-			 *
-			 * @param rhs
-			 *     The second entry
-			 *
-			 * @returns
-			 *     `true` if the two string values are equal, `false` otherwise
-			 *
-			 */
-			template<typename DeleterT>
-			constexpr bool operator()(const std::unique_ptr<const symbol_entry, DeleterT>& lhs, const std::unique_ptr<const symbol_entry, DeleterT>& rhs) const noexcept
-			{
-				return lhs->size == rhs->size && std::strcmp(lhs->cstr, rhs->cstr) == 0;
-			}
-		};
-	}
-
 
 	/**
 	 * @brief
@@ -88,38 +35,36 @@ namespace minijava
 	 *
 	 * Moving a `symbol_pool` does not invalidate canonical pointers.
 	 *
+	 * The pool only uses the provided allocator to allocate memory for
+	 * `symbol_entry`s of the normalized symbols.  Additional internal data
+	 * structures are always allocated using the global oprator `new`.
+	 *
 	 * @tparam AllocT
 	 *     allocator type used for allocating memory for normalized symbols
 	 *
 	 */
-	template<typename AllocT = std::allocator<char>>
-	class symbol_pool final: private boost::noncopyable
+	template<typename AllocT = std::allocator<symbol_entry>>
+	class symbol_pool final : private AllocT
 	{
 	public:
 
-		/** @brief Type alias for `InnerAllocT`. */
+		/** @brief Type alias for `AllocT`. */
 		using allocator_type = AllocT;
 
 	private:
-		using entry_type = symbol_entry;                                                 ///< symbol::symbol::entry
 
-		using allocator_traits = std::allocator_traits<allocator_type>;             ///< Traits for allocator_type
+		/** @brief Type alias for `symbol_entry`. */
+		using entry_type = symbol_entry;
 
-		// 5gon12eder: Again, the `static_assert`ion is probably overly
-		// restrictive.
-
-		static_assert(std::is_same<char, typename allocator_traits::value_type>::value, "Allocator does not allocate char!");
-
-		using entryptr_type = symbol_entry::ptr<allocator_type>;
+		/** @brief Type alias for a smart pointer holding an `entry_type`. */
+		using entryptr_type = unique_symbol_entr_ptr<allocator_type>;
 
 		/** @brief Has set type. */
 		using hash_set_type = boost::unordered_set<
 			entryptr_type,
-			detail::entryptr_hash,
-			detail::entryptr_equal
+			symbol_entry_ptr_hash,
+			symbol_entry_ptr_equal
 		>;
-
-		struct symbol_entry_string_cmp;
 
 	public:
 
@@ -135,23 +80,58 @@ namespace minijava
 		 *     Constructs an empty pool with the provided allocator.
 		 *
 		 * @param alloc
-		 *     Allocator used to allocate internal strings and symbol_entry
+		 *     allocator used to allocate `symbol_entry`s
 		 *
 		 */
 		symbol_pool(const allocator_type& alloc);
 
 		/**
 		 * @brief
-		 *     Move constructs this symbol pool
+		 *     Move constructor.
+		 *
+		 * The moved-away-from `symbol_pool` is left in an empty state.
+		 *
+		 * @param other
+		 *     `symbol_pool` to move away from
+		 *
 		 */
-		symbol_pool(symbol_pool&&) noexcept;
+		symbol_pool(symbol_pool&& other) noexcept;
 
 		/**
 		 * @brief
-		 *     Move assigns this symbol pool
+		 *     Move-assignment operator.
+		 *
+		 * The moved-away-from `symbol_pool` is left in an empty state.
+		 *
+		 * @param other
+		 *     `symbol_pool` to move away from
+		 *
 		 */
-		symbol_pool& operator=(symbol_pool&& old) noexcept;
+		symbol_pool& operator=(symbol_pool&& other) noexcept;
 
+		/**
+		 * @brief
+		 *     `delete`d copy constructor.
+		 *
+		 * `symbol_pool`s are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		symbol_pool(const symbol_pool& other) = delete;
+
+		/**
+		 * @brief
+		 *     `delete`d copy-assignment operator.
+		 *
+		 * `symbol_pool`s are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		symbol_pool& operator=(const symbol_pool&) = delete;
 
 		/**
 		 * @brief
@@ -175,56 +155,87 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Tests whether a normalized symbol wtih this string value exists.
+		 *     Tests whether a canonical representation of a string already
+		 *     exists.
 		 *
-		 * If the pool does not contain the symbol, it will *not* be added.
-		 * Use `normalize` if you want to add a symbol.
+		 * The empty string always has a canonical representation even if it
+		 * was never added to the pool.  If the pool does not contain the
+		 * symbol, it will *not* be added.  Use `normalize` if you want to add
+		 * a symbol.
 		 *
 		 * @param text
-		 *     symbol to look up
+		 *     text to check
 		 *
 		 * @returns
-		 *     whether the text has a normalized symbol
+		 *     `true` if `text.empty()` or the pool contains `text`
 		 *
 		 */
 		bool is_normalized(const std::string& text) const;
 
 		/**
 		 * @brief
-		 *     `return`s a symbol for the given string, creating one if necessary.
+		 *     `return` a canonical representation of a string.
 		 *
 		 * If the pool does not already contain the symbol, it is inserted.
+		 * Then a canonical representation is `return`ed.
 		 *
 		 * @param text
-		 *     Text value of the symbol
+		 *     text value of the symbol
 		 *
 		 * @returns
-		 *     the symbol
+		 *     the canonical symbol
 		 *
 		 */
 		symbol normalize(const std::string& text);
 
 		/**
 		 * @brief
-		 *     `return`s a copy of the allocator used for allocating memory for
-		 *     normalized symbols.
+		 *     `return`s a `const` reference to the stored allocator.
 		 *
 		 * @returns
-		 *     copy of the allocator
+		 *     allocator
 		 *
 		 */
-		allocator_type get_allocator() const;
+		const allocator_type& get_allocator() const noexcept;
+
+		/**
+		 * @brief
+		 *     `return`s a mutable reference to the stored allocator.
+		 *
+		 * @returns
+		 *     allocator
+		 *
+		 */
+		allocator_type& get_allocator() noexcept;
+
+		/**
+		 * @brief
+		 *     Exchanges the states of two `symbol_pool`.
+		 *
+		 * @param lhs
+		 *     first `symbol_pool`
+		 *
+		 * @param rhs
+		 *     second `symbol_pool`
+		 *
+		 */
+		friend void swap(symbol_pool& lhs, symbol_pool& rhs) noexcept
+		{
+			using std::swap;
+			swap(static_cast<AllocT&>(lhs), static_cast<AllocT&>(rhs));
+			swap(lhs._pool, rhs._pool);
+			swap(lhs._anchor, rhs._anchor);
+		}
 
 	private:
-		/** allocator used to allocate memory for symbol_entry  */
-		allocator_type _alloc;
 
 		/** @brief Pool of symbols. */
-		hash_set_type _pool;
+		hash_set_type _pool{};
 
 		/** @brief Pool anchor for some checks */
-		std::shared_ptr<symbol_debug_pool_anchor> _anchor;
-	};
+		std::shared_ptr<symbol_anchor> _anchor{};
+
+	};  // symbol_pool
 
 }  // namespace minijava
 

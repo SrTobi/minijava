@@ -15,10 +15,10 @@ BOOST_AUTO_TEST_CASE(empty_when_default_constructed)
 }
 
 
-BOOST_AUTO_TEST_CASE(empty_pool_is_normalized_nothing)
+BOOST_AUTO_TEST_CASE(empty_pool_is_normalized_only_empty_string)
 {
 	const auto pool = minijava::symbol_pool<>{};
-	BOOST_REQUIRE(not pool.is_normalized(""));
+	BOOST_REQUIRE(pool.is_normalized(""));
 	BOOST_REQUIRE(not pool.is_normalized("elephant"));
 }
 
@@ -85,6 +85,7 @@ BOOST_AUTO_TEST_CASE(correct_size_after_normalization)
 	BOOST_REQUIRE(not pool.empty());
 }
 
+
 BOOST_AUTO_TEST_CASE(move_constructed_pool_behaves_like_old_pool)
 {
 	using namespace std::string_literals;
@@ -96,11 +97,12 @@ BOOST_AUTO_TEST_CASE(move_constructed_pool_behaves_like_old_pool)
 	auto moved_pool = std::move(pool);
 	const auto canonical_from_moved = moved_pool.normalize(text);
 	BOOST_REQUIRE_EQUAL(canonical_from_moved, canonical);
-	BOOST_REQUIRE_EQUAL(moved_pool.size(), std::size_t(1));
+	BOOST_REQUIRE_EQUAL(moved_pool.size(), std::size_t{1});
 
 	// old pool is empty
 	BOOST_REQUIRE(pool.empty());
 }
+
 
 BOOST_AUTO_TEST_CASE(move_assigned_pool_behaves_like_old_pool)
 {
@@ -120,7 +122,7 @@ BOOST_AUTO_TEST_CASE(move_assigned_pool_behaves_like_old_pool)
 	second_pool = std::move(pool);
 	const auto canonical_from_moved = second_pool.normalize(text);
 	BOOST_REQUIRE_EQUAL(canonical_from_moved, canonical);
-	BOOST_REQUIRE_EQUAL(second_pool.size(), std::size_t(1));
+	BOOST_REQUIRE_EQUAL(second_pool.size(), std::size_t{1});
 
 	// old pool is empty
 	BOOST_REQUIRE(pool.empty());

@@ -9,6 +9,7 @@
 #define BOOST_TEST_MODULE  symbol
 #include <boost/test/unit_test.hpp>
 
+
 BOOST_AUTO_TEST_CASE(same_pointers_compare_equal)
 {
 	testaux::static_symbol_pool p("You're innocent when you dream");
@@ -17,6 +18,7 @@ BOOST_AUTO_TEST_CASE(same_pointers_compare_equal)
 	BOOST_REQUIRE(s1 == s2);
 	BOOST_REQUIRE(not (s1 != s2));
 }
+
 
 BOOST_AUTO_TEST_CASE(stream_insertion)
 {
@@ -27,20 +29,6 @@ BOOST_AUTO_TEST_CASE(stream_insertion)
 	auto oss = std::ostringstream{};
 	oss << s;
 	BOOST_REQUIRE_EQUAL(text, oss.str());
-}
-
-BOOST_AUTO_TEST_CASE(hash_of_symbol_equals_hash_of_std_string)
-{
-    std::hash<std::string> str_hasher;
-    std::string test_string = "symbols love to make love";
-    std::size_t expected_hash = str_hasher(test_string);
-
-    std::hash<minijava::symbol> poolstr_hasher;
-    testaux::static_symbol_pool pool(test_string);
-    minijava::symbol pool_symbol = pool.get();
-    std::size_t actual_hash = poolstr_hasher(pool_symbol);
-
-    BOOST_REQUIRE_EQUAL(actual_hash, expected_hash);
 }
 
 
@@ -75,7 +63,10 @@ BOOST_AUTO_TEST_CASE(test_empty_symbol)
     // check hash
     std::hash<minijava::symbol> hash_fn;
     BOOST_REQUIRE_EQUAL(hash_fn(stdctor_sym), hash_fn(empty_normalized));
-    BOOST_REQUIRE_EQUAL(hash_fn(stdctor_sym), 0);
+    BOOST_REQUIRE_EQUAL(0, hash_fn(stdctor_sym));
+    BOOST_REQUIRE_EQUAL(0, stdctor_sym.hash());
+    BOOST_REQUIRE_EQUAL(0, empty_normalized.hash());
+    BOOST_REQUIRE_EQUAL(full_normalized.hash(), hash_fn(full_normalized));
 }
 
 
@@ -103,6 +94,7 @@ BOOST_AUTO_TEST_CASE(copied_symbol_equals_original_symbol)
     minijava::symbol copy = origin;
 
     BOOST_REQUIRE_EQUAL(origin, copy);
+    BOOST_REQUIRE_EQUAL(origin.hash(), copy.hash());
 }
 
 BOOST_AUTO_TEST_CASE(normalized_symbol_cstr_equals_origin)
@@ -112,7 +104,7 @@ BOOST_AUTO_TEST_CASE(normalized_symbol_cstr_equals_origin)
 
     minijava::symbol normalized = pool.get();
 
-    BOOST_REQUIRE_EQUAL(normalized.c_str(), origin.c_str());
+    BOOST_REQUIRE_EQUAL(origin, normalized.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(normalized_symbol_size_and_lenght_equals_origin_size)
@@ -210,12 +202,10 @@ BOOST_AUTO_TEST_CASE(symbol_at_throws_out_of_bound_exception)
 
     const size_t to = 100;
 
-    for(std::size_t i = 0; i < to; ++i)
-    {
-        if(i < origin.size())
-        {
+    for (std::size_t i = 0; i < to; ++i) {
+        if (i < origin.size()) {
             BOOST_REQUIRE_NO_THROW(normalized.at(i));
-        }else{
+        } else {
             BOOST_REQUIRE_THROW(normalized.at(i), std::out_of_range);
         }
     }
@@ -230,4 +220,50 @@ BOOST_AUTO_TEST_CASE(test_symbol_back_front)
 
     BOOST_CHECK_EQUAL(origin.front(), normalized.front());
     BOOST_CHECK_EQUAL(origin.back(), normalized.back());
+}
+
+
+BOOST_AUTO_TEST_CASE(comparison_between_symbols_and_strings)
+{
+	using namespace std::string_literals;
+	const auto text = "Grumpy Wizards make toxic brew for the Evil Queen and Jack"s;
+	testaux::static_symbol_pool spool{text};
+	const auto canon = spool.get();
+	// We use explicit operators here to have full control over the comparison.
+	BOOST_REQUIRE(text == canon);
+	BOOST_REQUIRE(canon == text);
+	BOOST_REQUIRE(text.c_str() == canon);
+	BOOST_REQUIRE(canon == text.c_str());
+	BOOST_REQUIRE("Grumpy"s != canon);
+	BOOST_REQUIRE(canon != "Grumpy"s);
+	BOOST_REQUIRE("Wizards" != canon);
+	BOOST_REQUIRE(canon != "Wizards");
+	BOOST_REQUIRE(""s != canon);
+	BOOST_REQUIRE(canon != ""s);
+	BOOST_REQUIRE("" != canon);
+	BOOST_REQUIRE(canon != "");
+}
+
+
+BOOST_AUTO_TEST_CASE(comparison_between_symbols_and_strings_with_embedded_nulls)
+{
+	using namespace std::string_literals;
+	const auto text = "not done\0yet"s;
+	testaux::static_symbol_pool spool{text};
+	const auto canon = spool.get();
+	BOOST_REQUIRE_EQUAL(canon, text);
+	BOOST_REQUIRE_NE(canon, "not done");
+	BOOST_REQUIRE_NE(canon, "not done\0boy"s);
+	BOOST_REQUIRE_NE(canon, text + "\0"s);
+}
+
+
+BOOST_AUTO_TEST_CASE(comparison_between_empty_symbols_and_strings)
+{
+	using namespace std::string_literals;
+	BOOST_REQUIRE_EQUAL(minijava::symbol{}, std::string{});
+	BOOST_REQUIRE_EQUAL(minijava::symbol{}, ""s);
+	BOOST_REQUIRE_EQUAL(minijava::symbol{}, "");
+	BOOST_REQUIRE_NE(minijava::symbol{}, "\0"s);
+	BOOST_REQUIRE_NE(minijava::symbol{}, " ");
 }
