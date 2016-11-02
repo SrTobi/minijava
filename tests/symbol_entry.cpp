@@ -8,8 +8,6 @@
 #include <utility>
 #include <vector>
 
-#include <iostream>
-
 #define BOOST_TEST_MODULE  symbol_entry
 #include <boost/test/unit_test.hpp>
 
@@ -44,13 +42,11 @@ namespace /* anonymous */
 			if (alloc_log != nullptr) {
 				alloc_log->push_back(std::make_pair(p, n));
 			}
-			std::clog << "\033[32m" << __func__ << "(" << n << ") = " << static_cast<void*>(p) << "\033[m" << std::endl;
 			return p;
 		}
 
 		void deallocate(T *const p, const std::size_t n)
 		{
-			std::clog << "\033[31m" << __func__ << "(" << static_cast<void*>(p) << ", " << n << ")" << "\033[m" << std::endl;
 			if (dealloc_log != nullptr) {
 				dealloc_log->push_back(std::make_pair(p, n));
 			}

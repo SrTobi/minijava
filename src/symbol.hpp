@@ -56,9 +56,9 @@
  *          |     |symbol_entry|               |                      |
  *          |     +------------+               |                      |
  *          |                                  V                      |
- *      +------+      std::shared_ptr      +------+   std::weak_ptr   |
- *      |symbol|-------------------------->|anchor|<------------------+
- *      | pool |                           +------+
+ *      +------+    std::shared_ptr    +-------------+  std::weak_ptr |
+ *      |symbol|---------------------->|symbol_anchor|----------------+
+ *      | pool |                       +-------------+
  *      +------+
  *
  * How a symbol pool manages ownership of its `symbol_entry`s is its own
