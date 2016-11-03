@@ -157,13 +157,16 @@ namespace minijava
 			lex._lexbuf.clear();
 			auto c = current(lex);
 			assert(is_digit(c));
-			do {
+			if (c == '0') {
 				lex._lexbuf.push_back(static_cast<char>(c));
 				c = next(lex);
-			} while (is_digit(c));
-			if ((lex._lexbuf.front() == '0') && (lex._lexbuf.size() > 1)) {
-				throw lexical_error{"Invalid integer literal: leading zeros are not allowed"};
+			} else {
+				do {
+					lex._lexbuf.push_back(static_cast<char>(c));
+					c = next(lex);
+				} while (is_digit(c));
 			}
+			assert((lex._lexbuf.front() != '0') || (lex._lexbuf.size() == 1));
 			const auto lexval = lex._lit_pool.normalize(lex._lexbuf);
 			lex._current_token = token::create_integer_literal(lexval);
 		}

@@ -174,6 +174,10 @@ static const success_test success_data[] = {
 		{"15", lit("15")},
 		{"0/**/509720", lit("0"), lit("509720")},
 		{"-42 -0 --15", tt::minus, lit("42"), tt::minus, lit("0"), tt::decrement, lit("15")},
+		{"00", lit("0"), lit("0")},
+		{"000", lit("0"), lit("0"), lit("0")},
+		{"*012356--", tt::multiply, lit("0"), lit("12356"), tt::decrement},
+		{"<001true", tt::less_than, lit("0"), lit("0"), lit("1"), tt::kw_true},
 		{
 				"102984084080850832452705977991283408000810923847581234123412341234123412341242134",
 				lit("102984084080850832452705977991283408000810923847581234123412341234123412341242134")
@@ -231,12 +235,6 @@ static const failure_test failure_data[] = {
 		{"asdfghewr\\0a", id("asdfghewr")},
 		{"void\"", tt::kw_void},
 		{"1234\x7F", lit("1234")},
-
-		// invalid integer literals
-		{"00"},
-		{"000"},
-		{"*012356--", tt::multiply},
-		{"<001true", tt::less_than},
 
 		// invalid comments
 		{"/*"},
