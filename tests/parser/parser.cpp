@@ -92,13 +92,17 @@ namespace /* anonymous */
 #define STMT(...) __VA_ARGS__, tt::semicolon
 #define FIELD(Type, Name) STMT(tt::kw_public, PROTECT(Type), id(Name))
 #define CLASS(Name, Body) tt::kw_class, id(Name), Body
-#define MAIN_METHOD_TYPED(RetType, Name, Args, Body) tt::kw_public, tt::kw_static, RetType, id(Name), Args, PROTECT(Body)
+#define MAIN_METHOD_TYPED(RetType, Name, Args, Body) tt::kw_public, tt::kw_static, RetType, id(Name), Args, Body
 #define MAIN_METHOD(Name, ArgName, Body) MAIN_METHOD_TYPED(tt::kw_void, Name, PARAMS(ARRAY(id("String")), id(ArgName)), PROTECT(Body))
-#define METHOD(RetType, Name, Args, Body) tt::kw_public, RetType, id(Name), Args, PROTECT(Body)
+#define METHOD(RetType, Name, Args, Body) tt::kw_public, RetType, id(Name), Args, Body
 #define PROGRAM(...) CLASS("Foo", BLOCK(METHOD(tt::kw_int, "bar", EMPTY_PARAMS, BLOCK(__VA_ARGS__))))
 #define IF(Cond, Then) tt::kw_if, tt::left_paren, Cond, tt::right_paren, Then
 #define IFELSE(Cond, Then, Else) IF(PROTECT(Cond), PROTECT(Then)), tt::kw_else, Else
 #define WHILE(Cond, Body) tt::kw_while, tt::left_paren, Cond, tt::right_paren, Body
+#define RETURN(Expr) STMT(tt::kw_return, Expr)
+#define ARRAY_SUB(Array, ...) Array, tt::left_bracket, __VA_ARGS__, tt::right_bracket
+#define CALL(Func, Params) id(Func), Params
+#define PAREN(...) tt::left_paren, __VA_ARGS__, tt::right_paren
 
 static const token_sequence success_data[] = {
     {},
@@ -126,6 +130,22 @@ static const token_sequence success_data[] = {
     {PROGRAM(IFELSE(lit("1"), EMPTY_BLOCK, EMPTY_BLOCK))},
     {PROGRAM(WHILE(lit("1"), EMPTY_BLOCK))},
     {PROGRAM(WHILE(lit("1"), EMPTY_BLOCK))},
+    {PROGRAM(RETURN(lit("11")))},
+    {PROGRAM(STMT(tt::kw_return))},
+    {PROGRAM(STMT(tt::kw_return, tt::kw_null))},
+    {PROGRAM(STMT(tt::kw_return, tt::kw_this))},
+    {PROGRAM(STMT(tt::kw_return, tt::kw_false))},
+    {PROGRAM(STMT(tt::kw_return, tt::kw_true))},
+    {PROGRAM(STMT(tt::kw_return, id("foo")))},
+    {PROGRAM(STMT(tt::kw_return), STMT(tt::kw_return))},
+    {PROGRAM(STMT(lit("1"), tt::plus, id("itegerlit")))},
+    {PROGRAM(STMT(ARRAY_SUB(id("args"), lit("0"))))},
+    {PROGRAM(STMT(id("args"), tt::dot, id("length")))},
+    {PROGRAM(STMT(lit("0"), tt::dot, id("property")))},
+    {PROGRAM(STMT(PAREN(lit("0"), tt::plus, tt::kw_false)))},
+    {PROGRAM(STMT(CALL("crash", EMPTY_PARAMS)))},
+    {PROGRAM(STMT(CALL("fib", PARAMS(lit("3237834374672643")))))},
+    {PROGRAM(STMT(CALL("gcd", PARAMS(id("p"), tt::comma,id("q")))))},
 };
 
 
@@ -154,7 +174,11 @@ static const token_sequence failure_data[] = {
     {CLASS("Foo", BLOCK(METHOD(tt::kw_int, "bar", PARAMS(PDE(tt::comma), tt::kw_int, id("x")), EMPTY_BLOCK)))},
     {CLASS("Foo", BLOCK(STMT(tt::kw_public, ARRAY(tt::kw_int), tt::left_bracket, PDE(id("array")))))},
     {CLASS("Foo", BLOCK(STMT(tt::kw_public, tt::kw_int, PDE(tt::right_bracket), id("array"))))},
-    {PROGRAM(tt::kw_if, tt::left_paren, PDE(tt::right_paren))},
+    {PROGRAM(tt::kw_if, tt::left_paren, PDE(tt::right_paren), tt::semicolon)},
+    {PROGRAM(IF(tt::kw_true, STMT(PDE(tt::kw_int), id("avar"))))},
+    {PROGRAM(STMT(tt::kw_return, PDE(tt::kw_return)))},
+    {PROGRAM(STMT(id("args"), tt::dot, PDE(lit("0"))))},
+    {PROGRAM(STMT(CALL("gcd", PARAMS(id("p"), PDE(id("q"))))))},
 };
 
 

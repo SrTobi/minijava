@@ -5,8 +5,10 @@
 #include <array>
 #include <initializer_list>
 #include <algorithm>
+#include <stack>
 #include <boost/algorithm/string/join.hpp>
 
+#include "exceptions.hpp"
 #include "lexer/token_type.hpp"
 #include "lexer/token.hpp"
 
@@ -33,6 +35,24 @@ namespace minijava
         {
             using result_t = typename token_type_set_cat<T1, T2>::type;
             return result_t{};
+        }
+
+        constexpr bool is_binary_op(const token_type tt)
+        {
+            //TODO: implement it correctly
+            return tt == token_type::plus;
+        }
+
+        constexpr int precedence(const token_type tt)
+        {
+            //TODO: implement it correctly
+            assert(is_binary_op(tt));
+            return 1;
+        }
+
+        constexpr bool is_left_assoc(const token_type tt)
+        {
+            return tt != token_type::assign;
         }
 
         template<typename InIterT>
@@ -183,34 +203,51 @@ namespace minijava
 
                 while(!current_is(token_type::right_brace))
                 {
-                    parse_statement();
+                    parse_block_statement();
                 }
                 advance();
             }
 
+            void parse_block_statement()
+            {
+                parse_statement();
+            }
+
             void parse_statement()
             {
-                switch(current().type())
+                switch(current_type())
                 {
-                case token_type::right_brace:
-                    return;
-                case token_type::kw_if:
-                    parse_if();
-                    break;
-                case token_type::kw_while:
-                    parse_while();
-                    break;
                 case token_type::left_brace:
-                    parse_block();
-                    break;
+                    return parse_block();
                 case token_type::semicolon:
-                    advance();
-                    break;
+                    return parse_empty_statement();
+                case token_type::kw_if:
+                    return parse_if();
                 default:
-                    parse_expression();
-                    consume(token_type::semicolon);
-                    break;
+                    return parse_expression_statement();
+                case token_type::kw_while:
+                    return parse_while();
+                case token_type::kw_return:
+                    return parse_return();
                 }
+            }
+
+            void parse_empty_statement()
+            {
+                assert(current_is(token_type::semicolon));
+                advance();
+            }
+
+            void parse_while()
+            {
+                assert(current_is(token_type::kw_while));
+                advance();
+
+                consume(token_type::left_paren);
+                parse_expression();
+                consume(token_type::right_paren);
+
+                parse_statement();
             }
 
             void parse_if()
@@ -231,30 +268,174 @@ namespace minijava
                 }
             }
 
-            void parse_while()
+            void parse_expression_statement()
             {
-                assert(current_is(token_type::kw_while));
-                advance();
-
-                consume(token_type::left_paren);
                 parse_expression();
-                consume(token_type::right_paren);
-
-                parse_statement();
+                consume(token_type::semicolon);
             }
 
-            static constexpr auto primary_expr_first = set_t<
-                //token_type::identifier,
-                token_type::kw_null,
-                token_type::kw_true,
-                token_type::kw_false,
-                token_type::integer_literal,
-                token_type::kw_this
+            void parse_return()
+            {
+                assert(current_is(token_type::kw_return));
+                advance();
+
+                if(!current_is(token_type::semicolon))
+                {
+                    parse_expression();
+                }
+                consume(token_type::semicolon);
+            }
+
+            static constexpr auto prefix_ops_first = set_t<
+                token_type::logical_not,
+                token_type::minus
+            >{};
+
+            static constexpr auto postfix_ops_first = set_t<
+                token_type::dot,
+                token_type::left_bracket
             >{};
 
             void parse_expression()
             {
-                consume(primary_expr_first);
+                int min_prec = 0;
+                std::stack<int> prec_stack{};
+                std::stack<token_type> preop_stack{};
+                //t = first token
+            outer:
+                assert(preop_stack.empty());
+                while(current_is(prefix_ops_first))
+                {
+                    preop_stack.push(current_type());
+                    advance();
+                }
+
+                expect(primary_expr_first);
+                parse_primary();
+
+                while(current_is(postfix_ops_first))
+                {
+                    parse_postfix_op();
+                }
+
+                while(!preop_stack.empty())
+                {
+                    preop_stack.pop();
+                }
+
+            inner:
+
+                if (is_binary_op(current_type()) && precedence(current_type()) >= min_prec)
+                {
+                    int prec = precedence(current_type());
+                    if (is_left_assoc(current_type()))
+                    {
+                        ++prec;
+                    }
+
+                    prec_stack.push(min_prec);
+
+                    min_prec = prec;
+
+                    advance();
+                    goto outer;
+                }
+
+                if(!prec_stack.empty())
+                {
+                    min_prec = prec_stack.top();
+                    prec_stack.pop();
+                    goto inner;
+                }
+            }
+
+            void parse_postfix_op()
+            {
+                assert(current_is(postfix_ops_first));
+                if(current_is(token_type::left_bracket))
+                {
+                    // array access
+                    advance();
+                    parse_expression();
+                    consume(token_type::right_bracket);
+                }else{
+                    // field access or method invocation
+                    consume(token_type::dot);
+                    consume(token_type::identifier);
+
+                    if(current_is(token_type::left_paren))
+                    {
+                        // method invocation
+                        advance();
+                        parse_arguments();
+                        consume(token_type::right_paren);
+                    }
+                }
+            }
+
+            static constexpr auto primary_expr_first = set_t<
+                token_type::kw_null,
+                token_type::kw_false,
+                token_type::kw_true,
+                token_type::integer_literal,
+                token_type::identifier,
+                token_type::kw_this,
+                token_type::left_paren,
+                token_type::kw_new
+            >{};
+
+            void parse_primary()
+            {
+                assert(current_is(primary_expr_first));
+
+                switch(current_type())
+                {
+                case token_type::kw_null:
+                case token_type::kw_false:
+                case token_type::kw_true:
+                case token_type::integer_literal:
+                case token_type::kw_this:
+                    advance();
+                    return;
+                case token_type::identifier:
+                    advance();
+                    if(current_is(token_type::left_paren))
+                    {
+                        advance();
+                        parse_arguments();
+                        consume(token_type::right_paren);
+                    }
+                    return;
+                case token_type::left_paren:
+                    advance();
+                    parse_expression();
+                    consume(token_type::right_paren);
+                    return;
+                case token_type::kw_new:
+                    return parse_new_expression();
+                default:
+                    throw MINIJAVA_MAKE_ICE_MSG("Unexpected token");
+                }
+            }
+
+            void parse_arguments()
+            {
+                if(current_is(token_type::right_paren))
+                {
+                    return;
+                }
+                while (true) {
+                    parse_expression();
+                    if(!current_is(token_type::comma))
+                        return;
+                    advance();
+                }
+            }
+
+            void parse_new_expression()
+            {
+                assert(current_is(token_type::kw_new));
+                throw minijava::not_implemented_error{};
             }
 
             template<token_type... TTs>
@@ -299,6 +480,11 @@ namespace minijava
                 return *it;
             }
 
+            token_type current_type() noexcept
+            {
+                return current().type();
+            }
+
             template<token_type... TTs>
             bool current_is(token_type_set<TTs...>)
             {
@@ -309,7 +495,7 @@ namespace minijava
             bool current_is(const TTs... tts)
             {
                 const auto list = std::initializer_list<token_type>{ tts...};
-                return std::find(list.begin(), list.end(), current().type()) != list.end();
+                return std::find(list.begin(), list.end(), current_type()) != list.end();
             }
 
 
