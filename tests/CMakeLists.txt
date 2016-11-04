@@ -31,3 +31,6 @@ foreach(comp ${COMPONENTS})
 
 	add_dependencies(check ${comp-target})
 endforeach(comp)
+
+add_executable(parsegen "parser/syntax_gen.cpp")
+target_link_libraries(parsegen LINK_PRIVATE core)
