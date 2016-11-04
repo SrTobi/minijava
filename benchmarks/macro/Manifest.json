@@ -1,0 +1,188 @@
+// -*- coding:utf-8; mode:javascript; -*-
+
+// This file defines the macro-benchmarks.  It consists of a single JSON object
+// with one attribute per benchmark.  The key is the name of the benchmark and
+// the value is its definition.  The definition is itself a JSON object that
+// may have the following attributes, all of which are optional.
+//
+//  - `description` -- a short description of the benchmark
+//  - `cmdargs` -- list of command-line arguments to pass to the compiler
+//  - `setup` -- setup of input and output files (see below)
+//  - `stdin` -- file to connect to the standard input of the compiler
+//  - `stdout` -- file to connect to the standard output of the compiler
+//  - `stderr` -- file to connect to the standard error output of the compiler
+//  - `expect` -- expected exit code of the compiler (integer)
+//  - `require` -- additional requirements to check after running the benchmark
+//
+// The `setup` attribute of a benchmark defines input and output files that are
+// involved in running the benchmark.  It is a JSON object with variable names
+// (which you can choose almost to your liking) as the keys and "recipes" as
+// the values.  A recipe can have either of three types which determines how it
+// is interpreted.
+//
+//  - If the value is a string, it is interpreted as a file-name.
+//  - Otherwise, if the value is a list of strings, it is interpreted as a
+//    command to execute that will produce the contents of the file as its
+//    output.  The first element of the list (which must not be empty) is
+//    interpreted as the file-name of an executable file that will be passed
+//    the remaining elements as arguments.
+//  - Finally, if the value is `null`, only a variable name is defined but no
+//    file created.  This is useful for output files that you want to refer to
+//    later.
+//
+// A variable defined in the `setup` section can be referred to in the rest of
+// the benchmark definition.  For example, if you defined `XYZ` as a variable,
+// then you can use `{XYZ}` in, say, the `cmdargs` attribute and the
+// appropriate path will be substituted.
+//
+// You can even use these variable substitutions in the recipes in the `setup`
+// section.  Don't expect that the files will already exist by the time the
+// generator scripts are run, though.
+//
+// You can connect the standard streams of the compiler process to a file by
+// using the `stdin`, `stdout` or `stderr` attributes.  Their value should be a
+// string, which is interpreted as a file-name.  You can also use variable
+// substitutions in the strings.  For example, if you defined the variable
+// `XYZ` in the `setup` attribute, then `{XYZ}` would be a valid value for,
+// say, `stdin`.
+//
+// If you want to discard any of the streams, you can connect them to `null`,
+// which is the default, anyway, if you don't connect them.
+//
+// The `require` attribute must have as value an object that can have the
+// following attributes, all of which are optional.
+//
+//  - empty -- an array of strings with files names which must be empty
+//  - equal -- an array of two strings with file names which must be equal
+//
+// As you will probably have guessed by now, you can -- as an extension to the
+// official JSON format -- also use comments in this file.  This functionality
+// is rather limited, however.  Only line-comments that are on a line of their
+// own are allowed.  Everything else is still a syntax error.
+
+{
+
+    "lose-lose" : {
+        "description" : "do nothing, but do it in style",
+        "expect" : 1
+    },
+
+    "echo-001" : {
+	"description" : "echo empty file from stdin to stdout",
+	"cmdargs" : ["--echo"]
+    },
+
+    "echo-002-a" : {
+	"description" : "echo 100 MiB file from disk to disk",
+	"setup" : {
+	    "IN" : ["huge_random_file", "--size=104857600"],
+	    "OUT" : null
+	},
+	"cmdargs" : ["--echo", "--output={OUT}", "{IN}"]
+    },
+
+    "echo-002-b" : {
+	"description" : "echo 100 MiB file from disk to stdout",
+	"setup" : {
+	    "IN" : ["huge_random_file", "--size=104857600"],
+	    "OUT" : null
+	},
+	"cmdargs" : ["--echo", "{IN}"],
+	"stdout" : "{OUT}"
+    },
+
+    "echo-002-c" : {
+	"description" : "echo 100 MiB file from stdin to disk",
+	"setup" : {
+	    "IN" : ["huge_random_file", "--size=104857600"],
+	    "OUT" : null
+	},
+	"cmdargs" : ["--echo", "--output={OUT}"],
+	"stdin" : "{IN}"
+    },
+
+    "echo-002-d" : {
+	"description" : "echo 100 MiB file from stdin to stdout",
+	"setup" : {
+	    "IN" : ["huge_random_file", "--size=104857600"],
+	    "OUT" : null
+	},
+	"cmdargs" : ["--echo"],
+	"stdin" : "{IN}",
+	"stdout" : "{OUT}"
+    },
+
+    "echo-002-e" : {
+	"description" : "echo 100 MiB file from disk to /dev/null",
+	"setup" : {
+	    "IN" : ["huge_random_file", "--size=104857600"]
+	},
+	"cmdargs" : ["--echo", "{IN}"]
+    },
+
+    "echo-002-f" : {
+	"description" : "echo 100 MiB file from stdin to /dev/null",
+	"setup" : {
+	    "IN" : ["huge_random_file", "--size=104857600"]
+	},
+	"cmdargs" : ["--echo"],
+	"stdin" : "{IN}"
+    },
+
+    "lexer-001" : {
+	"description" : "lexing empty file",
+	"setup" : {
+	    "OUT" : null,
+	    "ERR" : null
+	},
+	"cmdargs" : ["--lextest"],
+	"stdout" : "{OUT}",
+	"stderr" : "{ERR}"
+    },
+
+    "lexer-002" : {
+	"description" : "lexing simple program",
+	"setup" : {
+	    "STDOUT" : null,
+	    "STDERR" : null,
+	    "REF" : "simple.lex"
+	},
+	"stdin" : "simple.mj",
+	"stdout" : "{STDOUT}",
+	"stderr" : "{STDERR}",
+	"cmdargs" : ["--lextest"]
+    },
+
+    "lexer-003" : {
+	"description" : "lexing single excessively long (100 MiB) identifier",
+	"setup" : {
+	    "IN" : ["long_id.py", "104857600"]
+	},
+	"cmdargs" : ["--lextest", "{IN}"]
+    },
+
+    "lexer-004-a" : {
+	"description" : "lexing huge number of different identifiers",
+	"setup" : {
+	    "IN" : ["many_different_ids", "--count=1000000", "--min-length=1", "--max-length=101"]
+	},
+	"cmdargs" : ["--lextest", "{IN}"]
+    },
+
+    "lexer-004-b" : {
+	"description" : "lexing huge number of the same repeated identifier",
+	"setup" : {
+	    "IN" : ["single_repeated_id.py", "--length=50", "1000000"]
+	},
+	"cmdargs" : ["--lextest", "{IN}"]
+    },
+
+    "lexer-005" : {
+	"description" : "lexing excessive repetition of block comments",
+	"setup" : {
+	    "IN" : ["adjacent_block_comments.py", "5000000"]
+	},
+	"cmdargs" : ["--lextest", "{IN}"]
+    }
+
+}
