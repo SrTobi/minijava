@@ -16,6 +16,7 @@
 #include "global.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "parser/parser.hpp"
 #include "symbol_pool.hpp"
 
 
@@ -34,6 +35,7 @@ namespace minijava
 		{
 			input = 1,
 			lexer = 2,
+			parser = 3
 		};
 
 
@@ -90,7 +92,8 @@ namespace minijava
 			auto interception = po::options_description{"Intercepting the Compilation at Specific Stages"};
 			interception.add_options()
 				("echo", "stop after the input stage and output the source file verbatim")
-				("lextest", "stop after lexical analysis and output a token sequence");
+				("lextest", "stop after lexical analysis and output a token sequence")
+				("parsetest", "stop after parsing and report syntax errors");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -132,6 +135,9 @@ namespace minijava
 			if (varmap.count("lextest")) {
 				setup.stage = compilation_stage::lexer;
 			}
+			if (varmap.count("parsetest")) {
+				setup.stage = compilation_stage::parser;
+			}
 			return true;
 		}
 
@@ -153,6 +159,11 @@ namespace minijava
 			const auto toklast = token_end(lex);
 			if (stage == compilation_stage::lexer) {
 				std::copy(tokfirst, toklast, std::ostream_iterator<token>{ostr, "\n"});
+				return;
+			}
+			parse_program(tokfirst, toklast);
+			if(stage == compilation_stage::parser)
+			{
 				return;
 			}
 			// If we get until here, we have a problem...

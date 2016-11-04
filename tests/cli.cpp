@@ -16,6 +16,8 @@
 #include "testaux/temporary_file.hpp"
 #include "testaux/testaux.hpp"
 
+#include "parser/parser.hpp"
+
 #define BOOST_TEST_MODULE  cli
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -529,5 +531,29 @@ BOOST_AUTO_TEST_CASE(lextest_does_not_eat_null_bytes_on_error)
 			minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr)
 	, std::exception);
 	BOOST_REQUIRE_EQUAL(expected_output, mystdout.str());
+	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
+}
+
+BOOST_AUTO_TEST_CASE(parsetest_valid_input)
+{
+	using namespace std::string_literals;
+	std::istringstream mystdin{valid_program_data};
+	std::ostringstream mystdout{};
+	std::ostringstream mystderr{};
+	minijava::real_main({"", "--parsetest"}, mystdin, mystdout, mystderr);
+	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
+	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
+}
+
+BOOST_AUTO_TEST_CASE(parsetest_invalid_input)
+{
+	using namespace std::string_literals;
+	std::istringstream mystdin{"class Foo { public static main(String[] args) {int 5;} }"};
+	std::ostringstream mystdout{};
+	std::ostringstream mystderr{};
+	BOOST_REQUIRE_THROW(
+			minijava::real_main({"", "--parsetest"}, mystdin, mystdout, mystderr)
+	, minijava::syntax_error);
+	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
