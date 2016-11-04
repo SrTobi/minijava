@@ -12,6 +12,8 @@
 #include "lexer/token_type.hpp"
 #include "lexer/token.hpp"
 
+#include "parser/operator.tpp"
+
 namespace minijava
 {
     namespace detail
@@ -37,24 +39,6 @@ namespace minijava
             return result_t{};
         }
 
-        constexpr bool is_binary_op(const token_type tt)
-        {
-            //TODO: implement it correctly
-            return tt == token_type::plus;
-        }
-
-        constexpr int precedence(const token_type tt)
-        {
-            //TODO: implement it correctly
-            assert(is_binary_op(tt));
-            return 1;
-        }
-
-        constexpr bool is_left_assoc(const token_type tt)
-        {
-            return tt != token_type::assign;
-        }
-
         template<typename InIterT>
         struct parser
         {
@@ -64,6 +48,7 @@ namespace minijava
             parser(InIterT first, InIterT /*last*/)
                 : it(first)
             {
+                token_buffer.push(*it);
             }
 
             void parse_program()
@@ -131,7 +116,7 @@ namespace minijava
                 expect(token_type::identifier);
                 if(std::strcmp(current().lexval().c_str(), "String") != 0)
                 {
-                    throw syntax_error(*it, "Expected 'String', but found "s + current().lexval().c_str());
+                    throw syntax_error(current(), "Expected 'String', but found "s + current().lexval().c_str());
                 }
                 advance();
 
@@ -175,10 +160,10 @@ namespace minijava
             }
 
             static constexpr auto type_first = set_t<
+                token_type::identifier,
                 token_type::kw_int,
                 token_type::kw_boolean,
-                token_type::kw_void,
-                token_type::identifier
+                token_type::kw_void
             >{};
 
             void parse_type()
@@ -210,7 +195,65 @@ namespace minijava
 
             void parse_block_statement()
             {
-                parse_statement();
+                if(!current_is(type_first))
+                {
+                    // we see a while/return/if/etc...
+                    return parse_statement();
+                }
+
+                // determine if statement or local
+                const auto first_token = current();
+                advance();
+
+                if(first_token.type() != token_type::identifier)
+                    expect(token_type::identifier, token_type::left_bracket);
+
+                if(current_is(token_type::identifier))
+                {
+                    // <type> bar
+                    //        ^^^
+                    putback(first_token);
+                } else if(!current_is(token_type::left_bracket))
+                {
+                    // foo +
+                    //     ^
+                    putback(first_token);
+                    return parse_statement();
+                } else {
+                    // foo [
+                    //     ^
+                    const auto second_token = current();
+                    advance();
+
+                    if(!current_is(token_type::right_bracket))
+                    {
+                        // foo [ 5 + 5 ]
+                        //       ^
+                        putback(second_token);
+                        putback(first_token);
+                        return parse_statement();
+                    }
+
+                    // foo [ ]
+                    //       ^
+                    putback(second_token);
+                    putback(first_token);
+                }
+
+                parse_local_variable_decl();
+            }
+
+            void parse_local_variable_decl()
+            {
+                assert(current_is(type_first));
+                parse_type();
+                consume(token_type::identifier);
+                if(current_is(token_type::assign))
+                {
+                    advance();
+                    parse_expression();
+                }
+                consume(token_type::semicolon);
             }
 
             void parse_statement()
@@ -296,11 +339,15 @@ namespace minijava
                 token_type::left_bracket
             >{};
 
-            void parse_expression()
+            void parse_expression(bool parsed_initial_primary = false)
             {
                 int min_prec = 0;
                 std::stack<int> prec_stack{};
                 std::stack<token_type> preop_stack{};
+
+                if(parsed_initial_primary)
+                    goto init_primary_provided;
+
                 //t = first token
             outer:
                 assert(preop_stack.empty());
@@ -312,6 +359,7 @@ namespace minijava
 
                 expect(primary_expr_first);
                 parse_primary();
+            init_primary_provided:
 
                 while(current_is(postfix_ops_first))
                 {
@@ -324,7 +372,6 @@ namespace minijava
                 }
 
             inner:
-
                 if (is_binary_op(current_type()) && precedence(current_type()) >= min_prec)
                 {
                     int prec = precedence(current_type());
@@ -356,6 +403,7 @@ namespace minijava
                 {
                     // array access
                     advance();
+
                     parse_expression();
                     consume(token_type::right_bracket);
                 }else{
@@ -434,8 +482,37 @@ namespace minijava
 
             void parse_new_expression()
             {
+                using namespace std::string_literals;
                 assert(current_is(token_type::kw_new));
-                throw minijava::not_implemented_error{};
+                advance();
+                const bool was_id = current_is(token_type::identifier);
+
+                consume(type_first);
+
+                switch(expect(token_type::left_paren, token_type::left_bracket))
+                {
+                case token_type::left_paren:
+                    if(!was_id)
+                    {
+                        // new int () // always fails
+                        expect(token_type::left_bracket);
+                    }
+                    advance();
+                    consume(token_type::right_paren);
+                    return;
+                case token_type::left_bracket:
+                    advance();
+                    parse_expression();
+                    consume(token_type::right_bracket);
+                    while(current_is(token_type::left_bracket))
+                    {
+                        advance();
+                        consume(token_type::right_bracket);
+                    }
+                    return;
+                default:
+                    throw MINIJAVA_MAKE_ICE();
+                }
             }
 
             template<token_type... TTs>
@@ -451,9 +528,9 @@ namespace minijava
                 if(!current_is(tts...))
                 {
                     std::array<std::string, sizeof...(tts)> exp_toks = {{name(tts)...}};
-                    throw syntax_error(*it, "Expected any of "s + boost::algorithm::join(exp_toks, ", "s) + " but found " + name(it->type()));
+                    throw syntax_error(current(), "Expected any of "s + boost::algorithm::join(exp_toks, ", "s) + " but found " + name(current_type()));
                 }
-                return it->type();
+                return current_type();
             }
 
             template<typename... TTs>
@@ -467,17 +544,27 @@ namespace minijava
             token next()
             {
                 advance();
-                return *it;
+                return current();
             }
 
             void advance()
             {
-                ++it;
+                token_buffer.pop();
+                if(token_buffer.empty())
+                {
+                    ++it;
+                    token_buffer.push(*it);
+                }
+            }
+
+            void putback(token tok)
+            {
+                token_buffer.push(tok);
             }
 
             token current()
             {
-                return *it;
+                return token_buffer.top();
             }
 
             token_type current_type() noexcept
@@ -498,7 +585,7 @@ namespace minijava
                 return std::find(list.begin(), list.end(), current_type()) != list.end();
             }
 
-
+            std::stack<token> token_buffer;
             InIterT it;
         };
     }

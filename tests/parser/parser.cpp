@@ -103,6 +103,8 @@ namespace /* anonymous */
 #define ARRAY_SUB(Array, ...) Array, tt::left_bracket, __VA_ARGS__, tt::right_bracket
 #define CALL(Func, Params) id(Func), Params
 #define PAREN(...) tt::left_paren, __VA_ARGS__, tt::right_paren
+#define NEW_OBJ(Type) tt::kw_new, CALL(Type, EMPTY_PARAMS)
+#define NEW_ARRAY(Type, ...) tt::kw_new, Type, tt::left_bracket, __VA_ARGS__, tt::right_bracket
 
 static const token_sequence success_data[] = {
     {},
@@ -146,6 +148,19 @@ static const token_sequence success_data[] = {
     {PROGRAM(STMT(CALL("crash", EMPTY_PARAMS)))},
     {PROGRAM(STMT(CALL("fib", PARAMS(lit("3237834374672643")))))},
     {PROGRAM(STMT(CALL("gcd", PARAMS(id("p"), tt::comma,id("q")))))},
+    {PROGRAM(STMT(NEW_OBJ("Foo")))},
+    {PROGRAM(STMT(NEW_ARRAY(id("Foo"), lit("1"), tt::plus, lit("2"))))},
+    {PROGRAM(STMT(ARRAY(NEW_ARRAY(id("Foo"), lit("1"), tt::plus, lit("2")))))},
+    {PROGRAM(STMT(ARRAY(NEW_ARRAY(tt::kw_void, lit("1"), tt::plus, lit("2")))))},
+    {PROGRAM(STMT(id("foo"), tt::assign, lit("3"), tt::minus, lit("5"), tt::multiply, lit("5")))},
+    {PROGRAM(STMT(lit("3"), tt::minus, tt::minus, tt::minus, lit("5")))},
+    {PROGRAM(STMT(id("foo"), tt::assign, id("bar")))},
+    {PROGRAM(STMT(tt::kw_int, id("foo")))},
+    {PROGRAM(STMT(id("Foo"), id("foo")))},
+    {PROGRAM(STMT(ARRAY(id("Foo")), id("arr")))},
+    {PROGRAM(STMT(ARRAY(ARRAY(id("Foo"))), id("arr")))},
+    {PROGRAM(STMT(ARRAY(ARRAY(tt::kw_int)), id("arr")))},
+    {PROGRAM(STMT(ARRAY_SUB(ARRAY_SUB(id("arr"), lit("9")), id("i"), tt::modulo, lit("0")), tt::assign, lit("5")))},
 };
 
 
@@ -177,8 +192,15 @@ static const token_sequence failure_data[] = {
     {PROGRAM(tt::kw_if, tt::left_paren, PDE(tt::right_paren), tt::semicolon)},
     {PROGRAM(IF(tt::kw_true, STMT(PDE(tt::kw_int), id("avar"))))},
     {PROGRAM(STMT(tt::kw_return, PDE(tt::kw_return)))},
+    {PROGRAM(STMT(tt::kw_return, lit("5"), PDE(tt::comma), lit("4")))},
+    {PROGRAM(STMT(tt::kw_return, tt::left_paren, PDE(tt::right_paren)))},
     {PROGRAM(STMT(id("args"), tt::dot, PDE(lit("0"))))},
     {PROGRAM(STMT(CALL("gcd", PARAMS(id("p"), PDE(id("q"))))))},
+    {PROGRAM(STMT(tt::kw_new, tt::kw_int, pde(), EMPTY_PARAMS))},
+    {PROGRAM(STMT(id("b"), tt::less_than, PDE(tt::greater_than), id("d")))},
+    {PROGRAM(STMT(tt::kw_int, PDE(lit("5"))))},
+    {PROGRAM(STMT(ARRAY_SUB(id("arr"), lit("9")), tt::left_bracket, PDE(tt::right_bracket)))},
+    {PROGRAM(STMT(ARRAY_SUB(ARRAY(id("Foo")), PDE(lit("9")))))},
 };
 
 
