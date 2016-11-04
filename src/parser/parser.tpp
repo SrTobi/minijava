@@ -506,8 +506,17 @@ namespace minijava
                     consume(token_type::right_bracket);
                     while(current_is(token_type::left_bracket))
                     {
+                        const auto left_bracket = current();
                         advance();
-                        consume(token_type::right_bracket);
+                        if(!current_is(token_type::right_bracket))
+                        {
+                            // immediately subscripted array expression
+                            // new int[length][][expr]
+                            // -> (new int[length][])[expr]
+                            putback(left_bracket);
+                            return;
+                        }
+                        advance();
                     }
                     return;
                 default:

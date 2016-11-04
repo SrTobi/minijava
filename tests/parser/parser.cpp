@@ -152,6 +152,7 @@ static const token_sequence success_data[] = {
     {PROGRAM(STMT(NEW_ARRAY(id("Foo"), lit("1"), tt::plus, lit("2"))))},
     {PROGRAM(STMT(ARRAY(NEW_ARRAY(id("Foo"), lit("1"), tt::plus, lit("2")))))},
     {PROGRAM(STMT(ARRAY(NEW_ARRAY(tt::kw_void, lit("1"), tt::plus, lit("2")))))},
+    {PROGRAM(STMT(ARRAY_SUB(ARRAY(NEW_ARRAY(tt::kw_void, lit("1"))), id("muhaha"))))},
     {PROGRAM(STMT(id("foo"), tt::assign, lit("3"), tt::minus, lit("5"), tt::multiply, lit("5")))},
     {PROGRAM(STMT(lit("3"), tt::minus, tt::minus, tt::minus, lit("5")))},
     {PROGRAM(STMT(id("foo"), tt::assign, id("bar")))},
