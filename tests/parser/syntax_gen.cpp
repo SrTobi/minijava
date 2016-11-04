@@ -19,7 +19,7 @@ namespace {
             static const double v = [](){
                 if(const auto envp = std::getenv("EXPRDIST"))
                     return std::stod(envp);
-                return 0.1;
+                return 0.025;
             }();
             return v;
         }
@@ -32,8 +32,8 @@ namespace {
 
         void gen_program()
         {
-            auto dist = std::exponential_distribution<double>{0.5};
-            auto n_classes = static_cast<int>(dist(engine)+0.5);
+            auto dist = std::exponential_distribution<double>{0.3};
+            auto n_classes = static_cast<int>(dist(engine)+0.3);
 
             while(n_classes--)
             {
@@ -49,7 +49,7 @@ namespace {
             push_Id();
             push(tt::left_brace);
 
-            auto dist = std::exponential_distribution<double>{0.7};
+            auto dist = std::exponential_distribution<double>{0.2};
             auto n_members = static_cast<int>(dist(engine)+0.5);
 
             while(n_members--)
@@ -168,7 +168,7 @@ namespace {
 
         void gen_block()
         {
-            auto dist = std::exponential_distribution<double>{0.7};
+            auto dist = std::exponential_distribution<double>{0.3};
             auto n_blocks = static_cast<int>(dist(engine));
             push(tt::left_brace);
             while(n_blocks--)
