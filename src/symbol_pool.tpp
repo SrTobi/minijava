@@ -2,67 +2,115 @@
 #error "Never `#include <symbol_pool.tpp>` directly; `#include <symbol_pool.hpp>` instead."
 #endif
 
-// TODO @Tobias Kahlert: Replace this stub implementation by an efficient one.
+#include <algorithm>
+#include <tuple>
 
 
 namespace minijava
 {
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	symbol_pool<InnerAllocT, OuterAllocT>::symbol_pool()
+	namespace detail
+	{
+
+		struct symbol_entry_string_cmp
+		{
+
+			template <typename AllocT>
+			bool operator()(const std::string& str,
+			                const unique_symbol_entr_ptr<AllocT>& entry) const
+			{
+				return std::equal(str.begin(), str.end(),
+				                  entry->data, entry->data + entry->size);
+			}
+
+		};
+
+	}  // namespace detail
+
+
+	template <typename AllocT>
+	symbol_pool<AllocT>::symbol_pool()
+		: _anchor{symbol_anchor::make_symbol_anchor()}
 	{
 	}
 
-	/*template <typename InnerAllocT, typename OuterAllocT>
-	symbol_pool<InnerAllocT, OuterAllocT>::symbol_pool(
-		const inner_allocator_type& inner,
-		const outer_allocator_type& outer
-	) : _pool{
-		0,
-		typename hash_set_type::hasher{},
-		typename hash_set_type::key_equal{},
-		scoped_allocator_type{outer, inner}
-	}
+	template <typename AllocT>
+	symbol_pool<AllocT>::symbol_pool(const allocator_type& alloc)
+		: AllocT{alloc}
+		, _anchor{symbol_anchor::make_symbol_anchor()}
 	{
-	}*/
-
-	template <typename InnerAllocT, typename OuterAllocT>
-	symbol symbol_pool<InnerAllocT, OuterAllocT>::normalize(const std::string& text)
-	{
-		auto pos = _pool.find(text);
-		if (pos == _pool.cend())
-			pos = _pool.insert(pos, text);
-		return symbol(pos->c_str());
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	bool symbol_pool<InnerAllocT, OuterAllocT>::contains(const std::string& text) const
+	template <typename AllocT>
+	symbol_pool<AllocT>::symbol_pool(symbol_pool&& other) noexcept
+		: AllocT(other.get_allocator())
 	{
-		return (_pool.find(text) != _pool.cend());
+		swap(*this, other);
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	std::size_t symbol_pool<InnerAllocT, OuterAllocT>::size() const noexcept
+	template<typename AllocT>
+	symbol_pool<AllocT>& symbol_pool<AllocT>::operator=(symbol_pool&& other) noexcept
+	{
+		symbol_pool temp{get_allocator()};
+		swap(*this, temp);
+		swap(*this, other);
+		return *this;
+	}
+
+	template <typename AllocT>
+	symbol symbol_pool<AllocT>::normalize(const std::string& text)
+	{
+		if (text.empty()) {
+			return symbol{};
+		}
+
+		const auto hash_fn = std::hash<std::string>{};
+		const auto comp_fn = detail::symbol_entry_string_cmp{};
+		const auto hash = hash_fn(text);
+
+		auto entry_it = _pool.find(text, hash_fn, comp_fn);
+
+		if (entry_it == _pool.end()) {
+			auto insert_entry = new_symbol_entry(get_allocator(), hash, text.size(), text.data());
+			std::tie(entry_it, std::ignore) = _pool.insert(std::move(insert_entry));
+		}
+
+		return symbol{entry_it->get(), _anchor};
+	}
+
+	template <typename AllocT>
+	bool symbol_pool<AllocT>::is_normalized(const std::string& text) const
+	{
+		if (text.empty()) {
+			return true;
+		}
+		const auto hash_fn = std::hash<std::string>{};
+		const auto comp_fn = detail::symbol_entry_string_cmp{};
+		return (_pool.find(text, hash_fn, comp_fn) != _pool.cend());
+	}
+
+	template <typename AllocT>
+	std::size_t symbol_pool<AllocT>::size() const noexcept
 	{
 		return _pool.size();
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	bool symbol_pool<InnerAllocT, OuterAllocT>::empty() const noexcept
+	template <typename AllocT>
+	bool symbol_pool<AllocT>::empty() const noexcept
 	{
 		return _pool.empty();
 	}
 
-	/*template <typename InnerAllocT, typename OuterAllocT>
-	InnerAllocT symbol_pool<InnerAllocT, OuterAllocT>::get_inner_allocator() const
+	template <typename AllocT>
+	const AllocT& symbol_pool<AllocT>::get_allocator() const noexcept
 	{
-		return _pool.get_allocator().inner_allocator();
+		return *this;
 	}
 
-	template <typename InnerAllocT, typename OuterAllocT>
-	OuterAllocT symbol_pool<InnerAllocT, OuterAllocT>::get_outer_allocator() const
+	template <typename AllocT>
+	AllocT& symbol_pool<AllocT>::get_allocator() noexcept
 	{
-		return _pool.get_allocator().outer_allocator();
-	}*/
+		return *this;
+	}
 
 }  // namespace minijava

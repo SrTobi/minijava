@@ -63,7 +63,7 @@ namespace /* anonymous */
 
 	private:
 
-		minijava::symbol_pool<> _pool{};
+		static minijava::symbol_pool<> _pool;
 		std::string _input;
 		std::vector<minijava::token> _expected{};
 
@@ -73,6 +73,8 @@ namespace /* anonymous */
 		}
 
 	};
+
+	minijava::symbol_pool<> failure_test::_pool;
 
 	class success_test : public failure_test
 	{
@@ -130,8 +132,8 @@ BOOST_AUTO_TEST_CASE(identifiers_are_put_into_the_correct_pool)
 	auto lex = minijava::make_lexer(std::begin(input), std::end(input),
 	                                id_pool, lit_pool);
 	const auto tok = lex.current_token();
-	BOOST_REQUIRE(id_pool.contains(tok.lexval().c_str()));
-	BOOST_REQUIRE(!lit_pool.contains(tok.lexval().c_str()));
+	BOOST_REQUIRE(id_pool.is_normalized(tok.lexval().c_str()));
+	BOOST_REQUIRE(!lit_pool.is_normalized(tok.lexval().c_str()));
 }
 
 
@@ -143,8 +145,8 @@ BOOST_AUTO_TEST_CASE(integer_literals_are_put_into_the_correct_pool)
 	auto lex = minijava::make_lexer(std::begin(input), std::end(input),
 	                                id_pool, lit_pool);
 	const auto tok = lex.current_token();
-	BOOST_REQUIRE(!id_pool.contains(tok.lexval().c_str()));
-	BOOST_REQUIRE(lit_pool.contains(tok.lexval().c_str()));
+	BOOST_REQUIRE(!id_pool.is_normalized(tok.lexval().c_str()));
+	BOOST_REQUIRE(lit_pool.is_normalized(tok.lexval().c_str()));
 }
 
 

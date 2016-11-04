@@ -34,6 +34,8 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	symbol
+	symbol_anchor
+	symbol_entry
 	symbol_pool
 )
 
