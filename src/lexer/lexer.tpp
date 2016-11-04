@@ -30,6 +30,8 @@ namespace minijava
 		{
 			// TODO: Set line and column attributes of the scanned token.
 			const auto c = lexer_impl::skip_white_space(lex);
+			auto current_column = lex._column;
+			auto current_line = lex._line;
 			if (c < 0) {
 				lex._current_token = token::create(token_type::eof);
 			} else if (is_word_head(c)) {
@@ -106,6 +108,8 @@ namespace minijava
 			} else {
 				throw lexical_error{};
 			}
+			lex._current_token.set_line(current_line);
+			lex._current_token.set_column(current_column);
 			return true;
 		}
 
@@ -260,7 +264,7 @@ namespace minijava
 		_current_token{token::create(token_type::eof)},
 		_current_it{first}, _last_it{last},
 		_id_pool{id_pool}, _lit_pool{lit_pool},
-		_line{0}, _column{0},
+		_line{1}, _column{1},
 		_lexbuf{alloc}
 	{
 		advance();
