@@ -1,3 +1,11 @@
+/**
+ * @file parser.hpp
+ *
+ * @brief
+ *     Parser for the MiniJava programming language.
+ *
+ */
+
 #pragma once
 
 #include <string>
@@ -5,99 +13,112 @@
 
 #include "lexer/token.hpp"
 
+
 namespace minijava
 {
-    struct syntax_error: std::runtime_error
-    {
-		syntax_error() : std::runtime_error{"invalid syntax"} {}
-		syntax_error(std::string msg) : std::runtime_error{std::move(msg)} {}
-		syntax_error(const token& tok, const std::string& msg)
-            : std::runtime_error{msg}
-            , _line(tok.line())
-            , _column(tok.column())
-        {}
 
-        std::size_t line() const noexcept
-        {
-            return _line;
-        }
+	/**
+	 * @brief
+	 *     Exception used to report syntacitcal errors from within the parser.
+	 *
+	 */
+	struct syntax_error: std::runtime_error
+	{
 
-        std::size_t column() const noexcept
-        {
-            return _column;
-        }
-    private:
-        std::size_t _line{};
-        std::size_t _column{};
-    };
+		/**
+		 * @brief
+		 *     Creates a new exception object with a generic error message and
+		 *     no source location information.
+		 *
+		 */
+		syntax_error();
 
-    template<typename InIterT>
-    void parse_program(InIterT first, InIterT last);
-}
+
+		/**
+		 * @brief
+		 *     Creates a new exception object with a custom error message and
+		 *     no source location information.
+		 *
+		 * @param msg
+		 *     custom error message
+		 *
+		 */
+		syntax_error(const std::string msg);
+
+		/**
+		 * @brief
+		 *     Creates a new exception object with a custom error message and
+		 *     source location information.
+		 *
+		 * @param tok
+		 *     token at the parser-defined error location
+		 *
+		 * @param msg
+		 *     custom error message
+		 *
+		 */
+		syntax_error(const token& tok, const std::string& msg);
+
+		/**
+		 * @brief
+		 *     `return`s the line number of the parser-defined error location.
+		 *
+		 * If the error location is unknown, 0 is `return`ed.
+		 *
+		 * @returns
+		 *     line number
+		 *
+		 */
+		std::size_t line() const noexcept;
+
+		/**
+		 * @brief
+		 *     `return`s the column number of the parser-defined error
+		 *     location.
+		 *
+		 * If the error location is unknown, 0 is `return`ed.
+		 *
+		 * @returns
+		 *     column number
+		 *
+		 */
+		std::size_t column() const noexcept;
+
+	private:
+
+		/** @brief Line number of the parser-defined error token. */
+		std::size_t _line{};
+
+		/** @brief Column number of the parser-defined error token. */
+		std::size_t _column{};
+
+	};  // struct syntax_error
+
+
+	/**
+	 * @brief
+	 *     Parses a sequence of tokens as a MiniJava program.
+	 *
+	 * @tparam InIterT
+	 *     input iterator type of the token iterator
+	 *
+	 * @param first
+	 *     iterator pointing at the first token of the program
+	 *
+	 * @param last
+	 *     iterator pointing after the last token of the program
+	 *
+	 * @throws syntax_error
+	 *     if the token sequence `[first, last)` is not a syntactical correct
+	 *     MiniJava program
+	 *
+	 */
+	template<typename InIterT>
+	void parse_program(InIterT first, InIterT last);
+
+}  // namespace minijava
 
 
 #define MINIJAVA_INCLUDED_FROM_PARSER_PARSER_HPP
 #include "parser/parser.tpp"
 #undef MINIJAVA_INCLUDED_FROM_PARSER_PARSER_HPP
-
-
-/*
-
-stack s (prec, expr, operator) = [];
-
-
-parse_exprs()
-{
-    min_prec = 0
-    t = first token
-outer:
-    stack preop-stack : unop = [];
-    while(t is pre-op)
-    {
-        preop-stack.push(t.operator)
-        t <- next token advance
-    }
-
-    result = parse_primary()
-    t <- next token advance
-
-    while(t is post-op)
-    {
-        result = t.operator(rusult)
-    }
-
-    while(!preop-stack.empty)
-    {
-        preop <- preop-stack.pop
-        result = preop(result)
-    }
-
-
-inner:
-    if (t is bin-op) && (t.prec >= min_prec)
-    {
-        prec = t.prec
-        if (t.assoc == left)
-        {
-            ++prec
-        }
-
-        s.push(min_prec, result, t.operator)
-
-        min_prec = prec
-
-        t <- next token advance
-        goto outer;
-    }
-
-    if(!s.empty)
-    {
-        (min_prec, lhs, op) <- s.pop
-        result <- op(lhs, result)
-        goto inner
-    }
-
-    return result
-}
-
-*/

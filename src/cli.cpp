@@ -96,7 +96,7 @@ namespace minijava
 			interception.add_options()
 				("echo", "stop after the input stage and output the source file verbatim")
 				("lextest", "stop after lexical analysis and output a token sequence")
-				("parsetest", "stop after parsing and report syntax errors");
+				("parsetest", "stop after parsing and reporting any syntax errors");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -118,9 +118,9 @@ namespace minijava
 				    << '\n' << generic
 				    << '\n' << interception
 				    << '\n' << other
-					<< '\n'
-					<< "Anywhere a file name is expected, '-' can be used to refer to the standard\n"
-					<< "input or output stream respectively\n";
+				    << '\n'
+				    << "Anywhere a file name is expected, '-' can be used to refer to the standard\n"
+				    << "input or output stream respectively\n";
 				return false;
 			}
 			if (varmap.count("version")) {
@@ -165,12 +165,11 @@ namespace minijava
 				return;
 			}
 			parse_program(tokfirst, toklast);
-			if(stage == compilation_stage::parser)
-			{
+			if (stage == compilation_stage::parser) {
 				return;
 			}
 			// If we get until here, we have a problem...
-			throw not_implemented_error{};
+			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
 
 
@@ -237,10 +236,10 @@ namespace minijava
 			// TODO: Once we have a logging facility, we should use it here
 			// instead of printing directly.
 			err << "warning: "
-				<< MINIJAVA_ENVVAR_STACK_LIMIT
-				<< ": not a valid stack size in bytes: "
-				<< envval
-				<< std::endl;
+			    << MINIJAVA_ENVVAR_STACK_LIMIT
+			    << ": not a valid stack size in bytes: "
+			    << envval
+			    << std::endl;
 			return 0;
 		}
 

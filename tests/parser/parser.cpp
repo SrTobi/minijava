@@ -219,3 +219,71 @@ BOOST_DATA_TEST_CASE(parser_rejects_invalid_programs, failure_data)
         BOOST_REQUIRE_EQUAL(pde_idx, e.column());
     }
 }
+
+
+namespace /* anonymous */
+{
+
+	template <minijava::token_type... TTs>
+	minijava::syntax_error get_thrown_syntax_error(const minijava::token& tok)
+	{
+		try {
+			minijava::detail::throw_syntax_error(tok, {TTs...});
+			throw std::runtime_error{__func__};
+		} catch (const minijava::syntax_error& e) {
+			return e;
+		}
+	}
+
+}
+
+
+BOOST_AUTO_TEST_CASE(throw_syntax_error_correct_source_location)
+{
+	auto tok = minijava::token::create(tt::semicolon);
+	tok.set_line(1234);
+	tok.set_column(56);
+	const auto e = get_thrown_syntax_error<tt::eof>(tok);
+	BOOST_REQUIRE_EQUAL(tok.line(), e.line());
+	BOOST_REQUIRE_EQUAL(tok.column(), e.column());
+}
+
+
+BOOST_AUTO_TEST_CASE(throw_syntax_error_single_expected_token_1st)
+{
+	using namespace std::string_literals;
+	const auto tok = minijava::token::create(tt::kw_if);
+	const auto e = get_thrown_syntax_error<tt::identifier>(tok);
+	BOOST_REQUIRE_EQUAL("Expected identifier but found keyword 'if'"s, e.what());
+}
+
+
+BOOST_AUTO_TEST_CASE(throw_syntax_error_single_expected_token_2nd)
+{
+	using namespace std::string_literals;
+	auto pool = minijava::symbol_pool<>{};
+	const auto tok = minijava::token::create_identifier(pool.normalize("foo"));
+	const auto e = get_thrown_syntax_error<tt::kw_if>(tok);
+	BOOST_REQUIRE_EQUAL("Expected keyword 'if' but found identifier 'foo'"s, e.what());
+}
+
+
+BOOST_AUTO_TEST_CASE(throw_syntax_error_two_expected_tokens)
+{
+	using namespace std::string_literals;
+	const auto tok = minijava::token::create(tt::colon);
+	const auto e = get_thrown_syntax_error<tt::plus, tt::minus>(tok);
+	BOOST_REQUIRE_EQUAL("Expected '+' or '-' but found ':'"s, e.what());
+}
+
+
+BOOST_AUTO_TEST_CASE(throw_syntax_error_three_expected_tokens)
+{
+	using namespace std::string_literals;
+	const auto tok = minijava::token::create(tt::eof);
+	const auto e = get_thrown_syntax_error<tt::kw_for, tt::kw_do, tt::kw_while>(tok);
+	BOOST_REQUIRE_EQUAL(
+		"Expected keyword 'for', keyword 'do' or keyword 'while' but found EOF"s,
+		e.what()
+	);
+}
