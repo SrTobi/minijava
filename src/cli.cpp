@@ -1,6 +1,7 @@
 #include "cli.hpp"
 
 #include <cerrno>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -10,6 +11,7 @@
 #include <vector>
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/program_options.hpp>
 
 #include "exceptions.hpp"
@@ -18,6 +20,7 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
 #include "symbol_pool.hpp"
+#include "system/system.hpp"
 
 
 namespace algo = boost::algorithm;
@@ -206,19 +209,72 @@ namespace minijava
 			finalize_stream(ostr);
 		}
 
+
+		// Checks the environment variable `MINIJAVA_STACK_LIMIT` and
+		// `return`s its value.  If the variable is set in the environment and
+		// has a valid value, its value is `return`ed.  Otherwise, 0 (which is
+		// not a valid value) is `return`ed.  If it is set to an invalid value,
+		// a warning is printed to `err`.
+		std::ptrdiff_t get_stack_limit(std::ostream& err)
+		{
+			const auto envval = std::getenv(MINIJAVA_ENVVAR_STACK_LIMIT);
+			if (envval == nullptr) {
+				return 0;
+			}
+			const auto text = std::string{envval};
+			if (boost::iequals("DEFAULT", text)) {
+				return 0;
+			}
+			if (boost::iequals("NONE", text)) {
+				return -1;
+			}
+			try {
+				const auto value = boost::lexical_cast<std::ptrdiff_t>(text);
+				if (value > 0) {
+					return value;
+				}
+			} catch (const boost::bad_lexical_cast&) { /* fall through */ }
+			// TODO: Once we have a logging facility, we should use it here
+			// instead of printing directly.
+			err << "warning: "
+				<< MINIJAVA_ENVVAR_STACK_LIMIT
+				<< ": not a valid stack size in bytes: "
+				<< envval
+				<< std::endl;
+			return 0;
+		}
+
+		// Checks the environment variable `MINIJAVA_STACK_LIMIT` and, if it
+		// is set, adjust the resource limt accordingly.  This function handles
+		// erros by printing a warning to `err` and otherwise ignoring them,
+		// letting the stack limit as it is.
+		void try_adjust_stack_limit(std::ostream& err)
+		{
+			if (const auto limit = get_stack_limit(err)) {
+				try {
+					set_max_stack_size_limit(limit);
+				} catch (const std::system_error& e) {
+					// TODO: Once we have a logging facility, we should use it
+					// here instead of printing directly.
+					err << "warning: " << e.what() << std::endl;
+				}
+			}
+		}
+
 	}  // namespace /* anonymous */
 
 
 	void real_main(const std::vector<const char *>& args,
 	               std::istream& thestdin,
 	               std::ostream& thestdout,
-	               std::ostream& /* thestderr */)
+	               std::ostream& thestderr)
 	{
 		auto setup = program_setup{};
 		if (!parse_cmd_options(args, thestdout, setup)) {
 			finalize_stream(thestdout);
 			return;
 		}
+		try_adjust_stack_limit(thestderr);
 		std::ifstream istr{};
 		std::ofstream ostr{};
 		const auto usestdin = (setup.input == "-");

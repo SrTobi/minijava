@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(MiniJava VERSION 0.1)
 enable_testing()
 
+include(CheckIncludeFileCXX)
 include("extras/cmake/activate_cpp14.cmake")
 include("extras/cmake/enable_diagnostics.cmake")
 
@@ -19,6 +20,8 @@ find_package(Boost REQUIRED COMPONENTS
 	system
 	unit_test_framework
 )
+
+check_include_file_cxx("sys/resource.h" MINIJAVA_HAVE_RLIMIT)
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https://svn.boost.org/trac/boost/ticket/12373
 link_directories(${Boost_LIBRARY_DIRS})
@@ -38,6 +41,7 @@ set(COMPONENTS
 	symbol_anchor
 	symbol_entry
 	symbol_pool
+	system/system
 )
 
 add_subdirectory("src")
