@@ -31,11 +31,11 @@ namespace minijava
 		template <typename DstT, typename SrcT>
 		constexpr DstT cast_or_infinity_non_negative(const SrcT src_val, const DstT dst_inf)
 		{
-			constexpr auto src_0 = SrcT{0};
-			constexpr auto dst_0 = DstT{0};
-			assert(src_val >= src_0);
-			constexpr auto dst_max = std::numeric_limits<DstT>::max();
-			constexpr auto xxl_max = static_cast<std::uintmax_t>(dst_max);
+			const auto src_0 = SrcT{0}; (void) src_0;  // Dear GCC, just because you fold
+			const auto dst_0 = DstT{0}; (void) dst_0;  // these constants as you ought to
+			assert(src_val >= src_0);                  // doesn't mean I'm not using them.
+			const auto dst_max = std::numeric_limits<DstT>::max();
+			const auto xxl_max = static_cast<std::uintmax_t>(dst_max);
 			const auto xxl_val = static_cast<std::uintmax_t>(src_val);
 			if (xxl_val > xxl_max) {
 				return dst_inf;
