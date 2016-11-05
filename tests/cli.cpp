@@ -72,28 +72,28 @@ static const std::string all_diagnostic_options[] = {
 
 // Unspectacular valid MiniJava program.
 static const std::string valid_program_data = R"java(
- class Fibonacci {
-     public int[] compute(int n) {
-         /* Program will crash if n < 2 and this is a comment. */
-         int[] values = new int[n];
-         values[0] = 0;
-         values[1] = 1;
-         for (int i = 2; i < n; ++i) {
-             values[i] = values[i - 1] + values[i - 2];
-         }
-         return values;
-     }
- }
+class Fibonacci {
+	public int[] compute(int n) {
+		/* Program will crash if n < 2 and this is a comment. */
+		int[] values = new int[n];
+		values[0] = 0;
+		values[1] = 1;
+		int i = 2;
+		while (i < n) {
+			values[i] = values[i - 1] + values[i - 2];
+			i = i + 1;
+		}
+		return values;
+	}
+}
 
- class Main {
-     public static void main(String[] args) {
-         Fibonacci fib = new Fibonacci();
-         int[] sequence = fib.compute(10);
-         for (int i = 0; i < 10; ++i) {
-             System.out.println(sequence[i]);
-         }
-     }
- }
+class Main {
+	public static void main(String[] args) {
+		Fibonacci fib = new Fibonacci();
+		int[] sequence = fib.compute(10);
+		System.out.println(sequence[9]);
+	}
+}
 )java";
 
 
@@ -453,7 +453,7 @@ class classic {
 	public int method(int arg) {
 		int res = arg+42;
 		res >>= 4;
-	    return res;
+		return res;
 	}
 }
 )java";
@@ -528,8 +528,8 @@ BOOST_AUTO_TEST_CASE(lextest_does_not_eat_null_bytes_on_error)
 	std::ostringstream mystderr{};
 	const auto expected_output = "identifier I\n"s;
 	BOOST_REQUIRE_THROW(
-			minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr)
-	, std::exception);
+		minijava::real_main({"", "--lextest"}, mystdin, mystdout, mystderr),
+		std::exception);
 	BOOST_REQUIRE_EQUAL(expected_output, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
@@ -548,12 +548,12 @@ BOOST_AUTO_TEST_CASE(parsetest_valid_input)
 BOOST_AUTO_TEST_CASE(parsetest_invalid_input)
 {
 	using namespace std::string_literals;
-	std::istringstream mystdin{"class Foo { public static main(String[] args) {int 5;} }"};
+	std::istringstream mystdin{"class Foo { public static main(String[] args) {} }"};
 	std::ostringstream mystdout{};
 	std::ostringstream mystderr{};
 	BOOST_REQUIRE_THROW(
-			minijava::real_main({"", "--parsetest"}, mystdin, mystdout, mystderr)
-	, minijava::syntax_error);
+		minijava::real_main({"", "--parsetest"}, mystdin, mystdout, mystderr),
+		minijava::syntax_error);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
