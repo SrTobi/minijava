@@ -626,27 +626,27 @@ int main(int argc, char * * argv)
 		auto options = po::options_description{"Options"};
 		options.add_options()
 			(
-				"help",
-				"show help text and exit"
-			)(
-				"no-print",
+				"no-print,q",
 				po::bool_switch(&noprint),
 				"don't serialize and write the program to standard output"
 			)(
-				"random-seed",
+				"random-seed,s",
 				po::value<unsigned>(&seed),
 				"use explicit random seed instead of non-determinism"
 			)(
-				"recursion-limit",
+				"recursion-limit,r",
 				po::value<std::size_t>(&limit),
 				"set limit for recursion depth"
+			)(
+				"help,h",
+				"show help text and exit"
 			);
 		auto varmap = po::variables_map{};
 		po::store(po::parse_command_line(argc, argv, options), varmap);
 		po::notify(varmap);
 		if (varmap.count("help")) {
 			std::cout
-				<< "usage: generator [--random-seed=VALUE] [--recursion-limit=N]\n"
+				<< "usage: generator [-s SEED] [-r N] [-q]\n"
 				<< "\n"
 				<< "Generates a syntactically correct random MiniJava program.\n"
 				<< "\n"
