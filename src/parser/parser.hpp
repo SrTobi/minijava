@@ -33,7 +33,6 @@ namespace minijava
 		 */
 		syntax_error();
 
-
 		/**
 		 * @brief
 		 *     Creates a new exception object with a custom error message and
