@@ -44,10 +44,16 @@ BOOST_AUTO_TEST_CASE(make_ice_macro)
 	const auto msg = "Internal compiler error"s;
 	const auto file = std::string{__FILE__};
 	const auto func = std::string{__func__};
-	const auto line = std::to_string(__LINE__ + 1);
-	const minijava::internal_compiler_error e = MINIJAVA_MAKE_ICE();
-	const auto what = std::string{e.what()};
-	BOOST_REQUIRE_EQUAL(file + ":" + line + ": " + func + ": " + msg, what);
+	const auto line = std::to_string(__LINE__ + 3);
+	auto caught = false;
+	try {
+		MINIJAVA_THROW_ICE(minijava::internal_compiler_error);
+	} catch (const minijava::internal_compiler_error& e) {
+		const auto what = std::string{e.what()};
+		BOOST_REQUIRE_EQUAL(file + ":" + line + ": " + func + ": " + msg, what);
+		caught = true;
+	}
+	BOOST_REQUIRE(caught);
 }
 
 
@@ -57,15 +63,14 @@ BOOST_AUTO_TEST_CASE(make_ice_msg_macro)
 	const auto msg = "Bad things going on"s;
 	const auto file = std::string{__FILE__};
 	const auto func = std::string{__func__};
-	const auto line = std::to_string(__LINE__ + 1);
-	const minijava::internal_compiler_error e = MINIJAVA_MAKE_ICE_MSG(msg);
-	const auto what = std::string{e.what()};
-	BOOST_REQUIRE_EQUAL(file + ":" + line + ": " + func + ": " + msg, what);
-}
-
-
-BOOST_AUTO_TEST_CASE(not_implemented_ice)
-{
-	const auto e = minijava::not_implemented_error{};
-	BOOST_REQUIRE_EQUAL("Not implemented yet", e.what());
+	const auto line = std::to_string(__LINE__ + 3);
+	auto caught = false;
+	try {
+		MINIJAVA_THROW_ICE_MSG(minijava::internal_compiler_error, msg);
+	} catch (const minijava::internal_compiler_error& e) {
+		const auto what = std::string{e.what()};
+		BOOST_REQUIRE_EQUAL(file + ":" + line + ": " + func + ": " + msg, what);
+		caught = true;
+	}
+	BOOST_REQUIRE(caught);
 }

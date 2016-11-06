@@ -1,6 +1,7 @@
 #include "cli.hpp"
 
 #include <cerrno>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -10,13 +11,16 @@
 #include <vector>
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/program_options.hpp>
 
 #include "exceptions.hpp"
 #include "global.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "parser/parser.hpp"
 #include "symbol_pool.hpp"
+#include "system/system.hpp"
 
 
 namespace algo = boost::algorithm;
@@ -34,6 +38,7 @@ namespace minijava
 		{
 			input = 1,
 			lexer = 2,
+			parser = 3
 		};
 
 
@@ -90,7 +95,8 @@ namespace minijava
 			auto interception = po::options_description{"Intercepting the Compilation at Specific Stages"};
 			interception.add_options()
 				("echo", "stop after the input stage and output the source file verbatim")
-				("lextest", "stop after lexical analysis and output a token sequence");
+				("lextest", "stop after lexical analysis and output a token sequence")
+				("parsetest", "stop after parsing and reporting any syntax errors");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -112,9 +118,9 @@ namespace minijava
 				    << '\n' << generic
 				    << '\n' << interception
 				    << '\n' << other
-					<< '\n'
-					<< "Anywhere a file name is expected, '-' can be used to refer to the standard\n"
-					<< "input or output stream respectively\n";
+				    << '\n'
+				    << "Anywhere a file name is expected, '-' can be used to refer to the standard\n"
+				    << "input or output stream respectively\n";
 				return false;
 			}
 			if (varmap.count("version")) {
@@ -131,6 +137,9 @@ namespace minijava
 			}
 			if (varmap.count("lextest")) {
 				setup.stage = compilation_stage::lexer;
+			}
+			if (varmap.count("parsetest")) {
+				setup.stage = compilation_stage::parser;
 			}
 			return true;
 		}
@@ -155,8 +164,12 @@ namespace minijava
 				std::copy(tokfirst, toklast, std::ostream_iterator<token>{ostr, "\n"});
 				return;
 			}
+			parse_program(tokfirst, toklast);
+			if (stage == compilation_stage::parser) {
+				return;
+			}
 			// If we get until here, we have a problem...
-			throw not_implemented_error{};
+			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
 
 
@@ -195,19 +208,72 @@ namespace minijava
 			finalize_stream(ostr);
 		}
 
+
+		// Checks the environment variable `MINIJAVA_STACK_LIMIT` and
+		// `return`s its value.  If the variable is set in the environment and
+		// has a valid value, its value is `return`ed.  Otherwise, 0 (which is
+		// not a valid value) is `return`ed.  If it is set to an invalid value,
+		// a warning is printed to `err`.
+		std::ptrdiff_t get_stack_limit(std::ostream& err)
+		{
+			const auto envval = std::getenv(MINIJAVA_ENVVAR_STACK_LIMIT);
+			if (envval == nullptr) {
+				return 0;
+			}
+			const auto text = std::string{envval};
+			if (boost::iequals("DEFAULT", text)) {
+				return 0;
+			}
+			if (boost::iequals("NONE", text)) {
+				return -1;
+			}
+			try {
+				const auto value = boost::lexical_cast<std::ptrdiff_t>(text);
+				if (value > 0) {
+					return value;
+				}
+			} catch (const boost::bad_lexical_cast&) { /* fall through */ }
+			// TODO: Once we have a logging facility, we should use it here
+			// instead of printing directly.
+			err << "warning: "
+			    << MINIJAVA_ENVVAR_STACK_LIMIT
+			    << ": not a valid stack size in bytes: "
+			    << envval
+			    << std::endl;
+			return 0;
+		}
+
+		// Checks the environment variable `MINIJAVA_STACK_LIMIT` and, if it
+		// is set, adjust the resource limt accordingly.  This function handles
+		// erros by printing a warning to `err` and otherwise ignoring them,
+		// letting the stack limit as it is.
+		void try_adjust_stack_limit(std::ostream& err)
+		{
+			if (const auto limit = get_stack_limit(err)) {
+				try {
+					set_max_stack_size_limit(limit);
+				} catch (const std::system_error& e) {
+					// TODO: Once we have a logging facility, we should use it
+					// here instead of printing directly.
+					err << "warning: " << e.what() << std::endl;
+				}
+			}
+		}
+
 	}  // namespace /* anonymous */
 
 
 	void real_main(const std::vector<const char *>& args,
 	               std::istream& thestdin,
 	               std::ostream& thestdout,
-	               std::ostream& /* thestderr */)
+	               std::ostream& thestderr)
 	{
 		auto setup = program_setup{};
 		if (!parse_cmd_options(args, thestdout, setup)) {
 			finalize_stream(thestdout);
 			return;
 		}
+		try_adjust_stack_limit(thestderr);
 		std::ifstream istr{};
 		std::ofstream ostr{};
 		const auto usestdin = (setup.input == "-");

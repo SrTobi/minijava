@@ -13,4 +13,6 @@ die() {
 test -f "${tagfile}" || die "Cannot find root directory"
 test -x "${minijava}" || die "Cannot find compiler executable"
 
+export MINIJAVA_STACK_LIMIT=NONE
+
 exec "${minijava}" "$@"

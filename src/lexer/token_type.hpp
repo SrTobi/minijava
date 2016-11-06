@@ -98,11 +98,11 @@ namespace minijava
 		kw_void,                       ///< keyword &ldquo;`void`&rdquo;
 		kw_volatile,                   ///< keyword &ldquo;`volatile`&rdquo;
 		kw_while,                      ///< keyword &ldquo;`while`&rdquo;
-		not_equal,                     ///< inequality operator &ldquo;`!=`&rdquo;
+		not_equal = static_cast<std::uint16_t>(token_category::punctuation), ///< inequality operator &ldquo;`!=`&rdquo;
 		logical_not,                   ///< logical not &ldquo;`!`&rdquo; operator &ldquo;`!`&rdquo;
 		left_paren,                    ///< left parenthesis &ldquo;`(`&rdquo;
 		right_paren,                   ///< right parenthesis &ldquo;`)`&rdquo;
-		multiply_assign = static_cast<std::uint16_t>(token_category::punctuation),  ///< multiply-assignment operator &ldquo;`*=`&rdquo;
+		multiply_assign,               ///< multiply-assignment operator &ldquo;`*=`&rdquo;
 		multiply,                      ///< multiplication operator &ldquo;`*`&rdquo;
 		increment,                     ///< increment operator &ldquo;`++`&rdquo;
 		plus_assign,                   ///< plus-assignment operator &ldquo;`+=`&rdquo;

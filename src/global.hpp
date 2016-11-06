@@ -6,6 +6,11 @@
  *
  * If we ever decide to use pre-compiled headers, this is the candidate.
  *
+ * This file also `#define`s macros for all environment variables that are used
+ * by the program.  This allows us to use a single definition point and let the
+ * compiler catch potential misspellings.  The naming convention is to use a
+ * macro `MINIJAVA_ENVVAR_FOO` for the environment variable `MINIJAVA_FOO`.
+ *
  */
 
 #pragma once
@@ -18,6 +23,14 @@
 #else
 #   define MINIJAVA_ASSERT_ACTIVE 1
 #endif
+
+/**
+ * @brief
+ *     Environment variable that can be used to set the maximum stack size.
+ *
+ */
+#define MINIJAVA_ENVVAR_STACK_LIMIT "MINIJAVA_STACK_LIMIT"
+
 
 /**
  * @brief
