@@ -32,5 +32,5 @@ foreach(comp ${COMPONENTS})
 	add_dependencies(check ${comp-target})
 endforeach(comp)
 
-add_executable(generator "generator.cpp")
-target_link_libraries(generator LINK_PRIVATE core)
+add_executable(syntaxgen "syntaxgen.cpp")
+target_link_libraries(syntaxgen LINK_PRIVATE core)

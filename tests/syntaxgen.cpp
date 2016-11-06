@@ -73,10 +73,10 @@ namespace /* anonymous */
 	};
 
 
-	struct generator
+	struct syntaxgen
 	{
 
-		generator(const unsigned seed, const std::size_t limit)
+		syntaxgen(const unsigned seed, const std::size_t limit)
 			: engine{seed}
 			, nest_depth{0}
 			, nest_limit{limit}
@@ -598,12 +598,12 @@ namespace /* anonymous */
 
 		std::size_t nest_limit{};
 
-	};  // struct generator
+	};  // struct syntaxgen
 
 
 	std::vector<minijava::token> generate_valid_program(const unsigned seed, const std::size_t depth)
 	{
-		auto gen = generator{seed, depth};
+		auto gen = syntaxgen{seed, depth};
 		gen.gen_program();
 		return std::move(gen.tokens);
 	}
@@ -646,7 +646,7 @@ int main(int argc, char * * argv)
 		po::notify(varmap);
 		if (varmap.count("help")) {
 			std::cout
-				<< "usage: generator [-s SEED] [-r N] [-q]\n"
+				<< "usage: syntaxgen [-s SEED] [-r N] [-q]\n"
 				<< "\n"
 				<< "Generates a syntactically correct random MiniJava program.\n"
 				<< "\n"
