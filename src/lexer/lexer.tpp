@@ -28,7 +28,6 @@ namespace minijava
 		// loop until it succeeds.
 		static bool do_advance(lexer_type& lex)
 		{
-			// TODO: Set line and column attributes of the scanned token.
 			const auto c = lexer_impl::skip_white_space(lex);
 			auto current_column = lex._column;
 			auto current_line = lex._line;
