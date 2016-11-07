@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(line_and_column_test)
 
 	BOOST_CHECK(std::equal(
 		token_begin(lex), token_end(lex),
-		std::begin(expected),
+		std::begin(expected), std::end(expected),
 		[](auto lhs, auto rhs) -> bool {
 			return lhs.line() == rhs[0] && lhs.column() == rhs[1];
 		}
