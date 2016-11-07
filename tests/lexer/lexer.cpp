@@ -276,17 +276,16 @@ BOOST_AUTO_TEST_CASE(excessive_sequence_of_block_comments_does_not_crash_lexer)
 
 BOOST_AUTO_TEST_CASE(line_and_column_test)
 {
-	int expected[][2] = {{1,1}, {1,3}, {2,1}, {2,2}, {2,4}, {3,2}};
+	size_t expected[][2] = {{1,1}, {1,3}, {2,1}, {2,2}, {2,4}, {3,2}, {3,6}};
 	std::string input = "a b\n+a hallo\n\twelt";
 	auto pool = minijava::symbol_pool<>{};
 	auto lex = minijava::make_lexer(std::begin(input), std::end(input), pool, pool);
 
-	auto size = sizeof(expected) / sizeof(expected[0]);
-	for (uint32_t i = 0; i < size; i++) {
-		auto current = lex.current_token();
-		BOOST_REQUIRE_EQUAL(current.line(), expected[i][0]);
-		BOOST_REQUIRE_EQUAL(current.column(), expected[i][1]);
-		lex.advance();
-	}
-
+	BOOST_CHECK(std::equal(
+		token_begin(lex), token_end(lex),
+		std::begin(expected),
+		[](auto lhs, auto rhs) -> bool {
+			return lhs.line() == rhs[0] && lhs.column() == rhs[1];
+		}
+	));
 }
