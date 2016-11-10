@@ -17,10 +17,9 @@ namespace minijava
 		std::map<std::string, token_type> make_lookup_table()
 		{
 			auto table = std::map<std::string, token_type>{};
-			const auto tti = detail::get_token_type_info_table();
-			for (auto it = tti.first; it != tti.second; ++it) {
-				if (category(it->first) == token_category::keyword) {
-					table[it->second] = it->first;
+			for (const auto tt : all_token_types()) {
+				if (category(tt) == token_category::keyword) {
+					table[name(tt)] = tt;
 				}
 			}
 			return table;
