@@ -1,0 +1,164 @@
+# Benchmarking HOWTO
+
+This file explains how to use the benchmarking infrastructure.  There are two
+kinds of benchmarks: *micro* and *macro* benchmarks.  Micro-benchmarks
+benchmark a single C++ function in isolation.  Macro-benchmarks, on the other
+hand, run the full compiler executable on some interesting input.
+
+
+## Running Benchmarks
+
+In order to run the benchmark suite, there are two *driver scripts* available
+in
+
+ - `/extras/benchmarks/micro-driver.py` and
+ - `/extras/benchmarks/macro-driver.py`
+
+for running the suite of micro- and macro-benchmarks respectively.  Their
+command-line interface is very general but therefore also a little
+complicated.  If you have cloned the repository and then built the project
+in the `/stage` sub-directory, the following invocations should work.
+
+    $ python3 extras/benchmarks/micro-driver.py -M benchmarks/micro/Manifest.json -D stage/benchmarks/micro/ benchmarks/micro/
+    $ python3 extras/benchmarks/macro-driver.py -M benchmarks/macro/Manifest.json -D stage/benchmarks/macro/ benchmarks/macro/ -X stage/src/minijava
+
+Since you're reading the benchmarking HOWTO, you probably like tweaking things
+and the scripts provide many more options for tweaking their action.  Run
+either script with the `--help` option to learn more about them.  Here, we will
+only explain the bare minimum shown in the invocations above.
+
+The `-M` option (which is short for `--manifest`) points the script to a
+*manifest* file that defines the benchmark suite.  There is currently exactly
+one such file for micro- and one for macro-benchmarks and their location is the
+one visible in the command-line above.
+
+The manifest file contains a definition for each benchmark.  The driver script
+reads this definition and ideally knows what to do.  You can look into the
+manifest files for a more detailed explanation of their structure.
+
+If the manifest file refers to files (maybe because they are input to the
+compiler), then the driver script has to find those files.  But the files could
+be source or generated.  And the build-directory could be different if you have
+built different configurations.  Therefore, the driver scripts use a search
+path (much like the include path of a C compiler or the `$PATH` of a shell) for
+files that match the name given in the manifest file.  By default, only the
+current working directory is searched but the `-D` option (which is short for
+`--directory`) can be used to list any number of directories in any order.
+Note that we list the build directory before the source directory in the
+example above.  This is probably what you want or the script might find and
+out-of-date file in the source directory that has since been re-built.
+
+Finally, the driver script for the macro benchmarks also needs the `-X` (or
+`--compiler`) option which points it to the compiler executable to use.
+
+
+## Learning from History
+
+The driver scripts will show you some more or less nicely formatted output as a
+quick feedback.  But if you're optimizing, you probably want to *compare*
+results.  Both driver scripts support recording the results of the experiments
+in a *history database*.  To enable this, you use the `-H` (or `--history`)
+option and give it a file-name of the database file as argument.  If the
+database does not exist, it will be created.  I recommend that you use a
+dedicated database for
+
+ - micro- versus macro-benchmarks,
+ - different machines you build on,
+ - different configurations you build
+ - and maybe even for different branches.
+
+Merging data-sets is always easy but picking apart what has once been mixed is
+tricky.
+
+If you run the same benchmark suite with the same history database again, the
+script will show you in the output a *trend* column where you can compare the
+results of the current run with the historically best result.  The unit of this
+column is *sigmas*.  That is, trends are measured in relative errors.  This
+strategy is more adaptive to different signal-to-noise rations of different
+benchmarks.  If an entry in that column reads +1.0, you have a reasonably
+significant result that you have a performance regression.
+
+If you want to plot or otherwise analyze the data, you can use the
+`/extras/benchmarks/history.py` script to manage the database file.  The most
+likely thing you'll want to do is export the data for a benchmark in a text
+format so you can, say, feed it to Gnuplot.  The following command exports the
+data for the benchmark `mumble` from the database file `histo.db`.
+
+    $ python3 extras/benchmarks/history.py -H histo.db --export mumble
+
+You can also perform a few other actions.  Run the script with the `--help`
+option to find out.
+
+Of course -- since the history database is just an SQLite file -- you can also
+fire up your SQLite interpreter and massage the file in whatever way you like.
+
+
+## Writing Benchmarks
+
+How to write benchmarks differs quite substantially between micro- and
+macro-benchmarks so we'll explain it separately here.
+
+
+### Macro-Benchmarks
+
+A macro-benchmark needs, at the very least, an input for the compiler and a
+command-line to invoke it.  You can use hand-written input files as well as
+generated ones.  Generating input is a bit more work because you have to write
+a script first but it is a far superior approach if your input is
+"pathological", such as containing megabytes of parenthesis.  Unfortunately,
+interesting benchmarks often require such awkward data.  No matter whether you
+write an input file or an input generator, you have to add a definition of the
+new benchmark to the manifest file to tell the driver script about it.  See the
+explanation in `benchmarks/macro/Manifest.json` and the existing examples for
+more information.  Finally, note that you might not have to write a new input
+generator from scratch.  Maybe you can combine the tools that are already there
+and hook them together in the manifest file to define a new benchmark.  You'll
+notice that the suite contains many more benchmarks than there are input files
+and generators.
+
+
+### Micro-Benchmarks
+
+Since a micro-benchmark does not test the whole compiler, you have to write a
+small program that only exercises the function you want to benchmark.  However,
+this program will also have to generate some inputs for the function to work on
+and this step might likely be far more laborious than the actual benchmark.  In
+order to keep the time spent for preparing the inputs out of the timing
+results, the micro-benchmark driver cannot simply time the execution time of
+the program.  Instead, the program itself has to measure this and tell the
+driver about it.  Fortunately, there is already a utility function for this in
+`testaux/benchmark.hpp`.  Have a look at the existing benchmarks for examples.
+
+The most important thing to do from within your micro-benchmark is calling the
+`testaux::run_benchmark` function.  It takes two or more arguments.  The first
+one is a `testaux::constraints` object that provides information like whether
+there is a timeout to honor.  Use the
+`testaux::get_constraints_from_environment` function to get those constraints
+from some environment variables.  The micro-benchmark driver sets those
+variables in the environment to communicate with your program.
+
+Often times, it will also be useful for your benchmark to have additional
+parameters.  You can pass them on the command-line just as with any other
+program.
+
+In the manifest file, you list the command-line the driver should use to run
+your program.
+
+Finally, your program has to communicate its results back to the driver
+script.  This is done via printing the mean and standard deviation *in seconds*
+to standard output as well as the number of samples that were combined to find
+this result.  The function `testaux::print_result` can print this line in the
+appropriate format for you.
+
+With micro-benchmarks it is often more useful to report not total execution
+time but time per unit of work.  For example, if you have a function that you
+cal *N* times during the benchmark, then instead of the time it takes to make
+those *N* calls, you could report the average time *one* call took by dividing
+the results for mean and standard deviation the `testaux::run_benchmark`
+function computed by *N*.  If you do this, your results will ideally remain
+stable if you change *N* which you might want in order to reduce noise or to
+gain speed.
+
+Standard error output of your program is ignored by the benchmark driver so you
+can use it for additional messages.  Notice that a `constraint` object has a
+`verbose` attribute that you can make use of.

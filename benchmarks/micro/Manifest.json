@@ -1,0 +1,40 @@
+// -*- coding:utf-8; mode:javascript; -*-
+
+
+// This file defines the micro-benchmarks.  It consists of a single JSON object
+// with one attribute per benchmark.  The key is the name of the benchmark and
+// the value is its definition.  The definition is itself a JSON object that
+// may have the following attributes.
+//
+//  - `description` (optional) -- a short description of the benchmark
+//  - `command` (mandatory) -- command-line to execute the benchmark
+//
+// The `command` attribute must have as value an array of strings.  The first
+// element in that array is the file-name of the executable and the remaining
+// elements are passed to it as command-line argumetns.
+//
+// The command must produce on standard output the following message
+//
+//     <mean> <stdev> <n>
+//
+// which will be consumed by the driver script.  The standard error and
+// standard input streams are connected to `/dev/null`.
+//
+// As you will probably have guessed by now, you can -- as an extension to the
+// official JSON format -- also use comments in this file.  This functionality
+// is rather limited, however.  Only line-comments that are on a line of their
+// own are allowed.  Everything else is still a syntax error.
+
+{
+
+    "character" : {
+	"description" : "character classification functions",
+	"command" : ["character", "--size=50000000"]
+    },
+
+    "keyword" : {
+	"description" : "keyword / identifier classification",
+	"command" : ["keyword", "--size=10000000"]
+    }
+
+}

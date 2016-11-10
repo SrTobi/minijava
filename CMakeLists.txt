@@ -47,6 +47,7 @@ set(COMPONENTS
 
 add_subdirectory("src")
 add_subdirectory("tests")
+add_subdirectory("benchmarks")
 
 configure_file(
 	"${PROJECT_SOURCE_DIR}/config.h.in"
