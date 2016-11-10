@@ -1,11 +1,11 @@
-#include "parser/serializer.hpp"
+#include "lexer/serializer.hpp"
 
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
-#define BOOST_TEST_MODULE  parser_serializer
+#define BOOST_TEST_MODULE  lexer_serializer
 #include <boost/test/unit_test.hpp>
 
 #include "lexer/token.hpp"

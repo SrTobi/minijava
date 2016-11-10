@@ -9,8 +9,8 @@
 
 #include "exceptions.hpp"
 #include "lexer/lexer.hpp"
+#include "lexer/serializer.hpp"
 #include "parser/parser.hpp"
-#include "parser/serializer.hpp"
 #include "symbol_pool.hpp"
 
 

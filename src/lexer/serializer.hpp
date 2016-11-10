@@ -38,5 +38,5 @@ namespace minijava
 
 
 #define MINIJAVA_INCLUDED_FROM_PARSER_SERIALIZER_HPP
-#include "parser/serializer.tpp"
+#include "serializer.tpp"
 #undef MINIJAVA_INCLUDED_FROM_PARSER_SERIALIZER_HPP
