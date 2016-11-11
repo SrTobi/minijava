@@ -11,8 +11,6 @@
 #include <cstddef>
 #include <iosfwd>
 
-#include <boost/variant.hpp>
-
 #include "lexer/token_type.hpp"
 #include "symbol.hpp"
 
@@ -45,12 +43,11 @@ namespace minijava
 		 * @param type
 		 *     token type
 		 *
-		 * @param data
-		 *     lexical value or instance of `boost::blank`
+		 * @param lexval
+		 *     lexical value of the token or empty symbol
 		 *
 		 */
-		template <typename DataT>
-		token(token_type type, DataT&& data);
+		token(token_type type, symbol lexval = symbol{});
 
 	public:
 
@@ -206,16 +203,16 @@ namespace minijava
 	private:
 
 		/** @brief Type of the token. */
-		token_type _type {};
+		token_type _type{};
 
 		/** @brief Lexical value associated with the token. */
-		boost::variant<boost::blank, symbol> _data {};
+		symbol _lexval{};
 
 		/** @brief Line number where the token was found. */
-		std::size_t _line {};
+		std::size_t _line{};
 
 		/** @brief Column number where the token was found. */
-		std::size_t _column {};
+		std::size_t _column{};
 
 	};  // class token
 

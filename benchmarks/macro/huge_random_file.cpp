@@ -31,7 +31,7 @@ namespace /* anonymous */
 		auto rnddst = std::uniform_int_distribution<word_type>{};
 		auto buffer = std::vector<word_type>(1024);
 		std::generate(std::begin(buffer), std::end(buffer),
-					  [&rndeng, &rnddst](){ return rnddst(rndeng); });
+		             [&rndeng, &rnddst](){ return rnddst(rndeng); });
 		auto count = std::size_t{};
 		while (count < size) {
 			const auto chunk = std::min(word_size * buffer.size(), size - count);
@@ -82,17 +82,17 @@ namespace /* anonymous */
 			);
 		auto vm = po::variables_map{};
 		po::store(po::parse_command_line(static_cast<int>(args.size()), args.data(), options), vm);
-		po::notify(vm);
 		if (vm.count("help")) {
 			std::cout.exceptions(std::ios_base::badbit);
 			std::cout << "usage: huge_random_file [-s SIZE] [-o FILE]\n"
-					  << "\n"
-					  << "Generate a file with random data.\n"
-					  << "\n"
-					  << options
-					  << std::endl;
+			          << "\n"
+			          << "Generate a file with random data.\n"
+			          << "\n"
+			          << options
+			          << std::endl;
 			return;
 		}
+		po::notify(vm);
 		dump_to_file(filename, size);
 	}
 

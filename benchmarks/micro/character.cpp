@@ -5,8 +5,6 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/program_options.hpp>
-
 #include "lexer/character.hpp"
 
 #include "benchmark.hpp"
@@ -43,55 +41,35 @@ namespace /* anonymous */
 		return input;
 	}
 
-	void real_main(const std::vector<const char *>& args)
+	void real_main(int argc, char * * argv)
 	{
-		namespace po = boost::program_options;
-		const auto cons = testaux::get_constraints_from_environment();
-		auto size = std::ptrdiff_t{};
-		auto options = po::options_description{"Options"};
-		options.add_options()
-			(
-				"size",
-				po::value<std::ptrdiff_t>(&size)->required(),
-				"number of characters to classify in one batch"
-			)(
-				"help",
-				"show help text and exit"
-			);
-		auto vm = po::variables_map{};
-		po::store(po::parse_command_line(static_cast<int>(args.size()), args.data(), options), vm);
-		po::notify(vm);
-		if (vm.count("help")) {
-			std::cout << "usage: character ---size=N\n"
-					  << "\n"
-					  << "Run micro-benchmarks for the character classification functions.\n"
-					  << "\n"
-					  << options << "\n";
+		const auto t0 = testaux::clock_type::now();
+		auto setup = testaux::benchmark_setup{
+			"character",
+			"Benchmark for character classification functions."
+		};
+		setup.add_cmd_arg("size", "number of characters to classify in one batch");
+		if (!setup.process(argc, argv)) {
 			return;
 		}
-		if (size < 1) {
-			throw po::error{"The size must not be negative"};
+		const auto size = setup.get_cmd_arg("size");
+		const auto input = get_input(size);
+		auto constr = setup.get_constraints();
+		if (constr.timeout.count() > 0) {
+			constr.timeout -= testaux::duration_type{testaux::clock_type::now() - t0};
 		}
-		if (cons.verbose) {
-			std::clog << "Generating input data with " << size << " characters...\n";
-		}
-		const auto input = get_input(static_cast<std::size_t>(size));
-		if (cons.verbose) {
-			std::clog << "Running benchmark " << size << " ...\n";
-		}
-		const auto absres = testaux::run_benchmark(cons, benchmark, input);
+		const auto absres = testaux::run_benchmark(constr, benchmark, input);
 		const auto relres = testaux::result{absres.mean / size, absres.stdev / size, absres.n};
 		testaux::print_result(relres);
 	}
 
+}  // namespace /* anonymous */
 
-}
 
 int main(int argc, char * * argv)
 {
 	try {
-		const auto args = std::vector<const char *>(argv, argv + argc);
-		real_main(args);
+		real_main(argc, argv);
 		return EXIT_SUCCESS;
 	} catch (const std::exception& e) {
 		std::cerr << "character: error: " << e.what() << std::endl;

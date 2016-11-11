@@ -50,6 +50,8 @@ namespace testaux
 
 		void print_verbose_progress(std::size_t i, duration_type t);
 
+		void print_constraints(const constraints& c);
+
 	}  // namespace detail
 
 
@@ -59,6 +61,12 @@ namespace testaux
 		const auto minruns = c.warmup + static_cast<std::size_t>(std::ceil(3.0 / c.quantile));
 		auto timings = std::vector<duration_type>{};
 		const auto t0 = clock_type::now();
+		if (c.verbose) {
+			detail::print_constraints(c);
+		}
+		if (c.timeout.count() < 0) {
+			throw failure{"Timeout expired before I could do anything useful"};
+		}
 		while (true) {
 			compiler_barrier();
 			const auto t1 = clock_type::now();
