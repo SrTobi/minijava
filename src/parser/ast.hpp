@@ -20,6 +20,313 @@ namespace minijava
 {
 	namespace ast
 	{
+		class node;
+		class type;
+		class var_decl;
+		class expression;
+		class assignment_expression;
+		class binary_expression;
+		class unary_expression;
+		class object_instantiation;
+		class array_instantiation;
+		class array_access;
+		class variable_access;
+		class method_invocation;
+		class this_ref;
+		class constant;
+		class boolean_constant;
+		class integer_constant;
+		class null_constant;
+		class block_statement;
+		class local_variable_statement;
+		class statement;
+		class expression_statement;
+		class block;
+		class if_statement;
+		class while_statement;
+		class return_statement;
+		class empty_statement;
+		class main_method;
+		class method;
+		class class_declaration;
+		class program;
+
+		class visitor
+		{
+		protected:
+			/**
+			 * @brief
+			 *     Visits a generic AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_node(node& node);
+
+			/**
+			 * @brief
+			 *     Visits an expression AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_expression(expression& node);
+
+			/**
+			 * @brief
+			 *     Visits a constant AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_constant(constant& node);
+
+			/**
+			 * @brief
+			 *     Visits a block_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_block_statement(block_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_statement(statement& node);
+
+		public:
+			/**
+			 * @brief
+			 *     Visits a type AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(type& node);
+
+			/**
+			 * @brief
+			 *     Visits a var_decl AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(var_decl& node);
+
+			/**
+			 * @brief
+			 *     Visits an assignment_expression AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(assignment_expression& node);
+
+			/**
+			 * @brief
+			 *     Visits a binary_expression AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(binary_expression& node);
+
+			/**
+			 * @brief
+			 *     Visits a unary_expression AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(unary_expression& node);
+
+			/**
+			 * @brief
+			 *     Visits an object_instantiation AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(object_instantiation& node);
+
+			/**
+			 * @brief
+			 *     Visits an array_instantiation AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(array_instantiation& node);
+
+			/**
+			 * @brief
+			 *     Visits an array_access AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(array_access& node);
+
+			/**
+			 * @brief
+			 *     Visits a variable_access AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(variable_access& node);
+
+			/**
+			 * @brief
+			 *     Visits a method_invocation AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(method_invocation& node);
+
+			/**
+			 * @brief
+			 *     Visits a this_ref AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(this_ref& node);
+
+			/**
+			 * @brief
+			 *     Visits a boolean_constant AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(boolean_constant& node);
+
+			/**
+			 * @brief
+			 *     Visits an integer_constant AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(integer_constant& node);
+
+			/**
+			 * @brief
+			 *     Visits a null_constant AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(null_constant& node);
+
+			/**
+			 * @brief
+			 *     Visits a local_variable_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(local_variable_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits an expression_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(expression_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a block AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(block& node);
+
+			/**
+			 * @brief
+			 *     Visits an if_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(if_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a while_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(while_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a return_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(return_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits an empty_statement AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(empty_statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a main_method AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(main_method& node);
+
+			/**
+			 * @brief
+			 *     Visits a method AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(method& node);
+
+			/**
+			 * @brief
+			 *     Visits a class_declaration AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(class_declaration& node);
+
+			/**
+			 * @brief
+			 *     Visits a program AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit(program& node);
+
+		};
+
 		/**
 		 * Binary operations supported by MiniJava
 		 */
@@ -159,6 +466,15 @@ namespace minijava
 				_column = column;
 			}
 
+			/**
+			 * @brief
+			 *     Accepts a visitor
+			 *
+			 * @param v
+			 *     The visitor
+			 */
+			virtual void accept(visitor& v) = 0;
+
 		private:
 
 			/** @brief Line number where the operation was found. */
@@ -225,6 +541,12 @@ namespace minijava
 				return _rank;
 			}
 
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief user-defined or built-in type represented by this node */
@@ -257,6 +579,11 @@ namespace minijava
 			{
 				assert(_type);
 				assert(!_name.empty());
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -302,6 +629,11 @@ namespace minijava
 				assert(_rhs);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief expression on the left side of the assignment */
@@ -342,6 +674,11 @@ namespace minijava
 				assert(_rhs);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief type of the binary operation */
@@ -380,6 +717,11 @@ namespace minijava
 				assert(_expression);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief type of the unary operation */
@@ -407,6 +749,11 @@ namespace minijava
 			object_instantiation(symbol class_name) : _class_name{class_name}
 			{
 				assert(!_class_name.empty());
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -442,6 +789,11 @@ namespace minijava
 				assert(_type);
 				assert(_type->rank() > 0);
 				assert(_extent);
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -483,6 +835,11 @@ namespace minijava
 				assert(_index);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief target array to access */
@@ -519,6 +876,11 @@ namespace minijava
 					: _target{std::move(target)}, _name{name}
 			{
 				assert(!_name.empty());
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -566,6 +928,11 @@ namespace minijava
 				_arguments.push_back(std::move(arg));
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief target object to access or null pointer */
@@ -581,7 +948,14 @@ namespace minijava
 		/**
 		 * AST node for a reference to `this`
 		 */
-		class this_ref final : public expression {};
+		class this_ref final : public expression
+		{
+		public:
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+		};
 
 		/**
 		 * Base class for AST nodes representing constants
@@ -604,6 +978,11 @@ namespace minijava
 			 *
 			 */
 			boolean_constant(bool value) : _value{value} {}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
 
 		private:
 
@@ -631,6 +1010,11 @@ namespace minijava
 				assert(!literal.empty());
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief integer literal specifying the value of the constant */
@@ -640,7 +1024,14 @@ namespace minijava
 		/**
 		 * Null constant AST node
 		 */
-		class null_constant final : public constant {};
+		class null_constant final : public constant
+		{
+		public:
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+		};
 
 		// endregion
 
@@ -682,6 +1073,11 @@ namespace minijava
 				assert(_declaration);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief variable declaration */
@@ -704,16 +1100,16 @@ namespace minijava
 		 */
 		class expression_statement final : public statement
 		{
-			
+
 		public:
 
 			/**
 			 * @brief
 			 *     Constructs an expression statement node.
-			 * 
+			 *
 			 * @param expression
 			 *     expression to interpret as a statement
-			 *     
+			 *
 			 */
 			expression_statement(std::unique_ptr<expression> expression)
 					: _expression{std::move(expression)}
@@ -721,8 +1117,13 @@ namespace minijava
 				assert(_expression);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
-			
+
 			/** @brief expression to interpret as a statement */
 			std::unique_ptr<expression> _expression;
 		};
@@ -744,6 +1145,11 @@ namespace minijava
 			{
 				assert(stmt);
 				_body.push_back(std::move(stmt));
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -785,6 +1191,11 @@ namespace minijava
 				assert(_then_branch);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief branch condition */
@@ -823,6 +1234,11 @@ namespace minijava
 				assert(_body);
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief loop condition */
@@ -851,6 +1267,11 @@ namespace minijava
 			return_statement(std::unique_ptr<expression> value)
 					: _value{std::move(value)} {}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief return value or null pointer if void is returned */
@@ -862,6 +1283,11 @@ namespace minijava
 		 */
 		class empty_statement final : public statement
 		{
+		public:
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
 		};
 
 		// endregion
@@ -893,6 +1319,11 @@ namespace minijava
 			{
 				assert(!_name.empty());
 				assert(_body);
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -944,6 +1375,11 @@ namespace minijava
 			{
 				assert(param);
 				_parameters.push_back(std::move(param));
+			}
+
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
 			}
 
 		private:
@@ -1008,6 +1444,11 @@ namespace minijava
 				_main_methods.push_back(std::move(main_method));
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief declared fields */
@@ -1041,6 +1482,11 @@ namespace minijava
 				_classes.push_back(std::move(class_decl));
 			}
 
+			void accept(visitor& v) override
+			{
+				v.visit(*this);
+			}
+
 		private:
 
 			/** @brief classes declared in this program */
@@ -1048,9 +1494,9 @@ namespace minijava
 		};
 
 		// endregion
-
-
-		// FIXME: add visitor base class: public methods (final classes) which
-		// call private methods by default (base node classes)
 	}
 }
+
+#define MINIJAVA_INCLUDED_FROM_PARSER_AST_HPP
+#include "parser/ast.tpp"
+#undef MINIJAVA_INCLUDED_FROM_PARSER_AST_HPP
