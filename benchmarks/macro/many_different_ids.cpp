@@ -16,31 +16,18 @@
 
 #include <boost/program_options.hpp>
 
+#include "random_tokens.hpp"
+
 
 namespace /* anonymous */
 {
 
 	void dump_ids(const std::size_t count, const std::size_t minlen, const std::size_t maxlen)
 	{
-		using namespace std::string_literals;
-		const auto headchars = "_"s
-			+ "ABCDEFGHILKLMNOPQRSTUVWXYZ"
-			+ "abcdefghijklmnopqrstuvwxyz";
-		const auto tailchars = headchars + "0123456789";
-		auto rndeng = std::default_random_engine {std::random_device{}()};
-		auto lendist = std::uniform_int_distribution<std::size_t>{minlen, maxlen};
-		auto headdist = std::uniform_int_distribution<std::size_t>{0, headchars.size() - 1};
-		auto taildist = std::uniform_int_distribution<std::size_t>{0, tailchars.size() - 1};
-		auto buffer = std::string{};
-		const auto tailgen = [&rndeng, &taildist, &tailchars](){
-			return tailchars[taildist(rndeng)];
-		};
-		buffer.reserve(count);
+		auto rndeng = std::default_random_engine{std::random_device{}()};
 		for (auto i = std::size_t{}; i < count; ++i) {
-			buffer.clear();
-			buffer.push_back(headchars[headdist(rndeng)]);
-			std::generate_n(std::back_inserter(buffer), lendist(rndeng) - 1, tailgen);
-			if (std::puts(buffer.c_str()) < 0) {
+			const auto word = testaux::get_random_identifier(rndeng, minlen, maxlen);
+			if (std::puts(word.c_str()) < 0) {
 				const auto ec = std::error_code{errno, std::system_category()};
 				throw std::system_error{ec, "Cannot write data to file"};
 			}
@@ -73,7 +60,6 @@ namespace /* anonymous */
 			);
 		auto vm = po::variables_map{};
 		po::store(po::parse_command_line(static_cast<int>(args.size()), args.data(), options), vm);
-		po::notify(vm);
 		if (vm.count("help")) {
 			std::cout.exceptions(std::ios_base::badbit);
 			std::cout << "usage: many_different_ids --count=N --min-length=N --max-length=N\n"
@@ -84,6 +70,7 @@ namespace /* anonymous */
 					  << std::endl;
 			return;
 		}
+		po::notify(vm);
 		if (count < 0) {
 			throw po::error{"Please select count >= 0 or it's not gonna work"};
 		}

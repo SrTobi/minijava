@@ -35,6 +35,11 @@
     "keyword" : {
 	"description" : "keyword / identifier classification",
 	"command" : ["keyword", "--size=10000000"]
+    },
+
+    "lexer" : {
+	"description" : "raw lexer performance",
+	"command" : ["lexer", "--size=3000000"]
     }
 
 }

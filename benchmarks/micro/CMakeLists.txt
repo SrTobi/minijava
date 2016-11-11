@@ -1,6 +1,7 @@
 set(MICRO_BENCHMARKS
 	character
 	keyword
+	lexer
 )
 
 foreach(bench ${MICRO_BENCHMARKS})
