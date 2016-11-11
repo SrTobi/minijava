@@ -431,17 +431,17 @@ namespace minijava
 			 * @param type
 			 *     type to instantiate
 			 *
-			 * @param size
-			 *     expression evaluating to the size of the first dimension
+			 * @param extent
+			 *     expression evaluating to the extent of the first dimension
 			 *
 			 */
 			array_instantiation(std::unique_ptr<type> type,
-								std::unique_ptr<expression> size)
-					: _type{std::move(type)}, _size{std::move(size)}
+								std::unique_ptr<expression> extent)
+					: _type{std::move(type)}, _extent{std::move(extent)}
 			{
 				assert(_type);
 				assert(_type->rank() > 0);
-				assert(_size);
+				assert(_extent);
 			}
 
 		private:
@@ -451,10 +451,10 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     expression evaluating to the size of the first dimension
+			 *     expression evaluating to the extent of the first dimension
 			 *
 			 */
-			std::unique_ptr<expression> _size;
+			std::unique_ptr<expression> _extent;
 		};
 
 		/**
