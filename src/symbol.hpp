@@ -22,14 +22,15 @@
  * alternative to create an empty symbol, even without a pool object.
  *
  * This component comes in two flavours: *debug* and *release*.  If the macro
- * `MINIJAVA_ASSERT_ACTIVE` is `#define`d to a constant integral expression
- * that evaluates to a value other than zero, debug configuration is selected.
- * Otherwise, if it is `#define`d to zero, release configuration.  If the macro
- * is not `#define`d at all ot its expansion is not a constant integral
- * expression, the behavior is undefined.  The two configurations are not
- * binary compatible.  Furthermore, in debug configuration, some functions
- * marked as `noexcept` might allocate memory so -- under very tragic
- * circumstances -- `std::terminate` might be called without prior warning.
+ * `MINIJAVA_ASSERT_ACTIVE` is <code>\#define</code>d to a constant integral
+ * expression that evaluates to a value other than zero, debug configuration
+ * is selected.  Otherwise, if it is <code>\#define</code>d to zero, release
+ * configuration.  If the macro is not <code>\#define</code>d at all ot its
+ * expansion is not a constant integral expression, the behavior is undefined.
+ * The two configurations are not binary compatible.  Furthermore, in debug
+ * configuration, some functions marked as `noexcept` might allocate memory so
+ * -- under very tragic circumstances -- `std::terminate` might be called
+ * without prior warning.
  *
  * In release configuration, `symbol`s are just wrapped pointers.  In debug
  * configuration, they store an additional reference (called *anchor* in the
@@ -127,7 +128,7 @@ namespace minijava
 	 *
 	 * In release configuration, instances of this type have exactly one
 	 * non-`static` data member which is a pointer to an internal string
-	 * reperesentation.  The pointed-to internal structure is not owned by the
+	 * representation.  The pointed-to internal structure is not owned by the
 	 * symbol itself, but by a so called pool.  Symbols may only be created by
 	 * pools and remain valid for use unly as long as the pool exists.
 	 * Equality on `symbol` objects is defined in terms of address identity of

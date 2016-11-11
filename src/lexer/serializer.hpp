@@ -23,7 +23,7 @@ namespace minijava
 	 * @param os
 	 *     stream to write the program text to
 	 *
-	 * @param fist
+	 * @param first
 	 *     iterator to the first token of the program
 	 *
 	 * @param last

@@ -6,10 +6,11 @@
  *
  * If we ever decide to use pre-compiled headers, this is the candidate.
  *
- * This file also `#define`s macros for all environment variables that are used
- * by the program.  This allows us to use a single definition point and let the
- * compiler catch potential misspellings.  The naming convention is to use a
- * macro `MINIJAVA_ENVVAR_FOO` for the environment variable `MINIJAVA_FOO`.
+ * This file also <code>\#define</code>s macros for all environment variables
+ * that are used by the program.  This allows us to use a single definition
+ * point and let the compiler catch potential misspellings.  The naming
+ * convention is to use a macro `MINIJAVA_ENVVAR_FOO` for the environment
+ * variable `MINIJAVA_FOO`.
  *
  */
 
@@ -21,6 +22,11 @@
 #ifdef NDEBUG
 #   define MINIJAVA_ASSERT_ACTIVE 0
 #else
+/**
+ * @brief
+ *     Controls whether code paths that check additional assertions are enabled.
+ *
+ */
 #   define MINIJAVA_ASSERT_ACTIVE 1
 #endif
 

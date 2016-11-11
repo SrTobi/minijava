@@ -169,6 +169,9 @@ namespace minijava
 	 * @param function
 	 *     name of the containing function
 	 *
+	 * @returns
+	 *     *N/A*
+	 *
 	 */
 	template <typename IceT>
 	[[noreturn]]
@@ -198,6 +201,9 @@ namespace minijava
 	 *
 	 * @param msg
 	 *     error message
+	 *
+	 * @returns
+	 *     *N/A*
 	 *
 	 */
 	template <typename IceT>

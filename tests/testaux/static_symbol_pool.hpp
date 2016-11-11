@@ -28,6 +28,7 @@ namespace testaux
 	{
 	private:
 
+		/** @brief Type alias for a smart pointer holding a `symbol_entry`. */
 		using entryptr_type = minijava::unique_symbol_entr_ptr<>;
 
 	public:
@@ -39,7 +40,7 @@ namespace testaux
 		 *     The content for the symbol that is created by this pool.
 		 */
 		static_symbol_pool(const std::string& str)
-			: _anchor(get_satic_symbol_anchor())
+			: _anchor(get_static_symbol_anchor())
 		{
             if (!str.empty()) {
 				auto alloc = std::allocator<minijava::symbol_entry>{};
@@ -70,7 +71,14 @@ namespace testaux
 		}
 
 	private:
-		const std::shared_ptr<minijava::symbol_anchor>& get_satic_symbol_anchor()
+		/**
+		 * @brief
+		 *     creates a symbol anchor for this pool
+		 *
+		 * @return
+		 *     symbol anchor
+		 */
+		const std::shared_ptr<minijava::symbol_anchor>& get_static_symbol_anchor()
 		{
 			static const auto static_symbol_anchor = std::make_shared<minijava::symbol_anchor>();
 			return static_symbol_anchor;
@@ -78,8 +86,11 @@ namespace testaux
 
 
 	private:
+		/** @brief Single symbol contained in this pool */
         minijava::symbol _symbol;
+		/** @brief Entry for the single symbol contained in this pool */
 		entryptr_type _entry;
+		/** @brief Symbol anchor for this pool */
 		std::shared_ptr<minijava::symbol_anchor> _anchor;
 	};
 }

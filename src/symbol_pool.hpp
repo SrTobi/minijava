@@ -106,6 +106,9 @@ namespace minijava
 		 * @param other
 		 *     `symbol_pool` to move away from
 		 *
+		 * @returns
+		 *     a reference to `*this`
+		 *
 		 */
 		symbol_pool& operator=(symbol_pool&& other) noexcept;
 
@@ -130,8 +133,11 @@ namespace minijava
 		 * @param other
 		 *     *N/A*
 		 *
+		 * @returns
+		 *     *N/A*
+		 *
 		 */
-		symbol_pool& operator=(const symbol_pool&) = delete;
+		symbol_pool& operator=(const symbol_pool& other) = delete;
 
 		/**
 		 * @brief

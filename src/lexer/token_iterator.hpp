@@ -190,7 +190,7 @@ namespace minijava
 	 *     second `token_iterator` to compare
 	 *
 	 * @returns
-	 *     `!token_iterator::equal(lhs, rhs)`
+	 *     `!#token_iterator::equal(lhs, rhs)`
 	 *
 	 */
 	template<typename LexerT>

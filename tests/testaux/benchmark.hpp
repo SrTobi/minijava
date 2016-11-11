@@ -174,7 +174,7 @@ namespace testaux
 	 * @tparam CallT
 	 *     callable type that can be invoked with arguments `args`
 	 *
-	 * @tperam ArgTs
+	 * @tparam ArgTs
 	 *     types of any arguments that should be passed to the benchmark
 	 *
 	 * @param c
