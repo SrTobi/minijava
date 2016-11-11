@@ -2,6 +2,9 @@
 #error "Never `#include <lexer/token_type.tpp>` directly; `#include <token_type.hpp>` instead."
 #endif
 
+#include <type_traits>
+#include <utility>
+
 
 namespace minijava
 {
@@ -118,14 +121,6 @@ namespace minijava
 			{token_type::eof,                          "EOF"},
 		};
 
-		constexpr auto get_token_type_info_table() noexcept
-		{
-			return std::make_pair(
-				std::begin(token_type_info_table),
-				std::end(token_type_info_table)
-			);
-		}
-
 	}  // namespace detail
 
 
@@ -136,25 +131,29 @@ namespace minijava
 		static_assert(std::is_same<raw_type_t, raw_cat_t>{}, "");
 		const auto bitmask = raw_cat_t{0xf000};
 		const auto raw_type = static_cast<raw_type_t>(tt);
-		const auto raw_cat = raw_type & bitmask;
+		const auto raw_cat = raw_cat_t((0U + raw_type) & (0U + bitmask));
 		return static_cast<token_category>(raw_cat);
 	}
 
+	constexpr std::size_t index(const token_type tt) noexcept
+	{
+		const auto raw_type = static_cast<std::size_t>(tt);
+		const auto raw_cat = static_cast<std::size_t>(category(tt));
+		const auto idx = raw_type - raw_cat;
+		if (idx < total_token_type_count) {
+			if (detail::token_type_info_table[idx].first == tt) {
+				return idx;
+			}
+		}
+		return total_token_type_count;
+	}
 
 	constexpr const char * name(const token_type tt) noexcept
 	{
-		auto r = detail::get_token_type_info_table();
-		while (r.first != r.second) {
-			const auto bisect = r.first + (r.second - r.first) / 2;
-			if (bisect->first > tt) {
-				r.second = bisect;
-			} else if (bisect->first < tt) {
-				r.first = bisect;
-			} else {
-				return bisect->second;
-			}
-		}
-		return nullptr;
+		const auto idx = index(tt);
+		return (idx < total_token_type_count)
+			? detail::token_type_info_table[idx].second
+			: nullptr;
 	}
 
 
