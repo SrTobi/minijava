@@ -42,7 +42,7 @@ namespace minijava
 		 *     error message
 		 *
 		 */
-		explicit lexical_error(std::string msg);
+		explicit lexical_error(const std::string& msg);
 	};
 
 	/**
