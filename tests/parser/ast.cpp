@@ -3,8 +3,14 @@
 #define BOOST_TEST_MODULE  parser_ast
 #include <boost/test/unit_test.hpp>
 
-// FIXME
-BOOST_AUTO_TEST_CASE(dummy_test_case)
+#include <type_traits>
+
+namespace ast = minijava::ast;
+
+BOOST_AUTO_TEST_CASE(ast_nodes_noncopyable)
 {
-	BOOST_REQUIRE(true);
+	static_assert(
+			!std::is_move_constructible<ast::program>{},
+			"nodes should not be copyable"
+	);
 }

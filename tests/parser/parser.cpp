@@ -1,6 +1,9 @@
 #include "parser/parser.hpp"
 
 #include <algorithm>
+#include <memory>
+#include <sstream>
+#include <string>
 #include <utility>
 
 #define BOOST_TEST_MODULE  parser_parser
@@ -9,10 +12,15 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_type.hpp"
+#include "parser/ast.hpp"
+#include "parser/pretty_printer.hpp"
 #include "symbol_pool.hpp"
 
 #include "testaux/testaux.hpp"
 #include "testaux/token_string.hpp"
+
+
+namespace ast = minijava::ast;
 
 
 // We provide some convenience macros to create token sequences from
@@ -376,7 +384,7 @@ BOOST_DATA_TEST_CASE(parser_rejects_invalid_programs, failure_data)
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::syntax_error& e) {
 		if (pde_idx != e.column()) {
-			std::clog <<"Caught exception: " << e.what() << std::endl;
+			std::clog << "Caught exception: " << e.what() << std::endl;
 		}
 		BOOST_REQUIRE_EQUAL(pde_idx, e.column());
 	}
@@ -449,3 +457,24 @@ BOOST_AUTO_TEST_CASE(throw_syntax_error_three_expected_tokens)
 		e.what()
 	);
 }
+
+
+//namespace /* anonymous */
+//{
+//	std::string serialize(ast::node& ast_node)
+//	{
+//		std::ostringstream oss {};
+//		auto pp = ast::pretty_printer{oss};
+//		pp.visit(ast_node);
+//		return oss.str();
+//	}
+//}
+//
+//
+//BOOST_AUTO_TEST_CASE(ast_for_empty_program)
+//{
+//	const token_sequence test_data {};
+//	auto expected_ast = std::make_unique<ast::program>();
+//	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+//	BOOST_REQUIRE_EQUAL(serialize(expected_ast), serialize(actual_ast));
+//}
