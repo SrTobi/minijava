@@ -25,9 +25,9 @@ namespace minijava
 
 	}
 
-	template <typename DataT>
-	token::token(const token_type type, DataT&& data) :
-		_type{type}, _data{std::forward<DataT>(data)}
+	inline token::token(token_type type, symbol lexval)
+		: _type{std::move(type)}
+		, _lexval{std::move(lexval)}
 	{
 	}
 
@@ -46,7 +46,7 @@ namespace minijava
 	inline token token::create(const token_type tt)
 	{
 		assert(!detail::has_lexval(tt));
-		return token{tt, boost::blank{}};
+		return token{tt};
 	}
 
 	inline token_type token::type() const noexcept
@@ -57,7 +57,7 @@ namespace minijava
 	inline symbol token::lexval() const
 	{
 		assert(has_lexval());
-		return boost::get<symbol>(_data);
+		return _lexval;
 	}
 
 	inline bool token::has_lexval() const noexcept
@@ -87,7 +87,7 @@ namespace minijava
 
 	inline bool token::equal(const token& lhs, const token& rhs) noexcept
 	{
-		return ((lhs._type == rhs._type) && (lhs._data == rhs._data));
+		return ((lhs._type == rhs._type) && (lhs._lexval == rhs._lexval));
 	}
 
 	inline bool operator==(const token& lhs, const token& rhs) noexcept
