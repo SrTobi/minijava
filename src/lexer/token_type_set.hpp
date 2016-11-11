@@ -231,7 +231,7 @@ namespace minijava
 	 *     second `token_type_set` to compare
 	 *
 	 * @returns
-	 *     `!token_type_set::equal(lhs, rhs)`
+	 *     `!#token_type_set::equal(lhs, rhs)`
 	 *
 	 */
 	constexpr bool operator!=(const token_type_set& lhs, const token_type_set& rhs) noexcept;

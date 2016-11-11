@@ -51,6 +51,9 @@ namespace minijava
 		class class_declaration;
 		class program;
 
+		/**
+		 * Base class for AST visitor
+		 */
 		class visitor
 		{
 		protected:
