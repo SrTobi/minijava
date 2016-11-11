@@ -511,6 +511,7 @@ namespace minijava
 			 *
 			 * @param rank
 			 *     rank of the array or 0 if this type is not an array type
+			 *
 			 */
 			type(primitive_type type, std::size_t rank)
 					: node{}, _type{type}, _rank{rank} {}
@@ -524,25 +525,12 @@ namespace minijava
 			 *
 			 * @param rank
 			 *     rank of the array or 0 if this type is not an array type
+			 *
 			 */
 			type(symbol type, std::size_t rank)
 					: node{}, _type{type}, _rank{rank}
 			{
 				assert(!_type.empty());
-			}
-
-			/**
-			 * @brief
-			 *     returns the rank of the array
-			 *
-			 * If this type is not an array type, `0` is returned.
-			 *
-			 * @return
-			 *     array rank or 0 if this type is not an array type
-			 */
-			std::size_t rank() const noexcept
-			{
-				return _rank;
 			}
 
 			/**
@@ -554,11 +542,39 @@ namespace minijava
 			 *     user-defined type
 			 *
 			 */
-			const type_name& get_type() const noexcept
+			minijava::ast::type_name& type_name() noexcept
 			{
 				return _type;
 			}
 
+			/**
+			 * @brief
+			 *     returns the type name
+			 *
+			 * @return
+			 *     primitive type or symbol representing the name of the
+			 *     user-defined type
+			 *
+			 */
+			const minijava::ast::type_name& type_name() const noexcept
+			{
+				return _type;
+			}
+
+			/**
+			 * @brief
+			 *     returns the rank of the array
+			 *
+			 * If this type is not an array type, `0` is returned.
+			 *
+			 * @return
+			 *     array rank or 0 if this type is not an array type
+			 *
+			 */
+			std::size_t rank() const noexcept
+			{
+				return _rank;
+			}
 
 			void accept(visitor& v) override
 			{
@@ -568,7 +584,7 @@ namespace minijava
 		private:
 
 			/** @brief user-defined or built-in type represented by this node */
-			type_name _type;
+			minijava::ast::type_name _type;
 
 			/** @brief rank of the array or 0 if this node does not represent an array type */
 			std::size_t _rank;
@@ -591,12 +607,52 @@ namespace minijava
 			 *
 			 * @param name
 			 *     variable name
+			 *
 			 */
 			var_decl(std::unique_ptr<type> type, symbol name)
 					: _type{std::move(type)}, _name{name}
 			{
 				assert(_type);
 				assert(!_name.empty());
+			}
+
+			/**
+			 * @brief
+			 *     Returns the type of this variable.
+			 *
+			 * @return
+			 *     type of this variable
+			 *
+			 */
+			minijava::ast::type& type()
+			{
+				return *_type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the type of this variable.
+			 *
+			 * @return
+			 *     type of this variable
+			 *
+			 */
+			const minijava::ast::type& type() const
+			{
+				return *_type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of this variable.
+			 *
+			 * @return
+			 *     name of this variable
+			 *
+			 */
+			symbol name() const
+			{
+				return _name;
 			}
 
 			void accept(visitor& v) override
@@ -606,10 +662,10 @@ namespace minijava
 
 		private:
 
-			/** @brief type of the variable */
-			std::unique_ptr<type> _type;
+			/** @brief type of this variable */
+			std::unique_ptr<minijava::ast::type> _type;
 
-			/** @brief symbol representing the variable name */
+			/** @brief symbol representing the name of this variable */
 			symbol _name;
 		};
 
@@ -638,6 +694,7 @@ namespace minijava
 			 *
 			 * @param rhs
 			 *     expression on the right side of the assignment
+			 *
 			 */
 			assignment_expression(std::unique_ptr<expression> lhs,
 			                      std::unique_ptr<expression> rhs)
@@ -647,6 +704,58 @@ namespace minijava
 				assert(_rhs);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the expression on the left side of this assignment
+			 *
+			 * @return
+			 *     left side of this assignment
+			 *
+			 */
+			expression& lhs()
+			{
+				return *_lhs;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the left side of this assignment
+			 *
+			 * @return
+			 *     left side of this assignment
+			 *
+			 */
+			const expression& lhs() const
+			{
+				return *_lhs;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the right side of this assignment
+			 *
+			 * @return
+			 *     right side of this assignment
+			 *
+			 */
+			expression& rhs()
+			{
+				return *_rhs;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the right side of this assignment
+			 *
+			 * @return
+			 *     right side of this assignment
+			 *
+			 */
+			const expression& rhs() const
+			{
+				return *_rhs;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -654,10 +763,10 @@ namespace minijava
 
 		private:
 
-			/** @brief expression on the left side of the assignment */
+			/** @brief expression on the left side of this assignment */
 			std::unique_ptr<expression> _lhs;
 
-			/** @brief expression on the right side of the assignment */
+			/** @brief expression on the right side of this assignment */
 			std::unique_ptr<expression> _rhs;
 		};
 
@@ -692,6 +801,71 @@ namespace minijava
 				assert(_rhs);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the type of this operation
+			 * 
+			 * @return
+			 *     type of this operation
+			 *
+			 */
+			binary_operation_type type() const
+			{
+				return _type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the left side of this operation
+			 *
+			 * @return
+			 *     left side of this operation
+			 *
+			 */
+			expression& lhs()
+			{
+				return *_lhs;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the left side of this operation
+			 *
+			 * @return
+			 *     left side of this operation
+			 *
+			 */
+			const expression& lhs() const
+			{
+				return *_lhs;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the right side of this operation
+			 *
+			 * @return
+			 *     right side of this operation
+			 *
+			 */
+			expression& rhs()
+			{
+				return *_rhs;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression on the right side of this operation
+			 *
+			 * @return
+			 *     right side of this operation
+			 *
+			 */
+			const expression& rhs() const
+			{
+				return *_rhs;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -724,15 +898,54 @@ namespace minijava
 			 * @param type
 			 *     unary operator
 			 *
-			 * @param expression
+			 * @param target
 			 *     expression to which the operation is applied
 			 *
 			 */
 			unary_expression(unary_operation_type type,
-			                 std::unique_ptr<expression> expression)
-					: _type{type}, _expression{std::move(expression)}
+			                 std::unique_ptr<expression> target)
+					: _type{type}, _target{std::move(target)}
 			{
-				assert(_expression);
+				assert(_target);
+			}
+
+			/**
+			 * @brief
+			 *     Returns the type of this operation
+			 *
+			 * @return
+			 *     type of this operation
+			 *
+			 */
+			unary_operation_type type() const
+			{
+				return _type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression to which this operation applies
+			 *
+			 * @return
+			 *     target of this operation
+			 *
+			 */
+			expression& target()
+			{
+				return *_target;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression to which this operation applies
+			 *
+			 * @return
+			 *     target of this operation
+			 *
+			 */
+			const expression& target() const
+			{
+				return *_target;
 			}
 
 			void accept(visitor& v) override
@@ -746,7 +959,7 @@ namespace minijava
 			unary_operation_type _type;
 
 			/** @brief expression to which the unary operation is applied */
-			std::unique_ptr<expression> _expression;
+			std::unique_ptr<expression> _target;
 		};
 
 		/**
@@ -767,6 +980,19 @@ namespace minijava
 			object_instantiation(symbol class_name) : _class_name{class_name}
 			{
 				assert(!_class_name.empty());
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the class which is bein instantiated.
+			 *
+			 * @return
+			 *     class name
+			 *
+			 */
+			symbol class_name() const
+			{
+				return _class_name;
 			}
 
 			void accept(visitor& v) override
@@ -809,6 +1035,60 @@ namespace minijava
 				assert(_extent);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the type being instantiated.
+			 *
+			 * @return
+			 *     type
+			 *
+			 */
+			minijava::ast::type& type()
+			{
+				return *_type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the type being instantiated.
+			 *
+			 * @return
+			 *     type
+			 *
+			 */
+			const minijava::ast::type& type() const
+			{
+				return *_type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression evaluating to the extent of the first
+			 *     dimension.
+			 *
+			 * @return
+			 *     extent of the first dimension
+			 *
+			 */
+			expression& extent()
+			{
+				return *_extent;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression evaluating to the extent of the first
+			 *     dimension.
+			 *
+			 * @return
+			 *     extent of the first dimension
+			 *
+			 */
+			const expression& extent() const
+			{
+				return *_extent;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -817,13 +1097,9 @@ namespace minijava
 		private:
 
 			/** @brief type to instantiate */
-			std::unique_ptr<type> _type;
+			std::unique_ptr<minijava::ast::type> _type;
 
-			/**
-			 * @brief
-			 *     expression evaluating to the extent of the first dimension
-			 *
-			 */
+			/** @brief expression evaluating to the extent of the first dimension */
 			std::unique_ptr<expression> _extent;
 		};
 
@@ -851,6 +1127,58 @@ namespace minijava
 			{
 				assert(_target);
 				assert(_index);
+			}
+
+			/**
+			 * @brief
+			 *     Returns the target of this array access.
+			 *
+			 * @return
+			 *     target expression
+			 *
+			 */
+			expression& target()
+			{
+				return *_target;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the target of this array access.
+			 *
+			 * @return
+			 *     target expression
+			 *
+			 */
+			const expression& target() const
+			{
+				return *_target;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the index expression.
+			 *
+			 * @return
+			 *     index expression
+			 *
+			 */
+			expression& index()
+			{
+				return *_index;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the index expression.
+			 *
+			 * @return
+			 *     index expression
+			 *
+			 */
+			const expression& index() const
+			{
+				return *_index;
 			}
 
 			void accept(visitor& v) override
@@ -894,6 +1222,51 @@ namespace minijava
 					: _target{std::move(target)}, _name{name}
 			{
 				assert(!_name.empty());
+			}
+
+			/**
+			 * @brief
+			 *     Returns the target whose member is accessed.
+			 *
+			 * May return `nullptr` if this node represents a local variable
+			 * access or an unqualifier member access.
+			 *
+			 * @return
+			 *     target expression or `nullptr`
+			 *
+			 */
+			expression* target()
+			{
+				return _target.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the target whose member is accessed.
+			 *
+			 * May return `nullptr` if this node represents a local variable
+			 * access or an unqualifier member access.
+			 *
+			 * @return
+			 *     target expression or `nullptr`
+			 *
+			 */
+			const expression* target() const
+			{
+				return _target.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the variable or field being accessed.
+			 *
+			 * @return
+			 *     variable/field name
+			 *
+			 */
+			symbol name() const
+			{
+				return _name;
 			}
 
 			void accept(visitor& v) override
@@ -941,6 +1314,75 @@ namespace minijava
 				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el) { return !!el; }));
 			}
 
+			/**
+			 * @brief
+			 *     Returns the target whose method is called.
+			 *
+			 * May return `nullptr` if the method name was not qualified.
+			 *
+			 * @return
+			 *     target expression or `nullptr`
+			 *
+			 */
+			expression* target()
+			{
+				return _target.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the target whose method is called.
+			 *
+			 * May return `nullptr` if the method name was not qualified.
+			 *
+			 * @return
+			 *     target expression or `nullptr`
+			 *
+			 */
+			const expression* target() const
+			{
+				return _target.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the method being called.
+			 *
+			 * @return
+			 *     method name
+			 *
+			 */
+			symbol name() const
+			{
+				return _name;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the arguments passed to the method.
+			 *
+			 * @return
+			 *     arguments
+			 *
+			 */
+			std::vector<std::unique_ptr<expression>>& arguments()
+			{
+				return _arguments;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the arguments passed to the method.
+			 *
+			 * @return
+			 *     arguments
+			 *
+			 */
+			const std::vector<std::unique_ptr<expression>>& arguments() const
+			{
+				return _arguments;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -963,7 +1405,9 @@ namespace minijava
 		 */
 		class this_ref final : public expression
 		{
+
 		public:
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -991,6 +1435,19 @@ namespace minijava
 			 *
 			 */
 			boolean_constant(bool value) : _value{value} {}
+
+			/**
+			 * @brief
+			 *     Returns the value of this constant.
+			 *
+			 * @return
+			 *     value
+			 *
+			 */
+			bool value() const noexcept
+			{
+				return _value;
+			}
 
 			void accept(visitor& v) override
 			{
@@ -1023,6 +1480,20 @@ namespace minijava
 				assert(!literal.empty());
 			}
 
+			/**
+			 * @brief
+			 *     Returns the integer literal specifying the value of this
+			 *     constant.
+			 *
+			 * @return
+			 *     integer literal
+			 *
+			 */
+			symbol literal() const
+			{
+				return _literal;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1039,7 +1510,9 @@ namespace minijava
 		 */
 		class null_constant final : public constant
 		{
+
 		public:
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1086,6 +1559,62 @@ namespace minijava
 				assert(_declaration);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the declaration of this local variable.
+			 *
+			 * @return
+			 *     variable declaration
+			 */
+			var_decl& declaration()
+			{
+				return *_declaration;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the declaration of this local variable.
+			 *
+			 * @return
+			 *     variable declaration
+			 */
+			const var_decl& declaration() const
+			{
+				return *_declaration;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the initial value of this local variable.
+			 *
+			 * May return `nullptr` if the variable is not initialized
+			 * immediately.
+			 *
+			 * @return
+			 *     initialization expression or `nullptr`
+			 *
+			 */
+			expression* initial_value()
+			{
+				return _initial_value.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the initial value of this local variable.
+			 *
+			 * May return `nullptr` if the variable is not initialized
+			 * immediately.
+			 *
+			 * @return
+			 *     initialization expression or `nullptr`
+			 *
+			 */
+			const expression* initial_value() const
+			{
+				return _initial_value.get();
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1130,6 +1659,32 @@ namespace minijava
 				assert(_expression);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the expression contained in this statement.
+			 *
+			 * @return
+			 *     expression
+			 *
+			 */
+			minijava::ast::expression& expression()
+			{
+				return *_expression;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the expression contained in this statement.
+			 *
+			 * @return
+			 *     expression
+			 *
+			 */
+			const minijava::ast::expression& expression() const
+			{
+				return *_expression;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1138,7 +1693,7 @@ namespace minijava
 		private:
 
 			/** @brief expression to interpret as a statement */
-			std::unique_ptr<expression> _expression;
+			std::unique_ptr<minijava::ast::expression> _expression;
 		};
 
 		/**
@@ -1158,6 +1713,32 @@ namespace minijava
 			{
 				assert(stmt);
 				_body.push_back(std::move(stmt));
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this block.
+			 *
+			 * @return
+			 *     block body
+			 *
+			 */
+			std::vector<std::unique_ptr<block_statement>>& body()
+			{
+				return _body;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this block.
+			 *
+			 * @return
+			 *     block body
+			 *
+			 */
+			const std::vector<std::unique_ptr<block_statement>>& body() const
+			{
+				return _body;
 			}
 
 			void accept(visitor& v) override
@@ -1182,6 +1763,9 @@ namespace minijava
 			/**
 			 * Constructs a new if statement.
 			 *
+			 * @param condition
+			 *     branch condition
+			 *
 			 * @param then_stmt
 			 *     statement to execute if the condition evaluates to `true`
 			 *
@@ -1189,19 +1773,102 @@ namespace minijava
 			 *     statement to execute if the condition evaluates to `false`
 			 *     or null if no such statement exists
 			 *
-			 * @param condition
-			 *     branch condition
-			 *
 			 */
-			if_statement(std::unique_ptr<statement> then_stmt,
-						 std::unique_ptr<statement> else_stmt,
-						 std::unique_ptr<expression> condition)
+			if_statement(std::unique_ptr<expression> condition,
+						 std::unique_ptr<statement> then_stmt,
+						 std::unique_ptr<statement> else_stmt)
 					: _condition{std::move(condition)}
 					, _then_branch{std::move(then_stmt)}
 					, _else_branch{std::move(else_stmt)}
 			{
 				assert(_condition);
 				assert(_then_branch);
+			}
+
+			/**
+			 * @brief
+			 *     Returns the branch condition.
+			 *
+			 * @return
+			 *     condition
+			 *
+			 */
+			expression& condition()
+			{
+				return *_condition;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the branch condition.
+			 *
+			 * @return
+			 *     condition
+			 *
+			 */
+			const expression& condition() const
+			{
+				return *_condition;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the statement which is executed if the condition
+			 *     evaluates to `true`.
+			 *
+			 * @return
+			 *     then statement
+			 *
+			 */
+			statement& then_statement()
+			{
+				return *_then_branch;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the statement which is executed if the condition
+			 *     evaluates to `true`.
+			 *
+			 * @return
+			 *     then statement
+			 *
+			 */
+			const statement& then_statement() const
+			{
+				return *_then_branch;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the statement which is executed if the condition
+			 *     evaluates to `false`.
+			 *
+			 * May return `nullptr` in case the `else` branch was omitted.
+			 *
+			 * @return
+			 *     else statement
+			 *
+			 */
+			statement* else_statement()
+			{
+				return _else_branch.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the statement which is executed if the condition
+			 *     evaluates to `false`.
+			 *
+			 * May return `nullptr` in case the `else` branch was omitted.
+			 *
+			 * @return
+			 *     else statement
+			 *
+			 */
+			const statement* else_statement() const
+			{
+				return _else_branch.get();
 			}
 
 			void accept(visitor& v) override
@@ -1247,6 +1914,58 @@ namespace minijava
 				assert(_body);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the loop condition.
+			 *
+			 * @return
+			 *     loop condition
+			 *
+			 */
+			expression& condition()
+			{
+				return *_condition;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the loop condition.
+			 *
+			 * @return
+			 *     loop condition
+			 *
+			 */
+			const expression& condition() const
+			{
+				return *_condition;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this loop.
+			 *
+			 * @return
+			 *     loop body
+			 *
+			 */
+			statement& body()
+			{
+				return *_body;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this loop.
+			 *
+			 * @return
+			 *     loop body
+			 *
+			 */
+			const statement& body() const
+			{
+				return *_body;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1280,6 +1999,36 @@ namespace minijava
 			return_statement(std::unique_ptr<expression> value)
 					: _value{std::move(value)} {}
 
+			/**
+			 * @brief
+			 *     Returns the value to be returned.
+			 *
+			 * May return `nullptr` in case `void` is returned.
+			 *
+			 * @return
+			 *     return value
+			 *
+			 */
+			expression* value()
+			{
+				return _value.get();
+			}
+
+			/**
+			 * @brief
+			 *     Returns the value to be returned.
+			 *
+			 * May return `nullptr` in case `void` is returned.
+			 *
+			 * @return
+			 *     return value
+			 *
+			 */
+			const expression* value() const
+			{
+				return _value.get();
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1296,7 +2045,9 @@ namespace minijava
 		 */
 		class empty_statement final : public statement
 		{
+
 		public:
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1332,6 +2083,45 @@ namespace minijava
 			{
 				assert(!_name.empty());
 				assert(_body);
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of this method.
+			 *
+			 * @return
+			 *     method name
+			 *
+			 */
+			symbol name() const
+			{
+				return _name;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this method.
+			 *
+			 * @return
+			 *     method body
+			 *
+			 */
+			block& body()
+			{
+				return *_body;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this method.
+			 *
+			 * @return
+			 *     method body
+			 *
+			 */
+			const block& body() const
+			{
+				return *_body;
 			}
 
 			void accept(visitor& v) override
@@ -1384,6 +2174,97 @@ namespace minijava
 				assert(_body);
 			}
 
+			/**
+			 * @brief
+			 *     Returns the name of this method.
+			 *
+			 * @return
+			 *     method name
+			 *
+			 */
+			symbol name() const
+			{
+				return _name;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the return type of this method.
+			 *
+			 * @return
+			 *     return type
+			 *
+			 */
+			type& return_type()
+			{
+				return *_return_type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the return type of this method.
+			 *
+			 * @return
+			 *     return type
+			 *
+			 */
+			const type& return_type() const
+			{
+				return *_return_type;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the parameter list of this method.
+			 *
+			 * @return
+			 *     parameter list
+			 *
+			 */
+			std::vector<std::unique_ptr<var_decl>>& parameters()
+			{
+				return _parameters;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the parameter list of this method.
+			 *
+			 * @return
+			 *     parameter list
+			 *
+			 */
+			const std::vector<std::unique_ptr<var_decl>>& parameters() const
+			{
+				return _parameters;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this method.
+			 *
+			 * @return
+			 *     method body
+			 *
+			 */
+			block& body()
+			{
+				return *_body;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this method.
+			 *
+			 * @return
+			 *     method body
+			 *
+			 */
+			const block& body() const
+			{
+				return *_body;
+			}
+
 			void accept(visitor& v) override
 			{
 				v.visit(*this);
@@ -1421,6 +2302,97 @@ namespace minijava
 			class_declaration(symbol name) : _name{name}
 			{
 				assert(!_name.empty());
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of this class.
+			 *
+			 * @return
+			 *     class name
+			 *
+			 */
+			symbol name() const
+			{
+				return _name;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the fields declared in this class.
+			 *
+			 * @return
+			 *     list of fields
+			 *
+			 */
+			std::vector<std::unique_ptr<var_decl>>& fields()
+			{
+				return _fields;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the fields declared in this class.
+			 *
+			 * @return
+			 *     list of fields
+			 *
+			 */
+			const std::vector<std::unique_ptr<var_decl>>& fields() const
+			{
+				return _fields;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the methods declared in this class.
+			 *
+			 * @return
+			 *     list of methods
+			 *
+			 */
+			std::vector<std::unique_ptr<method>>& methods()
+			{
+				return _methods;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the methods declared in this class.
+			 *
+			 * @return
+			 *     list of methods
+			 *
+			 */
+			const std::vector<std::unique_ptr<method>>& methods() const
+			{
+				return _methods;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the main methods declared in this class.
+			 *
+			 * @return
+			 *     list of main methods
+			 *
+			 */
+			std::vector<std::unique_ptr<main_method>>& main_methods()
+			{
+				return _main_methods;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the main methods declared in this class.
+			 *
+			 * @return
+			 *     list of main methods
+			 *
+			 */
+			const std::vector<std::unique_ptr<main_method>>& main_methods() const
+			{
+				return _main_methods;
 			}
 
 			/**
@@ -1501,6 +2473,32 @@ namespace minijava
 			{
 				assert(class_decl);
 				_classes.push_back(std::move(class_decl));
+			}
+
+			/**
+			 * @brief
+			 *     Returns the classes declared in this program.
+			 *
+			 * @return
+			 *     list of classes
+			 *
+			 */
+			std::vector<std::unique_ptr<class_declaration>>& classes()
+			{
+				return _classes;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the classes declared in this program.
+			 *
+			 * @return
+			 *     list of classes
+			 *
+			 */
+			const std::vector<std::unique_ptr<class_declaration>>& classes() const
+			{
+				return _classes;
 			}
 
 			void accept(visitor& v) override
