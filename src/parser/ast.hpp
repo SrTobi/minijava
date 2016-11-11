@@ -534,11 +534,26 @@ namespace minijava
 			 *
 			 * If this type is not an array type, `0` is returned.
 			 *
-			 * @return array rank or 0 if this type is not an array type
+			 * @return
+			 *     array rank or 0 if this type is not an array type
 			 */
 			std::size_t rank() const noexcept
 			{
 				return _rank;
+			}
+
+			/**
+			 * @brief
+			 *     returns the type name
+			 *
+			 * @return
+			 *     primitive type or symbol representing the name of the
+			 *     user-defined type
+			 *
+			 */
+			const type_name& get_type() const noexcept
+			{
+				return _type;
 			}
 
 
@@ -1406,6 +1421,14 @@ namespace minijava
 		public:
 
 			/**
+			 * Constructs a class declaration node.
+			 *
+			 * @param name
+			 *     class name
+			 */
+			class_declaration(symbol name) : _name{name} {}
+
+			/**
 			 * Adds a field declaration to this class.
 			 *
 			 * @param field
@@ -1450,6 +1473,9 @@ namespace minijava
 			}
 
 		private:
+
+			/** @brief class name */
+			symbol _name;
 
 			/** @brief declared fields */
 			std::vector<std::unique_ptr<var_decl>> _fields {};
