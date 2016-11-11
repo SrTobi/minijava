@@ -857,6 +857,13 @@ namespace minijava
 			std::unique_ptr<expression> _value;
 		};
 
+		/**
+		 * Empty statement AST node
+		 */
+		class empty_statement final : public statement
+		{
+		};
+
 		// endregion
 
 
