@@ -29,6 +29,7 @@ namespace testaux
 	template <minijava::token_type TokenType>
 	struct tagged_string
 	{
+		/** @brief actual string */
 		std::string s{};
 	};
 
@@ -66,7 +67,11 @@ namespace testaux
 
 	/**
 	 * @brief
-	 *     creates an appropriate token from either a tagged identifier string
+	 *     creates an appropriate token from a tagged identifier string
+	 *
+	 * @param pool
+	 *     symbol pool to use for creating the #minijava::symbol representing
+	 *     the identifier
 	 *
 	 * @param text
 	 *     tagged string representing the identifier
@@ -83,7 +88,11 @@ namespace testaux
 
 	/**
 	 * @brief
-	 *     creates an appropriate token from either a tagged integer literal string
+	 *     creates an appropriate token from a tagged integer literal string
+	 *
+	 * @param pool
+	 *     symbol pool to use for creating the #minijava::symbol representing
+	 *     the integer literal
 	 *
 	 * @param text
 	 *     tagged string representing the integer literal
@@ -101,6 +110,9 @@ namespace testaux
 	/**
 	 * @brief
 	 *     creates an appropriate token of the given type
+	 *
+	 * @param pool
+	 *     unused
 	 *
 	 * @param type
 	 *     requested token type

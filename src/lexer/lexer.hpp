@@ -27,8 +27,22 @@ namespace minijava
 	 */
 	struct lexical_error : std::runtime_error
 	{
-		lexical_error() : std::runtime_error{"invalid input"} {}
-		lexical_error(std::string msg) : std::runtime_error{std::move(msg)} {}
+		/**
+		 * @brief
+		 *     Creates an exception object with a generic error message.
+		 *
+		 */
+		lexical_error();
+
+		/**
+		 * @brief
+		 *     Creates an exception object with the provided error message.
+		 *
+		 * @param msg
+		 *     error message
+		 *
+		 */
+		explicit lexical_error(const std::string& msg);
 	};
 
 	/**
@@ -67,7 +81,8 @@ namespace minijava
 		/**
 		 * @brief
 		 *     Creates a `lexer` that will scan over the character range
-		 *     `[first, last)` and use the symbol pool `pool`.
+		 *     `[first, last)` and use the symbol pools `id_pool` for
+		 *     identifiers and `lit_pool` for integer literals.
 		 *
 		 * The range referred to by the iterators as well as the symbol pool
 		 * must remain valid throughout the life-time of this object.
@@ -253,6 +268,9 @@ namespace minijava
 	 * @param alloc
 	 *     allocator to use for allocating internal working buffers
 	 *
+	 * @returns
+	 *     lexer for the given character range which uses the given symbol pools
+	 *
 	 * @throws lexical_error
 	 *     if the input does not start with a valid token
 	 *
@@ -268,7 +286,7 @@ namespace minijava
 	make_lexer(
 		InIterT first, InIterT last,
 		IdPoolT& id_pool, LitPoolT& lit_pool,
-		const AllocT& = AllocT{}
+		const AllocT& alloc = AllocT{}
 	);
 
 }  // namespace minijava

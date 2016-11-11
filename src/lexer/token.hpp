@@ -63,6 +63,9 @@ namespace minijava
 		 * @param lexval
 		 *     name of the identifier
 		 *
+		 * @returns
+		 *     identifier token
+		 *
 		 */
 		static token create_identifier(symbol lexval);
 
@@ -76,6 +79,9 @@ namespace minijava
 		 * @param lexval
 		 *     digits of the integer literal
 		 *
+		 * @returns
+		 *     integer literal token
+		 *
 		 */
 		static token create_integer_literal(symbol lexval);
 
@@ -88,6 +94,9 @@ namespace minijava
 		 *
 		 * @param tt
 		 *     type of the token
+		 *
+		 * @returns
+		 *     token of the specified type
 		 *
 		 */
 		static token create(token_type tt);
@@ -238,7 +247,7 @@ namespace minijava
 	 *     second `token` to compare
 	 *
 	 * @returns
-	 *     `!token::equal(lhs, rhs)`
+	 *     `!#token::equal(lhs, rhs)`
 	 *
 	 */
 	bool operator!=(const token& lhs, const token& rhs) noexcept;
