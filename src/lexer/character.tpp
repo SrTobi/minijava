@@ -23,7 +23,7 @@ namespace minijava
 			return ((c >= ascii_min) && (c <= ascii_max));
 		}
 
-		ascii_bs_type make_ascii_bs(const char *const chars) noexcept
+		inline ascii_bs_type make_ascii_bs(const char *const chars) noexcept
 		{
 			auto bs = ascii_bs_type{};
 			for (auto it = chars; *it != '\0'; ++it) {
