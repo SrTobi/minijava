@@ -928,22 +928,17 @@ namespace minijava
 			 * @param name
 			 *     method to invoke
 			 *
+			 * @param arguments
+			 *     arguments passed to the method
+			 *
 			 */
-			method_invocation(std::unique_ptr<expression> target, symbol name)
+			method_invocation(std::unique_ptr<expression> target, symbol name,
+							  std::vector<std::unique_ptr<expression>> arguments)
 					: _target{std::move(target)}, _name{std::move(name)}
+					, _arguments{std::move(arguments)}
 			{
 				assert(!_name.empty());
-			}
-
-			/**
-			 * Adds an argument to the method invocation.
-			 *
-			 * @param arg argument
-			 */
-			void add_argument(std::unique_ptr<expression> arg)
-			{
-				assert(arg);
-				_arguments.push_back(std::move(arg));
+				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el) { return !!el; }));
 			}
 
 			void accept(visitor& v) override
@@ -959,8 +954,8 @@ namespace minijava
 			/** @brief method to invoke */
 			symbol _name;
 
-			/** @brief method arguments */
-			std::vector<std::unique_ptr<expression>> _arguments {};
+			/** @brief arguments passed to the method */
+			std::vector<std::unique_ptr<expression>> _arguments;
 		};
 
 		/**
@@ -1370,29 +1365,23 @@ namespace minijava
 			 * @param return_type
 			 *     method return type
 			 *
+			 * @param parameters
+			 *     method parameters
+			 *
 			 * @param body
 			 *     method body
 			 *
 			 */
 			method(symbol name, std::unique_ptr<type> return_type,
+				   std::vector<std::unique_ptr<var_decl>> parameters,
 				   std::unique_ptr<block> body)
 					: _name{name}, _return_type{std::move(return_type)},
-					  _body{std::move(body)}
+					  _parameters{std::move(parameters)}, _body{std::move(body)}
 			{
-
-			}
-
-			/**
-			 * Adds a parameter declaration to this method.
-			 *
-			 * @param param
-			 *     parameter declaration
-			 *
-			 */
-			void add_parameter(std::unique_ptr<var_decl> param)
-			{
-				assert(param);
-				_parameters.push_back(std::move(param));
+				assert(!_name.empty());
+				assert(_return_type);
+				assert(std::all_of(_parameters.begin(), _parameters.end(), [](auto&& el) { return !!el; }));
+				assert(_body);
 			}
 
 			void accept(visitor& v) override
@@ -1408,11 +1397,11 @@ namespace minijava
 			/** @brief method return type */
 			std::unique_ptr<type> _return_type;
 
+			/** @brief method parameters */
+			std::vector<std::unique_ptr<var_decl>> _parameters;
+
 			/** @brief method body */
 			std::unique_ptr<block> _body;
-
-			/** @brief method parameters */
-			std::vector<std::unique_ptr<var_decl>> _parameters {};
 		};
 
 		/**
@@ -1429,7 +1418,10 @@ namespace minijava
 			 * @param name
 			 *     class name
 			 */
-			class_declaration(symbol name) : _name{name} {}
+			class_declaration(symbol name) : _name{name}
+			{
+				assert(!_name.empty());
+			}
 
 			/**
 			 * Adds a field declaration to this class.
