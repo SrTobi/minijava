@@ -25,7 +25,7 @@ namespace minijava
 			 *
 			 */
 			pretty_printer(std::ostream& output)
-					: _output{output} {}
+					: _output{output}, _indentation_level{0} {}
 
 			void visit(type &node) override {
 				// TODO
@@ -172,46 +172,62 @@ namespace minijava
 			}
 
 			void visit(expression_statement &node) override {
+				_output << _indention();
 				node.expression().accept(*this);
 				_output << ";\n";
 			}
 
 			void visit(block &node) override {
-				_output << "{\n";
+				_output << _indention() << "{\n";
+
+				_indentation_level++;
 				for (size_t i = 0; i < node.body().size(); i++) {
 					node.body()[i]->accept(*this);
 				}
-				_output << "}\n";
+				_indentation_level--;
+
+				_output << _indention() << "}\n";
 			}
 
 			void visit(if_statement &node) override {
-				_output << "if (";
+				_output << _indention() << "if (";
 				node.condition().accept(*this);
 				_output << ") {\n";
 
+				_indentation_level++;
 				node.then_statement().accept(*this);
+				_indentation_level--;
+
 				if (node.else_statement() == nullptr) {
-					_output << "}\n";
+					_output << _indention() << "}\n";
 				} else {
-					_output << "} else {\n";
+					_output << _indention() << "} else {\n";
+
+					_indentation_level++;
 					node.else_statement();
-					_output << "}\n";
+					_indentation_level--;
+
+					_output << _indention() << "}\n";
 				}
 			}
 
 			void visit(while_statement &node) override {
-				_output << "while (";
+				_output << _indention() << "while (";
 				node.condition().accept(*this);
 				_output << ") {\n";
+
+				_indentation_level++;
 				node.body().accept(*this);
-				_output << "}\n";
+				_indentation_level--;
+
+				_output << _indention() << "}\n";
 			}
 
 			void visit(return_statement &node) override {
 				if (node.value() == nullptr) {
-					_output << "return;";
+					_output << _indention() << "return;";
 				} else {
-					_output << "return ";
+					_output << _indention() << "return ";
 					node.value()->accept(*this);
 					_output << ";";
 				}
@@ -219,7 +235,7 @@ namespace minijava
 
 			void visit(empty_statement &node) override {
 				(void)node;
-				_output << ";\n";
+				_output << _indention() << ";\n";
 			}
 
 			void visit(main_method &node) override {
@@ -229,7 +245,7 @@ namespace minijava
 			}
 
 			void visit(method &node) override {
-				_output << "public ";
+				_output <<_indention() << "public ";
 				node.return_type().accept(*this);
 				_output << " " << node.name() << "(";
 				for (size_t i = 0; i < node.parameters().size(); i++) {
@@ -239,12 +255,15 @@ namespace minijava
 					node.parameters()[i]->accept(*this);
 				}
 				_output << ") {\n";
+				_indentation_level++;
 				node.body().accept(*this);
-				_output << "}\n";
+				_indentation_level--;
+				_output << _indention() << "}\n";
 			}
 
 			void visit(class_declaration &node) override {
-				_output << "class " << node.name() << "{\n";
+				_output << _indention() << "class " << node.name() << " {\n";
+				_indentation_level++;
 				for (size_t i = 0; i < node.fields().size(); i++) {
 					node.fields()[i]->accept(*this);
 				}
@@ -257,7 +276,8 @@ namespace minijava
 					node.methods()[i]->accept(*this);
 				}
 
-				_output << "}\n";
+				_indentation_level--;
+				_output << _indention() << "}\n";
 			}
 
 			void visit(program &node) override {
@@ -266,13 +286,19 @@ namespace minijava
 				}
 			}
 
+
+
 		private:
 
 			/** @brief output stream */
 			std::ostream& _output;
 
-			//std::size_t indentation_level;
-			// ...
+			std::size_t _indentation_level;
+
+			std::string _indention() {
+				return std::string(_indentation_level, '\t');
+			}
+
 		};
 	}
 }
