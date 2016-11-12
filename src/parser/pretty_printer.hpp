@@ -28,8 +28,10 @@ namespace minijava
 					: _output{output}, _indentation_level{0} {}
 
 			void visit(type &node) override {
-				// TODO
-				visitor::visit(node);
+				_output << _type_name(&node.type_name());
+
+				for (size_t i = 0; i < node.rank(); i++)
+					_output << "[]";
 			}
 
 			void visit(var_decl &node) override {
@@ -107,13 +109,12 @@ namespace minijava
 			}
 
 			void visit(array_instantiation &node) override {
-				_output << "new ";
-				node.type().accept(*this);
+				_output << "new " << _type_name(&node.type().type_name());
 				_output << "[";
 				node.extent().accept(*this);
 				_output << "]";
-				//for (size_t rank = 0; rank < node.)
-				// TODO: Print Type correctly
+				for (size_t i = 1; i < node.type().rank(); i++)
+					_output << "[]";
 			}
 
 			void visit(array_access &node) override {
@@ -256,7 +257,12 @@ namespace minijava
 				}
 				_output << ") {\n";
 				_indentation_level++;
-				node.body().accept(*this);
+
+				// don't use accept, of nody.body(), because of implizit added curly braces
+				for (size_t i = 0; i < node.body().body().size(); i++) {
+					node.body().body()[i]->accept(*this);
+				}
+
 				_indentation_level--;
 				_output << _indention() << "}\n";
 			}
@@ -299,6 +305,23 @@ namespace minijava
 				return std::string(_indentation_level, '\t');
 			}
 
+			std::string _type_name(ast::type_name *type) {
+				if (auto p = boost::get<ast::primitive_type>(type)) {
+					switch (*p) {
+						case ast::primitive_type::type_int:
+							return "int";
+						case ast::primitive_type::type_boolean:
+							return "bool";
+						case ast::primitive_type::type_void:
+							return "void";
+					}
+				} else if (auto p = boost::get<symbol>(type)) {
+					return std::string(p->c_str());
+				}
+
+				assert(false);
+				return nullptr;
+			}
 		};
 	}
 }
