@@ -3,6 +3,9 @@ set(MICRO_BENCHMARKS
 	keyword
 	lexer
 	parser
+	tts-combine
+	tts-lookup
+	tts-modify
 )
 
 foreach(bench ${MICRO_BENCHMARKS})
