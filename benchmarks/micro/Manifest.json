@@ -40,6 +40,11 @@
     "lexer" : {
 	"description" : "raw lexer performance",
 	"command" : ["lexer", "--size=3000000"]
+    },
+
+    "parser" : {
+	"description" : "raw parser performance",
+	"command" : ["parser", "--recursion-depth=70"]
     }
 
 }
