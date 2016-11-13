@@ -26,7 +26,7 @@ namespace minijava
 			 *
 			 */
 			pretty_printer(std::ostream& output)
-					: _output{output}, _indentation_level{0} {}
+					: _output{output} {}
 
 			void visit(type &node) override;
 
@@ -84,17 +84,48 @@ namespace minijava
 			std::ostream& _output;
 
 			/** @brief current indentation level */
-			std::size_t _indentation_level;
+			std::size_t _indentation_level {0};
+
+			/** @brief whether we're currently starting the body of a method */
+			bool _start_method {false};
+
+			/** @brief whether we're currently starting the body of an if */
+			bool _start_if {false};
+
+			/** @brief whether we're currently starting the body of an else */
+			bool _start_else {false};
+
+			/** @brief whether we're currently starting the body of a loop */
+			bool _start_loop {false};
+
+			/** @brief helper that starts a regular block statement */
+			void _start_block_statement();
 
 			/**
 			 * @brief
-			 *     Returns an indentation string matching the current level.
+			 *     Convenience function for printing a line with the current
+			 *     indentation level.
 			 *
-			 * @return
-			 *     whitespace characters for indentation
+			 * This function does not append a newline character.
+			 *
+			 * @param line
+			 *     content of the line
 			 *
 			 */
-			std::string _indentation();
+			void _print(const std::string& line);
+
+			/**
+			 * @brief
+			 *     Convenience function for printing a line with the current
+			 *     indentation level.
+			 *
+			 * This function appends a newline character to the end of the line.
+			 *
+			 * @param line
+			 *     content of the line
+			 *
+			 */
+			void _println(const std::string& line);
 
 			/**
 			 * @brief

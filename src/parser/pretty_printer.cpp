@@ -4,7 +4,9 @@ namespace minijava
 {
 	namespace ast
 	{
-		void pretty_printer::visit(type &node)
+		using namespace std::string_literals;
+
+		void pretty_printer::visit(type& node)
 		{
 			_output << _type_name(node.name());
 
@@ -12,21 +14,21 @@ namespace minijava
 				_output << "[]";
 		}
 
-		void pretty_printer::visit(var_decl &node)
+		void pretty_printer::visit(var_decl& node)
 		{
 			_output << "public ";
 			node.var_type().accept(*this);
 			_output << node.name();
 		}
 
-		void pretty_printer::visit(assignment_expression &node)
+		void pretty_printer::visit(assignment_expression& node)
 		{
 			node.lhs().accept(*this);
 			_output << " = ";
 			node.rhs().accept(*this);
 		}
 
-		void pretty_printer::visit(binary_expression &node)
+		void pretty_printer::visit(binary_expression& node)
 		{
 			node.lhs().accept(*this);
 			switch (node.type()) {
@@ -73,7 +75,7 @@ namespace minijava
 			node.rhs().accept(*this);
 		}
 
-		void pretty_printer::visit(unary_expression &node)
+		void pretty_printer::visit(unary_expression& node)
 		{
 			switch (node.type()) {
 				case ast::unary_operation_type::minus:
@@ -86,12 +88,12 @@ namespace minijava
 			node.target().accept(*this);
 		}
 
-		void pretty_printer::visit(object_instantiation &node)
+		void pretty_printer::visit(object_instantiation& node)
 		{
 			_output << "new " << node.class_name() << "()";
 		}
 
-		void pretty_printer::visit(array_instantiation &node)
+		void pretty_printer::visit(array_instantiation& node)
 		{
 			_output << "new " << _type_name(node.array_type().name());
 			_output << "[";
@@ -101,7 +103,7 @@ namespace minijava
 				_output << "[]";
 		}
 
-		void pretty_printer::visit(array_access &node)
+		void pretty_printer::visit(array_access& node)
 		{
 			node.target().accept(*this);
 			_output << "[";
@@ -109,7 +111,7 @@ namespace minijava
 			_output << "]";
 		}
 
-		void pretty_printer::visit(variable_access &node)
+		void pretty_printer::visit(variable_access& node)
 		{
 			if (node.target() != nullptr) {
 				node.target()->accept(*this);
@@ -118,7 +120,7 @@ namespace minijava
 			_output << node.name();
 		}
 
-		void pretty_printer::visit(method_invocation &node)
+		void pretty_printer::visit(method_invocation& node)
 		{
 			if (node.target() != nullptr) {
 				node.target()->accept(*this);
@@ -134,29 +136,30 @@ namespace minijava
 			_output << ")";
 		}
 
-		void pretty_printer::visit(this_ref &node)
+		void pretty_printer::visit(this_ref& node)
 		{
 			node.accept(*this);
 		}
 
-		void pretty_printer::visit(boolean_constant &node)
+		void pretty_printer::visit(boolean_constant& node)
 		{
 			_output << (node.value() ? "true" : "false");
 		}
 
-		void pretty_printer::visit(integer_constant &node)
+		void pretty_printer::visit(integer_constant& node)
 		{
 			_output << node.literal();
 		}
 
-		void pretty_printer::visit(null_constant &node)
+		void pretty_printer::visit(null_constant&)
 		{
-			(void)node;
 			_output << "null";
 		}
 
-		void pretty_printer::visit(local_variable_statement &node)
+		void pretty_printer::visit(local_variable_statement& node)
 		{
+			_start_block_statement();
+
 			node.declaration().accept(*this);
 			if (node.initial_value() != nullptr) {
 				_output << " = ";
@@ -164,89 +167,139 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(expression_statement &node)
+		void pretty_printer::visit(expression_statement& node)
 		{
-			_output << _indentation();
+			_start_block_statement();
+
+			_print("");
 			node.inner_expression().accept(*this);
 			_output << ";\n";
 		}
 
-		void pretty_printer::visit(block &node)
+		void pretty_printer::visit(block& node)
 		{
-			_output << _indentation() << "{\n";
+			bool omit_newline = _start_if || _start_else;
 
-			_indentation_level++;
-			for (size_t i = 0; i < node.body().size(); i++) {
-				node.body()[i]->accept(*this);
+			if (omit_newline || _start_loop || _start_method) {
+				_output << " {\n";
+				_start_if = _start_else = _start_loop = _start_method = false;
+			} else {
+				_println("{");
 			}
-			_indentation_level--;
+			_indentation_level++;
 
-			_output << _indentation() << "}\n";
+			for (auto& block_stmt : node.body()) {
+				block_stmt->accept(*this);
+			}
+
+			_indentation_level--;
+			if (omit_newline) {
+				_print("}");
+			} else {
+				_println("}");
+			}
 		}
 
-		void pretty_printer::visit(if_statement &node)
+		namespace /* anonymous */
 		{
-			_output << _indentation() << "if (";
-			node.condition().accept(*this);
-			_output << ") {\n";
+			bool is_block(const ast::node* node)
+			{
+				return dynamic_cast<const ast::block*>(node) != nullptr;
+			}
 
-			_indentation_level++;
-			node.then_statement().accept(*this);
-			_indentation_level--;
+			bool is_if_statement(const ast::node* node)
+			{
+				return dynamic_cast<const ast::if_statement*>(node) != nullptr;
+			}
+		}
 
-			if (node.else_statement() == nullptr) {
-				_output << _indentation() << "}\n";
+		void pretty_printer::visit(if_statement& node)
+		{
+			bool then_is_block = is_block(&node.then_statement());
+			bool else_is_block = is_block(node.else_statement());
+			bool else_is_chain = is_if_statement(node.else_statement());
+
+			if (_start_else) {
+				_output << " if (";
 			} else {
-				_output << _indentation() << "} else {\n";
+				_print("if (");
+			}
+			node.condition().accept(*this);
+			_output << ")";
 
+			if (!then_is_block) {
 				_indentation_level++;
-				node.else_statement();
+			}
+			_start_if = true;
+			node.then_statement().accept(*this);
+			if (!then_is_block) {
 				_indentation_level--;
+			}
 
-				_output << _indentation() << "}\n";
+			if (auto stmt = node.else_statement()) {
+				_output << " else";
+				if (!else_is_block && !else_is_chain) {
+					_indentation_level++;
+				}
+				stmt->accept(*this);
+				if (!else_is_block && !else_is_chain) {
+					_indentation_level--;
+				} else if (else_is_block) {
+					_output << '\n';
+				}
+			} else if (then_is_block) {
+				_output << '\n';
 			}
 		}
 
-		void pretty_printer::visit(while_statement &node)
+		void pretty_printer::visit(while_statement& node)
 		{
-			_output << _indentation() << "while (";
-			node.condition().accept(*this);
-			_output << ") {\n";
+			_start_block_statement();
 
+			_print("while (");
+			node.condition().accept(*this);
+			_output << ")\n";
+			_start_loop = true;
 			_indentation_level++;
 			node.body().accept(*this);
 			_indentation_level--;
-
-			_output << _indentation() << "}\n";
 		}
 
-		void pretty_printer::visit(return_statement &node)
+		void pretty_printer::visit(return_statement& node)
 		{
+			_start_block_statement();
+
 			if (node.value() == nullptr) {
-				_output << _indentation() << "return;";
+				_print("return;");
 			} else {
-				_output << _indentation() << "return ";
+				_print("return ");
 				node.value()->accept(*this);
-				_output << ";";
+				_output << ';';
+			}
+			_output << '\n';
+		}
+
+		void pretty_printer::visit(empty_statement&)
+		{
+			bool print = _start_if || _start_else || _start_loop;
+
+			_start_block_statement();
+
+			if (print) {
+				_println(";");
 			}
 		}
 
-		void pretty_printer::visit(empty_statement &node)
+		void pretty_printer::visit(main_method& node)
 		{
-			(void)node;
-			_output << _indentation() << ";\n";
-		}
-
-		void pretty_printer::visit(main_method &node)
-		{
-			_output << "public static void " << node.name() << "(String[] args) {\n";
+			_print("public static void "s + node.name().c_str() + "(String[] args)");
+			_start_method = true;
 			node.body().accept(*this);
-			_output << "}\n";
 		}
 
-		void pretty_printer::visit(method &node)
+		void pretty_printer::visit(method& node)
 		{
-			_output <<_indentation() << "public ";
+			_print("public ");
 			node.return_type().accept(*this);
 			_output << " " << node.name() << "(";
 			for (size_t i = 0; i < node.parameters().size(); i++) {
@@ -255,51 +308,63 @@ namespace minijava
 				}
 				node.parameters()[i]->accept(*this);
 			}
-			_output << ") {\n";
+			_output << ")";
+			_start_method = true;
+			node.body().accept(*this);
+		}
+
+		void pretty_printer::visit(class_declaration& node)
+		{
+			_println("class "s + node.name().c_str() + " {");
 			_indentation_level++;
 
-			// don't use accept() on nody.body(), because of implicitly
-			// added curly braces
-			for (size_t i = 0; i < node.body().body().size(); i++) {
-				node.body().body()[i]->accept(*this);
+			for (auto& field : node.fields()) {
+				field->accept(*this);
+			}
+
+			for (auto& main_method : node.main_methods()) {
+				main_method->accept(*this);
+			}
+
+			for (auto& method : node.methods()) {
+				method->accept(*this);
 			}
 
 			_indentation_level--;
-			_output << _indentation() << "}\n";
+			_println("}");
 		}
 
-		void pretty_printer::visit(class_declaration &node)
+		void pretty_printer::visit(program& node)
 		{
-			_output << _indentation() << "class " << node.name() << " {\n";
-			_indentation_level++;
-			for (size_t i = 0; i < node.fields().size(); i++) {
-				node.fields()[i]->accept(*this);
+			for (auto& clazz : node.classes()) {
+				clazz->accept(*this);
 			}
-
-			for (size_t i = 0; i < node.main_methods().size(); i++) {
-				node.main_methods()[i]->accept(*this);
-			}
-
-			for (size_t i = 0; i < node.methods().size(); i++) {
-				node.methods()[i]->accept(*this);
-			}
-
-			_indentation_level--;
-			_output << _indentation() << "}\n";
 		}
 
-		void pretty_printer::visit(program &node)
+
+		// common code for most block statements to handle _start_if/else
+		void pretty_printer::_start_block_statement()
 		{
-			for (size_t i = 0; i < node.classes().size(); i++) {
-				node.classes()[i]->accept(*this);
+			if (_start_if || _start_else || _start_loop) {
+				_output << '\n';
+				_start_if = _start_else = _start_loop = false;
 			}
 		}
 
-		std::string pretty_printer::_indentation() {
-			return std::string(_indentation_level, '\t');
+
+		void pretty_printer::_print(const std::string& line)
+		{
+			_output << std::string(_indentation_level, '\t') << line;
 		}
 
-		std::string pretty_printer::_type_name(const ast::type_name& type) {
+		void pretty_printer::_println(const std::string& line)
+		{
+			_print(line);
+			_output << '\n';
+		}
+
+		std::string pretty_printer::_type_name(const ast::type_name& type)
+		{
 			if (auto p = boost::get<ast::primitive_type>(&type)) {
 				switch (*p) {
 					case ast::primitive_type::type_int:
