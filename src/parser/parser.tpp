@@ -725,9 +725,9 @@ namespace minijava
 				using ast::primitive_type;
 				switch(tok.type())
 				{
-				case token_type::kw_boolean:    return {primitive_type::type_boolean};
-				case token_type::kw_int:        return {primitive_type::type_int};
-				case token_type::kw_void:       return {primitive_type::type_void};
+				case token_type::kw_boolean: return primitive_type::type_boolean;
+				case token_type::kw_int:     return primitive_type::type_int;
+				case token_type::kw_void:    return primitive_type::type_void;
 				default:
 					MINIJAVA_NOT_REACHED();
 				}
