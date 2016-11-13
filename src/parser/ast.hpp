@@ -64,7 +64,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_node(node& node);
+			inline virtual void visit_node(node& node);
 
 			/**
 			 * @brief
@@ -73,7 +73,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_expression(expression& node);
+			inline virtual void visit_expression(expression& node);
 
 			/**
 			 * @brief
@@ -82,7 +82,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_constant(constant& node);
+			inline virtual void visit_constant(constant& node);
 
 			/**
 			 * @brief
@@ -91,7 +91,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_block_statement(block_statement& node);
+			inline virtual void visit_block_statement(block_statement& node);
 
 			/**
 			 * @brief
@@ -100,7 +100,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_statement(statement& node);
+			inline virtual void visit_statement(statement& node);
 
 		public:
 			/**
@@ -110,7 +110,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(type& node);
+			inline virtual void visit(type& node);
 
 			/**
 			 * @brief
@@ -119,7 +119,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(var_decl& node);
+			inline virtual void visit(var_decl& node);
 
 			/**
 			 * @brief
@@ -128,7 +128,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(assignment_expression& node);
+			inline virtual void visit(assignment_expression& node);
 
 			/**
 			 * @brief
@@ -137,7 +137,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(binary_expression& node);
+			inline virtual void visit(binary_expression& node);
 
 			/**
 			 * @brief
@@ -146,7 +146,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(unary_expression& node);
+			inline virtual void visit(unary_expression& node);
 
 			/**
 			 * @brief
@@ -155,7 +155,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(object_instantiation& node);
+			inline virtual void visit(object_instantiation& node);
 
 			/**
 			 * @brief
@@ -164,7 +164,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(array_instantiation& node);
+			inline virtual void visit(array_instantiation& node);
 
 			/**
 			 * @brief
@@ -173,7 +173,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(array_access& node);
+			inline virtual void visit(array_access& node);
 
 			/**
 			 * @brief
@@ -182,7 +182,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(variable_access& node);
+			inline virtual void visit(variable_access& node);
 
 			/**
 			 * @brief
@@ -191,7 +191,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(method_invocation& node);
+			inline virtual void visit(method_invocation& node);
 
 			/**
 			 * @brief
@@ -200,7 +200,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(this_ref& node);
+			inline virtual void visit(this_ref& node);
 
 			/**
 			 * @brief
@@ -209,7 +209,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(boolean_constant& node);
+			inline virtual void visit(boolean_constant& node);
 
 			/**
 			 * @brief
@@ -218,7 +218,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(integer_constant& node);
+			inline virtual void visit(integer_constant& node);
 
 			/**
 			 * @brief
@@ -227,7 +227,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(null_constant& node);
+			inline virtual void visit(null_constant& node);
 
 			/**
 			 * @brief
@@ -236,7 +236,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(local_variable_statement& node);
+			inline virtual void visit(local_variable_statement& node);
 
 			/**
 			 * @brief
@@ -245,7 +245,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(expression_statement& node);
+			inline virtual void visit(expression_statement& node);
 
 			/**
 			 * @brief
@@ -254,7 +254,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(block& node);
+			inline virtual void visit(block& node);
 
 			/**
 			 * @brief
@@ -263,7 +263,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(if_statement& node);
+			inline virtual void visit(if_statement& node);
 
 			/**
 			 * @brief
@@ -272,7 +272,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(while_statement& node);
+			inline virtual void visit(while_statement& node);
 
 			/**
 			 * @brief
@@ -281,7 +281,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(return_statement& node);
+			inline virtual void visit(return_statement& node);
 
 			/**
 			 * @brief
@@ -290,7 +290,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(empty_statement& node);
+			inline virtual void visit(empty_statement& node);
 
 			/**
 			 * @brief
@@ -299,7 +299,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(main_method& node);
+			inline virtual void visit(main_method& node);
 
 			/**
 			 * @brief
@@ -308,7 +308,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(method& node);
+			inline virtual void visit(method& node);
 
 			/**
 			 * @brief
@@ -317,7 +317,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(class_declaration& node);
+			inline virtual void visit(class_declaration& node);
 
 			/**
 			 * @brief
@@ -326,7 +326,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(program& node);
+			inline virtual void visit(program& node);
 
 		};
 
