@@ -452,7 +452,7 @@ namespace minijava
 					token_type op_type;
 					std::tie(min_prec, lhs, op_type) = std::move(prec_stack.top());
 					prec_stack.pop();
-					if(op_type == token_type::assign)
+					if (op_type == token_type::assign)
 						rhs = make<ast::assignment_expression>(std::move(lhs), std::move(rhs));
 					else
 						rhs = make<ast::binary_expression>(to_binary_operation(op_type), std::move(lhs), std::move(rhs));
@@ -461,11 +461,10 @@ namespace minijava
 				return rhs;
 			}
 
-			ast::unary_operation_type to_unary_operation(const token_type& type)
+			static ast::unary_operation_type to_unary_operation(const token_type& type)
 			{
 				using ast::unary_operation_type;
-				switch(type)
-				{
+				switch (type) {
 					case token_type::logical_not: return unary_operation_type::logical_not;
 					case token_type::minus:       return unary_operation_type::minus;
 				default:
@@ -473,11 +472,10 @@ namespace minijava
 				}
 			}
 
-			ast::binary_operation_type to_binary_operation(const token_type& type)
+			static ast::binary_operation_type to_binary_operation(const token_type& type)
 			{
 				using ast::binary_operation_type;
-				switch(type)
-				{
+				switch (type) {
 					case token_type::logical_or:    return binary_operation_type::logical_or;
 					case token_type::logical_and:   return binary_operation_type::logical_and;
 					case token_type::equal:         return binary_operation_type::equal;
@@ -618,7 +616,7 @@ namespace minijava
 					{
 						std::size_t rank = 1;
 						advance();
-						auto extend_expr = parse_expression();
+						auto extent_expr = parse_expression();
 						consume(token_type::right_bracket);
 						while (current_is(token_type::left_bracket)) {
 							const auto left_bracket = current();
@@ -634,7 +632,7 @@ namespace minijava
 							advance();
 						}
 						auto type = make_type(type_tok, rank);
-						return make<ast::array_instantiation>(std::move(type), std::move(extend_expr));
+						return make<ast::array_instantiation>(std::move(type), std::move(extent_expr));
 					}
 				default:
 					MINIJAVA_NOT_REACHED();
@@ -711,21 +709,20 @@ namespace minijava
 				const auto candidates = std::initializer_list<token_type>{tts...};
 				return std::any_of(
 					std::begin(candidates), std::end(candidates),
-					[ct = current_type()](const auto tt){ return ct == tt; }
+					[ct = current_type()](const auto tt) { return ct == tt; }
 				);
 			}
 
 			template<typename Type, typename... ParamsT>
-			ast_ptr<Type> make(ParamsT&&... params)
+			static ast_ptr<Type> make(ParamsT&&... params)
 			{
 				return std::make_unique<Type>(std::forward<ParamsT>(params)...);
 			}
 
-			ast::primitive_type to_primitive(const token& tok)
+			static ast::primitive_type to_primitive(const token& tok)
 			{
 				using ast::primitive_type;
-				switch(tok.type())
-				{
+				switch (tok.type()) {
 				case token_type::kw_boolean: return primitive_type::type_boolean;
 				case token_type::kw_int:     return primitive_type::type_int;
 				case token_type::kw_void:    return primitive_type::type_void;
@@ -734,9 +731,9 @@ namespace minijava
 				}
 			}
 
-			ast_ptr<ast::type> make_type(const token& tok, const std::size_t rank)
+			static ast_ptr<ast::type> make_type(const token& tok, const std::size_t rank)
 			{
-				if(tok.type() == token_type::identifier)
+				if (tok.type() == token_type::identifier)
 					return make<ast::type>(tok.lexval(), rank);
 				else
 					return make<ast::type>(to_primitive(tok), rank);
