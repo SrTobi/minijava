@@ -1,18 +1,16 @@
 #include "cli.hpp"
 
 #include <algorithm>
-#include <climits>
 #include <exception>
 #include <fstream>
 #include <ios>
-#include <iterator>
-#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "exceptions.hpp"
 
+#include "testaux/random.hpp"
 #include "testaux/temporary_file.hpp"
 #include "testaux/testaux.hpp"
 
@@ -21,40 +19,6 @@
 #define BOOST_TEST_MODULE  cli
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
-
-
-namespace /* anonymous */
-{
-
-	// Tests whether the file `filename` has the `expected` content.
-	bool file_has_content(const std::string& filename,
-	                      const std::string& expected)
-	{
-		std::ifstream istr{filename, std::ios_base::binary | std::ios_base::in};
-		if (!istr) {
-			throw std::ios_base::failure{"Cannot open file: " + filename};
-		}
-		istr.exceptions(std::ios_base::badbit);
-		const auto first_1 = std::istreambuf_iterator<char>{istr};
-		const auto last_1 = std::istreambuf_iterator<char>{};
-		const auto first_2 = std::begin(expected);
-		const auto last_2 = std::end(expected);
-		return std::equal(first_1, last_1, first_2, last_2);
-	}
-
-	// Creates a string with `n` uniformly distributed random bytes.  The seed
-	// is deterministic so the test behaves the same every time.
-	std::string make_random_string(const std::size_t n)
-	{
-		auto rndeng = std::default_random_engine{};
-		auto rnddst = std::uniform_int_distribution<char>{CHAR_MIN, CHAR_MAX};
-		const auto lambda = [&rndeng, &rnddst](){ return rnddst(rndeng); };
-		auto s = std::string(n, ' ');
-		std::generate(std::begin(s), std::end(s), lambda);
-		return s;
-	}
-
-}  // namespace /* anonymous */
 
 
 // List of all options that select a specific compilier action.
@@ -189,7 +153,7 @@ static const std::string echo_data[] = {
 	"The quick\nbrown fox jumps\nover the sleazy\ndog.\n",
 	std::string(1000, '\n'),
 	std::string(1000000, 'a'),
-	make_random_string(1000000),
+	testaux::make_random_string(1000000),
 };
 
 BOOST_DATA_TEST_CASE(echo_implicit_stdin_to_implicit_stdout, echo_data)
@@ -231,7 +195,7 @@ BOOST_DATA_TEST_CASE(echo_implicit_stdin_to_file, echo_data)
 	);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
-	BOOST_REQUIRE(file_has_content(tempfile.filename(), sample));
+	BOOST_REQUIRE(testaux::file_has_content(tempfile.filename(), sample));
 }
 
 
@@ -274,7 +238,7 @@ BOOST_DATA_TEST_CASE(echo_explicit_stdin_to_file, echo_data)
 	);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
-	BOOST_REQUIRE(file_has_content(tempfile.filename(), sample));
+	BOOST_REQUIRE(testaux::file_has_content(tempfile.filename(), sample));
 }
 
 
@@ -324,7 +288,7 @@ BOOST_DATA_TEST_CASE(echo_file_to_file, echo_data)
 	);
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
-	BOOST_REQUIRE(file_has_content(tempout.filename(), sample));
+	BOOST_REQUIRE(testaux::file_has_content(tempout.filename(), sample));
 }
 
 

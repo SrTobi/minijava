@@ -2,12 +2,14 @@
  * @file temporary_file.hpp
  *
  * @brief
- *     Ephermal file system entries.
+ *     Ephermal file system entries and related utility functions.
  *
  */
 
 #pragma once
 
+#include <cstdio>
+#include <memory>
 #include <string>
 
 
@@ -90,5 +92,45 @@ namespace testaux
 		}
 
 	};  // class temporary_file
+
+
+	/**
+	 * @brief
+	 *     Tests whether the file `filename` has the `expected` content.
+	 *
+	 * @param filename
+	 *     file-name of the file to read
+	 *
+	 * @param expected
+	 *     data to compare the file's data with
+	 *
+	 * @returns
+	 *     `true` if and only if the file can be read and has the expected content
+	 *
+	 * @throws std::ios_base::failure
+	 *     if the file cannot be read
+	 *
+	 */
+	bool file_has_content(const std::string& filename, const std::string& expected);
+
+	/**
+	 * @brief
+	 *     Opens a file and `return`s an RAII wrapper of the `FILE` pointer.
+	 *
+	 * @param filename
+	 *     file-name of the file to open
+	 *
+	 * @param mode
+	 *     mode in which to open the file (`[arw]b?`)
+	 *
+	 * @returns
+	 *     `std::unique_ptr` holding the open file handle
+	 *
+	 * @throws std::system_error
+	 *     if the file cannot be opened
+	 *
+	 */
+	std::unique_ptr<std::FILE, decltype(&std::fclose)>
+	open_file(const std::string& filename, const std::string& mode);
 
 }  // namespace testaux

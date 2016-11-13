@@ -30,6 +30,9 @@ set(COMPONENTS
 	cli
 	exceptions
 	global
+	io/file_data
+	io/file_output
+	io/misc
 	lexer/character
 	lexer/keyword
 	lexer/lexer
