@@ -216,9 +216,9 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(this_ref& node)
+		void pretty_printer::visit(this_ref& /* node */)
 		{
-			node.accept(*this);
+			_output << "this";
 		}
 
 		void pretty_printer::visit(boolean_constant& node)
