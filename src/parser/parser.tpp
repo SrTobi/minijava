@@ -151,7 +151,7 @@ namespace minijava
 				if (current_is(token_type::kw_static)) {
 					auto main_method = parse_main_method();
 					decl.add_main_method(std::move(main_method));
-				}else{
+				} else {
 					// parse field or method
 					auto type = parse_type();
 					auto id_tok = current();
@@ -167,7 +167,7 @@ namespace minijava
 						auto body = parse_block();
 						auto method = make<ast::method>(id_tok.lexval(), std::move(type), std::move(params), std::move(body));
 						decl.add_method(std::move(method));
-					}else{
+					} else {
 						// field
 						auto field = make<ast::var_decl>(std::move(type), id_tok.lexval());
 						decl.add_field(std::move(field));
@@ -516,7 +516,7 @@ namespace minijava
 						auto args = parse_arguments();
 						consume(token_type::right_paren);
 						return make<ast::method_invocation>(std::move(inner), id_tok.lexval(), std::move(args));
-					}else{
+					} else {
 						return make<ast::variable_access>(std::move(inner), id_tok.lexval());
 					}
 				}
@@ -565,7 +565,7 @@ namespace minijava
 							auto args = parse_arguments();
 							consume(token_type::right_paren);
 							return make<ast::method_invocation>(nullptr, id_tok.lexval(), std::move(args));
-						}else{
+						} else {
 							return make<ast::variable_access>(nullptr, id_tok.lexval());
 						}
 					}
