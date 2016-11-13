@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
 	auto test_conditional_block = std::make_unique<ast::if_statement>(
 		std::move(test_conditional),
 		std::move(test_then_statement),
-	    nullptr
+	    std::make_unique<ast::empty_statement>()
 	);
 
 	pp.visit(*test_conditional_block);
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
 
 	pp.visit(*test_conditional_block);
 	BOOST_REQUIRE_EQUAL(
-			"if (true)\n\t;\nelse if (false) {\n\ti = 0;\n} else {\n}\n"s,
+			"if (true)\n\t;\nelse if (false) {\n\ti = 0;\n} else { }\n"s,
 			oss.str()
 	);
 }
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 
 	pp.visit(*test_block);
 	BOOST_REQUIRE_EQUAL(
-			"{\n\tint i = ((3 * 5) + 10);\n\tf(((new bar[2][])[1])[i]);\n}\n"s,
+			"{\n\tint i = (3 * 5) + 10;\n\tf(((new bar[2][])[1])[i]);\n}\n"s,
 	        oss.str()
 	);
 }

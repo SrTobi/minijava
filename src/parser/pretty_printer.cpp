@@ -1,5 +1,7 @@
 #include "parser/pretty_printer.hpp"
 
+#include <map>
+
 namespace minijava
 {
 	namespace ast
@@ -16,20 +18,40 @@ namespace minijava
 
 		void pretty_printer::visit(var_decl& node)
 		{
-			_output << "public ";
+			if (_in_fields) {
+				_print("public ");
+			} else if (!_in_parameters) {
+				_print("");
+			}
 			node.var_type().accept(*this);
-			_output << node.name();
+			_output << " " << node.name();
+			if (_in_fields) {
+				_output << ";\n";
+			}
 		}
 
 		void pretty_printer::visit(assignment_expression& node)
 		{
+			bool parens = _print_expression_parens;
+			_print_expression_parens = true; // for nested expressions
+			if (parens) {
+				_output << "(";
+			}
 			node.lhs().accept(*this);
 			_output << " = ";
 			node.rhs().accept(*this);
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(binary_expression& node)
 		{
+			bool parens = _print_expression_parens;
+			_print_expression_parens = true; // for nested expressions
+			if (parens) {
+				_output << "(";
+			}
 			node.lhs().accept(*this);
 			switch (node.type()) {
 				case ast::binary_operation_type::add:
@@ -73,10 +95,18 @@ namespace minijava
 					break;
 			}
 			node.rhs().accept(*this);
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(unary_expression& node)
 		{
+			bool parens = _print_expression_parens;
+			_print_expression_parens = true; // for nested expressions
+			if (parens) {
+				_output << "(";
+			}
 			switch (node.type()) {
 				case ast::unary_operation_type::minus:
 					_output << "-";
@@ -86,42 +116,85 @@ namespace minijava
 					break;
 			}
 			node.target().accept(*this);
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(object_instantiation& node)
 		{
+			bool parens = _print_expression_parens;
+			if (parens) {
+				_output << "(";
+			}
 			_output << "new " << node.class_name() << "()";
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(array_instantiation& node)
 		{
+			bool parens = _print_expression_parens;
+			if (parens) {
+				_output << "(";
+			}
 			_output << "new " << _type_name(node.array_type().name());
 			_output << "[";
+			_print_expression_parens = false;
 			node.extent().accept(*this);
+			_print_expression_parens = true;
 			_output << "]";
-			for (size_t i = 1; i < node.array_type().rank(); i++)
+			for (size_t i = 1; i < node.array_type().rank(); i++) {
 				_output << "[]";
+			}
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(array_access& node)
 		{
+			bool parens = _print_expression_parens;
+			_print_expression_parens = true; // for nested expressions
+			if (parens) {
+				_output << "(";
+			}
 			node.target().accept(*this);
 			_output << "[";
+			_print_expression_parens = false;
 			node.index().accept(*this);
+			_print_expression_parens = true;
 			_output << "]";
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(variable_access& node)
 		{
+			bool parens = _print_expression_parens && node.target() != nullptr;
+			_print_expression_parens = true; // for nested expressions
+			if (parens) {
+				_output << "(";
+			}
 			if (node.target() != nullptr) {
 				node.target()->accept(*this);
 				_output << ".";
 			}
 			_output << node.name();
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(method_invocation& node)
 		{
+			bool parens = _print_expression_parens;
+			_print_expression_parens = true; // for nested expressions
+			if (parens) {
+				_output << "(";
+			}
 			if (node.target() != nullptr) {
 				node.target()->accept(*this);
 				_output << ".";
@@ -131,9 +204,14 @@ namespace minijava
 				if (i > 0) {
 					_output << ", ";
 				}
+				_print_expression_parens = false;
 				node.arguments()[i]->accept(*this);
+				_print_expression_parens = true;
 			}
 			_output << ")";
+			if (parens) {
+				_output << ")";
+			}
 		}
 
 		void pretty_printer::visit(this_ref& node)
@@ -163,8 +241,11 @@ namespace minijava
 			node.declaration().accept(*this);
 			if (node.initial_value() != nullptr) {
 				_output << " = ";
+				_print_expression_parens = false;
 				node.initial_value()->accept(*this);
+				_print_expression_parens = true;
 			}
+			_output << ";\n";
 		}
 
 		void pretty_printer::visit(expression_statement& node)
@@ -172,28 +253,36 @@ namespace minijava
 			_start_block_statement();
 
 			_print("");
+			_print_expression_parens = false;
 			node.inner_expression().accept(*this);
+			_print_expression_parens = true;
 			_output << ";\n";
 		}
 
 		void pretty_printer::visit(block& node)
 		{
-			bool omit_newline = _start_if || _start_else;
+			bool is_conditional = _start_if || _start_else;
+			bool is_empty = node.body().empty();
 
-			if (omit_newline || _start_loop || _start_method) {
-				_output << " {\n";
+			if (is_conditional || _start_loop || _start_method) {
+				_output << " {";
 				_start_if = _start_else = _start_loop = _start_method = false;
 			} else {
-				_println("{");
+				_print("{");
 			}
-			_indentation_level++;
+			if (is_empty) {
+				_output << " }\n";
+				return;
+			}
+			_output << '\n';
 
+			_indentation_level++;
 			for (auto& block_stmt : node.body()) {
 				block_stmt->accept(*this);
 			}
-
 			_indentation_level--;
-			if (omit_newline) {
+
+			if (is_conditional) {
 				_print("}");
 			} else {
 				_println("}");
@@ -202,21 +291,29 @@ namespace minijava
 
 		namespace /* anonymous */
 		{
-			bool is_block(const ast::node* node)
+			bool is_empty_statement(const ast::node* node)
 			{
-				return dynamic_cast<const ast::block*>(node) != nullptr;
+				return dynamic_cast<const ast::empty_statement*>(node) != nullptr;
 			}
 
 			bool is_if_statement(const ast::node* node)
 			{
 				return dynamic_cast<const ast::if_statement*>(node) != nullptr;
 			}
+
+			bool is_nonempty_block(const ast::node *node)
+			{
+				if (const auto p = dynamic_cast<const ast::block*>(node)) {
+					return !p->body().empty();
+				}
+				return false;
+			}
 		}
 
 		void pretty_printer::visit(if_statement& node)
 		{
-			bool then_is_block = is_block(&node.then_statement());
-			bool else_is_block = is_block(node.else_statement());
+			bool then_is_block = is_nonempty_block(&node.then_statement());
+			bool else_is_block = is_nonempty_block(node.else_statement());
 			bool else_is_chain = is_if_statement(node.else_statement());
 
 			if (_start_else) {
@@ -224,7 +321,9 @@ namespace minijava
 			} else {
 				_print("if (");
 			}
+			_print_expression_parens = false;
 			node.condition().accept(*this);
+			_print_expression_parens = true;
 			_output << ")";
 
 			if (!then_is_block) {
@@ -236,7 +335,8 @@ namespace minijava
 				_indentation_level--;
 			}
 
-			if (auto stmt = node.else_statement()) {
+			auto else_stmt = node.else_statement();
+			if (else_stmt && !is_empty_statement(else_stmt)) {
 				if (then_is_block) {
 					_output << " else";
 				} else {
@@ -246,7 +346,7 @@ namespace minijava
 					_indentation_level++;
 				}
 				_start_else = true;
-				stmt->accept(*this);
+				else_stmt->accept(*this);
 				if (!else_is_block && !else_is_chain) {
 					_indentation_level--;
 				} else if (else_is_block) {
@@ -262,7 +362,9 @@ namespace minijava
 			_start_block_statement();
 
 			_print("while (");
+			_print_expression_parens = false;
 			node.condition().accept(*this);
+			_print_expression_parens = true;
 			_output << ")\n";
 			_start_loop = true;
 			_indentation_level++;
@@ -278,7 +380,9 @@ namespace minijava
 				_print("return;");
 			} else {
 				_print("return ");
+				_print_expression_parens = false;
 				node.value()->accept(*this);
+				_print_expression_parens = true;
 				_output << ';';
 			}
 			_output << '\n';
@@ -307,12 +411,14 @@ namespace minijava
 			_print("public ");
 			node.return_type().accept(*this);
 			_output << " " << node.name() << "(";
+			_in_parameters = true;
 			for (size_t i = 0; i < node.parameters().size(); i++) {
 				if (i > 0) {
 					_output << ", ";
 				}
 				node.parameters()[i]->accept(*this);
 			}
+			_in_parameters = false;
 			_output << ")";
 			_start_method = true;
 			node.body().accept(*this);
@@ -323,16 +429,42 @@ namespace minijava
 			_println("class "s + node.name().c_str() + " {");
 			_indentation_level++;
 
-			for (auto& field : node.fields()) {
-				field->accept(*this);
-			}
-
-			for (auto& main_method : node.main_methods()) {
-				main_method->accept(*this);
-			}
-
+			// sort methods together by inserting into sorted map
+			auto sorted_method_map = std::map<std::string,
+					std::pair<bool, void*>>{};
 			for (auto& method : node.methods()) {
-				method->accept(*this);
+				sorted_method_map.insert(
+						std::make_pair(method->name().c_str(),
+						               std::make_pair(false, method.get()))
+				);
+			}
+			for (auto& method : node.main_methods()) {
+				sorted_method_map.insert(
+						std::make_pair(method->name().c_str(),
+						               std::make_pair(true, method.get()))
+				);
+			}
+			for (auto& el : sorted_method_map) {
+				bool is_main_method = el.second.first;
+				void* p = el.second.second;
+
+				if (is_main_method) {
+					(reinterpret_cast<main_method*>(p))->accept(*this);
+				} else {
+					(reinterpret_cast<method*>(p))->accept(*this);
+				}
+			}
+
+			_in_fields = true;
+			// sort fields by inserting into sorted map
+			auto sorted_field_map = std::map<std::string, var_decl*>{};
+			for (auto& field : node.fields()) {
+				sorted_field_map.insert(
+						std::make_pair(field->name().c_str(), field.get())
+				);
+			}
+			for (auto& el : sorted_field_map) {
+				el.second->accept(*this);
 			}
 
 			_indentation_level--;
@@ -347,7 +479,7 @@ namespace minijava
 		}
 
 
-		// common code for most block statements to handle _start_if/else
+		// common code for most block statements to handle _start_if/else/loop
 		void pretty_printer::_start_block_statement()
 		{
 			if (_start_if || _start_else || _start_loop) {
@@ -375,7 +507,7 @@ namespace minijava
 					case ast::primitive_type::type_int:
 						return "int";
 					case ast::primitive_type::type_boolean:
-						return "bool";
+						return "boolean";
 					case ast::primitive_type::type_void:
 						return "void";
 				}

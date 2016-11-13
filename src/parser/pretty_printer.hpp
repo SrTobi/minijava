@@ -101,6 +101,15 @@ namespace minijava
 			/** @brief helper that starts a regular block statement */
 			void _start_block_statement();
 
+			/** @brief whether we're currently printing the fields of a class */
+			bool _in_fields {false};
+
+			/** @brief whether we're currently printing a parameter list */
+			bool _in_parameters {false};
+
+			/** @brief whether expression should currently be parenthesized */
+			bool _print_expression_parens {true};
+
 			/**
 			 * @brief
 			 *     Convenience function for printing a line with the current
