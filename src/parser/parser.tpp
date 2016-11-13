@@ -464,8 +464,8 @@ namespace minijava
 				using ast::unary_operation_type;
 				switch(type)
 				{
-					case token_type::logical_not: return unary_operation_type::type_not;
-					case token_type::minus:       return unary_operation_type::type_negate;
+					case token_type::logical_not: return unary_operation_type::logical_not;
+					case token_type::minus:       return unary_operation_type::minus;
 				default:
 					MINIJAVA_NOT_REACHED();
 				}
@@ -476,19 +476,19 @@ namespace minijava
 				using ast::binary_operation_type;
 				switch(type)
 				{
-					case token_type::logical_or:        return binary_operation_type::type_logical_or;
-					case token_type::logical_and:       return binary_operation_type::type_logical_and;
-					case token_type::equal:             return binary_operation_type::type_equality;
-					case token_type::not_equal:         return binary_operation_type::type_unequality;
-					case token_type::less_than:         return binary_operation_type::type_lower;
-					case token_type::less_equal:        return binary_operation_type::type_lower_equal;
-					case token_type::greater_than:      return binary_operation_type::type_greater;
-					case token_type::greater_equal:     return binary_operation_type::type_greater_equal;
-					case token_type::plus:              return binary_operation_type::type_add;
-					case token_type::minus:             return binary_operation_type::type_subtract;
-					case token_type::multiply:          return binary_operation_type::type_multiplay;
-					case token_type::divides:           return binary_operation_type::type_divide;
-					case token_type::modulo:            return binary_operation_type::type_modulo;
+					case token_type::logical_or:        return binary_operation_type::logical_or;
+					case token_type::logical_and:       return binary_operation_type::logical_and;
+					case token_type::equal:             return binary_operation_type::equal;
+					case token_type::not_equal:         return binary_operation_type::not_equal;
+					case token_type::less_than:         return binary_operation_type::lower;
+					case token_type::less_equal:        return binary_operation_type::lower_equal;
+					case token_type::greater_than:      return binary_operation_type::greater;
+					case token_type::greater_equal:     return binary_operation_type::greater_equal;
+					case token_type::plus:              return binary_operation_type::add;
+					case token_type::minus:             return binary_operation_type::subtract;
+					case token_type::multiply:          return binary_operation_type::multiply;
+					case token_type::divides:           return binary_operation_type::divide;
+					case token_type::modulo:            return binary_operation_type::modulo;
 				default:
 					MINIJAVA_NOT_REACHED();
 				}

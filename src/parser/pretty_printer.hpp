@@ -49,44 +49,44 @@ namespace minijava
 			void visit(binary_expression &node) override {
 				node.lhs().accept(*this);
 				switch (node.type()) {
-					case ast::binary_operation_type::type_add:
+					case ast::binary_operation_type::add:
 						_output << " + ";
 						break;
-					case ast::binary_operation_type::type_subtract:
+					case ast::binary_operation_type::subtract:
 						_output << " - ";
 						break;
-					case ast::binary_operation_type::type_multiplay:
+					case ast::binary_operation_type::multiply:
 						_output << " * ";
 						break;
-					case ast::binary_operation_type::type_divide:
+					case ast::binary_operation_type::divide:
 						_output << " / ";
 						break;
-					case ast::binary_operation_type::type_modulo:
+					case ast::binary_operation_type::modulo:
 						_output << " % ";
 						break;
-					case ast::binary_operation_type::type_greater:
+					case ast::binary_operation_type::greater:
 						_output << " > ";
 						break;
-					case ast::binary_operation_type::type_greater_equal:
+					case ast::binary_operation_type::greater_equal:
 						_output << " >= ";
 						break;
-					case ast::binary_operation_type::type_equality:
+					case ast::binary_operation_type::equal:
 						_output << " == ";
 						break;
-					case ast::binary_operation_type::type_unequality:
+					case ast::binary_operation_type::not_equal:
 						_output << " != ";
 						break;
-					case ast::binary_operation_type::type_lower:
+					case ast::binary_operation_type::lower:
 						_output << " < ";
 						break;
-					case ast::binary_operation_type::type_lower_equal:
+					case ast::binary_operation_type::lower_equal:
 						_output << " <= ";
 						break;
-					case ast::binary_operation_type::type_logical_and:
-						_output << " & ";
+					case ast::binary_operation_type::logical_and:
+						_output << " && ";
 						break;
-					case ast::binary_operation_type::type_logical_or:
-						_output << " | ";
+					case ast::binary_operation_type::logical_or:
+						_output << " || ";
 						break;
 				}
 				node.rhs().accept(*this);
@@ -94,11 +94,11 @@ namespace minijava
 
 			void visit(unary_expression &node) override {
 				switch (node.type()) {
-					case ast::unary_operation_type::type_negate:
-						_output << "!";
+					case ast::unary_operation_type::minus:
+						_output << "-";
 						break;
-					case ast::unary_operation_type::type_not:
-						_output << "~";
+					case ast::unary_operation_type::logical_not:
+						_output << "!";
 						break;
 				}
 				node.target().accept(*this);

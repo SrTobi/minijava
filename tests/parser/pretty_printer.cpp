@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
 	auto pool = minijava::symbol_pool<>{};
 
 	auto test_conditional = std::make_unique<ast::binary_expression>(
-			ast::binary_operation_type::type_equality,
+			ast::binary_operation_type::equal,
 			std::make_unique<ast::variable_access>(
 					nullptr, pool.normalize("i")
 			),
@@ -161,9 +161,9 @@ BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 					pool.normalize("i")
 			),
 			std::make_unique<ast::binary_expression>(
-					ast::binary_operation_type::type_add,
+					ast::binary_operation_type::add,
 					std::make_unique<ast::binary_expression>(
-							ast::binary_operation_type::type_multiplay,
+							ast::binary_operation_type::multiply,
 							std::make_unique<ast::integer_constant>(
 									pool.normalize("3")
 							),

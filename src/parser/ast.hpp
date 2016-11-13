@@ -335,19 +335,19 @@ namespace minijava
 		 */
 		enum class binary_operation_type : std::uint16_t
 		{
-			type_logical_or,
-			type_logical_and,
-			type_equality,
-			type_unequality,
-			type_lower,
-			type_lower_equal,
-			type_greater,
-			type_greater_equal,
-			type_add,
-			type_subtract,
-			type_multiplay,
-			type_divide,
-			type_modulo,
+			logical_or,
+			logical_and,
+			equal,
+			not_equal,
+			lower,
+			lower_equal,
+			greater,
+			greater_equal,
+			add,
+			subtract,
+			multiply,
+			divide,
+			modulo,
 		};
 
 		/**
@@ -355,8 +355,8 @@ namespace minijava
 		 */
 		enum class unary_operation_type : std::uint8_t
 		{
-			type_not,
-			type_negate
+			logical_not,
+			minus
 		};
 
 		/**
