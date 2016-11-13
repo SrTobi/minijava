@@ -1307,7 +1307,7 @@ namespace minijava
 			 */
 			method_invocation(std::unique_ptr<expression> target, symbol name,
 							  std::vector<std::unique_ptr<expression>> arguments)
-					: _target{std::move(target)}, _name{std::move(name)}
+					: _target{std::move(target)}, _name{name}
 					, _arguments{std::move(arguments)}
 			{
 				assert(!_name.empty());
