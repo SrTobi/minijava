@@ -12,6 +12,7 @@
 #include <stdexcept>
 
 #include "lexer/token.hpp"
+#include "parser/ast.hpp"
 
 
 namespace minijava
@@ -113,7 +114,7 @@ namespace minijava
 	 *
 	 */
 	template<typename InIterT>
-	void parse_program(InIterT first, InIterT last);
+	std::unique_ptr<ast::program> parse_program(InIterT first, InIterT last);
 
 }  // namespace minijava
 
