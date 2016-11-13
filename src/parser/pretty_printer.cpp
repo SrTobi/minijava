@@ -2,6 +2,8 @@
 
 #include <map>
 
+#include "exceptions.hpp"
+
 namespace minijava
 {
 	namespace ast
@@ -54,10 +56,10 @@ namespace minijava
 			}
 			node.lhs().accept(*this);
 			switch (node.type()) {
-				case ast::binary_operation_type::add:
+				case ast::binary_operation_type::plus:
 					_output << " + ";
 					break;
-				case ast::binary_operation_type::subtract:
+				case ast::binary_operation_type::minus:
 					_output << " - ";
 					break;
 				case ast::binary_operation_type::multiply:
@@ -69,7 +71,7 @@ namespace minijava
 				case ast::binary_operation_type::modulo:
 					_output << " % ";
 					break;
-				case ast::binary_operation_type::greater:
+				case ast::binary_operation_type::greater_than:
 					_output << " > ";
 					break;
 				case ast::binary_operation_type::greater_equal:
@@ -81,10 +83,10 @@ namespace minijava
 				case ast::binary_operation_type::not_equal:
 					_output << " != ";
 					break;
-				case ast::binary_operation_type::lower:
+				case ast::binary_operation_type::less_than:
 					_output << " < ";
 					break;
-				case ast::binary_operation_type::lower_equal:
+				case ast::binary_operation_type::less_equal:
 					_output << " <= ";
 					break;
 				case ast::binary_operation_type::logical_and:
@@ -515,8 +517,7 @@ namespace minijava
 				return std::string(p->c_str());
 			}
 
-			assert(false);
-			return nullptr;
+			MINIJAVA_NOT_REACHED();
 		}
 	}
 }

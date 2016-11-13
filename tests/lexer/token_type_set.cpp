@@ -153,9 +153,9 @@ BOOST_AUTO_TEST_CASE(tts_singletons_with_different_elements_compare_not_equal)
 BOOST_AUTO_TEST_CASE(union_assign_of_tts)
 {
 	auto tts = minijava::token_type_set{tt::plus, tt::minus, tt::eof};
-	tts |= minijava::token_type_set{tt::multiply, tt::eof, tt::divides};
+	tts |= minijava::token_type_set{tt::multiply, tt::eof, tt::divide};
 	const auto expected = minijava::token_type_set{
-		tt::plus, tt::minus, tt::multiply, tt::divides, tt::eof
+		tt::plus, tt::minus, tt::multiply, tt::divide, tt::eof
 	};
 	BOOST_REQUIRE(tts == expected);
 }
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(free_intersection)
 BOOST_AUTO_TEST_CASE(intersection_assign_of_tts)
 {
 	auto tts = minijava::token_type_set{tt::plus, tt::minus, tt::eof};
-	tts &= minijava::token_type_set{tt::multiply, tt::eof, tt::divides};
+	tts &= minijava::token_type_set{tt::multiply, tt::eof, tt::divide};
 	const auto expected = minijava::token_type_set{tt::eof};
 	BOOST_REQUIRE(tts == expected);
 }

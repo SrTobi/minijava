@@ -113,7 +113,7 @@ namespace minijava
 		minus                          = 0x4043,  ///< minus operator &ldquo;`-`&rdquo;
 		dot                            = 0x4044,  ///< dot operator &ldquo;`.`&rdquo;
 		divides_assign                 = 0x4045,  ///< divide-assignment operator &ldquo;`/=`&rdquo;
-		divides                        = 0x4046,  ///< division operator &ldquo;`/`&rdquo;
+		divide                         = 0x4046,  ///< division operator &ldquo;`/`&rdquo;
 		colon                          = 0x4047,  ///< colon operator &ldquo;`:`&rdquo;
 		semicolon                      = 0x4048,  ///< semicolon &ldquo;`;`&rdquo;
 		left_shift_assign              = 0x4049,  ///< arithmetic left-shift-assignemt operator &ldquo;`<<=`&rdquo;

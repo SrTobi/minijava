@@ -388,7 +388,7 @@ namespace /* anonymous */
 			const auto guard = enter_nested();
 			if (nest_deeper_eh()) {
 				gen_multiplicative_expression();
-				push_one(tt::multiply, tt::divides, tt::modulo);
+				push_one(tt::multiply, tt::divide, tt::modulo);
 			}
 			gen_unary_expression();
 		}

@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 					pool.normalize("i")
 			),
 			std::make_unique<ast::binary_expression>(
-					ast::binary_operation_type::add,
+					ast::binary_operation_type::plus,
 					std::make_unique<ast::binary_expression>(
 							ast::binary_operation_type::multiply,
 							std::make_unique<ast::integer_constant>(

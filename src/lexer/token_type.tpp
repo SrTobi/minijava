@@ -87,7 +87,7 @@ namespace minijava
 			{token_type::minus,                        "-"},
 			{token_type::dot,                          "."},
 			{token_type::divides_assign,               "/="},
-			{token_type::divides,                      "/"},
+			{token_type::divide,                       "/"},
 			{token_type::colon,                        ":"},
 			{token_type::semicolon,                    ";"},
 			{token_type::left_shift_assign,            "<<="},

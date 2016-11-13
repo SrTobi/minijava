@@ -47,7 +47,7 @@ namespace minijava
 			{token_type::minus,                       true,  op_arity::binary, 11, op_assoc::left},
 			{token_type::dot,                         false, op_arity::none,   -1, op_assoc::none},
 			{token_type::divides_assign,              false, op_arity::binary,  1, op_assoc::right},
-			{token_type::divides,                     true,  op_arity::binary, 12, op_assoc::left},
+			{token_type::divide,                      true, op_arity::binary, 12, op_assoc::left},
 			{token_type::colon,                       false, op_arity::none,    2, op_assoc::right},
 			{token_type::semicolon,                   false, op_arity::none,   -1, op_assoc::none},
 			{token_type::left_shift_assign,           false, op_arity::binary,  1, op_assoc::right},

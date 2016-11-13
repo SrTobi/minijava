@@ -481,14 +481,14 @@ namespace minijava
 					case token_type::logical_and:   return binary_operation_type::logical_and;
 					case token_type::equal:         return binary_operation_type::equal;
 					case token_type::not_equal:     return binary_operation_type::not_equal;
-					case token_type::less_than:     return binary_operation_type::lower;
-					case token_type::less_equal:    return binary_operation_type::lower_equal;
-					case token_type::greater_than:  return binary_operation_type::greater;
+					case token_type::less_than:     return binary_operation_type::less_than;
+					case token_type::less_equal:    return binary_operation_type::less_equal;
+					case token_type::greater_than:  return binary_operation_type::greater_than;
 					case token_type::greater_equal: return binary_operation_type::greater_equal;
-					case token_type::plus:          return binary_operation_type::add;
-					case token_type::minus:         return binary_operation_type::subtract;
+					case token_type::plus:          return binary_operation_type::plus;
+					case token_type::minus:         return binary_operation_type::minus;
 					case token_type::multiply:      return binary_operation_type::multiply;
-					case token_type::divides:       return binary_operation_type::divide;
+					case token_type::divide:        return binary_operation_type::divide;
 					case token_type::modulo:        return binary_operation_type::modulo;
 				default:
 					MINIJAVA_NOT_REACHED();
