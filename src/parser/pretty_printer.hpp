@@ -28,7 +28,7 @@ namespace minijava
 					: _output{output}, _indentation_level{0} {}
 
 			void visit(type &node) override {
-				_output << _type_name(&node.type_name());
+				_output << _type_name(&node.name());
 
 				for (size_t i = 0; i < node.rank(); i++)
 					_output << "[]";
@@ -36,7 +36,7 @@ namespace minijava
 
 			void visit(var_decl &node) override {
 				_output << "public ";
-				node.type().accept(*this);
+				node.var_type().accept(*this);
 				_output << node.name();
 			}
 
@@ -109,11 +109,11 @@ namespace minijava
 			}
 
 			void visit(array_instantiation &node) override {
-				_output << "new " << _type_name(&node.type().type_name());
+				_output << "new " << _type_name(&node.array_type().name());
 				_output << "[";
 				node.extent().accept(*this);
 				_output << "]";
-				for (size_t i = 1; i < node.type().rank(); i++)
+				for (size_t i = 1; i < node.array_type().rank(); i++)
 					_output << "[]";
 			}
 
@@ -174,7 +174,7 @@ namespace minijava
 
 			void visit(expression_statement &node) override {
 				_output << _indention();
-				node.expression().accept(*this);
+				node.inner_expression().accept(*this);
 				_output << ";\n";
 			}
 

@@ -506,31 +506,31 @@ namespace minijava
 			 * @brief
 			 *     Constructs a type node representing a built-in type.
 			 *
-			 * @param type
-			 *     variable type
+			 * @param name
+			 *     primitive type name
 			 *
 			 * @param rank
 			 *     rank of the array or 0 if this type is not an array type
 			 *
 			 */
-			type(primitive_type type, std::size_t rank)
-					: node{}, _type{type}, _rank{rank} {}
+			type(primitive_type name, std::size_t rank)
+					: node{}, _name{name}, _rank{rank} {}
 
 			/**
 			 * @brief
 			 *     Constructs a type node representing a user-defined type.
 			 *
-			 * @param type
+			 * @param name
 			 *     symbol representing the type name
 			 *
 			 * @param rank
 			 *     rank of the array or 0 if this type is not an array type
 			 *
 			 */
-			type(symbol type, std::size_t rank)
-					: node{}, _type{type}, _rank{rank}
+			type(symbol name, std::size_t rank)
+					: node{}, _name{name}, _rank{rank}
 			{
-				assert(!_type.empty());
+				assert(!_name.empty());
 			}
 
 			/**
@@ -542,9 +542,9 @@ namespace minijava
 			 *     user-defined type
 			 *
 			 */
-			minijava::ast::type_name& type_name() noexcept
+			type_name& name() noexcept
 			{
-				return _type;
+				return _name;
 			}
 
 			/**
@@ -556,9 +556,9 @@ namespace minijava
 			 *     user-defined type
 			 *
 			 */
-			const minijava::ast::type_name& type_name() const noexcept
+			const type_name& name() const noexcept
 			{
-				return _type;
+				return _name;
 			}
 
 			/**
@@ -584,7 +584,7 @@ namespace minijava
 		private:
 
 			/** @brief user-defined or built-in type represented by this node */
-			minijava::ast::type_name _type;
+			type_name _name;
 
 			/** @brief rank of the array or 0 if this node does not represent an array type */
 			std::size_t _rank;
@@ -624,7 +624,7 @@ namespace minijava
 			 *     type of this variable
 			 *
 			 */
-			minijava::ast::type& type()
+			type& var_type()
 			{
 				return *_type;
 			}
@@ -637,7 +637,7 @@ namespace minijava
 			 *     type of this variable
 			 *
 			 */
-			const minijava::ast::type& type() const
+			const type& var_type() const
 			{
 				return *_type;
 			}
@@ -663,7 +663,7 @@ namespace minijava
 		private:
 
 			/** @brief type of this variable */
-			std::unique_ptr<minijava::ast::type> _type;
+			std::unique_ptr<type> _type;
 
 			/** @brief symbol representing the name of this variable */
 			symbol _name;
@@ -1043,7 +1043,7 @@ namespace minijava
 			 *     type
 			 *
 			 */
-			minijava::ast::type& type()
+			type& array_type()
 			{
 				return *_type;
 			}
@@ -1056,7 +1056,7 @@ namespace minijava
 			 *     type
 			 *
 			 */
-			const minijava::ast::type& type() const
+			const type& array_type() const
 			{
 				return *_type;
 			}
@@ -1097,7 +1097,7 @@ namespace minijava
 		private:
 
 			/** @brief type to instantiate */
-			std::unique_ptr<minijava::ast::type> _type;
+			std::unique_ptr<type> _type;
 
 			/** @brief expression evaluating to the extent of the first dimension */
 			std::unique_ptr<expression> _extent;
@@ -1667,7 +1667,7 @@ namespace minijava
 			 *     expression
 			 *
 			 */
-			minijava::ast::expression& expression()
+			expression& inner_expression()
 			{
 				return *_expression;
 			}
@@ -1680,7 +1680,7 @@ namespace minijava
 			 *     expression
 			 *
 			 */
-			const minijava::ast::expression& expression() const
+			const expression& inner_expression() const
 			{
 				return *_expression;
 			}
@@ -1693,7 +1693,7 @@ namespace minijava
 		private:
 
 			/** @brief expression to interpret as a statement */
-			std::unique_ptr<minijava::ast::expression> _expression;
+			std::unique_ptr<expression> _expression;
 		};
 
 		/**
