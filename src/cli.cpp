@@ -175,7 +175,7 @@ namespace minijava
 				return;
 			}
 
-			if(stage == compilation_stage::print_ast) {
+			if (stage == compilation_stage::print_ast) {
 				ast::pretty_printer printer_visitor(ostr);
 				ast->accept(printer_visitor);
 				return;
