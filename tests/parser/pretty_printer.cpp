@@ -145,6 +145,42 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
 	BOOST_REQUIRE_EQUAL("if (i == j)\n\ti = 0;\n"s, oss.str());
 }
 
+BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
+{
+	using namespace std::string_literals;
+	std::ostringstream oss {};
+	auto pp = ast::pretty_printer{oss};
+	auto pool = minijava::symbol_pool<>{};
+
+	auto test_conditional = std::make_unique<ast::boolean_constant>(true);
+	auto test_then_statement = std::make_unique<ast::empty_statement>();
+	auto test_else_conditional = std::make_unique<ast::boolean_constant>(false);
+	auto test_else_then_statement = std::make_unique<ast::block>();
+	auto test_assignment = std::make_unique<ast::expression_statement>(
+			std::make_unique<ast::assignment_expression>(
+					std::make_unique<ast::variable_access>(
+							nullptr, pool.normalize("i")
+					),
+					std::make_unique<ast::integer_constant>(pool.normalize("0"))
+			)
+	);
+	test_else_then_statement->add_block_statement(std::move(test_assignment));
+	auto test_else_statement = std::make_unique<ast::block>();
+	auto test_else_conditional_block = std::make_unique<ast::if_statement>(
+			std::move(test_else_conditional),
+			std::move(test_else_then_statement),
+			std::move(test_else_statement)
+	);
+	auto test_conditional_block = std::make_unique<ast::if_statement>(
+			std::move(test_conditional),
+			std::move(test_then_statement),
+			std::move(test_else_conditional_block)
+	);
+
+	pp.visit(*test_conditional_block);
+	BOOST_REQUIRE_EQUAL("if (true)\n\t;\nelse if (false) {\n\ti = 0;\n} else {\n}\n"s, oss.str());
+}
+
 BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 {
 	using namespace std::string_literals;

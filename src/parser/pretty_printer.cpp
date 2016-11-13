@@ -237,10 +237,15 @@ namespace minijava
 			}
 
 			if (auto stmt = node.else_statement()) {
-				_output << " else";
+				if (then_is_block) {
+					_output << " else";
+				} else {
+					_print("else");
+				}
 				if (!else_is_block && !else_is_chain) {
 					_indentation_level++;
 				}
+				_start_else = true;
 				stmt->accept(*this);
 				if (!else_is_block && !else_is_chain) {
 					_indentation_level--;
