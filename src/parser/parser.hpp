@@ -108,6 +108,9 @@ namespace minijava
 	 * @param last
 	 *     iterator pointing after the last token of the program
 	 *
+	 * @returns
+	 *     AST for the given program
+	 *
 	 * @throws syntax_error
 	 *     if the token sequence `[first, last)` is not a syntactical correct
 	 *     MiniJava program
