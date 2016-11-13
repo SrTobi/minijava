@@ -266,3 +266,63 @@ BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 	        oss.str()
 	);
 }
+
+
+namespace /* anonymous */
+{
+	template <typename T>
+	std::enable_if_t<std::is_base_of<ast::node, T>{} && std::is_final<T>{}, std::string>
+	serialize(T& ast_node)
+	{
+		std::ostringstream oss {};
+		auto pp = ast::pretty_printer{oss};
+		pp.visit(ast_node);
+		return oss.str();
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(class_with_var_decl)
+{
+	using namespace std::string_literals;
+	auto pool = minijava::symbol_pool<>{};
+	auto cls = std::make_unique<ast::class_declaration>(pool.normalize("Test"));
+	{
+		const auto id = pool.normalize("apple");
+		const auto tpnam = pool.normalize("Apple");
+		auto typ = std::make_unique<ast::type>(tpnam);
+		auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+		cls->add_field(std::move(dcl));
+	}
+	{
+		const auto id = pool.normalize("banana");
+		auto typ = std::make_unique<ast::type>(ast::primitive_type::type_int);
+		auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+		cls->add_field(std::move(dcl));
+	}
+	{
+		const auto id = pool.normalize("cranberry");
+		auto typ = std::make_unique<ast::type>(ast::primitive_type::type_boolean);
+		auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+		cls->add_field(std::move(dcl));
+	}
+	for (auto rank = std::size_t{}; rank <= 3; ++rank) {
+		const auto id = pool.normalize("date");
+		auto typ = std::make_unique<ast::type>(ast::primitive_type::type_void, rank);
+		auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+		cls->add_field(std::move(dcl));
+	}
+	BOOST_REQUIRE_EQUAL(std::size_t{7}, cls->fields().size());  // sanity-check
+	const auto expected = ""s
+		+ "class Test {\n"
+		+ "\tpublic Apple apple;\n"
+		+ "\tpublic int banana;\n"
+		+ "\tpublic boolean cranberry;\n"
+		+ "\tpublic void date;\n"
+		+ "\tpublic void[] date;\n"
+		+ "\tpublic void[][] date;\n"
+		+ "\tpublic void[][][] date;\n"
+		+ "}\n";
+	const auto actual = serialize(*cls);
+	BOOST_REQUIRE_EQUAL(expected, actual);
+}

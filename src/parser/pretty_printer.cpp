@@ -1,11 +1,85 @@
 #include "parser/pretty_printer.hpp"
 
-#include <map>
+#include <algorithm>
+#include <iterator>
+#include <vector>
 
 #include "exceptions.hpp"
 
 namespace minijava
 {
+	namespace /* anonymous */
+	{
+
+		// TODO: This is copy-pasta from `/tests/testaux/syntaxgen.tpp`.  Maybe
+		// we should put it into a utility header.  Maybe I should suibmit a
+		// proposal to add this to the standard library.  Maybe I should sit by
+		// a lake.
+
+		template <typename T>
+		class restore_finally final
+		{
+		public:
+
+			restore_finally() noexcept = default;
+
+			restore_finally(T& dest, const T update) noexcept
+				: _destp{&dest}, _prev{dest}
+			{
+				dest = update;
+			}
+
+			~restore_finally() noexcept
+			{
+				if (_destp != nullptr) {
+					*_destp = _prev;
+				}
+			}
+
+			restore_finally(const restore_finally&) = delete;
+
+			restore_finally(restore_finally&& other) noexcept : restore_finally{}
+			{
+				swap(*this, other);
+			}
+
+			restore_finally& operator=(const restore_finally&) = delete;
+
+			restore_finally& operator=(restore_finally&& other) noexcept
+			{
+				restore_finally temp{};
+				swap(*this, temp);
+				swap(*this, other);
+				return *this;
+			}
+
+			friend void swap(restore_finally& lhs, restore_finally& rhs) noexcept
+			{
+				std::swap(lhs._destp, rhs._destp);
+				std::swap(lhs._prev, rhs._prev);
+			}
+
+		private:
+
+			T * _destp{};
+			T _prev{};
+
+		};  // class restore_finally
+
+		template <typename T>
+		restore_finally<T> make_guard(T& dest, const T update) noexcept
+		{
+			return restore_finally<T>{dest, update};
+		}
+
+		template <typename T>
+		restore_finally<T> make_guard_incr(T& dest) noexcept
+		{
+			return restore_finally<T>{dest, dest + T{1}};
+		}
+
+	}  // namespace /* anonymous */
+
 	namespace ast
 	{
 		using namespace std::string_literals;
@@ -428,48 +502,41 @@ namespace minijava
 
 		void pretty_printer::visit(class_declaration& node)
 		{
+			using member_pair = std::pair<symbol, ast::node*>;
+			const auto ext = [](auto&& p){
+				return std::make_pair(p->name(), p.get());
+			};
+			const auto cmp = [](auto&& p1, auto&& p2){
+				return std::strcmp(p1.first.c_str(), p2.first.c_str()) < 0;
+			};
+			const auto vst = [this](auto&& p){ p.second->accept(*this); };
 			_println("class "s + node.name().c_str() + " {");
-			_indentation_level++;
-
-			// sort methods together by inserting into sorted map
-			auto sorted_method_map = std::map<std::string,
-					std::pair<bool, void*>>{};
-			for (auto& method : node.methods()) {
-				sorted_method_map.insert(
-						std::make_pair(method->name().c_str(),
-						               std::make_pair(false, method.get()))
+			{
+				const auto on_the_level_guard = make_guard_incr(_indentation_level);
+				auto members = std::vector<member_pair>{};
+				members.reserve(std::max(
+					node.methods().size() + node.main_methods().size(),
+					node.fields().size()
+				));
+				std::transform(
+					std::begin(node.methods()), std::end(node.methods()),
+					std::back_inserter(members), ext
 				);
-			}
-			for (auto& method : node.main_methods()) {
-				sorted_method_map.insert(
-						std::make_pair(method->name().c_str(),
-						               std::make_pair(true, method.get()))
+				std::transform(
+					std::begin(node.main_methods()), std::end(node.main_methods()),
+					std::back_inserter(members), ext
 				);
-			}
-			for (auto& el : sorted_method_map) {
-				bool is_main_method = el.second.first;
-				void* p = el.second.second;
-
-				if (is_main_method) {
-					(reinterpret_cast<main_method*>(p))->accept(*this);
-				} else {
-					(reinterpret_cast<method*>(p))->accept(*this);
-				}
-			}
-
-			_in_fields = true;
-			// sort fields by inserting into sorted map
-			auto sorted_field_map = std::map<std::string, var_decl*>{};
-			for (auto& field : node.fields()) {
-				sorted_field_map.insert(
-						std::make_pair(field->name().c_str(), field.get())
+				std::stable_sort(std::begin(members), std::end(members), cmp);
+				std::for_each(std::begin(members), std::end(members), vst);
+				members.clear();
+				const auto in_the_fields_guard = make_guard(_in_fields, true);
+				std::transform(
+					std::begin(node.fields()), std::end(node.fields()),
+					std::back_inserter(members), ext
 				);
+				std::stable_sort(std::begin(members), std::end(members), cmp);
+				std::for_each(std::begin(members), std::end(members), vst);
 			}
-			for (auto& el : sorted_field_map) {
-				el.second->accept(*this);
-			}
-
-			_indentation_level--;
 			_println("}");
 		}
 
