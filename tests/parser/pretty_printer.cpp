@@ -57,6 +57,16 @@ BOOST_AUTO_TEST_CASE(pretty_print_null)
 	BOOST_REQUIRE_EQUAL("null"s, oss.str());
 }
 
+BOOST_AUTO_TEST_CASE(pretty_print_this)
+{
+	using namespace std::string_literals;
+	std::ostringstream oss {};
+	auto pp = ast::pretty_printer{oss};
+	auto this_ref = std::make_unique<ast::this_ref>();
+	pp.visit(*this_ref);
+	BOOST_REQUIRE_EQUAL("this"s, oss.str());
+}
+
 BOOST_AUTO_TEST_CASE(pretty_print_empty_program)
 {
 	using namespace std::string_literals;
