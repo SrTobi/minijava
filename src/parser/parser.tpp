@@ -5,8 +5,9 @@
 #include <algorithm>
 #include <cstring>
 #include <initializer_list>
-#include <stack>
 #include <memory>
+#include <utility>
+#include <stack>
 
 #include "exceptions.hpp"
 #include "lexer/token_type.hpp"
