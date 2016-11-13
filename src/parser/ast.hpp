@@ -52,7 +52,8 @@ namespace minijava
 		class program;
 
 		/**
-		 * Base class for AST visitor
+		 * @brief
+		 *     Base class for AST visitors
 		 */
 		class visitor
 		{
@@ -371,7 +372,8 @@ namespace minijava
 
 
 		/**
-		 * Base class for AST nodes
+		 * @brief
+		 *     Base class for AST nodes
 		 */
 		class node
 		{
@@ -495,7 +497,8 @@ namespace minijava
 		using type_name = boost::variant<primitive_type, symbol>;
 
 		/**
-		 * Type name AST node
+		 * @brief
+		 *     Type name AST node
 		 */
 		class type final : public node
 		{
@@ -591,7 +594,8 @@ namespace minijava
 		};
 
 		/**
-		 * Variable declaration AST node
+		 * @brief
+		 *     Variable declaration AST node
 		 */
 		class var_decl final : public node
 		{
@@ -673,12 +677,14 @@ namespace minijava
 		// region expressions
 
 		/**
-		 * Base class for expression AST nodes
+		 * @brief
+		 *     Base class for expression AST nodes
 		 */
 		class expression : public node {};
 
 		/**
-		 * Assignment expression AST node
+		 * @brief
+		 *     Assignment expression AST node
 		 */
 		class assignment_expression final : public expression
 		{
@@ -771,7 +777,8 @@ namespace minijava
 		};
 
 		/**
-		 * Binary expression AST node
+		 * @brief
+		 *     Binary expression AST node
 		 */
 		class binary_expression final : public expression
 		{
@@ -884,7 +891,8 @@ namespace minijava
 		};
 
 		/**
-		 * Unary expression AST node
+		 * @brief
+		 *     Unary expression AST node
 		 */
 		class unary_expression final : public expression
 		{
@@ -963,7 +971,8 @@ namespace minijava
 		};
 
 		/**
-		 * Object instantiation AST node
+		 * @brief
+		 *     Object instantiation AST node
 		 */
 		class object_instantiation final : public expression
 		{
@@ -1008,7 +1017,8 @@ namespace minijava
 		};
 
 		/**
-		 * Array instantiation AST noded
+		 * @brief
+		 *     Array instantiation expression AST node
 		 */
 		class array_instantiation final : public expression
 		{
@@ -1104,7 +1114,8 @@ namespace minijava
 		};
 
 		/**
-		 * Array access AST node
+		 * @brief
+		 *     Array access expression AST node
 		 */
 		class array_access final : public expression
 		{
@@ -1197,7 +1208,7 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Variable access AST node.
+		 *     Variable access expression AST node.
 		 *
 		 * Represents a reference to a field or local variable.
 		 *
@@ -1284,7 +1295,8 @@ namespace minijava
 		};
 
 		/**
-		 * Method invocation AST node
+		 * @brief
+		 *     Method invocation expression AST node
 		 */
 		class method_invocation final : public expression
 		{
@@ -1401,7 +1413,8 @@ namespace minijava
 		};
 
 		/**
-		 * AST node for a reference to `this`
+		 * @brief
+		 *     AST node for a `this` expression
 		 */
 		class this_ref final : public expression
 		{
@@ -1415,12 +1428,14 @@ namespace minijava
 		};
 
 		/**
-		 * Base class for AST nodes representing constants
+		 * @brief
+		 *     Base class for expression AST nodes representing constants
 		 */
 		class constant : public expression {};
 
 		/**
-		 * Boolean constant AST node
+		 * @brief
+		 *     Boolean constant AST node
 		 */
 		class boolean_constant final : public constant
 		{
@@ -1461,7 +1476,8 @@ namespace minijava
 		};
 
 		/**
-		 * Integer constant AST node
+		 * @brief
+		 *     Integer constant AST node
 		 */
 		class integer_constant final : public constant
 		{
@@ -1506,7 +1522,8 @@ namespace minijava
 		};
 
 		/**
-		 * Null constant AST node
+		 * @brief
+		 *     Null constant AST node
 		 */
 		class null_constant final : public constant
 		{
@@ -1533,7 +1550,8 @@ namespace minijava
 		class block_statement : public node {};
 
 		/**
-		 * Local variable declaration AST node
+		 * @brief
+		 *     Local variable declaration AST node
 		 */
 		class local_variable_statement final : public block_statement
 		{
@@ -1631,14 +1649,15 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Base classes for statement AST nodes.
+		 *     Base class for statement AST nodes.
 		 *
 		 * Local variable declarations are not regular statements.
 		 */
 		class statement : public block_statement {};
 
 		/**
-		 * Expression statement AST node
+		 * @brief
+		 *     Expression statement AST node
 		 */
 		class expression_statement final : public statement
 		{
@@ -1697,7 +1716,8 @@ namespace minijava
 		};
 
 		/**
-		 * Block AST node
+		 * @brief
+		 *     Block AST node
 		 */
 		class block final : public statement
 		{
@@ -1753,7 +1773,8 @@ namespace minijava
 		};
 
 		/**
-		 * If statement AST node
+		 * @brief
+		 *     If statement AST node
 		 */
 		class if_statement final : public statement
 		{
@@ -1889,7 +1910,8 @@ namespace minijava
 		};
 
 		/**
-		 * While statement AST node
+		 * @brief
+		 *     While statement AST node
 		 */
 		class while_statement final : public statement
 		{
@@ -1981,7 +2003,8 @@ namespace minijava
 		};
 
 		/**
-		 * Return statement AST node
+		 * @brief
+		 *     Return statement AST node
 		 */
 		class return_statement final : public statement
 		{
@@ -2041,7 +2064,8 @@ namespace minijava
 		};
 
 		/**
-		 * Empty statement AST node
+		 * @brief
+		 *     Empty statement AST node
 		 */
 		class empty_statement final : public statement
 		{
@@ -2060,7 +2084,8 @@ namespace minijava
 		// region structural elements
 
 		/**
-		 * Main method AST node
+		 * @brief
+		 *     Main method AST node
 		 */
 		class main_method final : public node
 		{
@@ -2158,7 +2183,8 @@ namespace minijava
 		};
 
 		/**
-		 * Method AST node
+		 * @brief
+		 *     Method AST node
 		 */
 		class method final : public node
 		{
@@ -2305,7 +2331,8 @@ namespace minijava
 		};
 
 		/**
-		 * Class declaration AST node
+		 * @brief
+		 *     Class declaration AST node
 		 */
 		class class_declaration final : public node
 		{
@@ -2474,7 +2501,8 @@ namespace minijava
 		};
 
 		/**
-		 * Root node of the AST
+		 * @brief
+		 *     Root node of the AST
 		 */
 		class program final : public node
 		{
