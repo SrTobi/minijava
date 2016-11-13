@@ -48,7 +48,7 @@ namespace minijava
 					lex._current_token = token::create(token_type::divides_assign);
 					next(lex);
 				} else {
-					lex._current_token = token::create(token_type::divides);
+					lex._current_token = token::create(token_type::divide);
 				}
 			} else if (maybe_token(lex, '[', token_type::left_bracket)) {
 			} else if (maybe_token(lex, ']', token_type::right_bracket)) {

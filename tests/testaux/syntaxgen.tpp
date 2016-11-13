@@ -399,7 +399,7 @@ namespace testaux
 				const auto guard = _enter_nested();
 				if (_nest_deeper_eh()) {
 					_gen_multiplicative_expression();
-					_push_one(tt::multiply, tt::divides, tt::modulo);
+					_push_one(tt::multiply, tt::divide, tt::modulo);
 				}
 				_gen_unary_expression();
 			}

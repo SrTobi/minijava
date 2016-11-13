@@ -19,6 +19,7 @@
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
+#include "parser/pretty_printer.hpp"
 #include "symbol_pool.hpp"
 #include "system/system.hpp"
 
@@ -38,7 +39,8 @@ namespace minijava
 		{
 			input = 1,
 			lexer = 2,
-			parser = 3
+			parser = 3,
+			print_ast = 4
 		};
 
 
@@ -96,7 +98,8 @@ namespace minijava
 			interception.add_options()
 				("echo", "stop after the input stage and output the source file verbatim")
 				("lextest", "stop after lexical analysis and output a token sequence")
-				("parsetest", "stop after parsing and reporting any syntax errors");
+				("parsetest", "stop after parsing and reporting any syntax errors")
+				("print-ast", "stop after parsing and print the parsed ast");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -141,6 +144,9 @@ namespace minijava
 			if (varmap.count("parsetest")) {
 				setup.stage = compilation_stage::parser;
 			}
+			if (varmap.count("print-ast")) {
+				setup.stage = compilation_stage::print_ast;
+			}
 			return true;
 		}
 
@@ -164,8 +170,14 @@ namespace minijava
 				std::copy(tokfirst, toklast, std::ostream_iterator<token>{ostr, "\n"});
 				return;
 			}
-			parse_program(tokfirst, toklast);
+			auto ast = parse_program(tokfirst, toklast);
 			if (stage == compilation_stage::parser) {
+				return;
+			}
+
+			if (stage == compilation_stage::print_ast) {
+				ast::pretty_printer printer_visitor(ostr);
+				ast->accept(printer_visitor);
 				return;
 			}
 			// If we get until here, we have a problem...

@@ -42,7 +42,7 @@ namespace minijava
 		p->size = size;
 		std::memcpy(p->data, data, size);
 		p->data[size] = '\0';
-		return p;
+		return std::move(p); // explicit move to work around clang bug
 	}
 
 	template <typename AllocT>

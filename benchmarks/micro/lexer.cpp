@@ -15,6 +15,7 @@
 #include "symbol_pool.hpp"
 
 #include "benchmark.hpp"
+#include "exceptions.hpp"
 #include "random_tokens.hpp"
 
 
@@ -67,7 +68,7 @@ namespace /* anonymous */
 				buffer << testaux::get_random_punctuation(rndeng);
 				break;
 			default:
-				assert(false);
+				MINIJAVA_NOT_REACHED();
 			}
 		}
 		return buffer.str();

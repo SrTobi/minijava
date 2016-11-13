@@ -557,3 +557,59 @@ BOOST_AUTO_TEST_CASE(parsetest_invalid_input)
 	BOOST_REQUIRE_EQUAL(""s, mystdout.str());
 	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
 }
+
+
+// official example: https://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/example.input
+static const auto official_pretty_printer_test = R"java(
+class HelloWorld
+{
+	public int c;
+	public boolean[] array;
+	public static /* blabla */ void main(String[] args)
+	{ System.out.println( (43110 + 0) );
+	boolean b = true && (!false);
+	if (23+19 == (42+0)*1)
+		b = (0 < 1);
+		else if (!array[2+2]) {
+			int x = 0;;
+			x = x+1;
+		} else {
+			new HelloWorld().bar(42+0*1, -1);
+		}
+	}
+	public int bar(int a, int b) { return c = (a+b); }
+}
+)java";
+
+// official example: https://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/example.output
+static const auto official_pretty_printer_test_result = R"pretty(class HelloWorld {
+	public int bar(int a, int b) {
+		return c = (a + b);
+	}
+	public static void main(String[] args) {
+		(System.out).println(43110 + 0);
+		boolean b = true && (!false);
+		if ((23 + 19) == ((42 + 0) * 1))
+			b = (0 < 1);
+		else if (!(array[2 + 2])) {
+			int x = 0;
+			x = (x + 1);
+		} else {
+			(new HelloWorld()).bar(42 + (0 * 1), -1);
+		}
+	}
+	public boolean[] array;
+	public int c;
+}
+)pretty";
+
+BOOST_AUTO_TEST_CASE(print_ast_passes_example_test)
+{
+	using namespace std::string_literals;
+	std::istringstream mystdin{official_pretty_printer_test};
+	std::ostringstream mystdout{};
+	std::ostringstream mystderr{};
+	minijava::real_main({"", "--print-ast"}, mystdin, mystdout, mystderr);
+	BOOST_REQUIRE_EQUAL(official_pretty_printer_test_result, mystdout.str());
+	BOOST_REQUIRE_EQUAL(""s, mystderr.str());
+}

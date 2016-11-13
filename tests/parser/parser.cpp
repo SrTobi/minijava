@@ -1,6 +1,10 @@
 #include "parser/parser.hpp"
 
 #include <algorithm>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <type_traits>
 #include <utility>
 
 #define BOOST_TEST_MODULE  parser_parser
@@ -9,10 +13,15 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_type.hpp"
+#include "parser/ast.hpp"
+#include "parser/pretty_printer.hpp"
 #include "symbol_pool.hpp"
 
 #include "testaux/testaux.hpp"
 #include "testaux/token_string.hpp"
+
+
+namespace ast = minijava::ast;
 
 
 // We provide some convenience macros to create token sequences from
@@ -376,7 +385,7 @@ BOOST_DATA_TEST_CASE(parser_rejects_invalid_programs, failure_data)
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::syntax_error& e) {
 		if (pde_idx != e.column()) {
-			std::clog <<"Caught exception: " << e.what() << std::endl;
+			std::clog << "Caught exception: " << e.what() << std::endl;
 		}
 		BOOST_REQUIRE_EQUAL(pde_idx, e.column());
 	}
@@ -448,4 +457,228 @@ BOOST_AUTO_TEST_CASE(throw_syntax_error_three_expected_tokens)
 		"Expected keyword 'for', keyword 'do' or keyword 'while' but found EOF"s,
 		e.what()
 	);
+}
+
+
+namespace /* anonymous */
+{
+	template <typename T>
+	std::enable_if_t<std::is_base_of<ast::node, T>{} && std::is_final<T>{}, std::string>
+	serialize(T& ast_node)
+	{
+		std::ostringstream oss {};
+		auto pp = ast::pretty_printer{oss};
+		pp.visit(ast_node);
+		return oss.str();
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_empty_program)
+{
+	const token_sequence test_data{};
+	auto expected_ast = std::make_unique<ast::program>();
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_single_empty_class)
+{
+	const token_sequence test_data{CLASS("Example", EMPTY_BLOCK)};
+	auto pool = minijava::symbol_pool<>{};
+	auto expected_ast = std::make_unique<ast::program>();
+	expected_ast->add_class(std::make_unique<ast::class_declaration>(pool.normalize("Example")));
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_multiple_empty_classes)
+{
+	using namespace std::string_literals;
+	const token_sequence test_data{
+		CLASS("Alpha", EMPTY_BLOCK),
+		CLASS("Beta",  EMPTY_BLOCK),
+		CLASS("Gamma", EMPTY_BLOCK),
+		CLASS("Delta", EMPTY_BLOCK),
+	};
+	auto pool = minijava::symbol_pool<>{};
+	auto expected_ast = std::make_unique<ast::program>();
+	for (const auto& name : {"Alpha"s, "Beta"s, "Gamma"s, "Delta"s}) {
+		const auto canon = pool.normalize(name);
+		expected_ast->add_class(std::make_unique<ast::class_declaration>(canon));
+	}
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_class_with_fields)
+{
+	const token_sequence test_data{
+		CLASS("Employee",
+			BLOCK(
+				FIELD(id("Text"), "name"),
+				FIELD(tt::kw_int, "sallery"),
+				FIELD(tt::kw_boolean, "trustworthy"),
+				FIELD(tt::kw_void, "questionable"),
+				FIELD(ARRAY(tt::kw_void), "questionable"),
+				FIELD(ARRAY(ARRAY(tt::kw_void)), "questionable"),
+				FIELD(ARRAY(ARRAY(ARRAY(tt::kw_void))), "questionable")
+			)
+		)
+	};
+	auto pool = minijava::symbol_pool<>{};
+	auto expected_ast = std::make_unique<ast::program>();
+	if (auto cls = std::make_unique<ast::class_declaration>(pool.normalize("Employee"))) {
+		{
+			const auto id = pool.normalize("name");
+			const auto tpnam = pool.normalize("Text");
+			auto typ = std::make_unique<ast::type>(tpnam);
+			auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+			cls->add_field(std::move(dcl));
+		}
+		{
+			const auto id = pool.normalize("sallery");
+			auto typ = std::make_unique<ast::type>(ast::primitive_type::type_int);
+			auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+			cls->add_field(std::move(dcl));
+		}
+		{
+			const auto id = pool.normalize("trustworthy");
+			auto typ = std::make_unique<ast::type>(ast::primitive_type::type_boolean);
+			auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+			cls->add_field(std::move(dcl));
+		}
+		for (auto rank = std::size_t{}; rank <= 3; ++rank) {
+			const auto id = pool.normalize("questionable");
+			auto typ = std::make_unique<ast::type>(ast::primitive_type::type_void, rank);
+			auto dcl = std::make_unique<ast::var_decl>(std::move(typ), id);
+			cls->add_field(std::move(dcl));
+		}
+		expected_ast->add_class(std::move(cls));
+	}
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_methods_primitive)
+{
+	using namespace std::string_literals;
+	const token_sequence test_data{
+		CLASS("Example",
+			BLOCK(
+				METHOD(tt::kw_int, "nullary", EMPTY_PARAMS, EMPTY_BLOCK),
+				METHOD(tt::kw_int, "unary", PARAMS(
+					tt::kw_int, id("a")
+				), EMPTY_BLOCK),
+				METHOD(tt::kw_int, "binary", PARAMS(
+					tt::kw_int, id("a"), tt::comma,
+					tt::kw_int, id("b")
+				), EMPTY_BLOCK),
+				METHOD(tt::kw_int, "ternary", PARAMS(
+					tt::kw_int, id("a"), tt::comma,
+					tt::kw_int, id("b"), tt::comma,
+					tt::kw_int, id("c")
+				), EMPTY_BLOCK)
+			)
+		)
+	};
+	auto pool = minijava::symbol_pool<>{};
+	auto expected_ast = std::make_unique<ast::program>();
+	if (auto cls = std::make_unique<ast::class_declaration>(pool.normalize("Example"))) {
+		const std::pair<std::string, std::size_t> methods[] = {
+			{"nullary", 0},
+			{"unary",   1},
+			{"binary",  2},
+			{"ternary", 3},
+		};
+		const std::string parameters[] = {"a", "b", "c"};
+		for (const auto& method : methods) {
+			const auto id = pool.normalize(method.first);
+			auto typ = std::make_unique<ast::type>(ast::primitive_type::type_int);
+			auto prm = std::vector<std::unique_ptr<ast::var_decl>>{};
+			for (auto i = std::size_t{}; i < method.second; ++i) {
+				const auto prmnam = pool.normalize(parameters[i]);
+				auto prmtyp = std::make_unique<ast::type>(ast::primitive_type::type_int);
+				auto prmdcl = std::make_unique<ast::var_decl>(std::move(prmtyp), prmnam);
+				prm.push_back(std::move(prmdcl));
+			}
+			auto blk = std::make_unique<ast::block>();
+			auto mtd = std::make_unique<ast::method>(
+				id, std::move(typ), std::move(prm), std::move(blk)
+			);
+			cls->add_method(std::move(mtd));
+		}
+		expected_ast->add_class(std::move(cls));
+	}
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_methods_udt)
+{
+	using namespace std::string_literals;
+	const token_sequence test_data{
+		CLASS("Example",
+			BLOCK(
+				METHOD(ARRAY(id("Alpha")), "doStuff", PARAMS(
+					ARRAY(id("Alpha")), id("a")
+				), EMPTY_BLOCK)
+			)
+		)
+	};
+	auto pool = minijava::symbol_pool<>{};
+	auto expected_ast = std::make_unique<ast::program>();
+	if (auto cls = std::make_unique<ast::class_declaration>(pool.normalize("Example"))) {
+		const auto id = pool.normalize("doStuff");
+		const auto alp = pool.normalize("Alpha");
+		auto typ = std::make_unique<ast::type>(alp, 1);
+		auto prm = std::vector<std::unique_ptr<ast::var_decl>>{};
+		{
+			const auto prmnam = pool.normalize("a");
+			auto prmtyp = std::make_unique<ast::type>(alp, 1);
+			auto prmdcl = std::make_unique<ast::var_decl>(std::move(prmtyp), prmnam);
+			prm.push_back(std::move(prmdcl));
+		}
+		auto blk = std::make_unique<ast::block>();
+		auto mtd = std::make_unique<ast::method>(
+			id, std::move(typ), std::move(prm), std::move(blk)
+		);
+		cls->add_method(std::move(mtd));
+		expected_ast->add_class(std::move(cls));
+	}
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_methods_main)
+{
+	using namespace std::string_literals;
+	const token_sequence test_data{
+		CLASS("Example",
+			BLOCK(
+				MAIN_METHOD("notmain", "args", EMPTY_BLOCK),
+				MAIN_METHOD("notmain", "sgra", EMPTY_BLOCK)
+			)
+		)
+	};
+	auto pool = minijava::symbol_pool<>{};
+	auto expected_ast = std::make_unique<ast::program>();
+	if (auto cls = std::make_unique<ast::class_declaration>(pool.normalize("Example"))) {
+		const auto id = pool.normalize("notmain");
+		for (const auto& arg : {"args"s, "sgra"s}) {
+			const auto argid = pool.normalize(arg);
+			auto blk = std::make_unique<ast::block>();
+			auto mm = std::make_unique<ast::main_method>(id, argid, std::move(blk));
+			cls->add_main_method(std::move(mm));
+		}
+		expected_ast->add_class(std::move(cls));
+	}
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
 }

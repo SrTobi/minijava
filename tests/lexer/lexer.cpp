@@ -167,7 +167,7 @@ static const success_test success_data[] = {
 		{"alpha/**/beta", id("alpha"), id("beta")},
 		{"alpha beta/**/", id("alpha"), id("beta")},
 		{"/* * / */"},
-		{"/*/**/*/", tt::multiply, tt::divides},
+		{"/*/**/*/", tt::multiply, tt::divide},
 		{"**/*= */*", tt::multiply, tt::multiply, tt::multiply},
 		{"false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="s, tt::kw_false, tt::assign},
 

@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstring>
 #include <initializer_list>
+#include <memory>
+#include <utility>
 #include <stack>
 
 #include "exceptions.hpp"
@@ -12,6 +14,7 @@
 #include "lexer/token.hpp"
 
 #include "parser/operator.tpp"
+#include "parser/ast.hpp"
 
 namespace minijava
 {
@@ -101,6 +104,8 @@ namespace minijava
 		template<typename InIterT>
 		struct parser
 		{
+			template<typename Type>
+			using ast_ptr = std::unique_ptr<Type>;
 
 			template<token_type... TTs>
 			using set_t = token_type_set<TTs...>;
@@ -111,54 +116,72 @@ namespace minijava
 				token_buffer.push(*it);
 			}
 
-			void parse_program()
+			ast_ptr<ast::program> parse_program()
 			{
+				auto prog = make<ast::program>();
 				while (!current_is(token_type::eof)) {
 					expect(token_type::kw_class);
-					parse_class_declaration();
+					auto decl = parse_class_declaration();
+					prog->add_class(std::move(decl));
 				}
+
+				return prog;
 			}
 
-			void parse_class_declaration()
+			ast_ptr<ast::class_declaration> parse_class_declaration()
 			{
 				assert(current_is(token_type::kw_class));
 				advance();
+				auto id_tok = current();
 				consume(token_type::identifier);
+				auto class_decl = make<ast::class_declaration>(id_tok.lexval());
 				consume(token_type::left_brace);
 				while (!current_is(token_type::right_brace)) {
 					expect(token_type::kw_public);
-					parse_class_member();
+					parse_class_member(*class_decl);
 				}
 				consume(token_type::right_brace);
+				return class_decl;
 			}
 
-			void parse_class_member()
+			void parse_class_member(ast::class_declaration& decl)
 			{
 				assert(current_is(token_type::kw_public));
 				advance();
 				expect(cat(set_t<token_type::kw_static>{}, type_first));
 				if (current_is(token_type::kw_static)) {
-					return parse_main_method();
-				}
-				// parse field or method
-				parse_type();
-				consume(token_type::identifier);
-				if (consume(token_type::semicolon, token_type::left_paren) == token_type::left_paren) {
-					// parse method
-					if (current_is(parameters_first)) {
-						parse_parameters();
+					auto main_method = parse_main_method();
+					decl.add_main_method(std::move(main_method));
+				} else {
+					// parse field or method
+					auto type = parse_type();
+					auto id_tok = current();
+					consume(token_type::identifier);
+					if (consume(token_type::semicolon, token_type::left_paren) == token_type::left_paren) {
+						// parse method
+						std::vector<ast_ptr<ast::var_decl>> params;
+						if (current_is(parameters_first)) {
+							params = parse_parameters();
+						}
+						consume(token_type::right_paren);
+						expect(token_type::left_brace);
+						auto body = parse_block();
+						auto method = make<ast::method>(id_tok.lexval(), std::move(type), std::move(params), std::move(body));
+						decl.add_method(std::move(method));
+					} else {
+						// field
+						auto field = make<ast::var_decl>(std::move(type), id_tok.lexval());
+						decl.add_field(std::move(field));
 					}
-					consume(token_type::right_paren);
-					expect(token_type::left_brace);
-					parse_block();
 				}
 			}
 
-			void parse_main_method()
+			ast_ptr<ast::main_method> parse_main_method()
 			{
 				assert(current_is(token_type::kw_static));
 				advance();
 				consume(token_type::kw_void);
+				const auto id_main = current();
 				consume(token_type::identifier);
 				consume(token_type::left_paren);
 				expect(token_type::identifier);
@@ -168,10 +191,12 @@ namespace minijava
 				advance();
 				consume(token_type::left_bracket);
 				consume(token_type::right_bracket);
+				const auto id_args = current();
 				consume(token_type::identifier);
 				consume(token_type::right_paren);
 				expect(block_first);
-				return parse_block();
+				auto body = parse_block();
+				return make<ast::main_method>(id_main.lexval(), id_args.lexval(), std::move(body));
 			}
 
 			static constexpr auto parameters_first = set_t<
@@ -186,24 +211,28 @@ namespace minijava
 				token_type::right_paren
 			>{};
 
-			void parse_parameters()
+			std::vector<ast_ptr<ast::var_decl>> parse_parameters()
 			{
 				assert(current_is(parameters_first));
+				std::vector<ast_ptr<ast::var_decl>> params;
 				while (true) {
-					parse_parameter();
+					auto param = parse_parameter();
+					params.push_back(std::move(param));
 					if (!current_is(token_type::comma)) {
-						return;
+						return params;
 					}
 					advance();
 					expect(type_first);
 				}
 			}
 
-			void parse_parameter()
+			ast_ptr<ast::var_decl> parse_parameter()
 			{
 				assert(current_is(type_first));
-				parse_type();
+				auto type = parse_type();
+				auto id_tok = current();
 				consume(token_type::identifier);
+				return make<ast::var_decl>(std::move(type), id_tok.lexval());
 			}
 
 			static constexpr auto type_first = set_t<
@@ -213,31 +242,38 @@ namespace minijava
 				token_type::kw_void
 			>{};
 
-			void parse_type()
+			ast_ptr<ast::type> parse_type()
 			{
 				assert(current_is(type_first));
+				auto type_tok = current();
 				advance();
+				std::size_t rank = 0;
 				while (current_is(token_type::left_bracket)) {
 					advance();
 					consume(token_type::right_bracket);
+					++rank;
 				}
+				return make_type(type_tok, rank);
 			}
 
 			static constexpr auto block_first = set_t<
 				token_type::left_brace
 			>{};
 
-			void parse_block()
+			ast_ptr<ast::block> parse_block()
 			{
 				assert(current_is(token_type::left_brace));
 				advance();
+				auto block = make<ast::block>();
 				while (!current_is(token_type::right_brace)) {
-					parse_block_statement();
+					auto stmt = parse_block_statement();
+					block->add_block_statement(std::move(stmt));
 				}
 				advance();
+				return block;
 			}
 
-			void parse_block_statement()
+			ast_ptr<ast::block_statement> parse_block_statement()
 			{
 				if (!current_is(type_first)) {
 					// We see a while / return / if / ...
@@ -275,22 +311,26 @@ namespace minijava
 					putback(second_token);
 					putback(first_token);
 				}
-				parse_local_variable_decl();
+				return parse_local_variable_decl();
 			}
 
-			void parse_local_variable_decl()
+			ast_ptr<ast::local_variable_statement> parse_local_variable_decl()
 			{
 				assert(current_is(type_first));
-				parse_type();
+				auto type = parse_type();
+				auto id_tok = current();
 				consume(token_type::identifier);
+				ast_ptr<ast::expression> init = nullptr;
 				if (current_is(token_type::assign)) {
 					advance();
-					parse_expression();
+					init = parse_expression();
 				}
 				consume(token_type::semicolon);
+				auto decl = make<ast::var_decl>(std::move(type), id_tok.lexval());
+				return make<ast::local_variable_statement>(std::move(decl), std::move(init));
 			}
 
-			void parse_statement()
+			ast_ptr<ast::statement> parse_statement()
 			{
 				switch (current_type()) {
 				case token_type::left_brace:
@@ -308,50 +348,57 @@ namespace minijava
 				}
 			}
 
-			void parse_empty_statement()
+			ast_ptr<ast::empty_statement> parse_empty_statement()
 			{
 				assert(current_is(token_type::semicolon));
 				advance();
+				return make<ast::empty_statement>();
 			}
 
-			void parse_while()
+			ast_ptr<ast::while_statement> parse_while()
 			{
 				assert(current_is(token_type::kw_while));
 				advance();
 				consume(token_type::left_paren);
-				parse_expression();
+				auto cond = parse_expression();
 				consume(token_type::right_paren);
-				parse_statement();
+				auto body = parse_statement();
+				return make<ast::while_statement>(std::move(cond), std::move(body));
 			}
 
-			void parse_if()
+			ast_ptr<ast::if_statement> parse_if()
 			{
 				assert(current_is(token_type::kw_if));
 				advance();
 				consume(token_type::left_paren);
-				parse_expression();
+				auto cond = parse_expression();
 				consume(token_type::right_paren);
-				parse_statement();
+				auto then_body = parse_statement();
+				ast_ptr<ast::statement> else_body = nullptr;
 				if (current_is(token_type::kw_else)) {
 					advance();
-					parse_statement();
+					else_body = parse_statement();
 				}
+				return make<ast::if_statement>(std::move(cond), std::move(then_body), std::move(else_body));
 			}
 
-			void parse_expression_statement()
+			ast_ptr<ast::expression_statement> parse_expression_statement()
 			{
-				parse_expression();
+				auto expr = parse_expression();
 				consume(token_type::semicolon);
+				return make<ast::expression_statement>(std::move(expr));
 			}
 
-			void parse_return()
+			ast_ptr<ast::return_statement> parse_return()
 			{
 				assert(current_is(token_type::kw_return));
 				advance();
+				ast_ptr<ast::expression> ret_expr = nullptr;
 				if (!current_is(token_type::semicolon)) {
-					parse_expression();
+					ret_expr = parse_expression();
 				}
 				consume(token_type::semicolon);
+				return make<ast::return_statement>(std::move(ret_expr));
 			}
 
 			static constexpr auto prefix_ops_first = set_t<
@@ -364,11 +411,11 @@ namespace minijava
 				token_type::left_bracket
 			>{};
 
-			void parse_expression()
+			ast_ptr<ast::expression> parse_expression()
 			{
 				// This function uses an iterative formulation of the
 				// precedence climbing algorithm.
-				auto prec_stack = std::stack<int>{};
+				auto prec_stack = std::stack<std::tuple<int, ast_ptr<ast::expression>, token_type>>{};
 				auto preop_stack = std::stack<token_type>{};
 				auto cur_prec = -1;  // impossible precedence level
 				auto min_prec = 0;
@@ -379,12 +426,14 @@ namespace minijava
 					advance();
 				}
 				expect(primary_expr_first);
-				parse_primary();
+				auto rhs = parse_primary();
 				while (current_is(postfix_ops_first)) {
-					parse_postfix_op();
+					rhs = parse_postfix_op(std::move(rhs));
 				}
 				while (!preop_stack.empty()) {
+					auto op = preop_stack.top();
 					preop_stack.pop();
+					rhs = make<ast::unary_expression>(to_unary_operation(op), std::move(rhs));
 				}
 			inner_loop:
 				cur_prec = precedence(current_type());
@@ -392,35 +441,82 @@ namespace minijava
 					if (is_left_assoc(current_type())) {
 						++cur_prec;
 					}
-					prec_stack.push(min_prec);
+					prec_stack.emplace(min_prec, std::move(rhs), current_type());
 					min_prec = cur_prec;
 					advance();
 					goto outer_loop;
 				}
 				if (!prec_stack.empty()) {
-					min_prec = prec_stack.top();
+					assert(rhs);
+					ast_ptr<ast::expression> lhs;
+					token_type op_type;
+					std::tie(min_prec, lhs, op_type) = std::move(prec_stack.top());
 					prec_stack.pop();
+					if (op_type == token_type::assign)
+						rhs = make<ast::assignment_expression>(std::move(lhs), std::move(rhs));
+					else
+						rhs = make<ast::binary_expression>(to_binary_operation(op_type), std::move(lhs), std::move(rhs));
 					goto inner_loop;
+				}
+				return rhs;
+			}
+
+			static ast::unary_operation_type to_unary_operation(const token_type& type)
+			{
+				using ast::unary_operation_type;
+				switch (type) {
+					case token_type::logical_not: return unary_operation_type::logical_not;
+					case token_type::minus:       return unary_operation_type::minus;
+				default:
+					MINIJAVA_NOT_REACHED();
 				}
 			}
 
-			void parse_postfix_op()
+			static ast::binary_operation_type to_binary_operation(const token_type& type)
+			{
+				using ast::binary_operation_type;
+				switch (type) {
+					case token_type::logical_or:    return binary_operation_type::logical_or;
+					case token_type::logical_and:   return binary_operation_type::logical_and;
+					case token_type::equal:         return binary_operation_type::equal;
+					case token_type::not_equal:     return binary_operation_type::not_equal;
+					case token_type::less_than:     return binary_operation_type::less_than;
+					case token_type::less_equal:    return binary_operation_type::less_equal;
+					case token_type::greater_than:  return binary_operation_type::greater_than;
+					case token_type::greater_equal: return binary_operation_type::greater_equal;
+					case token_type::plus:          return binary_operation_type::plus;
+					case token_type::minus:         return binary_operation_type::minus;
+					case token_type::multiply:      return binary_operation_type::multiply;
+					case token_type::divide:        return binary_operation_type::divide;
+					case token_type::modulo:        return binary_operation_type::modulo;
+				default:
+					MINIJAVA_NOT_REACHED();
+				}
+			}
+
+
+			ast_ptr<ast::expression> parse_postfix_op(ast_ptr<ast::expression> inner)
 			{
 				assert(current_is(postfix_ops_first));
 				if (current_is(token_type::left_bracket)) {
 					// Array access
 					advance();
-					parse_expression();
+					auto index_expr = parse_expression();
 					consume(token_type::right_bracket);
+					return make<ast::array_access>(std::move(inner), std::move(index_expr));
 				} else {
 					// Field access or method invocation
 					consume(token_type::dot);
+					auto id_tok = current();
 					consume(token_type::identifier);
 					if (current_is(token_type::left_paren)) {
 						// Method invocation
 						advance();
-						parse_arguments();
+						auto args = parse_arguments();
 						consume(token_type::right_paren);
+						return make<ast::method_invocation>(std::move(inner), id_tok.lexval(), std::move(args));
+					} else {
+						return make<ast::variable_access>(std::move(inner), id_tok.lexval());
 					}
 				}
 			}
@@ -436,30 +532,49 @@ namespace minijava
 				token_type::kw_new
 			>{};
 
-			void parse_primary()
+			ast_ptr<ast::expression> parse_primary()
 			{
 				assert(current_is(primary_expr_first));
 				switch (current_type()) {
 				case token_type::kw_null:
+					advance();
+					return make<ast::null_constant>();
 				case token_type::kw_false:
+					advance();
+					return make<ast::boolean_constant>(false);
 				case token_type::kw_true:
+					advance();
+					return make<ast::boolean_constant>(true);
 				case token_type::integer_literal:
+					{
+						auto lit_tok = current();
+						advance();
+						return make<ast::integer_constant>(lit_tok.lexval());
+					}
 				case token_type::kw_this:
 					advance();
-					return;
+					return make<ast::this_ref>();
 				case token_type::identifier:
-					advance();
-					if (current_is(token_type::left_paren)) {
+					{
+						// variable or function call
+						auto id_tok = current();
 						advance();
-						parse_arguments();
-						consume(token_type::right_paren);
+						if (current_is(token_type::left_paren)) {
+							advance();
+							auto args = parse_arguments();
+							consume(token_type::right_paren);
+							return make<ast::method_invocation>(nullptr, id_tok.lexval(), std::move(args));
+						} else {
+							return make<ast::variable_access>(nullptr, id_tok.lexval());
+						}
 					}
-					return;
 				case token_type::left_paren:
-					advance();
-					parse_expression();
-					consume(token_type::right_paren);
-					return;
+					{
+						advance();
+						auto inner = parse_expression();
+						consume(token_type::right_paren);
+						return inner;
+					}
 				case token_type::kw_new:
 					return parse_new_expression();
 				default:
@@ -467,24 +582,27 @@ namespace minijava
 				}
 			}
 
-			void parse_arguments()
+			std::vector<ast_ptr<ast::expression>> parse_arguments()
 			{
+				std::vector<ast_ptr<ast::expression>> args{};
 				if (current_is(token_type::right_paren)) {
-					return;
+					return args;
 				}
 				while (true) {
-					parse_expression();
+					auto expr = parse_expression();
+					args.push_back(std::move(expr));
 					if (!current_is(token_type::comma)) {
-						return;
+						return args;
 					}
 					advance();
 				}
 			}
 
-			void parse_new_expression()
+			ast_ptr<ast::expression> parse_new_expression()
 			{
 				assert(current_is(token_type::kw_new));
 				advance();
+				const auto type_tok = current();
 				const auto type = consume(type_first);
 				switch (expect(token_type::left_paren, token_type::left_bracket)) {
 				case token_type::left_paren:
@@ -493,24 +611,29 @@ namespace minijava
 					}
 					advance();
 					consume(token_type::right_paren);
-					return;
+					return make<ast::object_instantiation>(type_tok.lexval());
 				case token_type::left_bracket:
-					advance();
-					parse_expression();
-					consume(token_type::right_bracket);
-					while (current_is(token_type::left_bracket)) {
-						const auto left_bracket = current();
+					{
+						std::size_t rank = 1;
 						advance();
-						if (!current_is(token_type::right_bracket)) {
-							// Immediately subscripted array expression
-							// new int[length][][expr]
-							// -> (new int[length][])[expr]
-							putback(left_bracket);
-							return;
+						auto extent_expr = parse_expression();
+						consume(token_type::right_bracket);
+						while (current_is(token_type::left_bracket)) {
+							const auto left_bracket = current();
+							advance();
+							if (!current_is(token_type::right_bracket)) {
+								// Immediately subscripted array expression
+								// new int[length][][expr]
+								// -> (new int[length][])[expr]
+								putback(left_bracket);
+								break;
+							}
+							++rank;
+							advance();
 						}
-						advance();
+						auto type = make_type(type_tok, rank);
+						return make<ast::array_instantiation>(std::move(type), std::move(extent_expr));
 					}
-					return;
 				default:
 					MINIJAVA_NOT_REACHED();
 				}
@@ -586,8 +709,34 @@ namespace minijava
 				const auto candidates = std::initializer_list<token_type>{tts...};
 				return std::any_of(
 					std::begin(candidates), std::end(candidates),
-					[ct = current_type()](const auto tt){ return ct == tt; }
+					[ct = current_type()](const auto tt) { return ct == tt; }
 				);
+			}
+
+			template<typename Type, typename... ParamsT>
+			static ast_ptr<Type> make(ParamsT&&... params)
+			{
+				return std::make_unique<Type>(std::forward<ParamsT>(params)...);
+			}
+
+			static ast::primitive_type to_primitive(const token& tok)
+			{
+				using ast::primitive_type;
+				switch (tok.type()) {
+				case token_type::kw_boolean: return primitive_type::type_boolean;
+				case token_type::kw_int:     return primitive_type::type_int;
+				case token_type::kw_void:    return primitive_type::type_void;
+				default:
+					MINIJAVA_NOT_REACHED();
+				}
+			}
+
+			static ast_ptr<ast::type> make_type(const token& tok, const std::size_t rank)
+			{
+				if (tok.type() == token_type::identifier)
+					return make<ast::type>(tok.lexval(), rank);
+				else
+					return make<ast::type>(to_primitive(tok), rank);
 			}
 
 			std::stack<token> token_buffer;
@@ -600,7 +749,7 @@ namespace minijava
 
 
 	template<typename InIterT>
-	void parse_program(InIterT first, InIterT last)
+	std::unique_ptr<ast::program> parse_program(InIterT first, InIterT last)
 	{
 		auto parser = detail::parser<InIterT>(first, last);
 		return parser.parse_program();
