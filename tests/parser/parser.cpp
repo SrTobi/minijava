@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #define BOOST_TEST_MODULE  parser_parser
@@ -459,22 +460,27 @@ BOOST_AUTO_TEST_CASE(throw_syntax_error_three_expected_tokens)
 }
 
 
-//namespace /* anonymous */
-//{
-//	std::string serialize(ast::node& ast_node)
-//	{
-//		std::ostringstream oss {};
-//		auto pp = ast::pretty_printer{oss};
-//		pp.visit(ast_node);
-//		return oss.str();
-//	}
-//}
-//
-//
-//BOOST_AUTO_TEST_CASE(ast_for_empty_program)
-//{
-//	const token_sequence test_data {};
-//	auto expected_ast = std::make_unique<ast::program>();
-//	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
-//	BOOST_REQUIRE_EQUAL(serialize(expected_ast), serialize(actual_ast));
-//}
+namespace /* anonymous */
+{
+	template<typename T,
+	         typename = std::enable_if_t<
+			         std::is_base_of<ast::node, T>::value
+			         && std::is_final<T>::value
+	         >>
+	std::string serialize(T& ast_node)
+	{
+		std::ostringstream oss {};
+		auto pp = ast::pretty_printer{oss};
+		pp.visit(ast_node);
+		return oss.str();
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(ast_for_empty_program)
+{
+	const token_sequence test_data {};
+	auto expected_ast = std::make_unique<ast::program>();
+	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
