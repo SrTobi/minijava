@@ -180,7 +180,7 @@ namespace minijava
 				assert(current_is(token_type::kw_static));
 				advance();
 				consume(token_type::kw_void);
-				auto id_tok = current();
+				const auto id_main = current();
 				consume(token_type::identifier);
 				consume(token_type::left_paren);
 				expect(token_type::identifier);
@@ -190,11 +190,12 @@ namespace minijava
 				advance();
 				consume(token_type::left_bracket);
 				consume(token_type::right_bracket);
+				const auto id_args = current();
 				consume(token_type::identifier);
 				consume(token_type::right_paren);
 				expect(block_first);
 				auto body = parse_block();
-				return make<ast::main_method>(id_tok.lexval(), std::move(body));
+				return make<ast::main_method>(id_main.lexval(), id_args.lexval(), std::move(body));
 			}
 
 			static constexpr auto parameters_first = set_t<

@@ -513,7 +513,7 @@ namespace minijava
 			 *     rank of the array or 0 if this type is not an array type
 			 *
 			 */
-			type(primitive_type name, std::size_t rank)
+			type(primitive_type name, std::size_t rank = 0)
 					: node{}, _name{name}, _rank{rank} {}
 
 			/**
@@ -527,7 +527,7 @@ namespace minijava
 			 *     rank of the array or 0 if this type is not an array type
 			 *
 			 */
-			type(symbol name, std::size_t rank)
+			type(symbol name, std::size_t rank = 0)
 					: node{}, _name{name}, _rank{rank}
 			{
 				assert(!_name.empty());
@@ -804,7 +804,7 @@ namespace minijava
 			/**
 			 * @brief
 			 *     Returns the type of this operation
-			 * 
+			 *
 			 * @return
 			 *     type of this operation
 			 *
@@ -2071,15 +2071,18 @@ namespace minijava
 			 * @brief
 			 *     Constructs a main method node.
 			 *
-			 * @param name
-			 *     method name
+			 * @param main
+			 *     method name (usually `main`)
+			 *
+			 * @param args
+			 *     parameter name (usually `args`)
 			 *
 			 * @param body
 			 *     method body
 			 *
 			 */
-			main_method(symbol name, std::unique_ptr<block> body)
-					: _name{name}, _body{std::move(body)}
+			main_method(symbol main, symbol args, std::unique_ptr<block> body)
+				: _name{main}, _argname{args}, _body{std::move(body)}
 			{
 				assert(!_name.empty());
 				assert(_body);
@@ -2096,6 +2099,19 @@ namespace minijava
 			symbol name() const
 			{
 				return _name;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the declared parameter.
+			 *
+			 * @return
+			 *     name of declared parameter
+			 *
+			 */
+			symbol argname() const
+			{
+				return _argname;
 			}
 
 			/**
@@ -2133,6 +2149,9 @@ namespace minijava
 
 			/** @brief method name */
 			symbol _name;
+
+			/** @brief Declared paramter name */
+			symbol _argname;
 
 			/** @brief method body */
 			std::unique_ptr<block> _body;

@@ -297,7 +297,7 @@ namespace minijava
 
 		void pretty_printer::visit(main_method& node)
 		{
-			_print("public static void "s + node.name().c_str() + "(String[] args)");
+			_print("public static void "s + node.name().c_str() + "(String[] " + node.argname().c_str() + ")");
 			_start_method = true;
 			node.body().accept(*this);
 		}
