@@ -804,7 +804,7 @@ namespace minijava
 			/**
 			 * @brief
 			 *     Returns the type of this operation
-			 * 
+			 *
 			 * @return
 			 *     type of this operation
 			 *
@@ -2083,24 +2083,6 @@ namespace minijava
 			 */
 			main_method(symbol main, symbol args, std::unique_ptr<block> body)
 				: _name{main}, _argname{args}, _body{std::move(body)}
-			{
-				assert(!_name.empty());
-				assert(_body);
-			}
-
-			/**
-			 * @brief
-			 *     Constructs a main method node.
-			 *
-			 * @param main
-			 *     method name (usually `main`)
-			 *
-			 * @param body
-			 *     method body
-			 *
-			 */
-			main_method(symbol main, std::unique_ptr<block> body)
-				: _name{main},  _body{std::move(body)}
 			{
 				assert(!_name.empty());
 				assert(_body);
