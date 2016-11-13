@@ -178,7 +178,10 @@ BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
 	);
 
 	pp.visit(*test_conditional_block);
-	BOOST_REQUIRE_EQUAL("if (true)\n\t;\nelse if (false) {\n\ti = 0;\n} else {\n}\n"s, oss.str());
+	BOOST_REQUIRE_EQUAL(
+			"if (true)\n\t;\nelse if (false) {\n\ti = 0;\n} else {\n}\n"s,
+			oss.str()
+	);
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
