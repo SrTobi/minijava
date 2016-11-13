@@ -377,7 +377,7 @@ namespace minijava
 					advance();
 					else_body = parse_statement();
 				}
-				return make<ast::if_statement>(std::move(then_body), std::move(else_body), std::move(cond));
+				return make<ast::if_statement>(std::move(cond), std::move(then_body), std::move(else_body));
 			}
 
 			ast_ptr<ast::expression_statement> parse_expression_statement()
