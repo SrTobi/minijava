@@ -17,7 +17,7 @@ namespace testaux
 		namespace fs = boost::filesystem;
 		const auto path = fs::unique_path(fs::temp_directory_path() / "%%%%%%%%");
 		_filename = path.string();
-		std::ofstream stream{_filename};
+		std::ofstream stream{_filename, std::ios_base::binary | std::ios_base::out};
 		stream.exceptions(std::iostream::failbit);
 		stream << text << std::flush;
 	}

@@ -291,14 +291,14 @@ namespace minijava
 		const auto usestdin = (setup.input == "-");
 		const auto usestdout = (setup.output == "-");
 		if (!usestdin) {
-			istr.open(setup.input);
+			istr.open(setup.input, std::ios_base::binary | std::ios_base::in);
 			if (!istr) {
 				const auto ec = std::error_code{errno, std::system_category()};
 				throw std::system_error{ec, "Cannot open input file: " + setup.input};
 			}
 		}
 		if (!usestdout) {
-			ostr.open(setup.output);
+			ostr.open(setup.output, std::ios_base::binary | std::ios_base::out);
 			if (!ostr) {
 				const auto ec = std::error_code{errno, std::system_category()};
 				throw std::system_error{ec, "Cannot open output file: " + setup.output};

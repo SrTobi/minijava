@@ -30,7 +30,7 @@ namespace /* anonymous */
 	bool file_has_content(const std::string& filename,
 	                      const std::string& expected)
 	{
-		std::ifstream istr{filename};
+		std::ifstream istr{filename, std::ios_base::binary | std::ios_base::in};
 		if (!istr) {
 			throw std::ios_base::failure{"Cannot open file: " + filename};
 		}
@@ -42,7 +42,7 @@ namespace /* anonymous */
 		return std::equal(first_1, last_1, first_2, last_2);
 	}
 
-	// Creates a string with `n` uniformyly distributed random bytes.  The seed
+	// Creates a string with `n` uniformly distributed random bytes.  The seed
 	// is deterministic so the test behaves the same every time.
 	std::string make_random_string(const std::size_t n)
 	{
