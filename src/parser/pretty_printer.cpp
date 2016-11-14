@@ -376,10 +376,36 @@ namespace minijava
 			_output << ";\n";
 		}
 
+		namespace /* anonymous */
+		{
+			bool is_empty_statement(const ast::node* node)
+			{
+				return dynamic_cast<const ast::empty_statement*>(node) != nullptr;
+			}
+
+			bool is_if_statement(const ast::node* node)
+			{
+				return dynamic_cast<const ast::if_statement*>(node) != nullptr;
+			}
+
+			bool is_nonempty_block(const ast::node *node)
+			{
+				if (const auto p = dynamic_cast<const ast::block*>(node)) {
+					return !std::all_of(
+							std::begin(p->body()),
+							std::end(p->body()),
+					        [](const std::unique_ptr<block_statement>& s)
+									{ return is_empty_statement(s.get()); }
+					);
+				}
+				return false;
+			}
+		}
+
 		void pretty_printer::visit(block& node)
 		{
 			const auto is_conditional = _start_if || _start_else;
-			const auto is_empty = node.body().empty();
+			const auto is_empty = !is_nonempty_block(&node);
 
 			if (is_conditional || _start_loop || _start_method) {
 				_output << " {";
@@ -403,27 +429,6 @@ namespace minijava
 			}
 		}
 
-		namespace /* anonymous */
-		{
-			bool is_empty_statement(const ast::node* node)
-			{
-				return dynamic_cast<const ast::empty_statement*>(node) != nullptr;
-			}
-
-			bool is_if_statement(const ast::node* node)
-			{
-				return dynamic_cast<const ast::if_statement*>(node) != nullptr;
-			}
-
-			bool is_nonempty_block(const ast::node *node)
-			{
-				if (const auto p = dynamic_cast<const ast::block*>(node)) {
-					return !p->body().empty();
-				}
-				return false;
-			}
-		}
-
 		void pretty_printer::visit(if_statement& node)
 		{
 			const auto then_is_block = is_nonempty_block(&node.then_statement());
@@ -433,8 +438,12 @@ namespace minijava
 			if (_start_else) {
 				_output << " if (";
 			} else {
+				if (_start_if || _start_loop) {
+					_output << '\n';
+				}
 				_print("if (");
 			}
+			_start_if = _start_else = _start_loop = false;
 			{
 				const auto pep_guard = make_guard(_print_expression_parens, false);
 				node.condition().accept(*this);
@@ -474,6 +483,8 @@ namespace minijava
 
 		void pretty_printer::visit(while_statement& node)
 		{
+			const auto body_is_block = is_nonempty_block(&node.body());
+
 			_start_block_statement();
 
 			_print("while (");
@@ -482,10 +493,13 @@ namespace minijava
 				node.condition().accept(*this);
 			}
 			_output << ")";
+			if (!body_is_block) {
+				_indentation_level++;
+			}
 			_start_loop = true;
-			{
-				const auto il_guard = make_guard_incr(_indentation_level);
-				node.body().accept(*this);
+			node.body().accept(*this);
+			if (!body_is_block) {
+				_indentation_level--;
 			}
 		}
 
@@ -542,6 +556,12 @@ namespace minijava
 
 		void pretty_printer::visit(class_declaration& node)
 		{
+			if (node.main_methods().empty() && node.methods().empty()
+					&& node.fields().empty()) {
+				_println("class "s + node.name().c_str() + " { }");
+				return;
+			}
+
 			using member_pair = std::pair<symbol, ast::node*>;
 			const auto ext = [](auto&& p){
 				return std::make_pair(p->name(), p.get());
