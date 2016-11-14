@@ -1,5 +1,5 @@
-#ifndef MINIJAVA_INCLUDED_FROM_SYMBOL_POOL_HPP
-#error "Never `#include <symbol_pool.tpp>` directly; `#include <symbol_pool.hpp>` instead."
+#ifndef MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_POOL_HPP
+#error "Never `#include <symbol/symbol_pool.tpp>` directly; `#include <symbol/symbol_pool.hpp>` instead."
 #endif
 
 #include <algorithm>

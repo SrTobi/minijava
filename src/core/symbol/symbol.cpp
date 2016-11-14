@@ -1,4 +1,4 @@
-#include "symbol.hpp"
+#include "symbol/symbol.hpp"
 
 #include <ostream>
 

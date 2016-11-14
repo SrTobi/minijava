@@ -14,7 +14,7 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
 #include "parser/pretty_printer.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include "testaux/syntaxgen.hpp"
 

@@ -11,7 +11,7 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_iterator.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include "testaux/token_string.hpp"
 

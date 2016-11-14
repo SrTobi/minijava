@@ -15,7 +15,7 @@
 #include "lexer/token_type.hpp"
 #include "parser/ast.hpp"
 #include "parser/pretty_printer.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include "testaux/testaux.hpp"
 #include "testaux/token_string.hpp"

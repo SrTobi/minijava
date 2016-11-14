@@ -12,7 +12,7 @@
 #include <iosfwd>
 
 #include "lexer/token_type.hpp"
-#include "symbol.hpp"
+#include "symbol/symbol.hpp"
 
 
 namespace minijava

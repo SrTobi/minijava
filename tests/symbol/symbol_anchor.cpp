@@ -1,4 +1,4 @@
-#include "symbol_anchor.hpp"
+#include "symbol/symbol_anchor.hpp"
 
 #include "global.hpp"
 
@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#define BOOST_TEST_MODULE  symbol_anchor
+#define BOOST_TEST_MODULE  symbol_symbol_anchor
 #include <boost/test/unit_test.hpp>
 
 

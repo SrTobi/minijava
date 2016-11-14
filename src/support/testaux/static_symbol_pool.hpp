@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 namespace testaux
 {
