@@ -483,6 +483,8 @@ namespace minijava
 
 		void pretty_printer::visit(while_statement& node)
 		{
+			const auto body_is_block = is_nonempty_block(&node.body());
+
 			_start_block_statement();
 
 			_print("while (");
@@ -491,10 +493,13 @@ namespace minijava
 				node.condition().accept(*this);
 			}
 			_output << ")";
+			if (!body_is_block) {
+				_indentation_level++;
+			}
 			_start_loop = true;
-			{
-				const auto il_guard = make_guard_incr(_indentation_level);
-				node.body().accept(*this);
+			node.body().accept(*this);
+			if (!body_is_block) {
+				_indentation_level--;
 			}
 		}
 
