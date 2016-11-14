@@ -452,10 +452,7 @@ namespace minijava
 					token_type op_type;
 					std::tie(min_prec, lhs, op_type) = std::move(prec_stack.top());
 					prec_stack.pop();
-					if (op_type == token_type::assign)
-						rhs = make<ast::assignment_expression>(std::move(lhs), std::move(rhs));
-					else
-						rhs = make<ast::binary_expression>(to_binary_operation(op_type), std::move(lhs), std::move(rhs));
+					rhs = make<ast::binary_expression>(to_binary_operation(op_type), std::move(lhs), std::move(rhs));
 					goto inner_loop;
 				}
 				return rhs;
@@ -476,6 +473,7 @@ namespace minijava
 			{
 				using ast::binary_operation_type;
 				switch (type) {
+					case token_type::assign:        return binary_operation_type::assign;
 					case token_type::logical_or:    return binary_operation_type::logical_or;
 					case token_type::logical_and:   return binary_operation_type::logical_and;
 					case token_type::equal:         return binary_operation_type::equal;
