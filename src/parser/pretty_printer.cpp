@@ -383,7 +383,6 @@ namespace minijava
 
 			if (is_conditional || _start_loop || _start_method) {
 				_output << " {";
-				// TODO: Can we use RAII here?  Where are those reset?
 				_start_if = _start_else = _start_loop = _start_method = false;
 			} else {
 				_print("{");
@@ -445,7 +444,7 @@ namespace minijava
 			if (!then_is_block) {
 				_indentation_level++;
 			}
-			_start_if = true;  // TODO: Where is this reset?
+			_start_if = true;
 			node.then_statement().accept(*this);
 			if (!then_is_block) {
 				_indentation_level--;
@@ -461,7 +460,7 @@ namespace minijava
 				if (!else_is_block && !else_is_chain) {
 					_indentation_level++;
 				}
-				_start_else = true;  // TODO: Where is this reset?
+				_start_else = true;
 				else_stmt->accept(*this);
 				if (!else_is_block && !else_is_chain) {
 					_indentation_level--;
@@ -483,7 +482,7 @@ namespace minijava
 				node.condition().accept(*this);
 			}
 			_output << ")\n";
-			_start_loop = true;  // TODO: Where is this reset?
+			_start_loop = true;
 			{
 				const auto il_guard = make_guard_incr(_indentation_level);
 				node.body().accept(*this);
@@ -519,7 +518,7 @@ namespace minijava
 		void pretty_printer::visit(main_method& node)
 		{
 			_print("public static void "s + node.name().c_str() + "(String[] " + node.argname().c_str() + ")");
-			const auto sm_guard = make_guard(_start_method, true);
+			_start_method = true;
 			node.body().accept(*this);
 		}
 
@@ -537,7 +536,7 @@ namespace minijava
 				);
 			}
 			_output << ")";
-			const auto sm_guard = make_guard(_start_method, true);
+			_start_method = true;
 			node.body().accept(*this);
 		}
 
