@@ -1,21 +1,136 @@
 #include "parser/pretty_printer.hpp"
 
-#include <map>
+#include <algorithm>
+#include <cstring>
+#include <iterator>
+#include <utility>
+#include <vector>
 
 #include "exceptions.hpp"
 
+using namespace std::string_literals;
+
 namespace minijava
 {
+	namespace /* anonymous */
+	{
+
+		// TODO: This is copy-pasta from `/tests/testaux/syntaxgen.tpp`.  Maybe
+		// we should put it into a utility header.  Maybe I should suibmit a
+		// proposal to add this to the standard library.  Maybe I should sit by
+		// a lake.
+
+		template <typename T>
+		class restore_finally final
+		{
+		public:
+
+			restore_finally() noexcept = default;
+
+			restore_finally(T& dest, const T update) noexcept
+				: _destp{&dest}, _prev{dest}
+			{
+				dest = update;
+			}
+
+			~restore_finally() noexcept
+			{
+				if (_destp != nullptr) {
+					*_destp = _prev;
+				}
+			}
+
+			restore_finally(const restore_finally&) = delete;
+
+			restore_finally(restore_finally&& other) noexcept : restore_finally{}
+			{
+				swap(*this, other);
+			}
+
+			restore_finally& operator=(const restore_finally&) = delete;
+
+			restore_finally& operator=(restore_finally&& other) noexcept
+			{
+				restore_finally temp{};
+				swap(*this, temp);
+				swap(*this, other);
+				return *this;
+			}
+
+			friend void swap(restore_finally& lhs, restore_finally& rhs) noexcept
+			{
+				std::swap(lhs._destp, rhs._destp);
+				std::swap(lhs._prev, rhs._prev);
+			}
+
+		private:
+
+			T * _destp{};
+			T _prev{};
+
+		};  // class restore_finally
+
+		template <typename T>
+		restore_finally<T> make_guard(T& dest, const T update) noexcept
+		{
+			return restore_finally<T>{dest, update};
+		}
+
+		template <typename T>
+		restore_finally<T> make_guard_incr(T& dest) noexcept
+		{
+			return restore_finally<T>{dest, dest + T{1}};
+		}
+
+		template <typename FuncT>
+		void repeat(const std::size_t start, const std::size_t stop, FuncT&& func)
+		{
+			for (auto i = start; i < stop; ++i) {
+				func();
+			}
+		}
+
+		template <typename FuncT>
+		void repeat(const std::size_t n, FuncT&& func)
+		{
+			repeat(std::size_t{0}, n, std::forward<FuncT>(func));
+		}
+
+		template <typename InIterT, typename UnaryFuncT, typename GlueFuncT>
+		void for_each_glue(const InIterT first, const InIterT last, UnaryFuncT&& func, GlueFuncT&& glue)
+		{
+			if (first != last) {
+				auto current = first;
+				func(*current);
+				++current;
+				while (current != last) {
+					glue();
+					func(*current);
+					++current;
+				}
+			}
+		}
+
+		template <typename ContainerT, typename UnaryFuncT, typename GlueFuncT>
+		void for_each_glue_c(ContainerT&& c, UnaryFuncT&& func, GlueFuncT&& glue)
+		{
+			for_each_glue(
+				std::begin(c),
+				std::end(c),
+				std::forward<UnaryFuncT>(func),
+				std::forward<GlueFuncT>(glue)
+			);
+		}
+
+	}  // namespace /* anonymous */
+
 	namespace ast
 	{
-		using namespace std::string_literals;
 
 		void pretty_printer::visit(type& node)
 		{
 			_output << _type_name(node.name());
-
-			for (size_t i = 0; i < node.rank(); i++)
-				_output << "[]";
+			repeat(node.rank(), [this](){ _output << "[]"; });
 		}
 
 		void pretty_printer::visit(var_decl& node)
@@ -34,8 +149,8 @@ namespace minijava
 
 		void pretty_printer::visit(assignment_expression& node)
 		{
-			bool parens = _print_expression_parens;
-			_print_expression_parens = true; // for nested expressions
+			const auto parens = _print_expression_parens;
+			const auto pep_guard = make_guard(_print_expression_parens, true);
 			if (parens) {
 				_output << "(";
 			}
@@ -49,8 +164,8 @@ namespace minijava
 
 		void pretty_printer::visit(binary_expression& node)
 		{
-			bool parens = _print_expression_parens;
-			_print_expression_parens = true; // for nested expressions
+			const auto parens = _print_expression_parens;
+			const auto pep_guard = make_guard(_print_expression_parens, true);
 			if (parens) {
 				_output << "(";
 			}
@@ -104,8 +219,8 @@ namespace minijava
 
 		void pretty_printer::visit(unary_expression& node)
 		{
-			bool parens = _print_expression_parens;
-			_print_expression_parens = true; // for nested expressions
+			const auto parens = _print_expression_parens;
+			const auto pep_guard = make_guard(_print_expression_parens, true);
 			if (parens) {
 				_output << "(";
 			}
@@ -125,7 +240,7 @@ namespace minijava
 
 		void pretty_printer::visit(object_instantiation& node)
 		{
-			bool parens = _print_expression_parens;
+			const auto parens = _print_expression_parens;
 			if (parens) {
 				_output << "(";
 			}
@@ -137,19 +252,18 @@ namespace minijava
 
 		void pretty_printer::visit(array_instantiation& node)
 		{
-			bool parens = _print_expression_parens;
+			const auto parens = _print_expression_parens;
 			if (parens) {
 				_output << "(";
 			}
 			_output << "new " << _type_name(node.array_type().name());
 			_output << "[";
-			_print_expression_parens = false;
-			node.extent().accept(*this);
-			_print_expression_parens = true;
-			_output << "]";
-			for (size_t i = 1; i < node.array_type().rank(); i++) {
-				_output << "[]";
+			{
+				const auto pep_guard = make_guard(_print_expression_parens, false);
+				node.extent().accept(*this);
 			}
+			_output << "]";
+			repeat(1, node.array_type().rank(), [this](){ _output << "[]"; });
 			if (parens) {
 				_output << ")";
 			}
@@ -157,16 +271,17 @@ namespace minijava
 
 		void pretty_printer::visit(array_access& node)
 		{
-			bool parens = _print_expression_parens;
-			_print_expression_parens = true; // for nested expressions
+			const auto parens = _print_expression_parens;
+			const auto pep_guard = make_guard(_print_expression_parens, true);
 			if (parens) {
 				_output << "(";
 			}
 			node.target().accept(*this);
 			_output << "[";
-			_print_expression_parens = false;
-			node.index().accept(*this);
-			_print_expression_parens = true;
+			{
+				const auto inner_pep_guard = make_guard(_print_expression_parens, false);
+				node.index().accept(*this);
+			}
 			_output << "]";
 			if (parens) {
 				_output << ")";
@@ -175,12 +290,12 @@ namespace minijava
 
 		void pretty_printer::visit(variable_access& node)
 		{
-			bool parens = _print_expression_parens && node.target() != nullptr;
-			_print_expression_parens = true; // for nested expressions
+			const auto parens = (_print_expression_parens && node.target());
+			const auto pep_guard = make_guard(_print_expression_parens, true);
 			if (parens) {
 				_output << "(";
 			}
-			if (node.target() != nullptr) {
+			if (node.target()) {
 				node.target()->accept(*this);
 				_output << ".";
 			}
@@ -192,23 +307,23 @@ namespace minijava
 
 		void pretty_printer::visit(method_invocation& node)
 		{
-			bool parens = _print_expression_parens;
-			_print_expression_parens = true; // for nested expressions
+			const auto parens = _print_expression_parens;
+			const auto pep_guard = make_guard(_print_expression_parens, true);
 			if (parens) {
 				_output << "(";
 			}
-			if (node.target() != nullptr) {
+			if (node.target()) {
 				node.target()->accept(*this);
 				_output << ".";
 			}
 			_output << node.name() << "(";
-			for (size_t i = 0; i < node.arguments().size(); i++) {
-				if (i > 0) {
-					_output << ", ";
-				}
-				_print_expression_parens = false;
-				node.arguments()[i]->accept(*this);
-				_print_expression_parens = true;
+			{
+				const auto inner_pep_guard = make_guard(_print_expression_parens, false);
+				for_each_glue_c(
+					node.arguments(),
+					[this](auto&& arg){ arg->accept(*this); },
+					[this](){ _output << ", "; }
+				);
 			}
 			_output << ")";
 			if (parens) {
@@ -239,13 +354,13 @@ namespace minijava
 		void pretty_printer::visit(local_variable_statement& node)
 		{
 			_start_block_statement();
-
 			node.declaration().accept(*this);
 			if (node.initial_value() != nullptr) {
 				_output << " = ";
-				_print_expression_parens = false;
-				node.initial_value()->accept(*this);
-				_print_expression_parens = true;
+				{
+					const auto pep_guard = make_guard(_print_expression_parens, false);
+					node.initial_value()->accept(*this);
+				}
 			}
 			_output << ";\n";
 		}
@@ -253,18 +368,18 @@ namespace minijava
 		void pretty_printer::visit(expression_statement& node)
 		{
 			_start_block_statement();
-
 			_print("");
-			_print_expression_parens = false;
-			node.inner_expression().accept(*this);
-			_print_expression_parens = true;
+			{
+				const auto pep_guard = make_guard(_print_expression_parens, false);
+				node.inner_expression().accept(*this);
+			}
 			_output << ";\n";
 		}
 
 		void pretty_printer::visit(block& node)
 		{
-			bool is_conditional = _start_if || _start_else;
-			bool is_empty = node.body().empty();
+			const auto is_conditional = _start_if || _start_else;
+			const auto is_empty = node.body().empty();
 
 			if (is_conditional || _start_loop || _start_method) {
 				_output << " {";
@@ -277,17 +392,14 @@ namespace minijava
 				return;
 			}
 			_output << '\n';
-
-			_indentation_level++;
-			for (auto& block_stmt : node.body()) {
-				block_stmt->accept(*this);
+			{
+				const auto il_guard = make_guard_incr(_indentation_level);
+				std::for_each(std::begin(node.body()), std::end(node.body()),
+				              [this](auto&& bs){ bs->accept(*this); });
 			}
-			_indentation_level--;
-
-			if (is_conditional) {
-				_print("}");
-			} else {
-				_println("}");
+			_print("}");
+			if (!is_conditional) {
+				_output << '\n';
 			}
 		}
 
@@ -314,18 +426,19 @@ namespace minijava
 
 		void pretty_printer::visit(if_statement& node)
 		{
-			bool then_is_block = is_nonempty_block(&node.then_statement());
-			bool else_is_block = is_nonempty_block(node.else_statement());
-			bool else_is_chain = is_if_statement(node.else_statement());
+			const auto then_is_block = is_nonempty_block(&node.then_statement());
+			const auto else_is_block = is_nonempty_block(node.else_statement());
+			const auto else_is_chain = is_if_statement(node.else_statement());
 
 			if (_start_else) {
 				_output << " if (";
 			} else {
 				_print("if (");
 			}
-			_print_expression_parens = false;
-			node.condition().accept(*this);
-			_print_expression_parens = true;
+			{
+				const auto pep_guard = make_guard(_print_expression_parens, false);
+				node.condition().accept(*this);
+			}
 			_output << ")";
 
 			if (!then_is_block) {
@@ -364,14 +477,16 @@ namespace minijava
 			_start_block_statement();
 
 			_print("while (");
-			_print_expression_parens = false;
-			node.condition().accept(*this);
-			_print_expression_parens = true;
+			{
+				const auto pep_guard = make_guard(_print_expression_parens, false);
+				node.condition().accept(*this);
+			}
 			_output << ")\n";
 			_start_loop = true;
-			_indentation_level++;
-			node.body().accept(*this);
-			_indentation_level--;
+			{
+				const auto il_guard = make_guard_incr(_indentation_level);
+				node.body().accept(*this);
+			}
 		}
 
 		void pretty_printer::visit(return_statement& node)
@@ -382,9 +497,10 @@ namespace minijava
 				_print("return;");
 			} else {
 				_print("return ");
-				_print_expression_parens = false;
-				node.value()->accept(*this);
-				_print_expression_parens = true;
+				{
+					const auto pep_guard = make_guard(_print_expression_parens, false);
+					node.value()->accept(*this);
+				}
 				_output << ';';
 			}
 			_output << '\n';
@@ -392,10 +508,8 @@ namespace minijava
 
 		void pretty_printer::visit(empty_statement&)
 		{
-			bool print = _start_if || _start_else || _start_loop;
-
+			const auto print = _start_if || _start_else || _start_loop;
 			_start_block_statement();
-
 			if (print) {
 				_println(";");
 			}
@@ -413,14 +527,14 @@ namespace minijava
 			_print("public ");
 			node.return_type().accept(*this);
 			_output << " " << node.name() << "(";
-			_in_parameters = true;
-			for (size_t i = 0; i < node.parameters().size(); i++) {
-				if (i > 0) {
-					_output << ", ";
-				}
-				node.parameters()[i]->accept(*this);
+			{
+				const auto ip_guard = make_guard(_in_parameters, true);
+				for_each_glue_c(
+					node.parameters(),
+					[this](auto&& prm){ prm->accept(*this); },
+					[this](){ _output << ", "; }
+				);
 			}
-			_in_parameters = false;
 			_output << ")";
 			_start_method = true;
 			node.body().accept(*this);
@@ -428,58 +542,52 @@ namespace minijava
 
 		void pretty_printer::visit(class_declaration& node)
 		{
+			using member_pair = std::pair<symbol, ast::node*>;
+			const auto ext = [](auto&& p){
+				return std::make_pair(p->name(), p.get());
+			};
+			const auto cmp = [](auto&& p1, auto&& p2){
+				return std::strcmp(p1.first.c_str(), p2.first.c_str()) < 0;
+			};
+			const auto vst = [this](auto&& p){ p.second->accept(*this); };
 			_println("class "s + node.name().c_str() + " {");
-			_indentation_level++;
-
-			// sort methods together by inserting into sorted map
-			auto sorted_method_map = std::map<std::string,
-					std::pair<bool, void*>>{};
-			for (auto& method : node.methods()) {
-				sorted_method_map.insert(
-						std::make_pair(method->name().c_str(),
-						               std::make_pair(false, method.get()))
+			{
+				const auto on_the_level_guard = make_guard_incr(_indentation_level);
+				auto members = std::vector<member_pair>{};
+				members.reserve(std::max(
+					node.methods().size() + node.main_methods().size(),
+					node.fields().size()
+				));
+				std::transform(
+					std::begin(node.methods()), std::end(node.methods()),
+					std::back_inserter(members), ext
 				);
-			}
-			for (auto& method : node.main_methods()) {
-				sorted_method_map.insert(
-						std::make_pair(method->name().c_str(),
-						               std::make_pair(true, method.get()))
+				std::transform(
+					std::begin(node.main_methods()), std::end(node.main_methods()),
+					std::back_inserter(members), ext
 				);
-			}
-			for (auto& el : sorted_method_map) {
-				bool is_main_method = el.second.first;
-				void* p = el.second.second;
-
-				if (is_main_method) {
-					(reinterpret_cast<main_method*>(p))->accept(*this);
-				} else {
-					(reinterpret_cast<method*>(p))->accept(*this);
-				}
-			}
-
-			_in_fields = true;
-			// sort fields by inserting into sorted map
-			auto sorted_field_map = std::map<std::string, var_decl*>{};
-			for (auto& field : node.fields()) {
-				sorted_field_map.insert(
-						std::make_pair(field->name().c_str(), field.get())
+				std::stable_sort(std::begin(members), std::end(members), cmp);
+				std::for_each(std::begin(members), std::end(members), vst);
+				members.clear();  // recycle the storage
+				const auto in_the_fields_guard = make_guard(_in_fields, true);
+				std::transform(
+					std::begin(node.fields()), std::end(node.fields()),
+					std::back_inserter(members), ext
 				);
+				std::stable_sort(std::begin(members), std::end(members), cmp);
+				std::for_each(std::begin(members), std::end(members), vst);
 			}
-			for (auto& el : sorted_field_map) {
-				el.second->accept(*this);
-			}
-
-			_indentation_level--;
 			_println("}");
 		}
 
 		void pretty_printer::visit(program& node)
 		{
-			for (auto& clazz : node.classes()) {
-				clazz->accept(*this);
-			}
+			for_each_glue_c(
+				node.classes(),
+				[this](auto&& cls){ cls->accept(*this); },
+				[this](){ _output << '\n'; }
+			);
 		}
-
 
 		// common code for most block statements to handle _start_if/else/loop
 		void pretty_printer::_start_block_statement()
@@ -489,7 +597,6 @@ namespace minijava
 				_start_if = _start_else = _start_loop = false;
 			}
 		}
-
 
 		void pretty_printer::_print(const std::string& line)
 		{
@@ -504,20 +611,20 @@ namespace minijava
 
 		std::string pretty_printer::_type_name(const ast::type_name& type)
 		{
-			if (auto p = boost::get<ast::primitive_type>(&type)) {
-				switch (*p) {
-					case ast::primitive_type::type_int:
-						return "int";
-					case ast::primitive_type::type_boolean:
-						return "boolean";
-					case ast::primitive_type::type_void:
-						return "void";
-				}
-			} else if (auto p = boost::get<symbol>(&type)) {
-				return std::string(p->c_str());
+			if (auto p = boost::get<symbol>(&type)) {
+				return p->c_str();
 			}
-
+			switch (boost::get<ast::primitive_type>(type)) {
+			case ast::primitive_type::type_int:
+				return "int";
+			case ast::primitive_type::type_boolean:
+				return "boolean";
+			case ast::primitive_type::type_void:
+				return "void";
+			}
 			MINIJAVA_NOT_REACHED();
 		}
-	}
-}
+
+	}  // namespace ast
+
+}  // namespace minijava

@@ -1,4 +1,5 @@
 add_subdirectory("testaux")
+add_subdirectory("fuzz")
 
 
 # add a custom test target that outputs errors of failed test cases
@@ -31,6 +32,3 @@ foreach(comp ${COMPONENTS})
 
 	add_dependencies(check ${comp-target})
 endforeach(comp)
-
-add_executable(syntaxgen "syntaxgen.cpp")
-target_link_libraries(syntaxgen LINK_PRIVATE core)
