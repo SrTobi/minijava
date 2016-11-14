@@ -1,6 +1,7 @@
 #include "parser/pretty_printer.hpp"
 
 #include <algorithm>
+#include <cstring>
 #include <iterator>
 #include <utility>
 #include <vector>
