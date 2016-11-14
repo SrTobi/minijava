@@ -11,7 +11,7 @@
 #include "parser/parser.hpp"
 #include "symbol_pool.hpp"
 
-#include "testaux/syntaxgen.hpp"
+#include "syntaxgen.hpp"
 
 namespace po = boost::program_options;
 
@@ -57,7 +57,7 @@ namespace /* anonymous */
 		auto varmap = po::variables_map{};
 		po::store(po::parse_command_line(argc, argv, options), varmap);
 		if (varmap.count("help")) {
-			std::cout << "usage: syntaxgen [-p] [-s SEED] [-r N]\n"
+			std::cout << "usage: parsetest [-p] [-s SEED] [-r N]\n"
 					  << "\n"
 					  << "Generates a syntactically correct random MiniJava program\n"
 					  << "and feeds its token stream into the parser.\n"
@@ -90,7 +90,7 @@ int main(int argc, char * * argv)
 		real_main(argc, argv);
 		return EXIT_SUCCESS;
 	} catch (const std::exception& e) {
-		std::cerr << "syntaxgen: error: " << e.what() << std::endl;
+		std::cerr << "parsetest: error: " << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 }
