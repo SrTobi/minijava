@@ -133,7 +133,7 @@ then
 fi
 
 ( cd "${builddir}/" && cmake --build . ) || die "Cannot build project"
-( cd "${builddir}/" && cmake --build . --target test ) || die "Unit tests failed"
+( cd "${builddir}/" && ctest -T test ) || die "Unit tests failed"
 
 test ${dox} -eq 0                                                             \
 	|| ( cd "${builddir}/" && cmake --build . --target docs )                 \
