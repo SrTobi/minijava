@@ -547,6 +547,12 @@ namespace minijava
 
 		void pretty_printer::visit(class_declaration& node)
 		{
+			if (node.main_methods().empty() && node.methods().empty()
+					&& node.fields().empty()) {
+				_println("class "s + node.name().c_str() + " { }");
+				return;
+			}
+
 			using member_pair = std::pair<symbol, ast::node*>;
 			const auto ext = [](auto&& p){
 				return std::make_pair(p->name(), p.get());
