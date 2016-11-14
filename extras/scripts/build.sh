@@ -125,7 +125,12 @@ do
 		cd "${builddir}/"
 		if [ -d dynlib ]
 		then
-			export LD_LIBRARY_PATH="${PWD}/dynlib/:${LD_LIBRARY_PATH}"
+			if [ "x${LD_LIBRARY_PATH+set}" = xset ]
+			then
+				export LD_LIBRARY_PATH="${PWD}/dynlib/:${LD_LIBRARY_PATH}"
+			else
+				export LD_LIBRARY_PATH="${PWD}/dynlib/"
+			fi
 		fi
 		cmake --build . || exit
 		[ ${dodocs} -eq 0 ] || cmake --build . --target docs || exit

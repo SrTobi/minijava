@@ -8,6 +8,7 @@ builddir="${rootdir}/stage"
 envfile="${builddir}/.environment"
 clean=0
 force=0
+dox=0
 buildtype="${CMAKE_BUILD_TYPE-Release}"
 
 message() {
@@ -66,6 +67,7 @@ do
 			echo "  --build-type=TYPE   set the CMake build type to TYPE"
 			echo "  --force             always force reconfiguration and rebuild everything"
 			echo "  --clean             only remove the build-directory"
+			echo "  --doxygen           generate API documentation"
 			echo "  --help              display this text and exit"
 			echo "  --version           display version information and exit"
 			echo ""
@@ -100,6 +102,9 @@ do
 		--clean)
 			clean=1
 			;;
+		--doxygen)
+			dox=1
+			;;
 		-*)
 			die "Unknown option: ${arg}"
 			;;
@@ -129,3 +134,7 @@ fi
 
 ( cd "${builddir}/" && cmake --build . ) || die "Cannot build project"
 ( cd "${builddir}/" && cmake --build . --target test ) || die "Unit tests failed"
+
+test ${dox} -eq 0                                                             \
+	|| ( cd "${builddir}/" && cmake --build . --target docs )                 \
+	|| die "Cannot build API documentation"
