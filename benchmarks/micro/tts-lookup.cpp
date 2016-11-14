@@ -11,7 +11,7 @@
 #include "lexer/token_type.hpp"
 #include "lexer/token_type_set.hpp"
 
-#include "benchmark.hpp"
+#include "testaux/benchmark.hpp"
 
 
 namespace /* anonymous */
