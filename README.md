@@ -78,8 +78,13 @@ Here is the directory hierarchy at a glance:
 
     /                     project root
     /src/                 C++ source code
+    /src/core/            library providing compiler functionality
+    /src/support/         library providing development support
+    /src/minijava.cpp     contains 'main' for the compiler
     /tests/               unit tests
-    /tests/testaux/       unit test support code
+    /benchmarks/          benchmarks
+    /benchmarks/micro/    micro-benchmarks
+    /benchmarks/macro/    macro-benchmarks
     extras/               auxiliary files for the build system
 
 The compiler executable is built from the single source file
@@ -109,9 +114,9 @@ exercise the following steps.
     `${dir}/` before the components name in the `COMPONENTS` variable in this
     case.
 
- 2. Create the file `/src/${dir}/feature.hpp` with the interface of your
+ 2. Create the file `/src/core/${dir}/feature.hpp` with the interface of your
     component.  You don't have to put everything into a single header file as
-    long as `/src/${dir}/feature.hpp` `#include`s all other files.
+    long as `/src/core/${dir}/feature.hpp` `#include`s all other files.
 
     If you are writing `template`-heavy code, it is recommended that you only
     put the public declarations into the `*.hpp` file and the implementation
@@ -120,9 +125,9 @@ exercise the following steps.
     implementation details) and also keeps the implementation stuff out of the
     reach of the Doxygen tool (which only processes `*.h` and `.hpp` files).
 
- 3. Create the file `/src/${dir}/feature.cpp` with the implementation of your
-    component.  It should `#include "feature.hpp"` as its first dependency to
-    make sure it compiles stand-alone.  Do this even if the source file is
+ 3. Create the file `/src/core/${dir}/feature.cpp` with the implementation of
+    your component.  It should `#include "feature.hpp"` as its first dependency
+    to make sure it compiles stand-alone.  Do this even if the source file is
     otherwise empty.
 
  4. Create the file `/tests/${dir}/feature.cpp` with the unit-tests for your
@@ -130,8 +135,8 @@ exercise the following steps.
     also `#include "${dir}/feature.hpp"`.
 
 A grab bag of utility features that were considered useful for writing unit
-tests can be found in `/tests/testaux/`.  If you add new compiled source files
-to it, don't forget to mention them in `/tests/testaux/CMakeLists.txt`.
+tests can be found in `/src/suport/testaux/`.  If you add new compiled source
+files to it, don't forget to mention them in `/src/support/CMakeLists.txt`.
 
 
 ## Contributing

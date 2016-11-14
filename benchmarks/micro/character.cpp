@@ -7,7 +7,7 @@
 
 #include "lexer/character.hpp"
 
-#include "benchmark.hpp"
+#include "testaux/benchmark.hpp"
 
 
 namespace /* anonymous */

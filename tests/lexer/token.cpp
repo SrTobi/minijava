@@ -12,7 +12,7 @@
 #include "symbol.hpp"
 #include "symbol_pool.hpp"
 
-#include "../testaux/token_string.hpp"
+#include "testaux/token_string.hpp"
 
 
 using testaux::id;

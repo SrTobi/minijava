@@ -9,9 +9,9 @@
 #include "parser/parser.hpp"
 #include "symbol_pool.hpp"
 
-#include "benchmark.hpp"
-#include "random_tokens.hpp"
-#include "syntaxgen.hpp"
+#include "testaux/benchmark.hpp"
+#include "testaux/random_tokens.hpp"
+#include "testaux/syntaxgen.hpp"
 
 
 namespace /* anonymous */
