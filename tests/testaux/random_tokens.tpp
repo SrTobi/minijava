@@ -4,6 +4,7 @@
 #include <cstring>
 #include <random>
 
+#include "lexer/keyword.hpp"
 #include "lexer/token_type.hpp"
 
 
@@ -58,10 +59,13 @@ namespace testaux
 		auto tailidxdist = std::uniform_int_distribution<std::size_t>{0, maxtail};
 		auto buffer = std::string{};
 		buffer.reserve(length);
-		buffer.push_back(detail::id_head_chars[headidxdist(engine)]);
-		while (buffer.length() < length) {
-			buffer.push_back(detail::id_tail_chars[tailidxdist(engine)]);
-		}
+		do {
+			buffer.clear();
+			buffer.push_back(detail::id_head_chars[headidxdist(engine)]);
+			while (buffer.length() < length) {
+				buffer.push_back(detail::id_tail_chars[tailidxdist(engine)]);
+			}
+		} while (minijava::classify_word(buffer) != minijava::token_type::identifier);
 		return buffer;
 	}
 
