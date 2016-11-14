@@ -8,15 +8,15 @@
 #include <string>
 #include <vector>
 
+#include "exceptions.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token.hpp"
 #include "lexer/token_iterator.hpp"
 #include "lexer/token_type.hpp"
 #include "symbol_pool.hpp"
 
-#include "benchmark.hpp"
-#include "exceptions.hpp"
-#include "random_tokens.hpp"
+#include "testaux/benchmark.hpp"
+#include "testaux/random_tokens.hpp"
 
 
 namespace /* anonymous */

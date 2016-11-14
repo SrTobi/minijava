@@ -1,4 +1,3 @@
-add_subdirectory("testaux")
 add_subdirectory("fuzz")
 
 
@@ -26,7 +25,7 @@ foreach(comp ${COMPONENTS})
 	)
 	target_link_libraries(${comp-target}
 		LINK_PRIVATE core
-		LINK_PRIVATE testaux
+		LINK_PRIVATE support
 		LINK_PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARIES}
 	)
 

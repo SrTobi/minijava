@@ -16,7 +16,7 @@
 
 #include <boost/program_options.hpp>
 
-#include "random_tokens.hpp"
+#include "testaux/random_tokens.hpp"
 
 
 namespace /* anonymous */

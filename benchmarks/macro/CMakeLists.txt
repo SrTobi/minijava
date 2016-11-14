@@ -6,6 +6,6 @@ target_link_libraries(huge_random_file
 add_executable(many_different_ids many_different_ids.cpp)
 target_link_libraries(many_different_ids
 		LINK_PRIVATE core
-		LINK_PRIVATE testaux
+		LINK_PRIVATE support
 		LINK_PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARIES}
 )

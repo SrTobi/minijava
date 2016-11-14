@@ -10,6 +10,6 @@ foreach(bench ${MICRO_BENCHMARKS})
 	target_include_directories(${bench} PRIVATE "${CMAKE_CURRENT_DIRECTORY}")
 	target_link_libraries(${bench}
 		LINK_PRIVATE core
-		LINK_PRIVATE testaux
+		LINK_PRIVATE support
 	)
 endforeach(bench)

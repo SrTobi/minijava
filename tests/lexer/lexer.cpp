@@ -13,7 +13,7 @@
 #include "lexer/token_iterator.hpp"
 #include "symbol_pool.hpp"
 
-#include "../testaux/token_string.hpp"
+#include "testaux/token_string.hpp"
 
 
 using namespace std::string_literals; // for strings with embedded null bytes

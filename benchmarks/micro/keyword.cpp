@@ -5,8 +5,8 @@
 
 #include "lexer/keyword.hpp"
 
-#include "benchmark.hpp"
-#include "random_tokens.hpp"
+#include "testaux/benchmark.hpp"
+#include "testaux/random_tokens.hpp"
 
 
 namespace /* anonymous */

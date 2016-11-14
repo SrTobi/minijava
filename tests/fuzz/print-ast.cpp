@@ -16,7 +16,7 @@
 #include "parser/pretty_printer.hpp"
 #include "symbol_pool.hpp"
 
-#include "syntaxgen.hpp"
+#include "testaux/syntaxgen.hpp"
 
 namespace po = boost::program_options;
 

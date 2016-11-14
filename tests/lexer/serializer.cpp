@@ -10,6 +10,7 @@
 
 #include "lexer/token.hpp"
 #include "symbol_pool.hpp"
+
 #include "testaux/token_string.hpp"
 
 using namespace std::string_literals;

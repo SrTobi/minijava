@@ -7,6 +7,7 @@
 
 namespace ast = minijava::ast;
 
+
 BOOST_AUTO_TEST_CASE(ast_nodes_noncopyable)
 {
 	static_assert(
