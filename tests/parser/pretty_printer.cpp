@@ -194,6 +194,64 @@ BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
 	);
 }
 
+BOOST_AUTO_TEST_CASE(pretty_print_while)
+{
+	using namespace std::string_literals;
+	std::ostringstream oss {};
+	auto pp = ast::pretty_printer{oss};
+	auto pool = minijava::symbol_pool<>{};
+
+	auto test_conditional = std::make_unique<ast::binary_expression>(
+			ast::binary_operation_type::equal,
+			std::make_unique<ast::variable_access>(
+					nullptr, pool.normalize("i")
+			),
+			std::make_unique<ast::variable_access>(
+					nullptr, pool.normalize("j")
+			)
+	);
+	auto test_then_statement = std::make_unique<ast::expression_statement>(
+			std::make_unique<ast::assignment_expression>(
+					std::make_unique<ast::variable_access>(
+							nullptr, pool.normalize("i")
+					),
+					std::make_unique<ast::integer_constant>(pool.normalize("0"))
+			)
+	);
+	auto test_conditional_block = std::make_unique<ast::while_statement>(
+			std::move(test_conditional),
+			std::move(test_then_statement)
+	);
+
+	pp.visit(*test_conditional_block);
+	BOOST_REQUIRE_EQUAL("while (i == j)\n\ti = 0;\n"s, oss.str());
+}
+
+BOOST_AUTO_TEST_CASE(pretty_print_empty_while)
+{
+	using namespace std::string_literals;
+	std::ostringstream oss {};
+	auto pp = ast::pretty_printer{oss};
+	auto pool = minijava::symbol_pool<>{};
+
+	auto test_conditional = std::make_unique<ast::binary_expression>(
+			ast::binary_operation_type::equal,
+			std::make_unique<ast::variable_access>(
+					nullptr, pool.normalize("i")
+			),
+			std::make_unique<ast::variable_access>(
+					nullptr, pool.normalize("j")
+			)
+	);
+	auto test_conditional_block = std::make_unique<ast::while_statement>(
+			std::move(test_conditional),
+			std::make_unique<ast::block>()
+	);
+
+	pp.visit(*test_conditional_block);
+	BOOST_REQUIRE_EQUAL("while (i == j) { }\n"s, oss.str());
+}
+
 BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 {
 	using namespace std::string_literals;

@@ -481,7 +481,7 @@ namespace minijava
 				const auto pep_guard = make_guard(_print_expression_parens, false);
 				node.condition().accept(*this);
 			}
-			_output << ")\n";
+			_output << ")";
 			_start_loop = true;
 			{
 				const auto il_guard = make_guard_incr(_indentation_level);
