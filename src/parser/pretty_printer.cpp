@@ -438,8 +438,12 @@ namespace minijava
 			if (_start_else) {
 				_output << " if (";
 			} else {
+				if (_start_if || _start_loop) {
+					_output << '\n';
+				}
 				_print("if (");
 			}
+			_start_if = _start_else = _start_loop = false;
 			{
 				const auto pep_guard = make_guard(_print_expression_parens, false);
 				node.condition().accept(*this);
