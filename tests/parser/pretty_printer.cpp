@@ -153,7 +153,9 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
 	);
 
 	pp.visit(*test_conditional_block);
-	BOOST_REQUIRE_EQUAL("if (i == j)\n\ti = 0;\n"s, oss.str());
+	// we're ignoring the spec here to achieve idempotence
+	// see COMPRAKT-4
+	BOOST_REQUIRE_EQUAL("if (i == j)\n\ti = 0;\nelse\n\t;\n"s, oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
