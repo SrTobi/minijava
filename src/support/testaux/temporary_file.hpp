@@ -51,6 +51,33 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     `delete`d copy constructor.
+		 *
+		 * `temporary_file`s are not copyable and not moveable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		temporary_file(const temporary_file& other) = delete;
+
+		/**
+		 * @brief
+		 *     `delete`d copy-assignment operator.
+		 *
+		 * `temporary_file`s are not copyable and not moveable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 * @returns
+		 *     *N/A*
+		 *
+		 */
+		temporary_file& operator=(const temporary_file& other) = delete;
+
+		/**
+		 * @brief
 		 *     `return`s the filename of the temporary file.
 		 *
 		 * @returns
