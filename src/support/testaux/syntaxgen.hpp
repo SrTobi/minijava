@@ -37,6 +37,9 @@ namespace testaux
 	 * @param depth
 	 *     maximum recursion depth (in the grammar)
 	 *
+	 * @returns
+	 *     generated token sequence
+	 *
 	 */
 	template <typename RndEngT, typename PoolT>
 	std::vector<minijava::token> generate_valid_program(RndEngT& engine, PoolT& pool, const std::size_t depth);

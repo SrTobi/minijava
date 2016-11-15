@@ -118,14 +118,13 @@ namespace minijava
 
 			ast_ptr<ast::program> parse_program()
 			{
-				auto prog = make<ast::program>();
+				std::vector<ast_ptr<ast::class_declaration>> classes;
 				while (!current_is(token_type::eof)) {
 					expect(token_type::kw_class);
 					auto decl = parse_class_declaration();
-					prog->add_class(std::move(decl));
+					classes.push_back(std::move(decl));
 				}
-
-				return prog;
+				return make<ast::program>(std::move(classes));
 			}
 
 			ast_ptr<ast::class_declaration> parse_class_declaration()
@@ -133,25 +132,32 @@ namespace minijava
 				assert(current_is(token_type::kw_class));
 				advance();
 				auto id_tok = current();
+				std::vector<ast_ptr<ast::var_decl>> fields;
+				std::vector<ast_ptr<ast::method>> methods;
+				std::vector<ast_ptr<ast::main_method>> main_methods;
 				consume(token_type::identifier);
-				auto class_decl = make<ast::class_declaration>(id_tok.lexval());
 				consume(token_type::left_brace);
 				while (!current_is(token_type::right_brace)) {
 					expect(token_type::kw_public);
-					parse_class_member(*class_decl);
+					parse_class_member(fields, methods, main_methods);
 				}
 				consume(token_type::right_brace);
-				return class_decl;
+				return make<ast::class_declaration>(id_tok.lexval(),
+				                                    std::move(fields),
+				                                    std::move(methods),
+				                                    std::move(main_methods));
 			}
 
-			void parse_class_member(ast::class_declaration& decl)
+			void parse_class_member(std::vector<ast_ptr<ast::var_decl>>& fields,
+			                        std::vector<ast_ptr<ast::method>>& methods,
+			                        std::vector<ast_ptr<ast::main_method>>& main_methods)
 			{
 				assert(current_is(token_type::kw_public));
 				advance();
 				expect(cat(set_t<token_type::kw_static>{}, type_first));
 				if (current_is(token_type::kw_static)) {
 					auto main_method = parse_main_method();
-					decl.add_main_method(std::move(main_method));
+					main_methods.push_back(std::move(main_method));
 				} else {
 					// parse field or method
 					auto type = parse_type();
@@ -167,11 +173,11 @@ namespace minijava
 						expect(token_type::left_brace);
 						auto body = parse_block();
 						auto method = make<ast::method>(id_tok.lexval(), std::move(type), std::move(params), std::move(body));
-						decl.add_method(std::move(method));
+						methods.push_back(std::move(method));
 					} else {
 						// field
 						auto field = make<ast::var_decl>(std::move(type), id_tok.lexval());
-						decl.add_field(std::move(field));
+						fields.push_back(std::move(field));
 					}
 				}
 			}
@@ -264,13 +270,13 @@ namespace minijava
 			{
 				assert(current_is(token_type::left_brace));
 				advance();
-				auto block = make<ast::block>();
+				std::vector<ast_ptr<ast::block_statement>> block_statements;
 				while (!current_is(token_type::right_brace)) {
 					auto stmt = parse_block_statement();
-					block->add_block_statement(std::move(stmt));
+					block_statements.push_back(std::move(stmt));
 				}
 				advance();
-				return block;
+				return make<ast::block>(std::move(block_statements));
 			}
 
 			ast_ptr<ast::block_statement> parse_block_statement()

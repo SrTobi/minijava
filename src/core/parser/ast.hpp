@@ -859,7 +859,7 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Constructs an array instantiation node
+			 *     Constructs an array instantiation node.
 			 *
 			 * @param type
 			 *     type to instantiate
@@ -999,7 +999,7 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     constructs a variable access node
+			 *     Constructs a variable access node.
 			 *
 			 * @param target
 			 *     target object to access or null pointer
@@ -1068,7 +1068,7 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     constructs a method invocation node
+			 *     Constructs a method invocation node.
 			 *
 			 * @param target
 			 *     target object to access or null pointer
@@ -1086,7 +1086,7 @@ namespace minijava
 					, _arguments{std::move(arguments)}
 			{
 				assert(!_name.empty());
-				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el) { return !!el; }));
+				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -1178,7 +1178,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a boolean constant node.
+			 * @brief
+			 *     Constructs a boolean constant node.
 			 *
 			 * @param value
 			 *     value of the constant
@@ -1220,7 +1221,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs an integer constant AST node.
+			 * @brief
+			 *     Constructs an integer constant AST node.
 			 *
 			 * @param literal
 			 *     integer literal specifying the value of the constant
@@ -1419,14 +1421,17 @@ namespace minijava
 		public:
 
 			/**
-			 * Adds a block statement to the end of this block.
+			 * @brief
+			 *     Constructs a block node.
 			 *
-			 * @param stmt block statement to add
+			 * @param statements
+			 *     statements inside the block
+			 *
 			 */
-			void add_block_statement(std::unique_ptr<block_statement> stmt)
+			block(std::vector<std::unique_ptr<block_statement>> statements)
+					: _body{std::move(statements)}
 			{
-				assert(stmt);
-				_body.push_back(std::move(stmt));
+				assert(std::all_of(_body.begin(), _body.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -1450,7 +1455,7 @@ namespace minijava
 		private:
 
 			/** @brief statements contained in this block */
-			std::vector<std::unique_ptr<block_statement>> _body {};
+			std::vector<std::unique_ptr<block_statement>> _body;
 		};
 
 		/**
@@ -1463,7 +1468,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a new if statement.
+			 * @brief
+			 *     Constructs an if statement node.
 			 *
 			 * @param condition
 			 *     branch condition
@@ -1557,7 +1563,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a while statement
+			 * @brief
+			 *     Constructs a while statement node.
 			 *
 			 * @param condition
 			 *     loop condition
@@ -1776,7 +1783,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a method node.
+			 * @brief
+			 *     Constructs a method node.
 			 *
 			 * @param name
 			 *     method name
@@ -1885,14 +1893,34 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a class declaration node.
+			 * @brief
+			 *     Constructs a class declaration node.
 			 *
 			 * @param name
 			 *     class name
+			 *
+			 * @param fields
+			 *     fields inside the class
+			 *
+			 * @param methods
+			 *     class methods
+			 *
+			 * @param main_methods
+			 *     main methods inside the class
+			 *
 			 */
-			class_declaration(symbol name) : _name{name}
+			class_declaration(symbol name,
+			                  std::vector<std::unique_ptr<var_decl>> fields,
+			                  std::vector<std::unique_ptr<method>> methods,
+			                  std::vector<std::unique_ptr<main_method>> main_methods)
+					: _name{name}, _fields{std::move(fields)},
+					  _methods{std::move(methods)},
+					  _main_methods{std::move(main_methods)}
 			{
 				assert(!_name.empty());
+				assert(std::all_of(_fields.begin(), _fields.end(), [](auto&& el){ return !!el; }));
+				assert(std::all_of(_methods.begin(), _methods.end(), [](auto&& el){ return !!el; }));
+				assert(std::all_of(_main_methods.begin(), _main_methods.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -1947,45 +1975,6 @@ namespace minijava
 				return _main_methods;
 			}
 
-			/**
-			 * Adds a field declaration to this class.
-			 *
-			 * @param field
-			 *     field declaration
-			 *
-			 */
-			void add_field(std::unique_ptr<var_decl> field)
-			{
-				assert(field);
-				_fields.push_back(std::move(field));
-			}
-
-			/**
-			 * Adds a method declaration to this class.
-			 *
-			 * @param method
-			 *     method declaration
-			 *
-			 */
-			void add_method(std::unique_ptr<method> method)
-			{
-				assert(method);
-				_methods.push_back(std::move(method));
-			}
-
-			/**
-			 * Adds a main method declaration to this class.
-			 *
-			 * @param main_method
-			 *     main method declaration
-			 *
-			 */
-			void add_main_method(std::unique_ptr<main_method> main_method)
-			{
-				assert(main_method);
-				_main_methods.push_back(std::move(main_method));
-			}
-
 			void accept(visitor& v) const override
 			{
 				v.visit(*this);
@@ -1997,13 +1986,13 @@ namespace minijava
 			symbol _name;
 
 			/** @brief declared fields */
-			std::vector<std::unique_ptr<var_decl>> _fields {};
+			std::vector<std::unique_ptr<var_decl>> _fields;
 
 			/** @brief declared methods */
-			std::vector<std::unique_ptr<method>> _methods {};
+			std::vector<std::unique_ptr<method>> _methods;
 
 			/** @brief declared main methods */
-			std::vector<std::unique_ptr<main_method>> _main_methods {};
+			std::vector<std::unique_ptr<main_method>> _main_methods;
 		};
 
 		/**
@@ -2016,16 +2005,17 @@ namespace minijava
 		public:
 
 			/**
-			 * Adds a class declaration to this program.
+			 * @brief
+			 *     Constructs a root node.
 			 *
-			 * @param class_decl
-			 *     class declaration
+			 * @param classes
+			 *     classes in the program
 			 *
 			 */
-			void add_class(std::unique_ptr<class_declaration> class_decl)
+			program(std::vector<std::unique_ptr<class_declaration>> classes)
+					: _classes{std::move(classes)}
 			{
-				assert(class_decl);
-				_classes.push_back(std::move(class_decl));
+				assert(std::all_of(_classes.begin(), _classes.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -2049,7 +2039,7 @@ namespace minijava
 		private:
 
 			/** @brief classes declared in this program */
-			std::vector<std::unique_ptr<class_declaration>> _classes {};
+			std::vector<std::unique_ptr<class_declaration>> _classes;
 		};
 
 		// endregion
