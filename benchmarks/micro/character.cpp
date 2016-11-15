@@ -24,16 +24,28 @@ namespace /* anonymous */
 		auto result = std::distance(first, last);  // to deduce correct type
 		switch (what) {
 		case 's':
-			result = std::count_if(first, last, minijava::is_space);
+			{
+				const auto lambda = [](const auto c){ return minijava::is_space(c); };
+				result = std::count_if(first, last, lambda);
+			}
 			break;
 		case 'd':
-			result = std::count_if(first, last, minijava::is_digit);
+			{
+				const auto lambda = [](const auto c){ return minijava::is_digit(c); };
+				result = std::count_if(first, last, lambda);
+			}
 			break;
 		case 'h':
-			result = std::count_if(first, last, minijava::is_word_head);
+			{
+				const auto lambda = [](const auto c){ return minijava::is_word_head(c); };
+				result = std::count_if(first, last, lambda);
+			}
 			break;
 		case 't':
-			result = std::count_if(first, last, minijava::is_word_tail);
+			{
+				const auto lambda = [](const auto c){ return minijava::is_word_tail(c); };
+				result = std::count_if(first, last, lambda);
+			}
 			break;
 		default:
 			throw std::runtime_error{"Unexpected selector: " + std::to_string(what)};
