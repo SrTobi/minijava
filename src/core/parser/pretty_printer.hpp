@@ -28,53 +28,53 @@ namespace minijava
 			pretty_printer(std::ostream& output)
 					: _output{output} {}
 
-			void visit(type &node) override;
+			void visit(const type &node) override;
 
-			void visit(var_decl &node) override;
+			void visit(const var_decl &node) override;
 
-			void visit(binary_expression &node) override;
+			void visit(const binary_expression &node) override;
 
-			void visit(unary_expression &node) override;
+			void visit(const unary_expression &node) override;
 
-			void visit(object_instantiation &node) override;
+			void visit(const object_instantiation &node) override;
 
-			void visit(array_instantiation &node) override;
+			void visit(const array_instantiation &node) override;
 
-			void visit(array_access &node) override;
+			void visit(const array_access &node) override;
 
-			void visit(variable_access &node) override;
+			void visit(const variable_access &node) override;
 
-			void visit(method_invocation &node) override;
+			void visit(const method_invocation &node) override;
 
-			void visit(this_ref &node) override;
+			void visit(const this_ref &node) override;
 
-			void visit(boolean_constant &node) override;
+			void visit(const boolean_constant &node) override;
 
-			void visit(integer_constant &node) override;
+			void visit(const integer_constant &node) override;
 
-			void visit(null_constant &node) override;
+			void visit(const null_constant &node) override;
 
-			void visit(local_variable_statement &node) override;
+			void visit(const local_variable_statement &node) override;
 
-			void visit(expression_statement &node) override;
+			void visit(const expression_statement &node) override;
 
-			void visit(block &node) override;
+			void visit(const block &node) override;
 
-			void visit(if_statement &node) override;
+			void visit(const if_statement &node) override;
 
-			void visit(while_statement &node) override;
+			void visit(const while_statement &node) override;
 
-			void visit(return_statement &node) override;
+			void visit(const return_statement &node) override;
 
-			void visit(empty_statement &node) override;
+			void visit(const empty_statement &node) override;
 
-			void visit(main_method &node) override;
+			void visit(const main_method &node) override;
 
-			void visit(method &node) override;
+			void visit(const method &node) override;
 
-			void visit(class_declaration &node) override;
+			void visit(const class_declaration &node) override;
 
-			void visit(program &node) override;
+			void visit(const program &node) override;
 
 		private:
 

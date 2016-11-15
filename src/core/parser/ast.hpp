@@ -65,7 +65,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_node(node& node);
+			virtual void visit_node(const node& node);
 
 			/**
 			 * @brief
@@ -74,7 +74,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_expression(expression& node);
+			virtual void visit_expression(const expression& node);
 
 			/**
 			 * @brief
@@ -83,7 +83,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_constant(constant& node);
+			virtual void visit_constant(const constant& node);
 
 			/**
 			 * @brief
@@ -92,7 +92,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_block_statement(block_statement& node);
+			virtual void visit_block_statement(const block_statement& node);
 
 			/**
 			 * @brief
@@ -101,7 +101,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_statement(statement& node);
+			virtual void visit_statement(const statement& node);
 
 		public:
 			/**
@@ -111,7 +111,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(type& node);
+			virtual void visit(const type& node);
 
 			/**
 			 * @brief
@@ -120,7 +120,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(var_decl& node);
+			virtual void visit(const var_decl& node);
 
 			/**
 			 * @brief
@@ -129,7 +129,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(binary_expression& node);
+			virtual void visit(const binary_expression& node);
 
 			/**
 			 * @brief
@@ -138,7 +138,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(unary_expression& node);
+			virtual void visit(const unary_expression& node);
 
 			/**
 			 * @brief
@@ -147,7 +147,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(object_instantiation& node);
+			virtual void visit(const object_instantiation& node);
 
 			/**
 			 * @brief
@@ -156,7 +156,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(array_instantiation& node);
+			virtual void visit(const array_instantiation& node);
 
 			/**
 			 * @brief
@@ -165,7 +165,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(array_access& node);
+			virtual void visit(const array_access& node);
 
 			/**
 			 * @brief
@@ -174,7 +174,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(variable_access& node);
+			virtual void visit(const variable_access& node);
 
 			/**
 			 * @brief
@@ -183,7 +183,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(method_invocation& node);
+			virtual void visit(const method_invocation& node);
 
 			/**
 			 * @brief
@@ -192,7 +192,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(this_ref& node);
+			virtual void visit(const this_ref& node);
 
 			/**
 			 * @brief
@@ -201,7 +201,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(boolean_constant& node);
+			virtual void visit(const boolean_constant& node);
 
 			/**
 			 * @brief
@@ -210,7 +210,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(integer_constant& node);
+			virtual void visit(const integer_constant& node);
 
 			/**
 			 * @brief
@@ -219,7 +219,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(null_constant& node);
+			virtual void visit(const null_constant& node);
 
 			/**
 			 * @brief
@@ -228,7 +228,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(local_variable_statement& node);
+			virtual void visit(const local_variable_statement& node);
 
 			/**
 			 * @brief
@@ -237,7 +237,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(expression_statement& node);
+			virtual void visit(const expression_statement& node);
 
 			/**
 			 * @brief
@@ -246,7 +246,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(block& node);
+			virtual void visit(const block& node);
 
 			/**
 			 * @brief
@@ -255,7 +255,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(if_statement& node);
+			virtual void visit(const if_statement& node);
 
 			/**
 			 * @brief
@@ -264,7 +264,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(while_statement& node);
+			virtual void visit(const while_statement& node);
 
 			/**
 			 * @brief
@@ -273,7 +273,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(return_statement& node);
+			virtual void visit(const return_statement& node);
 
 			/**
 			 * @brief
@@ -282,7 +282,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(empty_statement& node);
+			virtual void visit(const empty_statement& node);
 
 			/**
 			 * @brief
@@ -291,7 +291,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(main_method& node);
+			virtual void visit(const main_method& node);
 
 			/**
 			 * @brief
@@ -300,7 +300,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(method& node);
+			virtual void visit(const method& node);
 
 			/**
 			 * @brief
@@ -309,7 +309,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(class_declaration& node);
+			virtual void visit(const class_declaration& node);
 
 			/**
 			 * @brief
@@ -318,7 +318,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(program& node);
+			virtual void visit(const program& node);
 
 		};
 
@@ -470,7 +470,7 @@ namespace minijava
 			 * @param v
 			 *     The visitor
 			 */
-			virtual void accept(visitor& v) = 0;
+			virtual void accept(visitor& v) const = 0;
 
 		private:
 
@@ -537,20 +537,6 @@ namespace minijava
 			 *     user-defined type
 			 *
 			 */
-			type_name& name() noexcept
-			{
-				return _name;
-			}
-
-			/**
-			 * @brief
-			 *     returns the type name
-			 *
-			 * @return
-			 *     primitive type or symbol representing the name of the
-			 *     user-defined type
-			 *
-			 */
 			const type_name& name() const noexcept
 			{
 				return _name;
@@ -571,7 +557,7 @@ namespace minijava
 				return _rank;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -620,20 +606,7 @@ namespace minijava
 			 *     type of this variable
 			 *
 			 */
-			type& var_type()
-			{
-				return *_type;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the type of this variable.
-			 *
-			 * @return
-			 *     type of this variable
-			 *
-			 */
-			const type& var_type() const
+			const type& var_type() const noexcept
 			{
 				return *_type;
 			}
@@ -646,12 +619,12 @@ namespace minijava
 			 *     name of this variable
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -714,7 +687,7 @@ namespace minijava
 			 *     type of this operation
 			 *
 			 */
-			binary_operation_type type() const
+			binary_operation_type type() const noexcept
 			{
 				return _type;
 			}
@@ -727,20 +700,7 @@ namespace minijava
 			 *     left side of this operation
 			 *
 			 */
-			expression& lhs()
-			{
-				return *_lhs;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the left side of this operation
-			 *
-			 * @return
-			 *     left side of this operation
-			 *
-			 */
-			const expression& lhs() const
+			const expression& lhs() const noexcept
 			{
 				return *_lhs;
 			}
@@ -753,25 +713,12 @@ namespace minijava
 			 *     right side of this operation
 			 *
 			 */
-			expression& rhs()
+			const expression& rhs() const noexcept
 			{
 				return *_rhs;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the expression on the right side of this operation
-			 *
-			 * @return
-			 *     right side of this operation
-			 *
-			 */
-			const expression& rhs() const
-			{
-				return *_rhs;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -823,7 +770,7 @@ namespace minijava
 			 *     type of this operation
 			 *
 			 */
-			unary_operation_type type() const
+			unary_operation_type type() const noexcept
 			{
 				return _type;
 			}
@@ -836,25 +783,12 @@ namespace minijava
 			 *     target of this operation
 			 *
 			 */
-			expression& target()
+			const expression& target() const noexcept
 			{
 				return *_target;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the expression to which this operation applies
-			 *
-			 * @return
-			 *     target of this operation
-			 *
-			 */
-			const expression& target() const
-			{
-				return *_target;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -897,12 +831,12 @@ namespace minijava
 			 *     class name
 			 *
 			 */
-			symbol class_name() const
+			symbol class_name() const noexcept
 			{
 				return _class_name;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -925,7 +859,7 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Constructs an array instantiation node
+			 *     Constructs an array instantiation node.
 			 *
 			 * @param type
 			 *     type to instantiate
@@ -951,20 +885,7 @@ namespace minijava
 			 *     type
 			 *
 			 */
-			type& array_type()
-			{
-				return *_type;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the type being instantiated.
-			 *
-			 * @return
-			 *     type
-			 *
-			 */
-			const type& array_type() const
+			const type& array_type() const noexcept
 			{
 				return *_type;
 			}
@@ -978,26 +899,12 @@ namespace minijava
 			 *     extent of the first dimension
 			 *
 			 */
-			expression& extent()
+			const expression& extent() const noexcept
 			{
 				return *_extent;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the expression evaluating to the extent of the first
-			 *     dimension.
-			 *
-			 * @return
-			 *     extent of the first dimension
-			 *
-			 */
-			const expression& extent() const
-			{
-				return *_extent;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1046,20 +953,7 @@ namespace minijava
 			 *     target expression
 			 *
 			 */
-			expression& target()
-			{
-				return *_target;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the target of this array access.
-			 *
-			 * @return
-			 *     target expression
-			 *
-			 */
-			const expression& target() const
+			const expression& target() const noexcept
 			{
 				return *_target;
 			}
@@ -1072,25 +966,12 @@ namespace minijava
 			 *     index expression
 			 *
 			 */
-			expression& index()
+			const expression& index() const noexcept
 			{
 				return *_index;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the index expression.
-			 *
-			 * @return
-			 *     index expression
-			 *
-			 */
-			const expression& index() const
-			{
-				return *_index;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1118,7 +999,7 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     constructs a variable access node
+			 *     Constructs a variable access node.
 			 *
 			 * @param target
 			 *     target object to access or null pointer
@@ -1144,23 +1025,7 @@ namespace minijava
 			 *     target expression or `nullptr`
 			 *
 			 */
-			expression* target()
-			{
-				return _target.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the target whose member is accessed.
-			 *
-			 * May return `nullptr` if this node represents a local variable
-			 * access or an unqualifier member access.
-			 *
-			 * @return
-			 *     target expression or `nullptr`
-			 *
-			 */
-			const expression* target() const
+			const expression* target() const noexcept
 			{
 				return _target.get();
 			}
@@ -1173,12 +1038,12 @@ namespace minijava
 			 *     variable/field name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1203,7 +1068,7 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     constructs a method invocation node
+			 *     Constructs a method invocation node.
 			 *
 			 * @param target
 			 *     target object to access or null pointer
@@ -1221,7 +1086,7 @@ namespace minijava
 					, _arguments{std::move(arguments)}
 			{
 				assert(!_name.empty());
-				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el) { return !!el; }));
+				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -1234,22 +1099,7 @@ namespace minijava
 			 *     target expression or `nullptr`
 			 *
 			 */
-			expression* target()
-			{
-				return _target.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the target whose method is called.
-			 *
-			 * May return `nullptr` if the method name was not qualified.
-			 *
-			 * @return
-			 *     target expression or `nullptr`
-			 *
-			 */
-			const expression* target() const
+			const expression* target() const noexcept
 			{
 				return _target.get();
 			}
@@ -1262,7 +1112,7 @@ namespace minijava
 			 *     method name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -1275,25 +1125,12 @@ namespace minijava
 			 *     arguments
 			 *
 			 */
-			std::vector<std::unique_ptr<expression>>& arguments()
+			const std::vector<std::unique_ptr<expression>>& arguments() const noexcept
 			{
 				return _arguments;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the arguments passed to the method.
-			 *
-			 * @return
-			 *     arguments
-			 *
-			 */
-			const std::vector<std::unique_ptr<expression>>& arguments() const
-			{
-				return _arguments;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1319,7 +1156,7 @@ namespace minijava
 
 		public:
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1341,7 +1178,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a boolean constant node.
+			 * @brief
+			 *     Constructs a boolean constant node.
 			 *
 			 * @param value
 			 *     value of the constant
@@ -1362,7 +1200,7 @@ namespace minijava
 				return _value;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1383,7 +1221,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs an integer constant AST node.
+			 * @brief
+			 *     Constructs an integer constant AST node.
 			 *
 			 * @param literal
 			 *     integer literal specifying the value of the constant
@@ -1403,12 +1242,12 @@ namespace minijava
 			 *     integer literal
 			 *
 			 */
-			symbol literal() const
+			symbol literal() const noexcept
 			{
 				return _literal;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1428,7 +1267,7 @@ namespace minijava
 
 		public:
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1482,19 +1321,7 @@ namespace minijava
 			 * @return
 			 *     variable declaration
 			 */
-			var_decl& declaration()
-			{
-				return *_declaration;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the declaration of this local variable.
-			 *
-			 * @return
-			 *     variable declaration
-			 */
-			const var_decl& declaration() const
+			const var_decl& declaration() const noexcept
 			{
 				return *_declaration;
 			}
@@ -1510,28 +1337,12 @@ namespace minijava
 			 *     initialization expression or `nullptr`
 			 *
 			 */
-			expression* initial_value()
+			const expression* initial_value() const noexcept
 			{
 				return _initial_value.get();
 			}
 
-			/**
-			 * @brief
-			 *     Returns the initial value of this local variable.
-			 *
-			 * May return `nullptr` if the variable is not initialized
-			 * immediately.
-			 *
-			 * @return
-			 *     initialization expression or `nullptr`
-			 *
-			 */
-			const expression* initial_value() const
-			{
-				return _initial_value.get();
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1584,25 +1395,12 @@ namespace minijava
 			 *     expression
 			 *
 			 */
-			expression& inner_expression()
+			const expression& inner_expression() const noexcept
 			{
 				return *_expression;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the expression contained in this statement.
-			 *
-			 * @return
-			 *     expression
-			 *
-			 */
-			const expression& inner_expression() const
-			{
-				return *_expression;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1623,14 +1421,17 @@ namespace minijava
 		public:
 
 			/**
-			 * Adds a block statement to the end of this block.
+			 * @brief
+			 *     Constructs a block node.
 			 *
-			 * @param stmt block statement to add
+			 * @param statements
+			 *     statements inside the block
+			 *
 			 */
-			void add_block_statement(std::unique_ptr<block_statement> stmt)
+			block(std::vector<std::unique_ptr<block_statement>> statements)
+					: _body{std::move(statements)}
 			{
-				assert(stmt);
-				_body.push_back(std::move(stmt));
+				assert(std::all_of(_body.begin(), _body.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -1641,25 +1442,12 @@ namespace minijava
 			 *     block body
 			 *
 			 */
-			std::vector<std::unique_ptr<block_statement>>& body()
+			const std::vector<std::unique_ptr<block_statement>>& body() const noexcept
 			{
 				return _body;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the body of this block.
-			 *
-			 * @return
-			 *     block body
-			 *
-			 */
-			const std::vector<std::unique_ptr<block_statement>>& body() const
-			{
-				return _body;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1667,7 +1455,7 @@ namespace minijava
 		private:
 
 			/** @brief statements contained in this block */
-			std::vector<std::unique_ptr<block_statement>> _body {};
+			std::vector<std::unique_ptr<block_statement>> _body;
 		};
 
 		/**
@@ -1680,7 +1468,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a new if statement.
+			 * @brief
+			 *     Constructs an if statement node.
 			 *
 			 * @param condition
 			 *     branch condition
@@ -1712,20 +1501,7 @@ namespace minijava
 			 *     condition
 			 *
 			 */
-			expression& condition()
-			{
-				return *_condition;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the branch condition.
-			 *
-			 * @return
-			 *     condition
-			 *
-			 */
-			const expression& condition() const
+			const expression& condition() const noexcept
 			{
 				return *_condition;
 			}
@@ -1739,21 +1515,7 @@ namespace minijava
 			 *     then statement
 			 *
 			 */
-			statement& then_statement()
-			{
-				return *_then_branch;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the statement which is executed if the condition
-			 *     evaluates to `true`.
-			 *
-			 * @return
-			 *     then statement
-			 *
-			 */
-			const statement& then_statement() const
+			const statement& then_statement() const noexcept
 			{
 				return *_then_branch;
 			}
@@ -1769,28 +1531,12 @@ namespace minijava
 			 *     else statement
 			 *
 			 */
-			statement* else_statement()
+			const statement* else_statement() const noexcept
 			{
 				return _else_branch.get();
 			}
 
-			/**
-			 * @brief
-			 *     Returns the statement which is executed if the condition
-			 *     evaluates to `false`.
-			 *
-			 * May return `nullptr` in case the `else` branch was omitted.
-			 *
-			 * @return
-			 *     else statement
-			 *
-			 */
-			const statement* else_statement() const
-			{
-				return _else_branch.get();
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1817,7 +1563,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a while statement
+			 * @brief
+			 *     Constructs a while statement node.
 			 *
 			 * @param condition
 			 *     loop condition
@@ -1842,20 +1589,7 @@ namespace minijava
 			 *     loop condition
 			 *
 			 */
-			expression& condition()
-			{
-				return *_condition;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the loop condition.
-			 *
-			 * @return
-			 *     loop condition
-			 *
-			 */
-			const expression& condition() const
+			const expression& condition() const noexcept
 			{
 				return *_condition;
 			}
@@ -1868,25 +1602,12 @@ namespace minijava
 			 *     loop body
 			 *
 			 */
-			statement& body()
+			const statement& body() const noexcept
 			{
 				return *_body;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the body of this loop.
-			 *
-			 * @return
-			 *     loop body
-			 *
-			 */
-			const statement& body() const
-			{
-				return *_body;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1930,27 +1651,12 @@ namespace minijava
 			 *     return value
 			 *
 			 */
-			expression* value()
+			const expression* value() const noexcept
 			{
 				return _value.get();
 			}
 
-			/**
-			 * @brief
-			 *     Returns the value to be returned.
-			 *
-			 * May return `nullptr` in case `void` is returned.
-			 *
-			 * @return
-			 *     return value
-			 *
-			 */
-			const expression* value() const
-			{
-				return _value.get();
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1970,7 +1676,7 @@ namespace minijava
 
 		public:
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2019,7 +1725,7 @@ namespace minijava
 			 *     method name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -2032,7 +1738,7 @@ namespace minijava
 			 *     name of declared parameter
 			 *
 			 */
-			symbol argname() const
+			symbol argname() const noexcept
 			{
 				return _argname;
 			}
@@ -2045,25 +1751,12 @@ namespace minijava
 			 *     method body
 			 *
 			 */
-			block& body()
+			const block& body() const noexcept
 			{
 				return *_body;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the body of this method.
-			 *
-			 * @return
-			 *     method body
-			 *
-			 */
-			const block& body() const
-			{
-				return *_body;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2090,7 +1783,8 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a method node.
+			 * @brief
+			 *     Constructs a method node.
 			 *
 			 * @param name
 			 *     method name
@@ -2125,7 +1819,7 @@ namespace minijava
 			 *     method name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -2138,20 +1832,7 @@ namespace minijava
 			 *     return type
 			 *
 			 */
-			type& return_type()
-			{
-				return *_return_type;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the return type of this method.
-			 *
-			 * @return
-			 *     return type
-			 *
-			 */
-			const type& return_type() const
+			const type& return_type() const noexcept
 			{
 				return *_return_type;
 			}
@@ -2164,20 +1845,7 @@ namespace minijava
 			 *     parameter list
 			 *
 			 */
-			std::vector<std::unique_ptr<var_decl>>& parameters()
-			{
-				return _parameters;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the parameter list of this method.
-			 *
-			 * @return
-			 *     parameter list
-			 *
-			 */
-			const std::vector<std::unique_ptr<var_decl>>& parameters() const
+			const std::vector<std::unique_ptr<var_decl>>& parameters() const noexcept
 			{
 				return _parameters;
 			}
@@ -2190,25 +1858,12 @@ namespace minijava
 			 *     method body
 			 *
 			 */
-			block& body()
+			const block& body() const noexcept
 			{
 				return *_body;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the body of this method.
-			 *
-			 * @return
-			 *     method body
-			 *
-			 */
-			const block& body() const
-			{
-				return *_body;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2238,14 +1893,34 @@ namespace minijava
 		public:
 
 			/**
-			 * Constructs a class declaration node.
+			 * @brief
+			 *     Constructs a class declaration node.
 			 *
 			 * @param name
 			 *     class name
+			 *
+			 * @param fields
+			 *     fields inside the class
+			 *
+			 * @param methods
+			 *     class methods
+			 *
+			 * @param main_methods
+			 *     main methods inside the class
+			 *
 			 */
-			class_declaration(symbol name) : _name{name}
+			class_declaration(symbol name,
+			                  std::vector<std::unique_ptr<var_decl>> fields,
+			                  std::vector<std::unique_ptr<method>> methods,
+			                  std::vector<std::unique_ptr<main_method>> main_methods)
+					: _name{name}, _fields{std::move(fields)},
+					  _methods{std::move(methods)},
+					  _main_methods{std::move(main_methods)}
 			{
 				assert(!_name.empty());
+				assert(std::all_of(_fields.begin(), _fields.end(), [](auto&& el){ return !!el; }));
+				assert(std::all_of(_methods.begin(), _methods.end(), [](auto&& el){ return !!el; }));
+				assert(std::all_of(_main_methods.begin(), _main_methods.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -2256,7 +1931,7 @@ namespace minijava
 			 *     class name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -2269,20 +1944,7 @@ namespace minijava
 			 *     list of fields
 			 *
 			 */
-			std::vector<std::unique_ptr<var_decl>>& fields()
-			{
-				return _fields;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the fields declared in this class.
-			 *
-			 * @return
-			 *     list of fields
-			 *
-			 */
-			const std::vector<std::unique_ptr<var_decl>>& fields() const
+			const std::vector<std::unique_ptr<var_decl>>& fields() const noexcept
 			{
 				return _fields;
 			}
@@ -2295,20 +1957,7 @@ namespace minijava
 			 *     list of methods
 			 *
 			 */
-			std::vector<std::unique_ptr<method>>& methods()
-			{
-				return _methods;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the methods declared in this class.
-			 *
-			 * @return
-			 *     list of methods
-			 *
-			 */
-			const std::vector<std::unique_ptr<method>>& methods() const
+			const std::vector<std::unique_ptr<method>>& methods() const noexcept
 			{
 				return _methods;
 			}
@@ -2321,64 +1970,12 @@ namespace minijava
 			 *     list of main methods
 			 *
 			 */
-			std::vector<std::unique_ptr<main_method>>& main_methods()
+			const std::vector<std::unique_ptr<main_method>>& main_methods() const noexcept
 			{
 				return _main_methods;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the main methods declared in this class.
-			 *
-			 * @return
-			 *     list of main methods
-			 *
-			 */
-			const std::vector<std::unique_ptr<main_method>>& main_methods() const
-			{
-				return _main_methods;
-			}
-
-			/**
-			 * Adds a field declaration to this class.
-			 *
-			 * @param field
-			 *     field declaration
-			 *
-			 */
-			void add_field(std::unique_ptr<var_decl> field)
-			{
-				assert(field);
-				_fields.push_back(std::move(field));
-			}
-
-			/**
-			 * Adds a method declaration to this class.
-			 *
-			 * @param method
-			 *     method declaration
-			 *
-			 */
-			void add_method(std::unique_ptr<method> method)
-			{
-				assert(method);
-				_methods.push_back(std::move(method));
-			}
-
-			/**
-			 * Adds a main method declaration to this class.
-			 *
-			 * @param main_method
-			 *     main method declaration
-			 *
-			 */
-			void add_main_method(std::unique_ptr<main_method> main_method)
-			{
-				assert(main_method);
-				_main_methods.push_back(std::move(main_method));
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2389,13 +1986,13 @@ namespace minijava
 			symbol _name;
 
 			/** @brief declared fields */
-			std::vector<std::unique_ptr<var_decl>> _fields {};
+			std::vector<std::unique_ptr<var_decl>> _fields;
 
 			/** @brief declared methods */
-			std::vector<std::unique_ptr<method>> _methods {};
+			std::vector<std::unique_ptr<method>> _methods;
 
 			/** @brief declared main methods */
-			std::vector<std::unique_ptr<main_method>> _main_methods {};
+			std::vector<std::unique_ptr<main_method>> _main_methods;
 		};
 
 		/**
@@ -2408,16 +2005,17 @@ namespace minijava
 		public:
 
 			/**
-			 * Adds a class declaration to this program.
+			 * @brief
+			 *     Constructs a root node.
 			 *
-			 * @param class_decl
-			 *     class declaration
+			 * @param classes
+			 *     classes in the program
 			 *
 			 */
-			void add_class(std::unique_ptr<class_declaration> class_decl)
+			program(std::vector<std::unique_ptr<class_declaration>> classes)
+					: _classes{std::move(classes)}
 			{
-				assert(class_decl);
-				_classes.push_back(std::move(class_decl));
+				assert(std::all_of(_classes.begin(), _classes.end(), [](auto&& el){ return !!el; }));
 			}
 
 			/**
@@ -2428,25 +2026,12 @@ namespace minijava
 			 *     list of classes
 			 *
 			 */
-			std::vector<std::unique_ptr<class_declaration>>& classes()
+			const std::vector<std::unique_ptr<class_declaration>>& classes() const noexcept
 			{
 				return _classes;
 			}
 
-			/**
-			 * @brief
-			 *     Returns the classes declared in this program.
-			 *
-			 * @return
-			 *     list of classes
-			 *
-			 */
-			const std::vector<std::unique_ptr<class_declaration>>& classes() const
-			{
-				return _classes;
-			}
-
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2454,13 +2039,9 @@ namespace minijava
 		private:
 
 			/** @brief classes declared in this program */
-			std::vector<std::unique_ptr<class_declaration>> _classes {};
+			std::vector<std::unique_ptr<class_declaration>> _classes;
 		};
 
 		// endregion
 	}
 }
-
-#define MINIJAVA_INCLUDED_FROM_PARSER_AST_HPP
-#include "parser/ast.tpp"
-#undef MINIJAVA_INCLUDED_FROM_PARSER_AST_HPP
