@@ -68,5 +68,5 @@ namespace testaux
 }
 
 #define TESTAUX_INCLUDED_FROM_UNIQUE_PTR_VECTOR_HPP
-#include "unique_ptr_vector.tpp"
+#include "testaux/unique_ptr_vector.tpp"
 #undef TESTAUX_INCLUDED_FROM_UNIQUE_PTR_VECTOR_HPP

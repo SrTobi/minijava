@@ -1,8 +1,8 @@
 #ifndef TESTAUX_INCLUDED_FROM_UNIQUE_PTR_VECTOR_HPP
-#error "Never `#include <unique_ptr_vector.tpp>` directly; `#include <unique_ptr_vector.hpp>` instead."
+#error "Never `#include <testaux/unique_ptr_vector.tpp>` directly; `#include <testaux/unique_ptr_vector.hpp>` instead."
 #endif
 
-#include <algorithm>
+#include <utility>
 
 namespace testaux
 {
