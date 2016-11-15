@@ -462,13 +462,11 @@ BOOST_AUTO_TEST_CASE(throw_syntax_error_three_expected_tokens)
 
 namespace /* anonymous */
 {
-	template <typename T>
-	std::enable_if_t<std::is_base_of<ast::node, T>{} && std::is_final<T>{}, std::string>
-	serialize(T& ast_node)
+	std::string serialize(ast::node& ast_node)
 	{
 		std::ostringstream oss {};
 		auto pp = ast::pretty_printer{oss};
-		pp.visit(ast_node);
+		ast_node.accept(pp);
 		return oss.str();
 	}
 }
