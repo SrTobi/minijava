@@ -2045,7 +2045,3 @@ namespace minijava
 		// endregion
 	}
 }
-
-#define MINIJAVA_INCLUDED_FROM_PARSER_AST_HPP
-#include "parser/ast.tpp"
-#undef MINIJAVA_INCLUDED_FROM_PARSER_AST_HPP
