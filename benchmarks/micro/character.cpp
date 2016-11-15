@@ -1,32 +1,43 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include <random>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
-#include "lexer/character.hpp"
+#include <boost/program_options.hpp>
 
+#include "lexer/character.hpp"
 #include "testaux/benchmark.hpp"
 
 
 namespace /* anonymous */
 {
 
-	auto benchmark(const std::vector<int>& input)
+	auto benchmark(const std::vector<int>& input, const int what)
 	{
 		const auto first = std::begin(input);
 		const auto last = std::end(input);
 		testaux::clobber_memory(input.data());
-		const auto n_spaces = std::count_if(first, last, minijava::is_space);
-		testaux::clobber_memory(input.data());
-		const auto n_digits = std::count_if(first, last, minijava::is_digit);
-		testaux::clobber_memory(input.data());
-		const auto n_head = std::count_if(first, last, minijava::is_word_head);
-		testaux::clobber_memory(input.data());
-		const auto n_tail = std::count_if(first, last, minijava::is_word_tail);
-		testaux::clobber_memory(input.data());
-		const auto result = std::make_tuple(n_spaces, n_digits, n_head, n_tail);
+		auto result = std::distance(first, last);  // to deduce correct type
+		switch (what) {
+		case 's':
+			result = std::count_if(first, last, minijava::is_space);
+			break;
+		case 'd':
+			result = std::count_if(first, last, minijava::is_digit);
+			break;
+		case 'h':
+			result = std::count_if(first, last, minijava::is_word_head);
+			break;
+		case 't':
+			result = std::count_if(first, last, minijava::is_word_tail);
+			break;
+		default:
+			throw std::runtime_error{"Unexpected selector: " + std::to_string(what)};
+		}
 		testaux::clobber_memory(&result);
 		return result;
 	}
@@ -41,6 +52,24 @@ namespace /* anonymous */
 		return input;
 	}
 
+	int get_classification_function(const testaux::benchmark_setup& setup)
+	{
+		using namespace std::string_literals;
+		namespace po = boost::program_options;
+		auto choice = 0;
+		auto tally = 0;
+		for (const auto& flag : {"space"s, "digit"s, "head"s, "tail"s}) {
+			if (setup.get_cmd_flag(flag)) {
+				++tally;
+				choice = flag.front();
+			}
+		}
+		if (tally != 1) {
+			throw po::error{"Please select exactly one character classification function to benchmark"};
+		}
+		return choice;
+	}
+
 	void real_main(int argc, char * * argv)
 	{
 		const auto t0 = testaux::clock_type::now();
@@ -49,16 +78,21 @@ namespace /* anonymous */
 			"Benchmark for character classification functions."
 		};
 		setup.add_cmd_arg("size", "number of characters to classify in one batch");
+		setup.add_cmd_flag("space", "benchmark the is_space() function");
+		setup.add_cmd_flag("digit", "benchmark the is_digit() function");
+		setup.add_cmd_flag("head", "benchmark the is_word_head() function");
+		setup.add_cmd_flag("tail", "benchmark the is_word_tail() function");
 		if (!setup.process(argc, argv)) {
 			return;
 		}
 		const auto size = setup.get_cmd_arg("size");
+		const auto what = get_classification_function(setup);
 		const auto input = get_input(size);
 		auto constr = setup.get_constraints();
 		if (constr.timeout.count() > 0) {
 			constr.timeout -= testaux::duration_type{testaux::clock_type::now() - t0};
 		}
-		const auto absres = testaux::run_benchmark(constr, benchmark, input);
+		const auto absres = testaux::run_benchmark(constr, benchmark, input, what);
 		const auto relres = testaux::result{absres.mean / size, absres.stdev / size, absres.n};
 		testaux::print_result(relres);
 	}

@@ -27,9 +27,24 @@
 
 {
 
-    "character" : {
-	"description" : "character classification functions",
-	"command" : ["character", "--size=50000000"]
+    "character-space" : {
+	"description" : "is_space() character classification function",
+	"command" : ["character", "--size=50000000", "--space"]
+    },
+
+    "character-digit" : {
+	"description" : "is_digit() character classification function",
+	"command" : ["character", "--size=50000000", "--digit"]
+    },
+
+    "character-head" : {
+	"description" : "is_word_head() character classification function",
+	"command" : ["character", "--size=50000000", "--head"]
+    },
+
+    "character-tail" : {
+	"description" : "is_word_tail() character classification function",
+	"command" : ["character", "--size=50000000", "--tail"]
     },
 
     "keyword" : {
