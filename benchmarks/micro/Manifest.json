@@ -37,6 +37,21 @@
 	"command" : ["keyword", "--size=10000000"]
     },
 
+    "tts-modify" : {
+	"description" : "add() and remove() on token_type_set",
+	"command" : ["tts-modify", "--count=10000000"]
+    },
+
+    "tts-lookup" : {
+	"description" : "contains() on token_type_set",
+	"command" : ["tts-lookup", "--count=10000000"]
+    },
+
+    "tts-combine" : {
+	"description" : "union, intersection, assignment and empty() on token_type_set",
+	"command" : ["tts-combine", "--count=10000000"]
+    },
+
     "lexer" : {
 	"description" : "raw lexer performance",
 	"command" : ["lexer", "--size=3000000"]
