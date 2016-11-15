@@ -15,7 +15,7 @@
 
 #include <boost/variant.hpp>
 
-#include "symbol.hpp"
+#include "symbol/symbol.hpp"
 
 namespace minijava
 {

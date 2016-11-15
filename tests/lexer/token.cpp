@@ -9,8 +9,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 
-#include "symbol.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include "testaux/token_string.hpp"
 

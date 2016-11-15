@@ -9,7 +9,7 @@
 #include "exceptions.hpp"
 #include "lexer/serializer.hpp"
 #include "parser/parser.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include "testaux/syntaxgen.hpp"
 

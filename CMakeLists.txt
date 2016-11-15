@@ -41,10 +41,10 @@ set(COMPONENTS
 	parser/ast
 	parser/parser
 	parser/pretty_printer
-	symbol
-	symbol_anchor
-	symbol_entry
-	symbol_pool
+	symbol/symbol
+	symbol/symbol_anchor
+	symbol/symbol_entry
+	symbol/symbol_pool
 	system/system
 )
 

@@ -9,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "lexer/token.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include "testaux/token_string.hpp"
 

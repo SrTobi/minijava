@@ -110,12 +110,12 @@
 #include <type_traits>
 
 #include "global.hpp"
-#include "symbol_entry.hpp"
-#include "symbol_anchor.hpp"
+#include "symbol/symbol_entry.hpp"
+#include "symbol/symbol_anchor.hpp"
 
-#define MINIJAVA_INCLUDED_FROM_SYMBOL_HPP
-#include "symbol_base.tpp"
-#undef MINIJAVA_INCLUDED_FROM_SYMBOL_HPP
+#define MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_HPP
+#include "symbol/symbol_base.tpp"
+#undef MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_HPP
 
 
 namespace minijava

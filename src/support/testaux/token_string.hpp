@@ -12,7 +12,7 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_type.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 
 namespace testaux

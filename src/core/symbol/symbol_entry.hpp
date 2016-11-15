@@ -239,6 +239,6 @@ namespace minijava
 }  // namespace minijava
 
 
-#define MINIJAVA_INCLUDED_FROM_SYMBOL_ENTRY_HPP
-#include "symbol_entry.tpp"
-#undef MINIJAVA_INCLUDED_FROM_SYMBOL_ENTRY_HPP
+#define MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_ENTRY_HPP
+#include "symbol/symbol_entry.tpp"
+#undef MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_ENTRY_HPP

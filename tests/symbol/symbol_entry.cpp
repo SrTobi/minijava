@@ -1,4 +1,4 @@
-#include "symbol_entry.hpp"
+#include "symbol/symbol_entry.hpp"
 
 #include <cstddef>
 #include <cstdlib>
@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-#define BOOST_TEST_MODULE  symbol_entry
+#define BOOST_TEST_MODULE  symbol_symbol_entry
 #include <boost/test/unit_test.hpp>
 
 

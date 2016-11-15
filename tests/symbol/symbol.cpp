@@ -1,4 +1,4 @@
-#include "symbol.hpp"
+#include "symbol/symbol.hpp"
 
 #include "testaux/static_symbol_pool.hpp"
 
@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#define BOOST_TEST_MODULE  symbol
+#define BOOST_TEST_MODULE  symbol_symbol
 #include <boost/test/unit_test.hpp>
 
 

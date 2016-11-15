@@ -1,9 +1,9 @@
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include <cstddef>
 #include <string>
 
-#define BOOST_TEST_MODULE  symbol_pool
+#define BOOST_TEST_MODULE  symbol_symbol_pool
 #include <boost/test/unit_test.hpp>
 
 

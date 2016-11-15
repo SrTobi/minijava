@@ -1,4 +1,4 @@
-#include "symbol_anchor.hpp"
+#include "symbol/symbol_anchor.hpp"
 
 #include "global.hpp"
 

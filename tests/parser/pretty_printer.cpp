@@ -1,5 +1,5 @@
 #include "parser/pretty_printer.hpp"
-#include "symbol_pool.hpp"
+#include "symbol/symbol_pool.hpp"
 
 #include <memory>
 #include <sstream>

@@ -15,9 +15,9 @@
 
 #include <boost/unordered_set.hpp>
 
-#include "symbol.hpp"
-#include "symbol_anchor.hpp"
-#include "symbol_entry.hpp"
+#include "symbol/symbol.hpp"
+#include "symbol/symbol_anchor.hpp"
+#include "symbol/symbol_entry.hpp"
 
 
 namespace minijava
@@ -246,6 +246,6 @@ namespace minijava
 }  // namespace minijava
 
 
-#define MINIJAVA_INCLUDED_FROM_SYMBOL_POOL_HPP
-#include "symbol_pool.tpp"
-#undef MINIJAVA_INCLUDED_FROM_SYMBOL_POOL_HPP
+#define MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_POOL_HPP
+#include "symbol/symbol_pool.tpp"
+#undef MINIJAVA_INCLUDED_FROM_SYMBOL_SYMBOL_POOL_HPP
