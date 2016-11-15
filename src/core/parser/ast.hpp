@@ -537,20 +537,6 @@ namespace minijava
 			 *     user-defined type
 			 *
 			 */
-			type_name& name() noexcept
-			{
-				return _name;
-			}
-
-			/**
-			 * @brief
-			 *     returns the type name
-			 *
-			 * @return
-			 *     primitive type or symbol representing the name of the
-			 *     user-defined type
-			 *
-			 */
 			const type_name& name() const noexcept
 			{
 				return _name;
@@ -620,20 +606,7 @@ namespace minijava
 			 *     type of this variable
 			 *
 			 */
-			type& var_type()
-			{
-				return *_type;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the type of this variable.
-			 *
-			 * @return
-			 *     type of this variable
-			 *
-			 */
-			const type& var_type() const
+			const type& var_type() const noexcept
 			{
 				return *_type;
 			}
@@ -646,7 +619,7 @@ namespace minijava
 			 *     name of this variable
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -714,7 +687,7 @@ namespace minijava
 			 *     type of this operation
 			 *
 			 */
-			binary_operation_type type() const
+			binary_operation_type type() const noexcept
 			{
 				return _type;
 			}
@@ -727,20 +700,7 @@ namespace minijava
 			 *     left side of this operation
 			 *
 			 */
-			expression& lhs()
-			{
-				return *_lhs;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the left side of this operation
-			 *
-			 * @return
-			 *     left side of this operation
-			 *
-			 */
-			const expression& lhs() const
+			const expression& lhs() const noexcept
 			{
 				return *_lhs;
 			}
@@ -753,20 +713,7 @@ namespace minijava
 			 *     right side of this operation
 			 *
 			 */
-			expression& rhs()
-			{
-				return *_rhs;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the right side of this operation
-			 *
-			 * @return
-			 *     right side of this operation
-			 *
-			 */
-			const expression& rhs() const
+			const expression& rhs() const noexcept
 			{
 				return *_rhs;
 			}
@@ -823,7 +770,7 @@ namespace minijava
 			 *     type of this operation
 			 *
 			 */
-			unary_operation_type type() const
+			unary_operation_type type() const noexcept
 			{
 				return _type;
 			}
@@ -836,20 +783,7 @@ namespace minijava
 			 *     target of this operation
 			 *
 			 */
-			expression& target()
-			{
-				return *_target;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression to which this operation applies
-			 *
-			 * @return
-			 *     target of this operation
-			 *
-			 */
-			const expression& target() const
+			const expression& target() const noexcept
 			{
 				return *_target;
 			}
@@ -897,7 +831,7 @@ namespace minijava
 			 *     class name
 			 *
 			 */
-			symbol class_name() const
+			symbol class_name() const noexcept
 			{
 				return _class_name;
 			}
@@ -951,20 +885,7 @@ namespace minijava
 			 *     type
 			 *
 			 */
-			type& array_type()
-			{
-				return *_type;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the type being instantiated.
-			 *
-			 * @return
-			 *     type
-			 *
-			 */
-			const type& array_type() const
+			const type& array_type() const noexcept
 			{
 				return *_type;
 			}
@@ -978,21 +899,7 @@ namespace minijava
 			 *     extent of the first dimension
 			 *
 			 */
-			expression& extent()
-			{
-				return *_extent;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression evaluating to the extent of the first
-			 *     dimension.
-			 *
-			 * @return
-			 *     extent of the first dimension
-			 *
-			 */
-			const expression& extent() const
+			const expression& extent() const noexcept
 			{
 				return *_extent;
 			}
@@ -1046,20 +953,7 @@ namespace minijava
 			 *     target expression
 			 *
 			 */
-			expression& target()
-			{
-				return *_target;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the target of this array access.
-			 *
-			 * @return
-			 *     target expression
-			 *
-			 */
-			const expression& target() const
+			const expression& target() const noexcept
 			{
 				return *_target;
 			}
@@ -1072,20 +966,7 @@ namespace minijava
 			 *     index expression
 			 *
 			 */
-			expression& index()
-			{
-				return *_index;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the index expression.
-			 *
-			 * @return
-			 *     index expression
-			 *
-			 */
-			const expression& index() const
+			const expression& index() const noexcept
 			{
 				return *_index;
 			}
@@ -1144,23 +1025,7 @@ namespace minijava
 			 *     target expression or `nullptr`
 			 *
 			 */
-			expression* target()
-			{
-				return _target.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the target whose member is accessed.
-			 *
-			 * May return `nullptr` if this node represents a local variable
-			 * access or an unqualifier member access.
-			 *
-			 * @return
-			 *     target expression or `nullptr`
-			 *
-			 */
-			const expression* target() const
+			const expression* target() const noexcept
 			{
 				return _target.get();
 			}
@@ -1173,7 +1038,7 @@ namespace minijava
 			 *     variable/field name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -1234,22 +1099,7 @@ namespace minijava
 			 *     target expression or `nullptr`
 			 *
 			 */
-			expression* target()
-			{
-				return _target.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the target whose method is called.
-			 *
-			 * May return `nullptr` if the method name was not qualified.
-			 *
-			 * @return
-			 *     target expression or `nullptr`
-			 *
-			 */
-			const expression* target() const
+			const expression* target() const noexcept
 			{
 				return _target.get();
 			}
@@ -1262,7 +1112,7 @@ namespace minijava
 			 *     method name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -1275,20 +1125,7 @@ namespace minijava
 			 *     arguments
 			 *
 			 */
-			std::vector<std::unique_ptr<expression>>& arguments()
-			{
-				return _arguments;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the arguments passed to the method.
-			 *
-			 * @return
-			 *     arguments
-			 *
-			 */
-			const std::vector<std::unique_ptr<expression>>& arguments() const
+			const std::vector<std::unique_ptr<expression>>& arguments() const noexcept
 			{
 				return _arguments;
 			}
@@ -1403,7 +1240,7 @@ namespace minijava
 			 *     integer literal
 			 *
 			 */
-			symbol literal() const
+			symbol literal() const noexcept
 			{
 				return _literal;
 			}
@@ -1482,19 +1319,7 @@ namespace minijava
 			 * @return
 			 *     variable declaration
 			 */
-			var_decl& declaration()
-			{
-				return *_declaration;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the declaration of this local variable.
-			 *
-			 * @return
-			 *     variable declaration
-			 */
-			const var_decl& declaration() const
+			const var_decl& declaration() const noexcept
 			{
 				return *_declaration;
 			}
@@ -1510,23 +1335,7 @@ namespace minijava
 			 *     initialization expression or `nullptr`
 			 *
 			 */
-			expression* initial_value()
-			{
-				return _initial_value.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the initial value of this local variable.
-			 *
-			 * May return `nullptr` if the variable is not initialized
-			 * immediately.
-			 *
-			 * @return
-			 *     initialization expression or `nullptr`
-			 *
-			 */
-			const expression* initial_value() const
+			const expression* initial_value() const noexcept
 			{
 				return _initial_value.get();
 			}
@@ -1584,20 +1393,7 @@ namespace minijava
 			 *     expression
 			 *
 			 */
-			expression& inner_expression()
-			{
-				return *_expression;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression contained in this statement.
-			 *
-			 * @return
-			 *     expression
-			 *
-			 */
-			const expression& inner_expression() const
+			const expression& inner_expression() const noexcept
 			{
 				return *_expression;
 			}
@@ -1641,20 +1437,7 @@ namespace minijava
 			 *     block body
 			 *
 			 */
-			std::vector<std::unique_ptr<block_statement>>& body()
-			{
-				return _body;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the body of this block.
-			 *
-			 * @return
-			 *     block body
-			 *
-			 */
-			const std::vector<std::unique_ptr<block_statement>>& body() const
+			const std::vector<std::unique_ptr<block_statement>>& body() const noexcept
 			{
 				return _body;
 			}
@@ -1712,20 +1495,7 @@ namespace minijava
 			 *     condition
 			 *
 			 */
-			expression& condition()
-			{
-				return *_condition;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the branch condition.
-			 *
-			 * @return
-			 *     condition
-			 *
-			 */
-			const expression& condition() const
+			const expression& condition() const noexcept
 			{
 				return *_condition;
 			}
@@ -1739,21 +1509,7 @@ namespace minijava
 			 *     then statement
 			 *
 			 */
-			statement& then_statement()
-			{
-				return *_then_branch;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the statement which is executed if the condition
-			 *     evaluates to `true`.
-			 *
-			 * @return
-			 *     then statement
-			 *
-			 */
-			const statement& then_statement() const
+			const statement& then_statement() const noexcept
 			{
 				return *_then_branch;
 			}
@@ -1769,23 +1525,7 @@ namespace minijava
 			 *     else statement
 			 *
 			 */
-			statement* else_statement()
-			{
-				return _else_branch.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the statement which is executed if the condition
-			 *     evaluates to `false`.
-			 *
-			 * May return `nullptr` in case the `else` branch was omitted.
-			 *
-			 * @return
-			 *     else statement
-			 *
-			 */
-			const statement* else_statement() const
+			const statement* else_statement() const noexcept
 			{
 				return _else_branch.get();
 			}
@@ -1842,20 +1582,7 @@ namespace minijava
 			 *     loop condition
 			 *
 			 */
-			expression& condition()
-			{
-				return *_condition;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the loop condition.
-			 *
-			 * @return
-			 *     loop condition
-			 *
-			 */
-			const expression& condition() const
+			const expression& condition() const noexcept
 			{
 				return *_condition;
 			}
@@ -1868,20 +1595,7 @@ namespace minijava
 			 *     loop body
 			 *
 			 */
-			statement& body()
-			{
-				return *_body;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the body of this loop.
-			 *
-			 * @return
-			 *     loop body
-			 *
-			 */
-			const statement& body() const
+			const statement& body() const noexcept
 			{
 				return *_body;
 			}
@@ -1930,22 +1644,7 @@ namespace minijava
 			 *     return value
 			 *
 			 */
-			expression* value()
-			{
-				return _value.get();
-			}
-
-			/**
-			 * @brief
-			 *     Returns the value to be returned.
-			 *
-			 * May return `nullptr` in case `void` is returned.
-			 *
-			 * @return
-			 *     return value
-			 *
-			 */
-			const expression* value() const
+			const expression* value() const noexcept
 			{
 				return _value.get();
 			}
@@ -2019,7 +1718,7 @@ namespace minijava
 			 *     method name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -2032,7 +1731,7 @@ namespace minijava
 			 *     name of declared parameter
 			 *
 			 */
-			symbol argname() const
+			symbol argname() const noexcept
 			{
 				return _argname;
 			}
@@ -2045,20 +1744,7 @@ namespace minijava
 			 *     method body
 			 *
 			 */
-			block& body()
-			{
-				return *_body;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the body of this method.
-			 *
-			 * @return
-			 *     method body
-			 *
-			 */
-			const block& body() const
+			const block& body() const noexcept
 			{
 				return *_body;
 			}
@@ -2125,7 +1811,7 @@ namespace minijava
 			 *     method name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -2138,20 +1824,7 @@ namespace minijava
 			 *     return type
 			 *
 			 */
-			type& return_type()
-			{
-				return *_return_type;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the return type of this method.
-			 *
-			 * @return
-			 *     return type
-			 *
-			 */
-			const type& return_type() const
+			const type& return_type() const noexcept
 			{
 				return *_return_type;
 			}
@@ -2164,20 +1837,7 @@ namespace minijava
 			 *     parameter list
 			 *
 			 */
-			std::vector<std::unique_ptr<var_decl>>& parameters()
-			{
-				return _parameters;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the parameter list of this method.
-			 *
-			 * @return
-			 *     parameter list
-			 *
-			 */
-			const std::vector<std::unique_ptr<var_decl>>& parameters() const
+			const std::vector<std::unique_ptr<var_decl>>& parameters() const noexcept
 			{
 				return _parameters;
 			}
@@ -2190,20 +1850,7 @@ namespace minijava
 			 *     method body
 			 *
 			 */
-			block& body()
-			{
-				return *_body;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the body of this method.
-			 *
-			 * @return
-			 *     method body
-			 *
-			 */
-			const block& body() const
+			const block& body() const noexcept
 			{
 				return *_body;
 			}
@@ -2256,7 +1903,7 @@ namespace minijava
 			 *     class name
 			 *
 			 */
-			symbol name() const
+			symbol name() const noexcept
 			{
 				return _name;
 			}
@@ -2269,20 +1916,7 @@ namespace minijava
 			 *     list of fields
 			 *
 			 */
-			std::vector<std::unique_ptr<var_decl>>& fields()
-			{
-				return _fields;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the fields declared in this class.
-			 *
-			 * @return
-			 *     list of fields
-			 *
-			 */
-			const std::vector<std::unique_ptr<var_decl>>& fields() const
+			const std::vector<std::unique_ptr<var_decl>>& fields() const noexcept
 			{
 				return _fields;
 			}
@@ -2295,20 +1929,7 @@ namespace minijava
 			 *     list of methods
 			 *
 			 */
-			std::vector<std::unique_ptr<method>>& methods()
-			{
-				return _methods;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the methods declared in this class.
-			 *
-			 * @return
-			 *     list of methods
-			 *
-			 */
-			const std::vector<std::unique_ptr<method>>& methods() const
+			const std::vector<std::unique_ptr<method>>& methods() const noexcept
 			{
 				return _methods;
 			}
@@ -2321,20 +1942,7 @@ namespace minijava
 			 *     list of main methods
 			 *
 			 */
-			std::vector<std::unique_ptr<main_method>>& main_methods()
-			{
-				return _main_methods;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the main methods declared in this class.
-			 *
-			 * @return
-			 *     list of main methods
-			 *
-			 */
-			const std::vector<std::unique_ptr<main_method>>& main_methods() const
+			const std::vector<std::unique_ptr<main_method>>& main_methods() const noexcept
 			{
 				return _main_methods;
 			}
@@ -2428,20 +2036,7 @@ namespace minijava
 			 *     list of classes
 			 *
 			 */
-			std::vector<std::unique_ptr<class_declaration>>& classes()
-			{
-				return _classes;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the classes declared in this program.
-			 *
-			 * @return
-			 *     list of classes
-			 *
-			 */
-			const std::vector<std::unique_ptr<class_declaration>>& classes() const
+			const std::vector<std::unique_ptr<class_declaration>>& classes() const noexcept
 			{
 				return _classes;
 			}
