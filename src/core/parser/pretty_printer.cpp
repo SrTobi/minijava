@@ -448,7 +448,9 @@ namespace minijava
 			}
 
 			auto else_stmt = node.else_statement();
-			if (else_stmt && !is_empty_statement(else_stmt)) {
+			// we're ignoring the spec here to achieve idempotence
+			// see COMPRAKT-4
+			if (else_stmt/* && !is_empty_statement(else_stmt) */) {
 				if (then_is_block) {
 					_output << " else";
 				} else {
