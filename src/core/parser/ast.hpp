@@ -25,7 +25,6 @@ namespace minijava
 		class type;
 		class var_decl;
 		class expression;
-		class assignment_expression;
 		class binary_expression;
 		class unary_expression;
 		class object_instantiation;
@@ -122,15 +121,6 @@ namespace minijava
 			 *     The node
 			 */
 			virtual void visit(var_decl& node);
-
-			/**
-			 * @brief
-			 *     Visits an assignment_expression AST node.
-			 *
-			 * @param node
-			 *     The node
-			 */
-			virtual void visit(assignment_expression& node);
 
 			/**
 			 * @brief
@@ -337,6 +327,7 @@ namespace minijava
 		 */
 		enum class binary_operation_type : std::uint16_t
 		{
+			assign,
 			logical_or,
 			logical_and,
 			equal,
@@ -682,100 +673,6 @@ namespace minijava
 		 *     Base class for expression AST nodes
 		 */
 		class expression : public node {};
-
-		/**
-		 * @brief
-		 *     Assignment expression AST node
-		 */
-		class assignment_expression final : public expression
-		{
-
-		public:
-
-			/**
-			 * @brief
-			 *     Constructs an assignment expression node.
-			 *
-			 * @param lhs
-			 *     expression on the left side of the assignment
-			 *
-			 * @param rhs
-			 *     expression on the right side of the assignment
-			 *
-			 */
-			assignment_expression(std::unique_ptr<expression> lhs,
-			                      std::unique_ptr<expression> rhs)
-					: _lhs{std::move(lhs)}, _rhs{std::move(rhs)}
-			{
-				assert(_lhs);
-				assert(_rhs);
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the left side of this assignment
-			 *
-			 * @return
-			 *     left side of this assignment
-			 *
-			 */
-			expression& lhs()
-			{
-				return *_lhs;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the left side of this assignment
-			 *
-			 * @return
-			 *     left side of this assignment
-			 *
-			 */
-			const expression& lhs() const
-			{
-				return *_lhs;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the right side of this assignment
-			 *
-			 * @return
-			 *     right side of this assignment
-			 *
-			 */
-			expression& rhs()
-			{
-				return *_rhs;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the expression on the right side of this assignment
-			 *
-			 * @return
-			 *     right side of this assignment
-			 *
-			 */
-			const expression& rhs() const
-			{
-				return *_rhs;
-			}
-
-			void accept(visitor& v) override
-			{
-				v.visit(*this);
-			}
-
-		private:
-
-			/** @brief expression on the left side of this assignment */
-			std::unique_ptr<expression> _lhs;
-
-			/** @brief expression on the right side of this assignment */
-			std::unique_ptr<expression> _rhs;
-		};
 
 		/**
 		 * @brief

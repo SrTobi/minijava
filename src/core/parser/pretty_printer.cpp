@@ -147,21 +147,6 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(assignment_expression& node)
-		{
-			const auto parens = _print_expression_parens;
-			const auto pep_guard = make_guard(_print_expression_parens, true);
-			if (parens) {
-				_output << "(";
-			}
-			node.lhs().accept(*this);
-			_output << " = ";
-			node.rhs().accept(*this);
-			if (parens) {
-				_output << ")";
-			}
-		}
-
 		void pretty_printer::visit(binary_expression& node)
 		{
 			const auto parens = _print_expression_parens;
@@ -171,6 +156,9 @@ namespace minijava
 			}
 			node.lhs().accept(*this);
 			switch (node.type()) {
+				case ast::binary_operation_type::assign:
+					_output << " = ";
+					break;
 				case ast::binary_operation_type::plus:
 					_output << " + ";
 					break;

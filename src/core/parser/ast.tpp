@@ -40,11 +40,6 @@ namespace minijava
             visit_node(node);
         }
 
-        inline void visitor::visit(assignment_expression& node)
-        {
-            visit_expression(node);
-        }
-
         inline void visitor::visit(binary_expression& node)
         {
             visit_expression(node);

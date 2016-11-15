@@ -32,8 +32,6 @@ namespace minijava
 
 			void visit(var_decl &node) override;
 
-			void visit(assignment_expression &node) override;
-
 			void visit(binary_expression &node) override;
 
 			void visit(unary_expression &node) override;

@@ -138,7 +138,8 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
 			)
 	);
 	auto test_then_statement = std::make_unique<ast::expression_statement>(
-		std::make_unique<ast::assignment_expression>(
+		std::make_unique<ast::binary_expression>(
+				ast::binary_operation_type::assign,
 				std::make_unique<ast::variable_access>(
 						nullptr, pool.normalize("i")
 				),
@@ -167,7 +168,8 @@ BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
 	auto test_else_conditional = std::make_unique<ast::boolean_constant>(false);
 	auto test_else_then_statement = std::make_unique<ast::block>();
 	auto test_assignment = std::make_unique<ast::expression_statement>(
-			std::make_unique<ast::assignment_expression>(
+			std::make_unique<ast::binary_expression>(
+					ast::binary_operation_type::assign,
 					std::make_unique<ast::variable_access>(
 							nullptr, pool.normalize("i")
 					),
@@ -232,7 +234,8 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_while)
 			)
 	);
 	auto test_loop_body = std::make_unique<ast::expression_statement>(
-			std::make_unique<ast::assignment_expression>(
+			std::make_unique<ast::binary_expression>(
+					ast::binary_operation_type::assign,
 					std::make_unique<ast::variable_access>(
 							nullptr, pool.normalize("i")
 					),
@@ -265,7 +268,8 @@ BOOST_AUTO_TEST_CASE(pretty_print_regular_while)
 			)
 	);
 	auto test_loop_body = std::make_unique<ast::expression_statement>(
-			std::make_unique<ast::assignment_expression>(
+			std::make_unique<ast::binary_expression>(
+					ast::binary_operation_type::assign,
 					std::make_unique<ast::variable_access>(
 							nullptr, pool.normalize("i")
 					),
