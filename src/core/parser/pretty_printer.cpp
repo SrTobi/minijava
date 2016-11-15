@@ -127,13 +127,13 @@ namespace minijava
 	namespace ast
 	{
 
-		void pretty_printer::visit(type& node)
+		void pretty_printer::visit(const type& node)
 		{
 			_output << _type_name(node.name());
 			repeat(node.rank(), [this](){ _output << "[]"; });
 		}
 
-		void pretty_printer::visit(var_decl& node)
+		void pretty_printer::visit(const var_decl& node)
 		{
 			if (_in_fields) {
 				_print("public ");
@@ -147,7 +147,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(binary_expression& node)
+		void pretty_printer::visit(const binary_expression& node)
 		{
 			const auto parens = _print_expression_parens;
 			const auto pep_guard = make_guard(_print_expression_parens, true);
@@ -205,7 +205,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(unary_expression& node)
+		void pretty_printer::visit(const unary_expression& node)
 		{
 			const auto parens = _print_expression_parens;
 			const auto pep_guard = make_guard(_print_expression_parens, true);
@@ -226,7 +226,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(object_instantiation& node)
+		void pretty_printer::visit(const object_instantiation& node)
 		{
 			const auto parens = _print_expression_parens;
 			if (parens) {
@@ -238,7 +238,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(array_instantiation& node)
+		void pretty_printer::visit(const array_instantiation& node)
 		{
 			const auto parens = _print_expression_parens;
 			if (parens) {
@@ -257,7 +257,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(array_access& node)
+		void pretty_printer::visit(const array_access& node)
 		{
 			const auto parens = _print_expression_parens;
 			const auto pep_guard = make_guard(_print_expression_parens, true);
@@ -276,7 +276,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(variable_access& node)
+		void pretty_printer::visit(const variable_access& node)
 		{
 			const auto parens = (_print_expression_parens && node.target());
 			const auto pep_guard = make_guard(_print_expression_parens, true);
@@ -293,7 +293,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(method_invocation& node)
+		void pretty_printer::visit(const method_invocation& node)
 		{
 			const auto parens = _print_expression_parens;
 			const auto pep_guard = make_guard(_print_expression_parens, true);
@@ -319,27 +319,27 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(this_ref& /* node */)
+		void pretty_printer::visit(const this_ref& /* node */)
 		{
 			_output << "this";
 		}
 
-		void pretty_printer::visit(boolean_constant& node)
+		void pretty_printer::visit(const boolean_constant& node)
 		{
 			_output << (node.value() ? "true" : "false");
 		}
 
-		void pretty_printer::visit(integer_constant& node)
+		void pretty_printer::visit(const integer_constant& node)
 		{
 			_output << node.literal();
 		}
 
-		void pretty_printer::visit(null_constant&)
+		void pretty_printer::visit(const null_constant&)
 		{
 			_output << "null";
 		}
 
-		void pretty_printer::visit(local_variable_statement& node)
+		void pretty_printer::visit(const local_variable_statement& node)
 		{
 			_start_block_statement();
 			node.declaration().accept(*this);
@@ -353,7 +353,7 @@ namespace minijava
 			_output << ";\n";
 		}
 
-		void pretty_printer::visit(expression_statement& node)
+		void pretty_printer::visit(const expression_statement& node)
 		{
 			_start_block_statement();
 			_print("");
@@ -390,7 +390,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(block& node)
+		void pretty_printer::visit(const block& node)
 		{
 			const auto is_conditional = _start_if || _start_else;
 			const auto is_empty = !is_nonempty_block(&node);
@@ -417,7 +417,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(if_statement& node)
+		void pretty_printer::visit(const if_statement& node)
 		{
 			const auto then_is_block = is_nonempty_block(&node.then_statement());
 			const auto else_is_block = is_nonempty_block(node.else_statement());
@@ -469,7 +469,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(while_statement& node)
+		void pretty_printer::visit(const while_statement& node)
 		{
 			const auto body_is_block = is_nonempty_block(&node.body());
 
@@ -491,7 +491,7 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(return_statement& node)
+		void pretty_printer::visit(const return_statement& node)
 		{
 			_start_block_statement();
 
@@ -508,7 +508,7 @@ namespace minijava
 			_output << '\n';
 		}
 
-		void pretty_printer::visit(empty_statement&)
+		void pretty_printer::visit(const empty_statement&)
 		{
 			const auto print = _start_if || _start_else || _start_loop;
 			_start_block_statement();
@@ -517,14 +517,14 @@ namespace minijava
 			}
 		}
 
-		void pretty_printer::visit(main_method& node)
+		void pretty_printer::visit(const main_method& node)
 		{
 			_print("public static void "s + node.name().c_str() + "(String[] " + node.argname().c_str() + ")");
 			_start_method = true;
 			node.body().accept(*this);
 		}
 
-		void pretty_printer::visit(method& node)
+		void pretty_printer::visit(const method& node)
 		{
 			_print("public ");
 			node.return_type().accept(*this);
@@ -542,7 +542,7 @@ namespace minijava
 			node.body().accept(*this);
 		}
 
-		void pretty_printer::visit(class_declaration& node)
+		void pretty_printer::visit(const class_declaration& node)
 		{
 			if (node.main_methods().empty() && node.methods().empty()
 					&& node.fields().empty()) {
@@ -588,7 +588,7 @@ namespace minijava
 			_println("}");
 		}
 
-		void pretty_printer::visit(program& node)
+		void pretty_printer::visit(const program& node)
 		{
 			for_each_glue_c(
 				node.classes(),

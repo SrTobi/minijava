@@ -65,7 +65,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_node(node& node);
+			virtual void visit_node(const node& node);
 
 			/**
 			 * @brief
@@ -74,7 +74,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_expression(expression& node);
+			virtual void visit_expression(const expression& node);
 
 			/**
 			 * @brief
@@ -83,7 +83,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_constant(constant& node);
+			virtual void visit_constant(const constant& node);
 
 			/**
 			 * @brief
@@ -92,7 +92,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_block_statement(block_statement& node);
+			virtual void visit_block_statement(const block_statement& node);
 
 			/**
 			 * @brief
@@ -101,7 +101,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit_statement(statement& node);
+			virtual void visit_statement(const statement& node);
 
 		public:
 			/**
@@ -111,7 +111,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(type& node);
+			virtual void visit(const type& node);
 
 			/**
 			 * @brief
@@ -120,7 +120,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(var_decl& node);
+			virtual void visit(const var_decl& node);
 
 			/**
 			 * @brief
@@ -129,7 +129,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(binary_expression& node);
+			virtual void visit(const binary_expression& node);
 
 			/**
 			 * @brief
@@ -138,7 +138,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(unary_expression& node);
+			virtual void visit(const unary_expression& node);
 
 			/**
 			 * @brief
@@ -147,7 +147,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(object_instantiation& node);
+			virtual void visit(const object_instantiation& node);
 
 			/**
 			 * @brief
@@ -156,7 +156,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(array_instantiation& node);
+			virtual void visit(const array_instantiation& node);
 
 			/**
 			 * @brief
@@ -165,7 +165,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(array_access& node);
+			virtual void visit(const array_access& node);
 
 			/**
 			 * @brief
@@ -174,7 +174,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(variable_access& node);
+			virtual void visit(const variable_access& node);
 
 			/**
 			 * @brief
@@ -183,7 +183,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(method_invocation& node);
+			virtual void visit(const method_invocation& node);
 
 			/**
 			 * @brief
@@ -192,7 +192,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(this_ref& node);
+			virtual void visit(const this_ref& node);
 
 			/**
 			 * @brief
@@ -201,7 +201,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(boolean_constant& node);
+			virtual void visit(const boolean_constant& node);
 
 			/**
 			 * @brief
@@ -210,7 +210,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(integer_constant& node);
+			virtual void visit(const integer_constant& node);
 
 			/**
 			 * @brief
@@ -219,7 +219,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(null_constant& node);
+			virtual void visit(const null_constant& node);
 
 			/**
 			 * @brief
@@ -228,7 +228,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(local_variable_statement& node);
+			virtual void visit(const local_variable_statement& node);
 
 			/**
 			 * @brief
@@ -237,7 +237,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(expression_statement& node);
+			virtual void visit(const expression_statement& node);
 
 			/**
 			 * @brief
@@ -246,7 +246,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(block& node);
+			virtual void visit(const block& node);
 
 			/**
 			 * @brief
@@ -255,7 +255,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(if_statement& node);
+			virtual void visit(const if_statement& node);
 
 			/**
 			 * @brief
@@ -264,7 +264,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(while_statement& node);
+			virtual void visit(const while_statement& node);
 
 			/**
 			 * @brief
@@ -273,7 +273,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(return_statement& node);
+			virtual void visit(const return_statement& node);
 
 			/**
 			 * @brief
@@ -282,7 +282,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(empty_statement& node);
+			virtual void visit(const empty_statement& node);
 
 			/**
 			 * @brief
@@ -291,7 +291,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(main_method& node);
+			virtual void visit(const main_method& node);
 
 			/**
 			 * @brief
@@ -300,7 +300,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(method& node);
+			virtual void visit(const method& node);
 
 			/**
 			 * @brief
@@ -309,7 +309,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(class_declaration& node);
+			virtual void visit(const class_declaration& node);
 
 			/**
 			 * @brief
@@ -318,7 +318,7 @@ namespace minijava
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(program& node);
+			virtual void visit(const program& node);
 
 		};
 
@@ -470,7 +470,7 @@ namespace minijava
 			 * @param v
 			 *     The visitor
 			 */
-			virtual void accept(visitor& v) = 0;
+			virtual void accept(visitor& v) const = 0;
 
 		private:
 
@@ -571,7 +571,7 @@ namespace minijava
 				return _rank;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -651,7 +651,7 @@ namespace minijava
 				return _name;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -771,7 +771,7 @@ namespace minijava
 				return *_rhs;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -854,7 +854,7 @@ namespace minijava
 				return *_target;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -902,7 +902,7 @@ namespace minijava
 				return _class_name;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -997,7 +997,7 @@ namespace minijava
 				return *_extent;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1090,7 +1090,7 @@ namespace minijava
 				return *_index;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1178,7 +1178,7 @@ namespace minijava
 				return _name;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1293,7 +1293,7 @@ namespace minijava
 				return _arguments;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1319,7 +1319,7 @@ namespace minijava
 
 		public:
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1362,7 +1362,7 @@ namespace minijava
 				return _value;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1408,7 +1408,7 @@ namespace minijava
 				return _literal;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1428,7 +1428,7 @@ namespace minijava
 
 		public:
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1531,7 +1531,7 @@ namespace minijava
 				return _initial_value.get();
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1602,7 +1602,7 @@ namespace minijava
 				return *_expression;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1659,7 +1659,7 @@ namespace minijava
 				return _body;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1790,7 +1790,7 @@ namespace minijava
 				return _else_branch.get();
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1886,7 +1886,7 @@ namespace minijava
 				return *_body;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1950,7 +1950,7 @@ namespace minijava
 				return _value.get();
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -1970,7 +1970,7 @@ namespace minijava
 
 		public:
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2063,7 +2063,7 @@ namespace minijava
 				return *_body;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2208,7 +2208,7 @@ namespace minijava
 				return *_body;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2378,7 +2378,7 @@ namespace minijava
 				_main_methods.push_back(std::move(main_method));
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
@@ -2446,7 +2446,7 @@ namespace minijava
 				return _classes;
 			}
 
-			void accept(visitor& v) override
+			void accept(visitor& v) const override
 			{
 				v.visit(*this);
 			}
