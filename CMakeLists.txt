@@ -47,6 +47,7 @@ set(COMPONENTS
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
+	semantic/semantic_type
 	system/system
 )
 
