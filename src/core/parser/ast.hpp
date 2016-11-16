@@ -413,6 +413,23 @@ namespace minijava
 
 			/**
 			 * @brief
+			 *     `return`s an optional ID for this `node` in the AST.
+			 *
+			 * AST nodes never make use of this information themselves but
+			 * client code might use it to quickly associate arbitrary
+			 * information with AST nodes.  The nodes in an AST shall either
+			 * have all ID zero or else each have a unique non-zero ID.
+			 *
+			 * @returns
+			 *     the optional ID of this `node`
+			 *
+			 */
+			std::size_t id() const noexcept {
+				return _id;
+			}
+
+			/**
+			 * @brief
 			 *     `return`s the line number where the node was found.
 			 *
 			 * If the value is 0, the line number is unknown.
@@ -473,6 +490,9 @@ namespace minijava
 			virtual void accept(visitor& v) const = 0;
 
 		private:
+
+            /** @brief Optional ID of this node in the AST. */
+			std::size_t _id {};
 
 			/** @brief Line number where the operation was found. */
 			std::size_t _line {};

@@ -62,3 +62,11 @@ BOOST_AUTO_TEST_CASE(type_checks)
 	// abstract (has at least one pure `virtual` member function).  Alas, I
 	// don't know how to check the latter predicate.
 }
+
+
+BOOST_AUTO_TEST_CASE(node_has_zero_id_after_construction)
+{
+	struct vertex : ast::node { void accept(ast::visitor&) const override {} };
+	vertex v{};
+	BOOST_REQUIRE_EQUAL(0, v.id());
+}
