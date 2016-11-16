@@ -142,6 +142,46 @@ static const std::string success_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public int lol;
+			public void test()
+			{
+				- lol;
+				- - lol;
+				-(lol);
+				boolean a;
+				!a;
+				!!a;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int lol;
+			public void test()
+			{
+				lol = 3;
+				lol = 4 + 3;
+				lol = 9 - 3;
+				lol = 3 * 3;
+				lol = 3 % 3;
+				lol = 3 / 0;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean lol;
+			public void test(int x, int y)
+			{
+				lol = x == 3 && y != 3;
+				lol = x < 3 || y > 3;
+				lol = x <= 3 == y > 3;
+				lol = x <= 3 != true;
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
@@ -341,6 +381,78 @@ static const std::string failure_data[] = {
 			public void test(A[][] foo)
 			{
 				foo[0].lol;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(int foo)
+			{
+				!foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(A foo)
+			{
+				!foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(int foo)
+			{
+				!-foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(boolean foo)
+			{
+				-foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(A foo)
+			{
+				-foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(boolean foo)
+			{
+				-!foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(boolean foo)
+			{
+				foo = foo == 3;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(boolean foo)
+			{
+				foo = 3 + 3;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(A foo)
+			{
+				foo = 3 - 9;
 			}
 		}
 	)",

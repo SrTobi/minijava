@@ -3,6 +3,7 @@
 #include "parser/ast.hpp"
 #include "semantic/semantic_type.hpp"
 #include "exceptions.hpp"
+#include "std_definitions.hpp"
 
 #include <unordered_map>
 #include <stack>
@@ -330,22 +331,56 @@ namespace minijava
 
 			void visit(const ast::binary_expression& node) override
 			{
-				visit_expression(node);
+				do_visit(node.lhs());
+				do_visit(node.rhs());
+				auto lhs_type = type_of(node.lhs());
+				auto rhs_type = type_of(node.rhs());
+				auto ret_type = resolve_binary_operator(node.type(), lhs_type, rhs_type);
+				if(!ret_type)
+				{
+					throw semantic_error("Wrong type for binary operation");
+				}
+				type_a.emplace(&node, *ret_type);
 			}
 
 			void visit(const ast::unary_expression& node) override
 			{
-				visit_expression(node);
+				do_visit(node.target());
+				auto in_type = type_of(node.target());
+				auto ret_type = resolve_unary_operator(node.type(), in_type);
+				if(!ret_type)
+				{
+					throw semantic_error("Wrong type for unary operation");
+				}
+				type_a.emplace(&node, *ret_type);
 			}
 
 			void visit(const ast::object_instantiation& node) override
 			{
-				visit_expression(node);
+				using namespace std::string_literals;
+
+				auto class_name = node.class_name();
+				auto it = program_a.classes.find(class_name);
+				if(it == program_a.classes.end())
+				{
+					throw semantic_error("Can not resolve typename '"s + class_name.c_str() + "'");
+				}
+
+				auto type = semantic_type(it->second);
+				type_a.emplace(&node, type);
 			}
 
 			void visit(const ast::array_instantiation& node) override
 			{
-				visit_expression(node);
+				auto type = to_type(node.array_type());
+				check_not_void(type);
+				do_visit(node.extent());
+				auto extent_type = type_of(node.extent());
+				if(extent_type != semantic_type_kind::kind_int)
+				{
+					throw semantic_error("Expected int expression for array extent");
+				}
+				type_a.emplace(&node, type);
 			}
 
 			void visit(const ast::array_access& node) override
