@@ -31,7 +31,7 @@ namespace /* anonymous */
 			std::cout << std::endl;
 		}
 		const auto ast = minijava::parse_program(std::begin(tokens), std::end(tokens));
-		testaux::check_ids_zero(*ast);
+		testaux::check_ids_strict(*ast);
 	}
 
 	void real_main(int argc, char** argv)
