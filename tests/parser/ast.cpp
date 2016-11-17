@@ -46,6 +46,15 @@ namespace /* anonymous */
 		ast::program
 	>;
 
+	struct vertex : ast::node
+	{
+
+		void accept(ast::visitor&) const override
+		{
+		}
+
+	};
+
 }  // namespace /* anonymous */
 
 
@@ -66,7 +75,25 @@ BOOST_AUTO_TEST_CASE(type_checks)
 
 BOOST_AUTO_TEST_CASE(node_has_zero_id_after_construction)
 {
-	struct vertex : ast::node { void accept(ast::visitor&) const override {} };
 	vertex v{};
 	BOOST_REQUIRE_EQUAL(0, v.id());
+}
+
+
+BOOST_AUTO_TEST_CASE(node_has_unknown_sloc_after_construction)
+{
+	vertex v{};
+	BOOST_REQUIRE_EQUAL(0, v.line());
+	BOOST_REQUIRE_EQUAL(0, v.column());
+}
+
+
+BOOST_AUTO_TEST_CASE(node_can_be_mutated_with_mutator)
+{
+	vertex v{};
+	ast::node::mutator m{1, 2, 3};
+	m(v);
+	BOOST_REQUIRE_EQUAL(1, v.id());
+	BOOST_REQUIRE_EQUAL(2, v.line());
+	BOOST_REQUIRE_EQUAL(3, v.column());
 }

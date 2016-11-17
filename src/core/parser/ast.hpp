@@ -17,10 +17,18 @@
 
 #include "symbol/symbol.hpp"
 
+
 namespace minijava
 {
+
+	/**
+	 * @brief
+	 *     `namespace` for AST node types.
+	 *
+	 */
 	namespace ast
 	{
+
 		class node;
 		class type;
 		class var_decl;
@@ -369,6 +377,51 @@ namespace minijava
 		 */
 		class node
 		{
+		public:
+
+			/**
+			 * @brief
+			 *     A helper `class` to mutate fields of `node`s that should
+			 *     normally not be mutatet.
+			 *
+			 * This is a low-level helper used to break encapsulation in a
+			 * controlled way.  Stay away from it and use factories and
+			 * builders instead.
+			 *
+			 * In order to mutate a `node`'s fields, create a `node::mutator`
+			 * object, set its fields to the desired values and then call the
+			 * function call operator on it, passing it the `node` that should
+			 * be mutated.
+			 *
+			 */
+			struct mutator
+			{
+				/** @brief Desired value for the `node`'s `id` attribute. */
+				std::size_t id{};
+
+				/** @brief Desired value for the `node`'s `line` attribute. */
+				std::size_t line{};
+
+				/** @brief Desired value for the `node`'s `column` attribute. */
+				std::size_t column{};
+
+				/**
+				 * @brief
+				 *     Sets the attributes of the `node` to the attributes set
+				 *     on this object.
+				 *
+				 * @param n
+				 *     `node` to have its attributes set
+				 *
+				 */
+				void operator()(node& n) const noexcept
+				{
+					n._id = id;
+					n._line = line;
+					n._column = column;
+				}
+
+			};  // struct mutator
 
 		public:
 
@@ -454,30 +507,6 @@ namespace minijava
 			 */
 			std::size_t column() const noexcept {
 				return _column;
-			}
-
-			/**
-			 * @brief
-			 *     Associates a line number with the node.
-			 *
-			 * @param line
-			 *     line number
-			 *
-			 */
-			void set_line(std::size_t line) noexcept {
-				_line = line;
-			}
-
-			/**
-			 * @brief
-			 *     Associates a column number with the node.
-			 *
-			 * @param column
-			 *     column number
-			 *
-			 */
-			void set_column(std::size_t column) noexcept {
-				_column = column;
 			}
 
 			/**
@@ -2063,5 +2092,7 @@ namespace minijava
 		};
 
 		// endregion
-	}
-}
+
+	}  // namespace ast
+
+}  // namespace minijava
