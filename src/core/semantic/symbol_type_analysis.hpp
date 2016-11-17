@@ -1,40 +1,39 @@
 #pragma once
 
+#include <unordered_map>
 #include <memory>
 
 #include "parser/ast.hpp"
+#include "type_system.hpp"
 
 namespace minijava
 {
-	/**
-	 * @brief
-	 *     Exception used to report syntacitcal errors from within the parser.
-	 *
-	 */
-	struct semantic_error: std::runtime_error
+	namespace semantic
 	{
+		class type_annotation
+		{
+		public:
+			type_annotation(std::unordered_map<const ast::expression*, t_type> annotations);
+			t_type operator[](const ast::expression& node) const;
 
-		/**
-		 * @brief
-		 *     Creates a new exception object with a generic error message and
-		 *     no source location information.
-		 *
-		 */
-		semantic_error();
+			const std::unordered_map<const ast::expression*, t_type>& types() const;
+		private:
+			std::unordered_map<const ast::expression*, t_type> _types;
+		};
 
-		/**
-		 * @brief
-		 *     Creates a new exception object with a custom error message and
-		 *     no source location information.
-		 *
-		 * @param msg
-		 *     custom error message
-		 *
-		 */
-		semantic_error(const std::string msg);
+		class ref_annotation
+		{
+		public:
+			ref_annotation(std::unordered_map<const ast::node*, const symbol_def*>);
 
-	};  // struct semantic_error
+			const method_def& operator[](const ast::method_invocation& node) const;
+			const symbol_def& operator[](const ast::variable_access& node) const;
 
+			const std::unordered_map<const ast::node*, const symbol_def*> refs() const;
+		private:
+			std::unordered_map<const ast::node*, const symbol_def*> _refs;
+		};
 
-    void analyse_program(const ast::program& prog);
+		std::pair<type_annotation, ref_annotation> analyse_program(const ast::program& prog, const type_system& typesystem, def_annotations& def_a);
+	}
 }

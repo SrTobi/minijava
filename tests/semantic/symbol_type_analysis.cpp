@@ -16,6 +16,8 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/ast.hpp"
 #include "parser/parser.hpp"
+#include "semantic/semantic_error.hpp"
+#include "semantic/symbol_def.hpp"
 
 #include "testaux/testaux.hpp"
 
@@ -182,6 +184,61 @@ static const std::string success_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public void test()
+			{
+				return;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test(int x)
+			{
+				return x;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int foo(boolean a)
+			{
+			}
+
+			public int test(int x)
+			{
+				int y = foo(true);
+				return test(x);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int foo(boolean a)
+			{
+			}
+
+			public int test(int x)
+			{
+				foo(true);
+				return test(x);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int foo(A a)
+			{
+			}
+
+			public int test()
+			{
+				foo(null);
+				foo(new A());
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
@@ -192,8 +249,11 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
 	const auto toklast = minijava::token_end(lex);
 
 	auto ast = minijava::parse_program(tokfirst, toklast);
+
+	minijava::semantic::def_annotations def_a{};
+	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a);
 	try{
-		minijava::analyse_program(*ast);
+		minijava::semantic::analyse_program(*ast, typesystem, def_a);
 	}catch(const minijava::semantic_error& e)
 	{
 		BOOST_FAIL("Exception thrown: " << e.what());
@@ -203,50 +263,10 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
 
 static const std::string failure_data[] = {
 	R"(
-		class A {}
-		class A {}
-	)",
-	R"(
-		class A {
-			public int name;
-			public boolean name;
-		}
-	)",
-	R"(
-		class A {
-			public int name() {}
-			public boolean name() {}
-		}
-	)",
-	R"(
-		class A {
-			public B foo;
-		}
-	)",
-	R"(
-		class A {
-			public B foo()
-			{
-			}
-		}
-	)",
-	R"(
-		class A {
-			public void foo;
-		}
-	)",
-	R"(
 		class A {
 			public void foo()
 			{
 				void xxx;
-			}
-		}
-	)",
-	R"(
-		class A {
-			public void[] foo()
-			{
 			}
 		}
 	)",
@@ -456,6 +476,78 @@ static const std::string failure_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public void test(A foo)
+			{
+				return foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test(A foo)
+			{
+				return;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test(A foo)
+			{
+				return foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test()
+			{
+				foo();
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test()
+			{
+				test(3);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test(boolean a)
+			{
+				test(3);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test(int a)
+			{
+				test(true);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public int test(boolean a)
+			{
+				test(true, 3);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				int x = test();
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_rejects_invalid_programs, failure_data)
@@ -466,8 +558,11 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_rejects_invalid_programs, failure_data
 	const auto toklast = minijava::token_end(lex);
 
 	auto ast = minijava::parse_program(tokfirst, toklast);
+
+	minijava::semantic::def_annotations def_a{};
+	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a);
 	try{
-		minijava::analyse_program(*ast);
+		minijava::semantic::analyse_program(*ast, typesystem, def_a);
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::semantic_error& e) {
 	}
