@@ -48,7 +48,6 @@ set(COMPONENTS
 	symbol/symbol_entry
 	symbol/symbol_pool
 	semantic/semantic_error
-	semantic/semantic_type
 	semantic/std_definitions
 	semantic/symbol_def
 	semantic/symbol_type_analysis

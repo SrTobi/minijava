@@ -1,7 +1,6 @@
 #include "symbol_type_analysis.hpp"
 
 #include "parser/ast.hpp"
-#include "semantic/semantic_type.hpp"
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_def.hpp"
 #include "exceptions.hpp"
