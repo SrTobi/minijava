@@ -96,6 +96,28 @@ namespace minijava
 				std::stack<scope> scopes;
 			};
 
+			struct lvalue_visitor : public ast::visitor
+			{
+				bool is_lvalue = false;
+
+				void visit(const ast::array_access&) override
+				{
+					is_lvalue = true;
+				}
+
+				void visit(const ast::variable_access&) override
+				{
+					is_lvalue = true;
+				}
+			};
+
+			bool is_lvalue(const ast::expression& expr)
+			{
+				lvalue_visitor visitor;
+				visitor.do_visit(expr);
+				return visitor.is_lvalue;
+			}
+
 			struct name_type_visitor : public ast::visitor
 			{
 				name_type_visitor(const type_system& typesystem, const globals_list& globals, def_annotations& def_a)
@@ -174,6 +196,12 @@ namespace minijava
 					{
 						throw semantic_error("Wrong type for binary operation");
 					}
+
+					if(node.type() == ast::binary_operation_type::assign && !is_lvalue(node.lhs()))
+					{
+						throw semantic_error("Expected a lvalue on the left side of an assignment");
+					}
+
 					type_a.emplace(&node, *ret_type);
 				}
 

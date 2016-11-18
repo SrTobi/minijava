@@ -555,7 +555,7 @@ static const std::string failure_data[] = {
 	)",
 	R"(
 		class A {
-			public boolean test()
+			public void test()
 			{
 				int x = test();
 			}
@@ -563,7 +563,7 @@ static const std::string failure_data[] = {
 	)",
 	R"(
 		class A {
-			public boolean test()
+			public void test()
 			{
 				System.out.println(true);
 			}
@@ -571,7 +571,7 @@ static const std::string failure_data[] = {
 	)",
 	R"(
 		class A {
-			public boolean test()
+			public void test()
 			{
 				System.out.println();
 			}
@@ -579,7 +579,7 @@ static const std::string failure_data[] = {
 	)",
 	R"(
 		class A {
-			public boolean test()
+			public void test()
 			{
 				System.out.println(2, 2);
 			}
@@ -587,7 +587,7 @@ static const std::string failure_data[] = {
 	)",
 	R"(
 		class A {
-			public boolean test()
+			public void test()
 			{
 				System.in;
 			}
@@ -595,9 +595,33 @@ static const std::string failure_data[] = {
 	)",
 	R"(
 		class A {
-			public boolean test()
+			public void test()
 			{
 				System.out.test();
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test()
+			{
+				3 + 3 = 3 + 3;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				test() = true;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test(int a)
+			{
+				(a = a) = 3;
 			}
 		}
 	)",
