@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parser/ast.hpp"
+#include "symbol/symbol_pool.hpp"
 #include "type_system.hpp"
 
 #include <boost/optional.hpp>

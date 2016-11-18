@@ -49,7 +49,7 @@ set(COMPONENTS
 	symbol/symbol_pool
 	semantic/ref_type_analysis
 	semantic/semantic_error
-	semantic/std_definitions
+	semantic/buildins
 	semantic/symbol_def
 	semantic/type_system
 	system/system

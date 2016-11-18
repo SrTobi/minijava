@@ -1,4 +1,4 @@
-#include "semantic/std_definitions.hpp"
+#include "semantic/buildins.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#define BOOST_TEST_MODULE  semantic_std_definitions
+#define BOOST_TEST_MODULE  semantic_buildins
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 

@@ -1,10 +1,10 @@
 #include "ref_type_analysis.hpp"
 
+#include "exceptions.hpp"
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_def.hpp"
-#include "exceptions.hpp"
-#include "std_definitions.hpp"
+#include "semantic/buildins.hpp"
 
 #include <stack>
 #include <utility>
