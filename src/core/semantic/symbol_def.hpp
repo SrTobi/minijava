@@ -125,7 +125,7 @@ namespace minijava
 			const std::unordered_map<symbol, const field_def*> fields() const noexcept;
 
 			field_def* new_field(const t_type& type, const symbol& name, const ast::var_decl* decl);
-			method_def* new_method(const t_type& ret_type, const symbol& name, const ast::method* decl);
+			method_def* new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool static_ = false);
 
 		private:
 			std::unordered_map<symbol, const method_def*> _methods;

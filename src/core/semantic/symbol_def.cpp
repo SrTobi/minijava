@@ -258,30 +258,26 @@ namespace minijava
 				throw semantic_error("Type " + type.to_string() + " can not be used as field");
 			}
 			auto field = std::make_unique<field_def>(name, type, *this, decl);
-			auto ptr = field.get();
 			bool inserted;
-			std::tie(std::ignore, inserted) = _fields.emplace(name, ptr);
+			std::tie(std::ignore, inserted) = _fields.emplace(name, field.get());
 			if(!inserted)
 			{
-				throw semantic_error("Field '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
+				throw semantic_error("Field with name '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
 			}
-			_def_a.store(std::move(field));
-			return ptr;
+			return _def_a.store(std::move(field));
 		}
 
-		method_def* class_def::new_method(const t_type& ret_type, const symbol& name, const ast::method* decl)
+		method_def* class_def::new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool static_)
 		{
 			using namespace std::string_literals;
-			auto method = std::make_unique<method_def>(name, ret_type, false, *this, decl, _def_a);
-			auto ptr = method.get();
+			auto method = std::make_unique<method_def>(name, ret_type, static_, *this, decl, _def_a);
 			bool inserted;
-			std::tie(std::ignore, inserted) = _methods.emplace(name, ptr);
+			std::tie(std::ignore, inserted) = _methods.emplace(name, method.get());
 			if(!inserted)
 			{
-				throw semantic_error("Method '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
+				throw semantic_error("Method with name '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
 			}
-			_def_a.store(std::move(method));
-			return ptr;
+			return _def_a.store(std::move(method));
 		}
 
 
