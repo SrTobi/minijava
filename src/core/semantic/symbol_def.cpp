@@ -240,6 +240,16 @@ namespace minijava
 			return nullptr;
 		}
 
+		const std::unordered_map<symbol, const method_def*> class_def::methods() const noexcept
+		{
+			return _methods;
+		}
+
+		const std::unordered_map<symbol, const field_def*> class_def::fields() const noexcept
+		{
+			return _fields;
+		}
+
 		field_def* class_def::new_field(const t_type& type, const symbol& name, const ast::var_decl* decl)
 		{
 			using namespace std::string_literals;
