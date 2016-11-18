@@ -17,6 +17,7 @@
 #include "parser/pretty_printer.hpp"
 #include "symbol/symbol_pool.hpp"
 
+#include "testaux/ast_id_checker.hpp"
 #include "testaux/testaux.hpp"
 #include "testaux/token_string.hpp"
 #include "testaux/unique_ptr_vector.hpp"
@@ -483,6 +484,7 @@ BOOST_AUTO_TEST_CASE(ast_empty_program)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }
 
 
@@ -502,6 +504,7 @@ BOOST_AUTO_TEST_CASE(ast_single_empty_class)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }
 
 
@@ -545,6 +548,7 @@ BOOST_AUTO_TEST_CASE(ast_multiple_empty_classes)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }
 
 
@@ -619,6 +623,7 @@ BOOST_AUTO_TEST_CASE(ast_class_with_fields)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }
 
 
@@ -737,6 +742,7 @@ BOOST_AUTO_TEST_CASE(ast_methods_primitive)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }
 
 
@@ -783,6 +789,7 @@ BOOST_AUTO_TEST_CASE(ast_methods_udt)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }
 
 
@@ -825,4 +832,5 @@ BOOST_AUTO_TEST_CASE(ast_methods_main)
 	);
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+	testaux::check_ids_strict(*actual_ast);
 }

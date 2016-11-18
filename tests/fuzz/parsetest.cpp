@@ -11,6 +11,7 @@
 #include "parser/parser.hpp"
 #include "symbol/symbol_pool.hpp"
 
+#include "testaux/ast_id_checker.hpp"
 #include "testaux/syntaxgen.hpp"
 
 namespace po = boost::program_options;
@@ -24,11 +25,13 @@ namespace /* anonymous */
 	{
 		auto pool = minijava::symbol_pool<>{};
 		const auto tokens = testaux::generate_valid_program(engine, pool, limit);
+		std::cout << "/* number of tokens: " << std::setw(12) << tokens.size() << " */\n";
 		if (print) {
 			minijava::pretty_print(std::cout, std::begin(tokens), std::end(tokens));
 			std::cout << std::endl;
 		}
-		minijava::parse_program(std::begin(tokens), std::end(tokens));
+		const auto ast = minijava::parse_program(std::begin(tokens), std::end(tokens));
+		testaux::check_ids_strict(*ast);
 	}
 
 	void real_main(int argc, char** argv)

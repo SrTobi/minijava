@@ -39,6 +39,8 @@ set(COMPONENTS
 	lexer/token_type
 	lexer/token_type_set
 	parser/ast
+	parser/ast_factory
+	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
 	symbol/symbol
