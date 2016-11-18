@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "symbol/symbol.hpp"
+#include "symbol/symbol_pool.hpp"
 #include "parser/ast.hpp"
 
 namespace minijava
@@ -16,9 +17,19 @@ namespace minijava
 		class method_def;
 		class class_def;
 		class def_annotations;
+		class t_type;
+		class type_system;
 
-		namespace detail {
+		namespace detail
+		{
 			struct type_base;
+			void extract_typesystem(const ast::program& prog, type_system& ts, const t_type& string_typ);
+		}
+
+		namespace buildins
+		{
+			template<typename AllocT>
+			t_type register_string(type_system& typesystem, symbol_pool<AllocT>& pool);
 		}
 
 		class t_type
@@ -75,6 +86,15 @@ namespace minijava
 			std::unordered_map<symbol, const class_def*> _classes;
 		};
 
-		type_system extract_typesystem(const ast::program& prog, def_annotations& def_a);
+		template<typename AllocT>
+		type_system extract_typesystem(const ast::program& prog, def_annotations& def_a, symbol_pool<AllocT>& pool)
+		{
+			type_system ts{def_a};
+			auto string_type = buildins::register_string(ts, pool);
+			detail::extract_typesystem(prog, ts, string_type);
+			return ts;
+		}
 	}
 }
+
+#include "semantic/buildins.hpp"

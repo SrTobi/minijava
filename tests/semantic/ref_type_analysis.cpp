@@ -251,6 +251,15 @@ static const std::string success_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public static void main(String[] args)
+			{
+				args;
+				return;
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
@@ -263,7 +272,7 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
 	auto ast = minijava::parse_program(tokfirst, toklast);
 
 	minijava::semantic::def_annotations def_a{};
-	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a);
+	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a, pool);
 	auto system = buildins::register_system(typesystem, pool);
 	try{
 		minijava::semantic::analyse_program(*ast, {{pool.normalize("System"), system}}, typesystem, def_a);
@@ -335,6 +344,16 @@ static const std::string failure_data[] = {
 					int foo;
 				}
 				foo;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public void test(int foo)
+			{
+				{
+					int foo;
+				}
 			}
 		}
 	)",
@@ -625,6 +644,22 @@ static const std::string failure_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public static void main(String[] args)
+			{
+				int args;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public static void main(String[] args)
+			{
+				main(args);
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_rejects_invalid_programs, failure_data)
@@ -637,7 +672,7 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_rejects_invalid_programs, failure_data
 	auto ast = minijava::parse_program(tokfirst, toklast);
 
 	minijava::semantic::def_annotations def_a{};
-	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a);
+	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a, pool);
 	auto system = buildins::register_system(typesystem, pool);
 	try{
 		minijava::semantic::analyse_program(*ast, {{pool.normalize("System"), system}}, typesystem, def_a);

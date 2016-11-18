@@ -169,20 +169,16 @@ namespace minijava
 				void visit(const ast::var_decl& node) override
 				{
 					using namespace std::string_literals;
+					assert(cur_method && "check that no fields or parameter are visited with this");
 					if(symbols.is_defined_in_dependend_scope(node.name()))
 					{
 						throw semantic_error("Variable '"s + node.name().c_str() + "' has already been defined in the current scope!");
 					}
-					if(cur_method) // fields and parameter already have definitions
-					{
-						auto ty = type_of(node);
-						check_not_void(ty);
-						auto vdef = std::make_unique<var_def>(node.name(), ty, *cur_method, &node);
-						symbols.add_def(*vdef);
-						_def_a.store(std::move(vdef));
-					}else{
-						symbols.add_def(_def_a[node]);
-					}
+					auto ty = type_of(node);
+					check_not_void(ty);
+					auto vdef = std::make_unique<var_def>(node.name(), ty, *cur_method, &node);
+					symbols.add_def(*vdef);
+					_def_a.store(std::move(vdef));
 				}
 
 				void visit(const ast::binary_expression& node) override
@@ -426,23 +422,20 @@ namespace minijava
 					/* nothing to do */
 				}
 
-				void visit(const ast::main_method& node) override
-				{
-					(void)node;
-				}
-
 				void visit(const ast::method& node) override
 				{
 					assert(!cur_method);
 					symbols.enter_scope(true);
-
-					do_visit(node.return_type());
-					do_visit_all(node.parameters());
-
 					cur_method = &_def_a[node];
-					do_visit(node.body());
-					cur_method = nullptr;
 
+					for(auto&& param: cur_method->parameters())
+					{
+						symbols.add_def(*param);
+					}
+
+					do_visit(node.body());
+
+					cur_method = nullptr;
 					symbols.leave_scope();
 				}
 
@@ -452,8 +445,13 @@ namespace minijava
 					cur_class = &_def_a[node];
 					symbols.enter_scope(true);
 
-					do_visit_all(node.fields());
+					for(auto&& field_pair: cur_class->fields())
+					{
+						symbols.add_def(*field_pair.second);
+					}
+
 					do_visit_all(node.methods());
+					do_visit_all(node.main_methods());
 
 					symbols.leave_scope();
 					cur_class = nullptr;

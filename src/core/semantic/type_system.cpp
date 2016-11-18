@@ -11,9 +11,10 @@ namespace minijava
 		namespace {
 			struct member_collector : public ast::visitor
 			{
-				member_collector(type_system& typesystem, class_def& clazz_def)
+				member_collector(type_system& typesystem, class_def& clazz_def, const t_type& string_type)
 					: typesystem(typesystem)
 					, clazz_def(clazz_def)
+					, string_type(string_type)
 				{
 				}
 
@@ -29,6 +30,17 @@ namespace minijava
 					}
 				}
 
+				void visit(const ast::main_method& node) override
+				{
+					if(node.name().c_str() != std::string("main"))
+					{
+						throw semantic_error("static method must have name main");
+					}
+
+					auto* method_d = clazz_def.new_method(type_system::t_void(), node.name(), &node, true);
+					method_d->add_parameter(string_type.with_rank(1), node.argname(), nullptr);
+				}
+
 				void visit(const ast::var_decl& node) override
 				{
 					auto field_type = typesystem.resolve(node.var_type());
@@ -39,10 +51,12 @@ namespace minijava
 				{
 					do_visit_all(node.fields());
 					do_visit_all(node.methods());
+					do_visit_all(node.main_methods());
 				}
 
 				type_system& typesystem;
 				class_def& clazz_def;
+				const t_type& string_type;
 			};
 		}
 
@@ -373,24 +387,24 @@ namespace minijava
 			return t_boolean().with_rank(rank);
 		}
 
-
-		type_system extract_typesystem(const ast::program& prog, def_annotations& def_a)
+		namespace detail
 		{
-			type_system ts{def_a};
-			std::vector<class_def*> classes{};
-
-			for(auto&& clazz: prog.classes())
+			void extract_typesystem(const ast::program& prog, type_system& ts, const t_type& string_type)
 			{
-				class_def* def = ts.new_class(clazz->name(), clazz.get());
-				classes.push_back(def);
-			}
+				std::vector<class_def*> classes{};
 
-			for(auto&& clazz_def: classes)
-			{
-				member_collector collector(ts, *clazz_def);
-				collector.do_visit(clazz_def->decl());
+				for(auto&& clazz: prog.classes())
+				{
+					class_def* def = ts.new_class(clazz->name(), clazz.get());
+					classes.push_back(def);
+				}
+
+				for(auto&& clazz_def: classes)
+				{
+					member_collector collector(ts, *clazz_def, string_type);
+					collector.do_visit(clazz_def->decl());
+				}
 			}
-			return ts;
 		}
 	}
 }

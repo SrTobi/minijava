@@ -29,7 +29,7 @@ type_system get_typesystem(const std::string& sample, def_annotations& def_a, mi
 
 	auto ast = minijava::parse_program(tokfirst, toklast);
 
-	return extract_typesystem(*ast, def_a);
+	return extract_typesystem(*ast, def_a, pool);
 }
 
 
