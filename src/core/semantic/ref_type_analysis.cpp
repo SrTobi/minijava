@@ -1,4 +1,4 @@
-#include "symbol_type_analysis.hpp"
+#include "ref_type_analysis.hpp"
 
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"

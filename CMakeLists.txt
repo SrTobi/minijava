@@ -47,10 +47,10 @@ set(COMPONENTS
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
+	semantic/ref_type_analysis
 	semantic/semantic_error
 	semantic/std_definitions
 	semantic/symbol_def
-	semantic/symbol_type_analysis
 	semantic/type_system
 	system/system
 )

@@ -1,4 +1,4 @@
-#include "semantic/symbol_type_analysis.hpp"
+#include "semantic/ref_type_analysis.hpp"
 
 #include <algorithm>
 #include <memory>
