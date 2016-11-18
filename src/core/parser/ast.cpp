@@ -131,7 +131,7 @@ namespace minijava
 
 		void visitor::visit(const main_method& node)
 		{
-			visit_node(node);
+			visit(static_cast<const method&>(node));
 		}
 
 		void visitor::visit(const method& node)
