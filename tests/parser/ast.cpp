@@ -67,9 +67,6 @@ BOOST_AUTO_TEST_CASE(type_checks)
 	static_assert(testaux::meta::none<std::is_copy_assignable>(ants), "");
 	static_assert(testaux::meta::none<std::is_move_constructible>(ants), "");
 	static_assert(testaux::meta::none<std::is_move_assignable>(ants), "");
-	// TODO: I'd also like to check that each class is either `final` or
-	// abstract (has at least one pure `virtual` member function).  Alas, I
-	// don't know how to check the latter predicate.
 }
 
 
