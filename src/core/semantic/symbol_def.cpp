@@ -1,5 +1,6 @@
 #include "symbol_def.hpp"
 
+#include "exceptions.hpp"
 #include "semantic/semantic_error.hpp"
 
 namespace minijava
@@ -92,6 +93,36 @@ namespace minijava
 			return _method;
 		}
 
+		global_def::global_def(const symbol& name, const t_type& type)
+			: _name(name)
+			, _type(type)
+		{
+		}
+
+		const ast::var_decl& global_def::decl() const
+		{
+			MINIJAVA_NOT_REACHED();
+		}
+
+		symbol global_def::name() const
+		{
+			return _name;
+		}
+
+		t_type global_def::type() const
+		{
+			return _type;
+		}
+
+		bool global_def::is_local() const
+		{
+			return false;
+		}
+
+		bool global_def::is_external() const
+		{
+			return true;
+		}
 
 		method_def::method_def(const symbol& name, const t_type& ret_type, bool is_static, const class_def& clazz, const ast::method* decl, def_annotations& def_a)
 			: _name(name)
@@ -276,27 +307,6 @@ namespace minijava
 		{
 			assert(_definitions.count(&decl));
 			return static_cast<const method_def&>(*_definitions.at(&decl));
-		}
-
-
-		void def_annotations::store(std::unique_ptr<const class_def> def)
-		{
-			_store(std::move(def));
-		}
-
-		void def_annotations::store(std::unique_ptr<const method_def> def)
-		{
-			_store(std::move(def));
-		}
-
-		void def_annotations::store(std::unique_ptr<const field_def> def)
-		{
-			_store(std::move(def));
-		}
-
-		void def_annotations::store(std::unique_ptr<const var_def> def)
-		{
-			_store(std::move(def));
 		}
 
 		void def_annotations::_store(std::unique_ptr<const symbol_def> def)

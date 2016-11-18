@@ -16,12 +16,12 @@
 
 BOOST_AUTO_TEST_CASE(check_unary_logical_not_operation)
 {
-	namespace semantic = minijava::semantic;
+	namespace buildins = minijava::semantic::buildins;
 	using minijava::ast::unary_operation_type;
-	using semantic::type_system;
+	using minijava::semantic::type_system;
 
-	BOOST_CHECK(not semantic::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_int()));
-	BOOST_CHECK(not semantic::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_void()));
-	BOOST_CHECK(not semantic::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_boolean_array(1)));
-	BOOST_CHECK(semantic::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_boolean()));
+	BOOST_CHECK(not buildins::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_int()));
+	BOOST_CHECK(not buildins::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_void()));
+	BOOST_CHECK(not buildins::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_boolean_array(1)));
+	BOOST_CHECK(buildins::resolve_unary_operator(unary_operation_type::logical_not, type_system::t_boolean()));
 }

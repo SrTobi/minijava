@@ -34,6 +34,9 @@ namespace minijava
 			std::unordered_map<const ast::node*, const symbol_def*> _refs;
 		};
 
+		using globals_list = std::unordered_map<symbol, t_type>;
+
 		std::pair<type_annotation, ref_annotation> analyse_program(const ast::program& prog, const type_system& typesystem, def_annotations& def_a);
+		std::pair<type_annotation, ref_annotation> analyse_program(const ast::program& prog, const globals_list& globals, const type_system& typesystem, def_annotations& def_a);
 	}
 }

@@ -69,6 +69,21 @@ namespace minijava
 			const ast::var_decl* _decl;
 		};
 
+		class global_def : public symbol_def
+		{
+		public:
+			global_def(const symbol& name, const t_type& type);
+			virtual const ast::var_decl& decl() const override;
+			virtual symbol name() const override;
+			virtual t_type type() const override;
+			virtual bool is_local() const override;
+			virtual bool is_external() const override;
+
+		private:
+			symbol _name;
+			t_type _type;
+		};
+
 		class method_def : public symbol_def
 		{
 		public:
@@ -131,10 +146,13 @@ namespace minijava
 			const method_def& def_of(const ast::method& decl) const;
 			const symbol_def& def_of(const ast::var_decl& decl) const;
 
-			void store(std::unique_ptr<const class_def> def);
-			void store(std::unique_ptr<const method_def> def);
-			void store(std::unique_ptr<const field_def> def);
-			void store(std::unique_ptr<const var_def> def);
+			template<typename T>
+			T* store(std::unique_ptr<T> def)
+			{
+				auto* ptr = def.get();
+				_store(std::move(def));
+				return ptr;
+			}
 		private:
 			void _store(std::unique_ptr<const symbol_def> def);
 

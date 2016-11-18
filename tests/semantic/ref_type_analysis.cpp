@@ -18,8 +18,11 @@
 #include "parser/parser.hpp"
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_def.hpp"
+#include "semantic/buildins.hpp"
 
 #include "testaux/testaux.hpp"
+
+namespace buildins = minijava::semantic::buildins;
 
 static const std::string success_data[] = {
 	"",
@@ -239,6 +242,15 @@ static const std::string success_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public int foo(A a)
+			{
+				System.out;
+				System.out.println(5);
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
@@ -252,8 +264,9 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_accepts_valid_programs, success_data)
 
 	minijava::semantic::def_annotations def_a{};
 	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a);
+	auto system = buildins::register_system(typesystem, pool);
 	try{
-		minijava::semantic::analyse_program(*ast, typesystem, def_a);
+		minijava::semantic::analyse_program(*ast, {{pool.normalize("System"), system}}, typesystem, def_a);
 	}catch(const minijava::semantic_error& e)
 	{
 		BOOST_FAIL("Exception thrown: " << e.what());
@@ -548,6 +561,46 @@ static const std::string failure_data[] = {
 			}
 		}
 	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				System.out.println(true);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				System.out.println();
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				System.out.println(2, 2);
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				System.in;
+			}
+		}
+	)",
+	R"(
+		class A {
+			public boolean test()
+			{
+				System.out.test();
+			}
+		}
+	)",
 };
 
 BOOST_DATA_TEST_CASE(symbol_type_analysis_rejects_invalid_programs, failure_data)
@@ -561,8 +614,9 @@ BOOST_DATA_TEST_CASE(symbol_type_analysis_rejects_invalid_programs, failure_data
 
 	minijava::semantic::def_annotations def_a{};
 	auto typesystem = minijava::semantic::extract_typesystem(*ast, def_a);
+	auto system = buildins::register_system(typesystem, pool);
 	try{
-		minijava::semantic::analyse_program(*ast, typesystem, def_a);
+		minijava::semantic::analyse_program(*ast, {{pool.normalize("System"), system}}, typesystem, def_a);
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::semantic_error& e) {
 	}
