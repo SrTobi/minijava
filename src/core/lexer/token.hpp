@@ -13,7 +13,7 @@
 
 #include "lexer/token_type.hpp"
 #include "symbol/symbol.hpp"
-
+#include "lexer/position.hpp"
 
 namespace minijava
 {
@@ -136,47 +136,26 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s the line number where the token was found.
+		 *     `return`s the position where the token was found.
 		 *
-		 * If the value is 0, the line number is unknown.
-		 *
-		 * @returns
-		 *     line number
-		 *
-		 */
-		std::size_t line() const noexcept;
-
-		/**
-		 * @brief
-		 *     `return`s the column number where the token was found.
-		 *
-		 * If the value is 0, the column number is unknown.
+		 * If the value is 0, the position number is unknown.
 		 *
 		 * @returns
-		 *     column number
+		 *     position
 		 *
 		 */
-		std::size_t column() const noexcept;
+		minijava::position position() const noexcept;
 
 		/**
 		 * @brief
-		 *     Associates a line number with the token.
+		 *     Associates a position with the token.
 		 *
-		 * @param line
-		 *     line number
+		 * @param position
+		 *     position
 		 *
 		 */
-		void set_line(std::size_t line) noexcept;
+		void set_position(minijava::position pos) noexcept;
 
-		/**
-		 * @brief
-		 *     Associates a column number with the token.
-		 *
-		 * @param column
-		 *     column number
-		 *
-		 */
-		void set_column(std::size_t column) noexcept;
 
 		/**
 		 * @brief
@@ -185,8 +164,7 @@ namespace minijava
 		 * Two tokens are considered equal if they are of the same type and --
 		 * if tokens of that type have an associated lexical value -- their
 		 * associated lexical values compare equal, too.  The source code
-		 * location (line and column number) does not participate in the
-		 * comparison.
+		 * location does not participate in the comparison.
 		 *
 		 * @param lhs
 		 *     first token to comare
@@ -208,11 +186,9 @@ namespace minijava
 		/** @brief Lexical value associated with the token. */
 		symbol _lexval{};
 
-		/** @brief Line number where the token was found. */
-		std::size_t _line{};
+		/** @brief Position where the token was found. */
+		minijava::position _position{0, 0};
 
-		/** @brief Column number where the token was found. */
-		std::size_t _column{};
 
 	};  // class token
 

@@ -9,8 +9,10 @@
 #pragma once
 
 #include <memory>
+#include <lexer/position.hpp>
 
 #include "parser/ast.hpp"
+#include "lexer/position.hpp"
 
 
 namespace minijava
@@ -75,6 +77,27 @@ namespace minijava
 		 *
 		 */
 		ast_builder& at_line(std::size_t line);
+
+		/**
+		 * @brief
+		 *     Associates a line and column number with the to-be-created `node`.
+		 *
+		 * This function may be called at most once and only to set a non-zero
+		 * line and column number.  Attempting to re-set the line number that was
+		 * set before or to set the line number to zero will result in undefined
+		 * behavior.
+		 *
+		 * @param line
+		 *     line number to associate with the `node`
+		 *
+		 * @param column
+		 *     column number to associate with the `node`
+		 *
+		 * @returns
+		 *     reference to `*this`
+		 *
+		 */
+		ast_builder& at(const minijava::position position);
 
 		/**
 		 * @brief

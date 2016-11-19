@@ -21,14 +21,9 @@
 namespace minijava
 {
 
-	inline std::size_t syntax_error::line() const noexcept
+	inline position syntax_error::position() const noexcept
 	{
-		return _line;
-	}
-
-	inline std::size_t syntax_error::column() const noexcept
-	{
-		return _column;
+		return _position;
 	}
 
 	namespace detail
@@ -50,11 +45,11 @@ namespace minijava
 		void throw_syntax_error_main_signature(const token& pde);
 
 		// `throw`s a `syntax_error` that complains about `tt` (which must be a
-		// keyword identifying a primitive type) being used in a new object
+		// token with a keyword identifying a primitive type) being used in a new object
 		// expression that was detected at `pde` which must be a left
 		// parenthesis.
 		[[noreturn]]
-		void throw_syntax_error_new_primitive(const token& pde, token_type tt);
+		void throw_syntax_error_new_primitive(const token& pde, const token& type_token);
 
 		// Tag type to statically define a set of token types.  It should be
 		// asserted that the type list `TTs` is free of duplicates but doing so

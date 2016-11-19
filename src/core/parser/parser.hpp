@@ -13,6 +13,7 @@
 
 #include "lexer/token.hpp"
 #include "parser/ast.hpp"
+#include "lexer/position.hpp"
 
 
 namespace minijava
@@ -61,36 +62,21 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s the line number of the parser-defined error location.
+		 *     `return`s the position of the parser-defined error location.
 		 *
 		 * If the error location is unknown, 0 is `return`ed.
 		 *
 		 * @returns
-		 *     line number
+		 *     position
 		 *
 		 */
-		std::size_t line() const noexcept;
-
-		/**
-		 * @brief
-		 *     `return`s the column number of the parser-defined error
-		 *     location.
-		 *
-		 * If the error location is unknown, 0 is `return`ed.
-		 *
-		 * @returns
-		 *     column number
-		 *
-		 */
-		std::size_t column() const noexcept;
+		minijava::position position() const noexcept;
 
 	private:
 
-		/** @brief Line number of the parser-defined error token. */
-		std::size_t _line{};
+		/** @brief Position of the parser-defined error token. */
+		minijava::position _position{0, 0};
 
-		/** @brief Column number of the parser-defined error token. */
-		std::size_t _column{};
 
 	};  // struct syntax_error
 
