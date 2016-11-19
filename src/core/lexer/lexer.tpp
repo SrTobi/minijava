@@ -4,7 +4,7 @@
 
 #include "lexer/character.hpp"
 #include "lexer/keyword.hpp"
-#include "lexer/position.hpp"
+#include "position.hpp"
 
 
 namespace minijava

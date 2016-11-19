@@ -13,7 +13,7 @@
 
 #include "lexer/token_type.hpp"
 #include "symbol/symbol.hpp"
-#include "lexer/position.hpp"
+#include "position.hpp"
 
 namespace minijava
 {

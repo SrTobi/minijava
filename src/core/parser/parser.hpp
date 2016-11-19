@@ -13,7 +13,7 @@
 
 #include "lexer/token.hpp"
 #include "parser/ast.hpp"
-#include "lexer/position.hpp"
+#include "position.hpp"
 
 
 namespace minijava

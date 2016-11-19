@@ -9,10 +9,9 @@
 #pragma once
 
 #include <memory>
-#include <lexer/position.hpp>
+#include "position.hpp"
 
 #include "parser/ast.hpp"
-#include "lexer/position.hpp"
 
 
 namespace minijava

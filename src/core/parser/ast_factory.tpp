@@ -3,7 +3,7 @@
 #endif
 
 #include <cassert>
-#include "lexer/position.hpp"
+#include "position.hpp"
 
 namespace minijava
 {

@@ -41,28 +41,6 @@ namespace minijava
 			return _column;
 		}
 
-		bool operator==(const position& lhs, const position& rhs) noexcept
-		{
-			return lhs.line() == rhs.line() && lhs.column() == rhs.column();
-		}
-
-		bool operator!=(const position& lhs, const position& rhs) noexcept {
-			return !(lhs == rhs);
-		}
-
-		bool operator==(const position& lhs, const int rhs) noexcept {
-			return rhs == 0 && lhs.line() == 0 && lhs.column() == 0;
-		}
-
-		bool operator!=(const position& lhs, const int rhs) noexcept {
-			return !(lhs == rhs);
-		}
-
-		std::ostream& operator<<(std::ostream& os, const position& pos) {
-			os << "line: " << pos.line()
-			   << " column: " << pos.column();
-		}
-
 	private:
 
 		/** @brief Line number. */
@@ -71,4 +49,10 @@ namespace minijava
 		/** @brief Column number. */
 		std::size_t _column{};
 	};
+
+	bool operator==(const position& lhs, const position& rhs) noexcept;
+
+	bool operator!=(const position& lhs, const position& rhs) noexcept;
+
+	std::ostream& operator<<(std::ostream& os, const minijava::position& pos);
 }
