@@ -13,6 +13,7 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_type.hpp"
+#include "position.hpp"
 #include "parser/ast.hpp"
 #include "parser/pretty_printer.hpp"
 #include "symbol/symbol_pool.hpp"
@@ -140,7 +141,9 @@ namespace /* anonymous */
 			}
 			_tokens.push_back(eof);
 			for(std::size_t i = 0; i < _tokens.size(); ++i) {
-				_tokens[i].set_column(i + 1);
+				_tokens[i].set_position(minijava::position(
+						_tokens[i].position().line(),
+						i + 1));
 			}
 		}
 
@@ -388,10 +391,10 @@ BOOST_DATA_TEST_CASE(parser_rejects_invalid_programs, failure_data)
 		minijava::parse_program(std::begin(sample), std::end(sample));
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::syntax_error& e) {
-		if (pde_idx != e.column()) {
+		if (pde_idx != e.position().column()) {
 			std::clog << "Caught exception: " << e.what() << std::endl;
 		}
-		BOOST_REQUIRE_EQUAL(pde_idx, e.column());
+		BOOST_REQUIRE_EQUAL(pde_idx, e.position().column());
 	}
 }
 
@@ -416,11 +419,9 @@ namespace /* anonymous */
 BOOST_AUTO_TEST_CASE(throw_syntax_error_correct_source_location)
 {
 	auto tok = minijava::token::create(tt::semicolon);
-	tok.set_line(1234);
-	tok.set_column(56);
+	tok.set_position(minijava::position(1234, 56));
 	const auto e = get_thrown_syntax_error<tt::eof>(tok);
-	BOOST_REQUIRE_EQUAL(tok.line(), e.line());
-	BOOST_REQUIRE_EQUAL(tok.column(), e.column());
+	BOOST_REQUIRE_EQUAL(tok.position(), e.position());
 }
 
 

@@ -9,6 +9,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 
+#include "position.hpp"
+
 #include "symbol/symbol.hpp"
 #include "symbol/symbol_pool.hpp"
 
@@ -58,8 +60,7 @@ BOOST_AUTO_TEST_CASE(token_ctor_id)
 	BOOST_REQUIRE_EQUAL(tt::identifier, tok.type());
 	BOOST_REQUIRE_EQUAL(canon, tok.lexval());
 	BOOST_REQUIRE_EQUAL(true, tok.has_lexval());
-	BOOST_REQUIRE_EQUAL(std::size_t{0}, tok.line());
-	BOOST_REQUIRE_EQUAL(std::size_t{0}, tok.column());
+	BOOST_REQUIRE_EQUAL(minijava::position(0, 0), tok.position());
 }
 
 
@@ -73,8 +74,7 @@ BOOST_AUTO_TEST_CASE(token_ctor_integer_literal)
 	BOOST_REQUIRE_EQUAL(tt::integer_literal, tok.type());
 	BOOST_REQUIRE_EQUAL(canon, tok.lexval());
 	BOOST_REQUIRE_EQUAL(true, tok.has_lexval());
-	BOOST_REQUIRE_EQUAL(std::size_t{0}, tok.line());
-	BOOST_REQUIRE_EQUAL(std::size_t{0}, tok.column());
+	BOOST_REQUIRE_EQUAL(minijava::position(0, 0), tok.position());
 }
 
 
@@ -98,8 +98,7 @@ BOOST_DATA_TEST_CASE(token_ctor_punct, monostate_token_data)
 	const auto tok = minijava::token::create(sample);
 	BOOST_REQUIRE_EQUAL(sample, tok.type());
 	BOOST_REQUIRE_EQUAL(false, tok.has_lexval());
-	BOOST_REQUIRE_EQUAL(std::size_t{0}, tok.line());
-	BOOST_REQUIRE_EQUAL(std::size_t{0}, tok.column());
+	BOOST_REQUIRE_EQUAL(minijava::position(0, 0), tok.position());
 }
 
 
@@ -117,13 +116,13 @@ BOOST_DATA_TEST_CASE(tokens_that_compare_equal, equal_data)
 	auto tok2 = sample.second;
 	BOOST_REQUIRE_EQUAL(tok1, tok2);
 	BOOST_REQUIRE_EQUAL(tok2, tok1);
-	tok1.set_line(std::size_t{12});
+	tok1.set_position(minijava::position(12, tok1.position().column()));
 	BOOST_REQUIRE_EQUAL(tok1, tok2);
-	tok1.set_column(std::size_t{345});
+	tok1.set_position(minijava::position(tok1.position().line(), 345));
 	BOOST_REQUIRE_EQUAL(tok2, tok1);
-	tok2.set_line(std::size_t{6});
+	tok2.set_position(minijava::position(6, tok2.position().column()));
 	BOOST_REQUIRE_EQUAL(tok1, tok2);
-	tok2.set_column(std::size_t{7});
+	tok2.set_position(minijava::position(tok2.position().line(), 7));
 	BOOST_REQUIRE_EQUAL(tok2, tok1);
 }
 

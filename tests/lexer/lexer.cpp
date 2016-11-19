@@ -10,6 +10,7 @@
 #include <boost/test/data/test_case.hpp>
 
 #include "lexer/token.hpp"
+#include "position.hpp"
 #include "lexer/token_iterator.hpp"
 #include "symbol/symbol_pool.hpp"
 
@@ -285,7 +286,7 @@ BOOST_AUTO_TEST_CASE(line_and_column_test)
 		token_begin(lex), token_end(lex),
 		std::begin(expected), std::end(expected),
 		[](auto lhs, auto rhs) -> bool {
-			return lhs.line() == rhs[0] && lhs.column() == rhs[1];
+			return lhs.position().line() == rhs[0] && lhs.position().column() == rhs[1];
 		}
 	));
 }

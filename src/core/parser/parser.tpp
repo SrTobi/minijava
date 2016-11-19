@@ -127,6 +127,7 @@ namespace minijava
 			ast_ptr<ast::class_declaration> parse_class_declaration()
 			{
 				assert(current_is(token_type::kw_class));
+				auto pos = current().position();
 				advance();
 				auto id_tok = current();
 				std::vector<ast_ptr<ast::var_decl>> fields;
@@ -139,7 +140,7 @@ namespace minijava
 					parse_class_member(fields, methods, main_methods);
 				}
 				consume(token_type::right_brace);
-				return make<ast::class_declaration>()(
+				return make<ast::class_declaration>().at(pos)(
 					id_tok.lexval(),
 					std::move(fields),
 					std::move(methods),
@@ -152,10 +153,11 @@ namespace minijava
 			                        std::vector<ast_ptr<ast::main_method>>& main_methods)
 			{
 				assert(current_is(token_type::kw_public));
+				auto pos = current().position();
 				advance();
 				expect(cat(set_t<token_type::kw_static>{}, type_first));
 				if (current_is(token_type::kw_static)) {
-					auto main_method = parse_main_method();
+					auto main_method = parse_main_method(pos);
 					main_methods.push_back(std::move(main_method));
 				} else {
 					// parse field or method
@@ -171,7 +173,7 @@ namespace minijava
 						consume(token_type::right_paren);
 						expect(token_type::left_brace);
 						auto body = parse_block();
-						auto method = make<ast::method>()(
+						auto method = make<ast::method>().at(pos)(
 							id_tok.lexval(),
 							std::move(type),
 							std::move(params),
@@ -180,13 +182,14 @@ namespace minijava
 						methods.push_back(std::move(method));
 					} else {
 						// field
-						auto field = make<ast::var_decl>()(std::move(type), id_tok.lexval());
+						auto field = make<ast::var_decl>().at(pos)
+							(std::move(type), id_tok.lexval());
 						fields.push_back(std::move(field));
 					}
 				}
 			}
 
-			ast_ptr<ast::main_method> parse_main_method()
+			ast_ptr<ast::main_method> parse_main_method(position pos)
 			{
 				assert(current_is(token_type::kw_static));
 				advance();
@@ -206,7 +209,7 @@ namespace minijava
 				consume(token_type::right_paren);
 				expect(block_first);
 				auto body = parse_block();
-				return make<ast::main_method>()
+				return make<ast::main_method>().at(pos)
 					(id_main.lexval(), id_args.lexval(), std::move(body));
 			}
 
@@ -240,10 +243,12 @@ namespace minijava
 			ast_ptr<ast::var_decl> parse_parameter()
 			{
 				assert(current_is(type_first));
+				auto pos = current().position();
 				auto type = parse_type();
 				auto id_tok = current();
 				consume(token_type::identifier);
-				return make<ast::var_decl>()(std::move(type), id_tok.lexval());
+				return make<ast::var_decl>().at(pos)
+					(std::move(type), id_tok.lexval());
 			}
 
 			static constexpr auto type_first = set_t<
@@ -274,6 +279,7 @@ namespace minijava
 			ast_ptr<ast::block> parse_block()
 			{
 				assert(current_is(token_type::left_brace));
+				auto pos = current().position();
 				advance();
 				std::vector<ast_ptr<ast::block_statement>> block_statements;
 				while (!current_is(token_type::right_brace)) {
@@ -281,7 +287,8 @@ namespace minijava
 					block_statements.push_back(std::move(stmt));
 				}
 				advance();
-				return make<ast::block>()(std::move(block_statements));
+				return make<ast::block>().at(pos)
+					(std::move(block_statements));
 			}
 
 			ast_ptr<ast::block_statement> parse_block_statement()
@@ -328,6 +335,7 @@ namespace minijava
 			ast_ptr<ast::local_variable_statement> parse_local_variable_decl()
 			{
 				assert(current_is(type_first));
+//				auto pos = current().position();
 				auto type = parse_type();
 				auto id_tok = current();
 				consume(token_type::identifier);
@@ -626,7 +634,7 @@ namespace minijava
 				switch (expect(token_type::left_paren, token_type::left_bracket)) {
 				case token_type::left_paren:
 					if (type != token_type::identifier) {
-						throw_syntax_error_new_primitive(current(), type);
+						throw_syntax_error_new_primitive(current(), type_tok);
 					}
 					advance();
 					consume(token_type::right_paren);
