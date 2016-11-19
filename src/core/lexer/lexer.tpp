@@ -30,7 +30,7 @@ namespace minijava
 		static bool do_advance(lexer_type& lex)
 		{
 			const auto c = lexer_impl::skip_white_space(lex);
-			auto current_position = position(lex._column, lex._line);
+			auto current_position = position(lex._line, lex._column);
 			if (c < 0) {
 				lex._current_token = token::create(token_type::eof);
 			} else if (is_word_head(c)) {
