@@ -30,6 +30,7 @@ set(COMPONENTS
 	cli
 	exceptions
 	global
+	position
 	lexer/character
 	lexer/keyword
 	lexer/lexer
