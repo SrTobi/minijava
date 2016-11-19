@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <iosfwd>
 
 namespace minijava
 {
@@ -37,6 +39,28 @@ namespace minijava
 		inline std::size_t column() const noexcept
 		{
 			return _column;
+		}
+
+		bool operator==(const position& lhs, const position& rhs) noexcept
+		{
+			return lhs.line() == rhs.line() && lhs.column() == rhs.column();
+		}
+
+		bool operator!=(const position& lhs, const position& rhs) noexcept {
+			return !(lhs == rhs);
+		}
+
+		bool operator==(const position& lhs, const int rhs) noexcept {
+			return rhs == 0 && lhs.line() == 0 && lhs.column() == 0;
+		}
+
+		bool operator!=(const position& lhs, const int rhs) noexcept {
+			return !(lhs == rhs);
+		}
+
+		std::ostream& operator<<(std::ostream& os, const position& pos) {
+			os << "line: " << pos.line()
+			   << " column: " << pos.column();
 		}
 
 	private:
