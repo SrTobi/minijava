@@ -31,6 +31,23 @@ namespace testaux
 
 	/**
 	 * @brief
+	 *     Drop-in replacement for the C++17 `as_const` function.
+	 *
+	 * @param obj
+	 *     any object
+	 *
+	 * @returns
+	 *     `const` reference to the object
+	 *
+	 */
+	template <typename T>
+	const T& as_const(const T& obj) noexcept
+	{
+		return obj;
+	}
+
+	/**
+	 * @brief
 	 *     A silly printable wrapper around any type to silence Boost.Test.
 	 *
 	 * Boost.Test requires that types overload `operator<<` in many cases.  If

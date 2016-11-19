@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <iosfwd>
+#include <cstdio>
 #include <vector>
 
 namespace minijava
@@ -34,10 +34,10 @@ namespace minijava
 	 *     on failure to successfully complete the requested task
 	 *
 	 */
-	void real_main(const std::vector<const char *>& args,
-	               std::istream& thestdin,
-	               std::ostream& thestdout,
-	               std::ostream& thestderr);
+	void real_main(const std::vector<const char*>& args,
+	               std::FILE* thestdin,
+	               std::FILE* thestdout,
+	               std::FILE* thestderr);
 
 	// `stdin`, `stdout` and `stderr` are standard-library macros so we cannot
 	// use them as parameter names.
