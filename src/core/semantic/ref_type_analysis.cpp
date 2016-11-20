@@ -291,10 +291,6 @@ namespace minijava
 						throw semantic_error(target_type.to_string() + " has no method '" + node.name().c_str() +"'");
 					}
 
-					if (method->is_static()) {
-						throw semantic_error("Can not call static method 'main'");
-					}
-
 					// check parameter
 					do_visit_all(node.arguments());
 					const auto& formal_params = method->parameters();

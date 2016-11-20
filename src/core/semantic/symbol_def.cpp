@@ -124,10 +124,9 @@ namespace minijava
 			return true;
 		}
 
-		method_def::method_def(const symbol& name, const t_type& ret_type, bool is_static, const class_def& clazz, const ast::method* decl, def_annotations& def_a)
+		method_def::method_def(const symbol& name, const t_type& ret_type, const class_def& clazz, const ast::method* decl, def_annotations& def_a)
 			: _name(name)
 			, _ret_type(ret_type)
-			, _static(is_static)
 			, _class(clazz)
 			, _decl(decl)
 			, _def_a(def_a)
@@ -159,11 +158,6 @@ namespace minijava
 		bool method_def::is_external() const
 		{
 			return _decl == nullptr;
-		}
-
-		bool method_def::is_static() const
-		{
-			return _static;
 		}
 
 		const class_def& method_def::clazz() const
@@ -262,11 +256,11 @@ namespace minijava
 			return _def_a.store(std::move(field));
 		}
 
-		method_def* class_def::new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool is_static)
+		method_def* class_def::new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool is_main)
 		{
 			using namespace std::string_literals;
-			auto method = std::make_unique<method_def>(name, ret_type, is_static, *this, decl, _def_a);
-			if (!is_static) {
+			auto method = std::make_unique<method_def>(name, ret_type, *this, decl, _def_a);
+			if (!is_main) {
 				bool inserted;
 				std::tie(std::ignore, inserted) = _methods.emplace(name, method.get());
 				if (!inserted) {

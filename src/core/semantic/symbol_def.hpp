@@ -87,13 +87,12 @@ namespace minijava
 		class method_def : public symbol_def
 		{
 		public:
-			method_def(const symbol& name, const t_type& ret_type, bool is_static, const class_def& clazz, const ast::method* decl, def_annotations& def_a);
+			method_def(const symbol& name, const t_type& ret_type, const class_def& clazz, const ast::method* decl, def_annotations& def_a);
 			virtual const ast::method& decl() const override;
 			virtual symbol name() const override;
 			virtual t_type type() const override;
 			virtual bool is_local() const override;
 			virtual bool is_external() const override;
-			virtual bool is_static() const;
 			const class_def& clazz() const;
 			const std::vector<const var_def*> parameters() const;
 
@@ -125,7 +124,7 @@ namespace minijava
 			const std::unordered_map<symbol, const field_def*> fields() const noexcept;
 
 			field_def* new_field(const t_type& type, const symbol& name, const ast::var_decl* decl);
-			method_def* new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool is_static = false);
+			method_def* new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool is_main = false);
 
 		private:
 			std::unordered_map<symbol, const method_def*> _methods;
