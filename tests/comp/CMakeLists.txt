@@ -1,6 +1,8 @@
 set(minijava_exec "${PROJECT_BINARY_DIR}/src/minijava")
 set(comptest_exec "${CMAKE_CURRENT_SOURCE_DIR}/driver.py")
 
+add_dependencies(check minijava)
+
 add_test(
 	NAME comptest-lexical-valid
 	COMMAND ${comptest_exec}
