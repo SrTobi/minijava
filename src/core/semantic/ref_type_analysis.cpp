@@ -264,6 +264,9 @@ namespace minijava
 						if (!def) {
 							throw semantic_error("No variable '"s + node.name().c_str() + "' defined in current scope");
 						}
+						if (_in_main && !def->is_external() && !def->is_local()) {
+							throw semantic_error{"Unqualified member access in main method"};
+						}
 
 						name_a.emplace(&node, def);
 						type_a.emplace(&node, def->type());
@@ -282,6 +285,8 @@ namespace minijava
 						if (!target_type.has_member()) {
 							throw semantic_error(target_type.to_string() + " has no methods!");
 						}
+					} else if (_in_main) {
+						throw semantic_error{"Unqualified method invocation in main method"};
 					}
 
 					// find the method
@@ -416,6 +421,13 @@ namespace minijava
 					symbols.leave_scope();
 				}
 
+				void visit(const ast::main_method& node) override
+				{
+					_in_main = true;
+					visit(static_cast<const ast::method&>(node));
+					_in_main = false;
+				}
+
 				void visit(const ast::class_declaration& node) override
 				{
 					assert(!cur_class);
@@ -439,8 +451,8 @@ namespace minijava
 				}
 
 
+				bool _in_main{false};
 				symbol_table symbols;
-				bool cur_parameter = false;
 				const method_def* cur_method = nullptr;
 				const class_def* cur_class = nullptr;
 				const type_system& _typesystem;
