@@ -14,28 +14,12 @@ namespace minijava
 	}
 
 	template <typename NodeT>
-	ast_builder<NodeT>& ast_builder<NodeT>::at_line(const std::size_t line)
-	{
-		assert((line != 0) && (_mutator.line == 0));
-		_mutator.line = line;
-		return *this;
-	}
-
-	template <typename NodeT>
 	ast_builder<NodeT>& ast_builder<NodeT>::at(const minijava::position position)
 	{
 		assert((position.line() != 0) && (_mutator.line == 0));
 		assert((position.column() != 0) && (_mutator.column == 0));
 		_mutator.line = position.line();
 		_mutator.column = position.column();
-		return *this;
-	}
-
-	template <typename NodeT>
-	ast_builder<NodeT>& ast_builder<NodeT>::at_column(const std::size_t column)
-	{
-		assert((column != 0) && (_mutator.column == 0));
-		_mutator.column = column;
 		return *this;
 	}
 

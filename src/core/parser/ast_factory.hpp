@@ -61,24 +61,6 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Associates a line number with the to-be-created `node`.
-		 *
-		 * This function may be called at most once and only to set a non-zero
-		 * line number.  Attempting to re-set the line number that was set
-		 * before or to set the line number to zero will result in undefined
-		 * behavior.
-		 *
-		 * @param line
-		 *     line number to associate with the `node`
-		 *
-		 * @returns
-		 *     reference to `*this`
-		 *
-		 */
-		ast_builder& at_line(std::size_t line);
-
-		/**
-		 * @brief
 		 *     Associates a line and column number with the to-be-created `node`.
 		 *
 		 * This function may be called at most once and only to set a non-zero
@@ -97,24 +79,6 @@ namespace minijava
 		 *
 		 */
 		ast_builder& at(const minijava::position position);
-
-		/**
-		 * @brief
-		 *     Associates a column number with the to-be-created `node`.
-		 *
-		 * This function may be called at most once and only to set a non-zero
-		 * column number.  Attempting to re-set the column number that was set
-		 * before or to set the column number to zero will result in undefined
-		 * behavior.
-		 *
-		 * @param column
-		 *     column number to associate with the `node`
-		 *
-		 * @returns
-		 *     reference to `*this`
-		 *
-		 */
-		ast_builder& at_column(std::size_t column);
 
 		/**
 		 * @brief
