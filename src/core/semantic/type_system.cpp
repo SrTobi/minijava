@@ -18,6 +18,8 @@ namespace minijava
 				{
 				}
 
+				using ast::visitor::visit;
+
 				void visit(const ast::method& node) override
 				{
 					auto ret_type = typesystem.resolve(node.return_type());

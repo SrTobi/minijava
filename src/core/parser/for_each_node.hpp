@@ -29,6 +29,7 @@ namespace minijava
 	 */
 	struct for_each_node : ast::visitor
 	{
+		using ast::visitor::visit;
 
 		void visit(const ast::var_decl& node) override
 		{
