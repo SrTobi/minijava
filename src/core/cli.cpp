@@ -21,11 +21,7 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
 #include "parser/pretty_printer.hpp"
-#include "semantic/constant.hpp"
-#include "semantic/ref_type_analysis.hpp"
-#include "semantic/symbol_def.hpp"
-#include "semantic/thou_shalt_return.hpp"
-#include "semantic/unique_entry_point.hpp"
+#include "semantic/analyze.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
 
@@ -241,19 +237,7 @@ namespace minijava
 				return;
 			}
 			if (stage == compilation_stage::semantic) {
-				auto defa = semantic::def_annotations{};
-				auto typs = semantic::extract_typesystem(*ast, defa, pool);
-				auto syst = semantic::builtins::register_system(typs, pool);
-				semantic::analyse_program(*ast, {{pool.normalize("System"), syst}}, typs, defa);
-				const auto handler = [](const ast::node& n){
-					// TODO: This is very inappropriate but this is throw-away code.
-					std::cerr << "warning: Expression has undefined result: "
-					          << "line = " << n.line() << ", "
-					          << "column = " << n.column() << "\n";
-				};
-				extract_constants(*ast, handler);
-				check_return_paths(*ast);
-				check_unique_entry_point(*ast);
+				analyze_ast(*ast, pool);
 				return;
 			}
 			// If we get until here, we have a problem...
