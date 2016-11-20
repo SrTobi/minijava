@@ -192,7 +192,7 @@ namespace minijava
 			if (stage == compilation_stage::semantic) {
 				auto defa = semantic::def_annotations{};
 				auto typs = semantic::extract_typesystem(*ast, defa, pool);
-				auto syst = semantic::buildins::register_system(typs, pool);
+				auto syst = semantic::builtins::register_system(typs, pool);
 				semantic::analyse_program(*ast, {{pool.normalize("System"), syst}}, typs, defa);
 				const auto handler = [](const ast::node& n){
 					// TODO: This is very inappropriate but this is throw-away code.

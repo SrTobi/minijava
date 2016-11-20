@@ -4,7 +4,7 @@
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_def.hpp"
-#include "semantic/buildins.hpp"
+#include "semantic/builtins.hpp"
 
 #include <stack>
 #include <utility>
@@ -191,7 +191,7 @@ namespace minijava
 					do_visit(node.rhs());
 					auto lhs_type = type_of(node.lhs());
 					auto rhs_type = type_of(node.rhs());
-					auto ret_type = buildins::resolve_binary_operator(node.type(), lhs_type, rhs_type, _typesystem);
+					auto ret_type = builtins::resolve_binary_operator(node.type(), lhs_type, rhs_type, _typesystem);
 					if(!ret_type)
 					{
 						throw semantic_error("Wrong type for binary operation");
@@ -209,7 +209,7 @@ namespace minijava
 				{
 					do_visit(node.target());
 					auto in_type = type_of(node.target());
-					auto ret_type = buildins::resolve_unary_operator(node.type(), in_type);
+					auto ret_type = builtins::resolve_unary_operator(node.type(), in_type);
 					if(!ret_type)
 					{
 						throw semantic_error("Wrong type for unary operation");

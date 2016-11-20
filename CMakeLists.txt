@@ -43,7 +43,7 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
-	semantic/buildins
+	semantic/builtins
 	semantic/constant
 	semantic/ref_type_analysis
 	semantic/semantic_error

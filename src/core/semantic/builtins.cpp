@@ -1,4 +1,4 @@
-#include "buildins.hpp"
+#include "builtins.hpp"
 
 #include "exceptions.hpp"
 
@@ -6,7 +6,7 @@ namespace minijava
 {
 	namespace semantic
 	{
-		namespace buildins
+		namespace builtins
 		{
 			boost::optional<t_type> resolve_binary_operator(ast::binary_operation_type op, const t_type& lhs, const t_type& rhs, const type_system& typesystem)
 			{
