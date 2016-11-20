@@ -40,6 +40,14 @@
 
 /**
  * @brief
+ *     Environment variable that can be used to disable memory-mapped I/O.
+ *
+ */
+#define MINIJAVA_ENVVAR_NO_MMAP "MINIJAVA_NO_MMAP"
+
+
+/**
+ * @brief
  *     Top-level `namespace` for everything in this project.
  *
  */
