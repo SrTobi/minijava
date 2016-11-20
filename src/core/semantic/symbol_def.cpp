@@ -262,14 +262,16 @@ namespace minijava
 			return _def_a.store(std::move(field));
 		}
 
-		method_def* class_def::new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool static_)
+		method_def* class_def::new_method(const t_type& ret_type, const symbol& name, const ast::method* decl, bool is_static)
 		{
 			using namespace std::string_literals;
-			auto method = std::make_unique<method_def>(name, ret_type, static_, *this, decl, _def_a);
-			bool inserted;
-			std::tie(std::ignore, inserted) = _methods.emplace(name, method.get());
-			if (!inserted) {
-				throw semantic_error("Method with name '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
+			auto method = std::make_unique<method_def>(name, ret_type, is_static, *this, decl, _def_a);
+			if (!is_static) {
+				bool inserted;
+				std::tie(std::ignore, inserted) = _methods.emplace(name, method.get());
+				if (!inserted) {
+					throw semantic_error("Method with name '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
+				}
 			}
 			return _def_a.store(std::move(method));
 		}
