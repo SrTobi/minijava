@@ -1,6 +1,6 @@
 class A {
 
-	public int test(boolean a) {
+	public void test(boolean a) {
 		/*** test(true, 3); ***/
 	}
 

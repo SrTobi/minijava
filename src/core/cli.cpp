@@ -23,6 +23,7 @@
 #include "semantic/constant.hpp"
 #include "semantic/ref_type_analysis.hpp"
 #include "semantic/symbol_def.hpp"
+#include "semantic/thou_shalt_return.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
 
@@ -200,6 +201,7 @@ namespace minijava
 					          << "column = " << n.column() << "\n";
 				};
 				extract_constants(*ast, handler);
+				check_return_paths(*ast);
 				return;
 			}
 			// If we get until here, we have a problem...

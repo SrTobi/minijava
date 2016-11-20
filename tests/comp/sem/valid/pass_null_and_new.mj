@@ -1,11 +1,13 @@
 class A {
 
 	public int foo(A a) {
+		return 0;
 	}
 
 	public int test() {
 		foo(null);
 		foo(new A());
+		return 0;
 	}
 
 	public static void main(String[] args) {
