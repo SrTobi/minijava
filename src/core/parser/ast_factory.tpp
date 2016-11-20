@@ -16,10 +16,8 @@ namespace minijava
 	template <typename NodeT>
 	ast_builder<NodeT>& ast_builder<NodeT>::at(const minijava::position position)
 	{
-		assert((position.line() != 0) && (_mutator.line == 0));
-		assert((position.column() != 0) && (_mutator.column == 0));
-		_mutator.line = position.line();
-		_mutator.column = position.column();
+		assert((position != minijava::position()) && (_mutator.position == minijava::position()));
+		_mutator.position = position;
 		return *this;
 	}
 
