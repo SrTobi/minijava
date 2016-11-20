@@ -9,7 +9,7 @@ namespace minijava
 	namespace semantic
 	{
 		namespace {
-			struct member_collector : public ast::visitor
+			struct member_collector final : public ast::visitor
 			{
 				member_collector(type_system& typesystem, class_def& clazz_def, const t_type& string_type)
 					: typesystem(typesystem)
@@ -25,8 +25,7 @@ namespace minijava
 					auto ret_type = typesystem.resolve(node.return_type());
 					auto* method_d = clazz_def.new_method(ret_type, node.name(), &node);
 
-					for(auto&& param : node.parameters())
-					{
+					for (auto&& param : node.parameters()) {
 						auto param_type = typesystem.resolve(param->var_type());
 						method_d->add_parameter(param_type, param->name(), param.get());
 					}
@@ -34,11 +33,6 @@ namespace minijava
 
 				void visit(const ast::main_method& node) override
 				{
-					if(node.name().c_str() != std::string("main"))
-					{
-						throw semantic_error("static method must have name main");
-					}
-
 					auto* method_d = clazz_def.new_method(type_system::t_void(), node.name(), &node, true);
 					method_d->add_parameter(string_type.with_rank(1), node.argname(), nullptr);
 				}
@@ -244,8 +238,7 @@ namespace minijava
 
 			std::string result = _inner->to_string();
 
-			for(std::size_t i = 0; i < rank(); ++i)
-			{
+			for (std::size_t i = 0; i < rank(); ++i) {
 				result += "[]";
 			}
 			return result;
@@ -283,8 +276,7 @@ namespace minijava
 					switch(prim)
 					{
 					case ast::primitive_type::type_void:
-						if(rank > 0)
-						{
+						if (rank > 0) {
 							throw semantic_error("Array of type 'void' is not allowed!");
 						}
 						return t_void();
@@ -312,8 +304,7 @@ namespace minijava
 			using namespace std::string_literals;
 
 			auto* clazz = resolve_class(name);
-			if(!clazz)
-			{
+			if (!clazz) {
 				throw semantic_error("Can not resolve typename '"s + name.c_str() + "'");
 			}
 
@@ -323,8 +314,7 @@ namespace minijava
 		const class_def* type_system::resolve_class(const symbol& name) const
 		{
 			auto it = _classes.find(name);
-			if(it != _classes.end())
-			{
+			if (it != _classes.end()) {
 				return it->second;
 			}
 			return nullptr;
@@ -347,8 +337,7 @@ namespace minijava
 			auto* ptr = def.get();
 			bool inserted = false;
 			std::tie(std::ignore, inserted) = _classes.emplace(name, ptr);
-			if(!inserted)
-			{
+			if (!inserted) {
 				throw semantic_error("Class '"s + name.c_str() + "' already defined!");
 			}
 			_def_a.store(std::move(def));
@@ -395,14 +384,12 @@ namespace minijava
 			{
 				std::vector<class_def*> classes{};
 
-				for(auto&& clazz: prog.classes())
-				{
+				for (auto&& clazz: prog.classes()) {
 					class_def* def = ts.new_class(clazz->name(), clazz.get());
 					classes.push_back(def);
 				}
 
-				for(auto&& clazz_def: classes)
-				{
+				for (auto&& clazz_def: classes) {
 					member_collector collector(ts, *clazz_def, string_type);
 					collector.do_visit(clazz_def->decl());
 				}

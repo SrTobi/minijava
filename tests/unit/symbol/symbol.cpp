@@ -186,8 +186,7 @@ BOOST_AUTO_TEST_CASE(test_symbol_index_access)
 
     minijava::symbol normalized = pool.get();
 
-    for(std::size_t i = 0; i < origin.length(); ++i)
-    {
+    for (std::size_t i = 0; i < origin.length(); ++i) {
         BOOST_REQUIRE_EQUAL(origin[i], normalized[i]);
         BOOST_REQUIRE_EQUAL(origin.at(i), normalized.at(i));
     }

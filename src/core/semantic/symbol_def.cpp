@@ -178,8 +178,7 @@ namespace minijava
 
 		var_def* method_def::add_parameter(const t_type& type, const symbol& name, const ast::var_decl* decl)
 		{
-			if(!type.is_instantiable())
-			{
+			if (!type.is_instantiable()) {
 				throw semantic_error("Type " + type.to_string() + " can not be used as parameter");
 			}
 			auto param = std::make_unique<var_def>(name, type, *this, decl);
@@ -223,8 +222,7 @@ namespace minijava
 		const method_def* class_def::method(const symbol& name) const
 		{
 			auto it = _methods.find(name);
-			if(it != _methods.end())
-			{
+			if (it != _methods.end()) {
 				return it->second;
 			}
 			return nullptr;
@@ -233,8 +231,7 @@ namespace minijava
 		const field_def* class_def::field(const symbol& name) const
 		{
 			auto it = _fields.find(name);
-			if(it != _fields.end())
-			{
+			if (it != _fields.end()) {
 				return it->second;
 			}
 			return nullptr;
@@ -253,15 +250,13 @@ namespace minijava
 		field_def* class_def::new_field(const t_type& type, const symbol& name, const ast::var_decl* decl)
 		{
 			using namespace std::string_literals;
-			if(!type.is_instantiable())
-			{
+			if (!type.is_instantiable()) {
 				throw semantic_error("Type " + type.to_string() + " can not be used as field");
 			}
 			auto field = std::make_unique<field_def>(name, type, *this, decl);
 			bool inserted;
 			std::tie(std::ignore, inserted) = _fields.emplace(name, field.get());
-			if(!inserted)
-			{
+			if (!inserted) {
 				throw semantic_error("Field with name '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
 			}
 			return _def_a.store(std::move(field));
@@ -273,8 +268,7 @@ namespace minijava
 			auto method = std::make_unique<method_def>(name, ret_type, static_, *this, decl, _def_a);
 			bool inserted;
 			std::tie(std::ignore, inserted) = _methods.emplace(name, method.get());
-			if(!inserted)
-			{
+			if (!inserted) {
 				throw semantic_error("Method with name '"s + name.c_str() + "' has already been defined in '" + this->name().c_str() + "'!");
 			}
 			return _def_a.store(std::move(method));
@@ -317,10 +311,9 @@ namespace minijava
 
 		void def_annotations::_store(std::unique_ptr<const symbol_def> def)
 		{
-			if(def->is_external())
-			{
+			if (def->is_external()) {
 				_externals.push_back(std::move(def));
-			}else{
+			} else {
 				assert(!_definitions.count(&def->decl()));
 				_definitions.emplace(&def->decl(), std::move(def));
 			}

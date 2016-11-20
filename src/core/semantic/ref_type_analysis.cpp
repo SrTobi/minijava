@@ -31,12 +31,11 @@ namespace minijava
 
 				bool is_defined_in_dependend_scope(symbol name) const
 				{
-					for(auto scope = current(); scope; scope = scope->pred)
-					{
-						if(scope->symbols.count(name))
+					for (auto scope = current(); scope; scope = scope->pred) {
+						if (scope->symbols.count(name))
 							return true;
 
-						if(scope->may_overwrite)
+						if (scope->may_overwrite)
 							break;
 					}
 					return false;
@@ -44,12 +43,10 @@ namespace minijava
 
 				const symbol_def* lookup(symbol name) const
 				{
-					for(auto scope = current(); scope; scope = scope->pred)
-					{
+					for (auto scope = current(); scope; scope = scope->pred) {
 						auto it = scope->symbols.find(name);
 
-						if(it != scope->symbols.end())
-						{
+						if (it != scope->symbols.end()) {
 							return it->second;
 						}
 					}
@@ -96,7 +93,7 @@ namespace minijava
 				std::stack<scope> scopes;
 			};
 
-			struct lvalue_visitor : public ast::visitor
+			struct lvalue_visitor final : public ast::visitor
 			{
 				bool is_lvalue = false;
 
@@ -120,14 +117,13 @@ namespace minijava
 				return visitor.is_lvalue;
 			}
 
-			struct name_type_visitor : public ast::visitor
+			struct name_type_visitor final : public ast::visitor
 			{
 				name_type_visitor(const type_system& typesystem, const globals_list& globals, def_annotations& def_a)
 					: _typesystem(typesystem)
 					, _def_a(def_a)
 				{
-					for(auto&& gdef : globals)
-					{
+					for (auto&& gdef : globals) {
 						auto def = std::make_unique<global_def>(gdef.first, gdef.second);
 						symbols.add_def(*def);
 						_def_a.store(std::move(def));
@@ -147,8 +143,7 @@ namespace minijava
 
 				void check_not_void(const t_type& type)
 				{
-					if(type == type_system::t_void())
-					{
+					if (type == type_system::t_void()) {
 						throw semantic_error("Type 'void' is only allowed as return type!");
 					}
 				}
@@ -156,8 +151,7 @@ namespace minijava
 				void check_type(const t_type& expected, const t_type& actual)
 				{
 					using namespace std::string_literals;
-					if(!_typesystem.is_assignable(actual, expected))
-					{
+					if (!_typesystem.is_assignable(actual, expected)) {
 						throw semantic_error("Expected type '"s + expected.to_string() + "' but actual type is '" + actual.to_string() + "'");
 					}
 				}
@@ -174,8 +168,7 @@ namespace minijava
 				{
 					using namespace std::string_literals;
 					assert(cur_method && "check that no fields or parameter are visited with this");
-					if(symbols.is_defined_in_dependend_scope(node.name()))
-					{
+					if (symbols.is_defined_in_dependend_scope(node.name())) {
 						throw semantic_error("Variable '"s + node.name().c_str() + "' has already been defined in the current scope!");
 					}
 					auto ty = type_of(node);
@@ -192,13 +185,11 @@ namespace minijava
 					auto lhs_type = type_of(node.lhs());
 					auto rhs_type = type_of(node.rhs());
 					auto ret_type = builtins::resolve_binary_operator(node.type(), lhs_type, rhs_type, _typesystem);
-					if(!ret_type)
-					{
+					if (!ret_type) {
 						throw semantic_error("Wrong type for binary operation");
 					}
 
-					if(node.type() == ast::binary_operation_type::assign && !is_lvalue(node.lhs()))
-					{
+					if (node.type() == ast::binary_operation_type::assign && !is_lvalue(node.lhs())) {
 						throw semantic_error("Expected a lvalue on the left side of an assignment");
 					}
 
@@ -210,8 +201,7 @@ namespace minijava
 					do_visit(node.target());
 					auto in_type = type_of(node.target());
 					auto ret_type = builtins::resolve_unary_operator(node.type(), in_type);
-					if(!ret_type)
-					{
+					if (!ret_type) {
 						throw semantic_error("Wrong type for unary operation");
 					}
 					type_a.emplace(&node, *ret_type);
@@ -229,8 +219,7 @@ namespace minijava
 					check_not_void(type);
 					do_visit(node.extent());
 					auto extent_type = type_of(node.extent());
-					if(extent_type != type_system::t_int())
-					{
+					if (extent_type != type_system::t_int()) {
 						throw semantic_error("Expected int expression for array extent");
 					}
 					type_a.emplace(&node, type);
@@ -240,8 +229,7 @@ namespace minijava
 				{
 					do_visit(node.target());
 					const auto arr_type = type_of(node.target());
-					if(!arr_type.is_array())
-					{
+					if (!arr_type.is_array()) {
 						throw semantic_error("Expected an array expression but found type '" + arr_type.to_string() + "'");
 					}
 
@@ -255,29 +243,25 @@ namespace minijava
 				void visit(const ast::variable_access& node) override
 				{
 					using namespace std::string_literals;
-					if(node.target())
-					{
+					if (node.target()) {
 						// access the field of an object
 						do_visit(*node.target());
 						auto ty = type_of(*node.target());
-						if(!ty.has_member())
-						{
+						if (!ty.has_member()) {
 							throw semantic_error(ty.to_string() + " has no fields!");
 						}
 						// find the field
 						auto& clazz = ty.objref();
 						auto field = clazz.field(node.name());
-						if(!field)
-						{
+						if (!field) {
 							throw semantic_error(ty.to_string() + " has no field '" + node.name().c_str() +"'");
 						}
 						name_a.emplace(&node, field);
 						type_a.emplace(&node, field->type());
-					}else{
+					} else {
 						auto* def = symbols.lookup(node.name());
 
-						if(!def)
-						{
+						if (!def) {
 							throw semantic_error("No variable '"s + node.name().c_str() + "' defined in current scope");
 						}
 
@@ -290,14 +274,12 @@ namespace minijava
 				{
 					using namespace std::string_literals;
 					t_type target_type = cur_class->type();
-					if(node.target())
-					{
+					if (node.target()) {
 						// access the methods of an object
 						do_visit(*node.target());
 						target_type = type_of(*node.target());
 
-						if(!target_type.has_member())
-						{
+						if (!target_type.has_member()) {
 							throw semantic_error(target_type.to_string() + " has no methods!");
 						}
 					}
@@ -305,13 +287,11 @@ namespace minijava
 					// find the method
 					const auto& clazz = target_type.objref();
 					const auto* method = clazz.method(node.name());
-					if(!method)
-					{
+					if (!method) {
 						throw semantic_error(target_type.to_string() + " has no method '" + node.name().c_str() +"'");
 					}
 
-					if(method->is_static())
-					{
+					if (method->is_static()) {
 						throw semantic_error("Can not call static method 'main'");
 					}
 
@@ -321,20 +301,17 @@ namespace minijava
 					const auto expected_size = formal_params.size();
 					const auto actual_size = node.arguments().size();
 
-					if(expected_size != actual_size)
-					{
+					if (expected_size != actual_size) {
 						throw semantic_error("Expected '" + std::to_string(expected_size) + "' parameters in call to '"
 						                     + method->name().c_str() + "' but found " + std::to_string(actual_size));
 					}
 
-					for(std::size_t i = 0; i < actual_size; ++i)
-					{
+					for (std::size_t i = 0; i < actual_size; ++i) {
 						const auto* param = method->parameters()[i];
 						const auto& arg = *node.arguments()[i];
 						auto expected_type = param->type();
 						auto actual_type = type_of(arg);
-						if(!_typesystem.is_assignable(actual_type, expected_type))
-						{
+						if (!_typesystem.is_assignable(actual_type, expected_type)) {
 							throw semantic_error("Expected type " + expected_type.to_string() + "' in parameter " + std::to_string(i + 1) + " in call to '"
 							                     + method->name().c_str() + "' but found " + actual_type.to_string());
 						}
@@ -372,8 +349,7 @@ namespace minijava
 				{
 					do_visit(node.declaration());
 					const auto& ty = type_of(node.declaration());
-					if(node.initial_value())
-					{
+					if (node.initial_value()) {
 						do_visit(*node.initial_value());
 						check_type(ty, type_of(*node.initial_value()));
 					}
@@ -396,7 +372,7 @@ namespace minijava
 					do_visit(node.condition());
 					check_type(type_system::t_boolean(), type_of(node.condition()));
 					do_visit(node.then_statement());
-					if(node.else_statement())
+					if (node.else_statement())
 						do_visit(*node.else_statement());
 				}
 
@@ -410,15 +386,12 @@ namespace minijava
 				void visit(const ast::return_statement& node) override
 				{
 					using namespace std::string_literals;
-					if(cur_method->type() == type_system::t_void())
-					{
-						if(node.value())
-						{
+					if (cur_method->type() == type_system::t_void()) {
+						if (node.value()) {
 							throw semantic_error("Method '"s + cur_method->name().c_str() + "' has return type void and can not return a value");
 						}
-					}else{
-						if(!node.value())
-						{
+					} else {
+						if (!node.value()) {
 							throw semantic_error("Expected return statement to return a value");
 						}
 						do_visit(*node.value());
@@ -437,8 +410,7 @@ namespace minijava
 					symbols.enter_scope(true);
 					cur_method = &_def_a[node];
 
-					for(auto&& param: cur_method->parameters())
-					{
+					for (auto&& param: cur_method->parameters()) {
 						symbols.add_def(*param);
 					}
 
@@ -454,8 +426,7 @@ namespace minijava
 					cur_class = &_def_a[node];
 					symbols.enter_scope(true);
 
-					for(auto&& field_pair: cur_class->fields())
-					{
+					for (auto&& field_pair: cur_class->fields()) {
 						symbols.add_def(*field_pair.second);
 					}
 

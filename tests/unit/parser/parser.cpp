@@ -139,7 +139,7 @@ namespace /* anonymous */
 				_tokens.erase(pos);
 			}
 			_tokens.push_back(eof);
-			for(std::size_t i = 0; i < _tokens.size(); ++i) {
+			for (std::size_t i = 0; i < _tokens.size(); ++i) {
 				_tokens[i].set_column(i + 1);
 			}
 		}
