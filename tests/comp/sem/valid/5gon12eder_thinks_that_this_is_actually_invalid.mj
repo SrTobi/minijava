@@ -1,0 +1,9 @@
+class A {
+
+	public static void main(String[] args) {
+		/* Didn't we discuss that this usage should be disallowed? */
+		args;
+		return;
+	}
+
+}

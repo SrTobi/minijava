@@ -20,6 +20,8 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
 #include "parser/pretty_printer.hpp"
+#include "semantic/ref_type_analysis.hpp"
+#include "semantic/symbol_def.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
 
@@ -40,7 +42,8 @@ namespace minijava
 			input = 1,
 			lexer = 2,
 			parser = 3,
-			print_ast = 4
+			print_ast = 4,
+			semantic = 5,
 		};
 
 
@@ -99,7 +102,8 @@ namespace minijava
 				("echo", "stop after the input stage and output the source file verbatim")
 				("lextest", "stop after lexical analysis and output a token sequence")
 				("parsetest", "stop after parsing and reporting any syntax errors")
-				("print-ast", "stop after parsing and print the parsed ast");
+				("print-ast", "stop after parsing and print the parsed ast")
+				("check", "stop after analysis and reporting any semantic errors");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -147,6 +151,9 @@ namespace minijava
 			if (varmap.count("print-ast")) {
 				setup.stage = compilation_stage::print_ast;
 			}
+			if (varmap.count("check")) {
+				setup.stage = compilation_stage::semantic;
+			}
 			return true;
 		}
 
@@ -178,6 +185,13 @@ namespace minijava
 			if (stage == compilation_stage::print_ast) {
 				ast::pretty_printer printer_visitor(ostr);
 				ast->accept(printer_visitor);
+				return;
+			}
+			if (stage == compilation_stage::semantic) {
+				auto defa = semantic::def_annotations{};
+				auto typs = semantic::extract_typesystem(*ast, defa, pool);
+				auto syst = semantic::buildins::register_system(typs, pool);
+				semantic::analyse_program(*ast, {{pool.normalize("System"), syst}}, typs, defa);
 				return;
 			}
 			// If we get until here, we have a problem...

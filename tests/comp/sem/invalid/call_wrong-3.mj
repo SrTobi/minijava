@@ -1,0 +1,10 @@
+class A {
+
+	public int test(int a) {
+		/*** test(true); ***/
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

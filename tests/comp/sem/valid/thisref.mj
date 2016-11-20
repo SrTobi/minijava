@@ -1,0 +1,13 @@
+class A {
+
+	public boolean field;
+
+	public void test() {
+		this.field;
+		field;
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

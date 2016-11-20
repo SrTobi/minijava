@@ -1,0 +1,14 @@
+class A {
+
+	public int foo(A a) {
+	}
+
+	public int test() {
+		foo(null);
+		foo(new A());
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

@@ -1,0 +1,14 @@
+class A {
+
+	public boolean foo;
+
+	public void test() {
+		/*** int foo; ***/
+		if (foo) {
+		}
+	}
+
+	public static void main(String[] args) {
+	}
+
+}
