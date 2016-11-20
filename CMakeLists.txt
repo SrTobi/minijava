@@ -43,15 +43,16 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
+	semantic/buildins
+	semantic/constant
+	semantic/ref_type_analysis
+	semantic/semantic_error
+	semantic/symbol_def
+	semantic/type_system
 	symbol/symbol
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
-	semantic/ref_type_analysis
-	semantic/semantic_error
-	semantic/buildins
-	semantic/symbol_def
-	semantic/type_system
 	system/system
 )
 
