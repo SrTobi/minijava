@@ -48,6 +48,7 @@ set(COMPONENTS
 	semantic/ref_type_analysis
 	semantic/semantic_error
 	semantic/symbol_def
+	semantic/thou_shalt_return
 	semantic/type_system
 	symbol/symbol
 	symbol/symbol_anchor

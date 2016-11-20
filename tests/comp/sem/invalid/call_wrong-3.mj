@@ -1,6 +1,6 @@
 class A {
 
-	public int test(int a) {
+	public void test(int a) {
 		/*** test(true); ***/
 	}
 

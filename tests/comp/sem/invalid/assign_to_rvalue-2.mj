@@ -3,6 +3,7 @@ class A {
 	public boolean test()
 	{
 		/*** test() = true; ***/
+		return false;
 	}
 
 	public static void main(String[] args) {
