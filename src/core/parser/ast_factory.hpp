@@ -9,8 +9,8 @@
 #pragma once
 
 #include <memory>
-#include "position.hpp"
 
+#include "position.hpp"
 #include "parser/ast.hpp"
 
 

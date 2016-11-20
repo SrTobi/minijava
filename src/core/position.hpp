@@ -8,7 +8,9 @@ namespace minijava
 	struct position {
 
 	public:
-		position(const std::size_t line, const std::size_t column) : _line(line), _column(column)
+		position() = default;
+
+		position(const std::size_t line, const std::size_t column) : _line{line}, _column{column}
 		{ }
 
 		/**
@@ -21,7 +23,7 @@ namespace minijava
 		 *     line number
 		 *
 		 */
-		inline std::size_t line() const noexcept
+		constexpr std::size_t line() const noexcept
 		{
 			return _line;
 		}
@@ -36,7 +38,7 @@ namespace minijava
 		 *     column number
 		 *
 		 */
-		inline std::size_t column() const noexcept
+		constexpr std::size_t column() const noexcept
 		{
 			return _column;
 		}
@@ -50,9 +52,61 @@ namespace minijava
 		std::size_t _column{};
 	};
 
-	bool operator==(const position& lhs, const position& rhs) noexcept;
+	/**
+	 * @brief
+	 *     Compares two `position`s for equality.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` and `rhs` are equal
+	 *
+	 */
+	constexpr bool operator==(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	{
+		return lhs.line() == rhs.line() && lhs.column() == rhs.column();
+	}
 
-	bool operator!=(const position& lhs, const position& rhs) noexcept;
+	/**
+	 * @brief
+	 *     Compares two `position`s for unequality.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` and `rhs` are not equal
+	 *
+	 */
+	constexpr bool operator!=(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	{
+		return !(lhs == rhs);
+	}
 
+	/**
+	 * @brief
+	 *     Inserts a textual representation of a position into an output stream.
+	 *
+	 * The textual representation consists of the textual representation of the
+	 * `position`'s line and column, written for humans.
+	 * i.e. "line: 10 column: 20"
+	 *
+	 * @param os
+	 *     stream to write to
+	 *
+	 * @param tok
+	 *     token to insert
+	 *
+	 * @returns
+	 *     reference to `os`
+	 *
+	 */
 	std::ostream& operator<<(std::ostream& os, const minijava::position& pos);
 }

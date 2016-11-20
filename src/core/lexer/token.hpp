@@ -187,7 +187,7 @@ namespace minijava
 		symbol _lexval{};
 
 		/** @brief Position where the token was found. */
-		minijava::position _position{0, 0};
+		minijava::position _position;
 
 
 	};  // class token

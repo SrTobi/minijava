@@ -3,7 +3,6 @@
 #endif
 
 #include <cassert>
-#include "position.hpp"
 
 namespace minijava
 {
