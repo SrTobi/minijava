@@ -535,7 +535,7 @@ namespace testaux
 			void _gen_new_array_expression()
 			{
 				const auto guard = _enter_nested();
-				auto dist = std::geometric_distribution<int>{1.0};
+				auto dist = std::geometric_distribution<int>{0.5};
 				auto rank = dist(_engine);
 				_push(tt::kw_new);
 				_gen_basic_type();

@@ -1,0 +1,12 @@
+class A {
+
+	public int foo;
+
+	public void test() {
+		/*** if (foo) { } ***/
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

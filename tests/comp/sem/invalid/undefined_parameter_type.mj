@@ -1,0 +1,8 @@
+class A {
+
+	public int foo(/*** B x ***/) {}
+
+	public static void main(String[] args) {
+	}
+
+}

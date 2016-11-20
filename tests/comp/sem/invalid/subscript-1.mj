@@ -1,0 +1,10 @@
+class A {
+
+	public void test(int foo) {
+		foo /*** [0] ***/;
+	}
+
+	public static void main(String[] args) {
+	}
+
+}
