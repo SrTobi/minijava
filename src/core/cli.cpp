@@ -158,7 +158,7 @@ namespace minijava
 				("lextest", "stop after lexical analysis and output a token sequence")
 				("parsetest", "stop after parsing and reporting any syntax errors")
 				("print-ast", "stop after parsing and print the parsed ast")
-				("check", "stop after analysis and reporting any semantic errors");
+				("check", "stop after semantic analysis and report semantic errors");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
