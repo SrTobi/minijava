@@ -335,7 +335,7 @@ namespace minijava
 			ast_ptr<ast::local_variable_statement> parse_local_variable_decl()
 			{
 				assert(current_is(type_first));
-//				auto pos = current().position();
+				auto pos = current().position();
 				auto type = parse_type();
 				auto id_tok = current();
 				consume(token_type::identifier);
@@ -345,9 +345,9 @@ namespace minijava
 					init = parse_expression();
 				}
 				consume(token_type::semicolon);
-				auto decl = make<ast::var_decl>()
+				auto decl = make<ast::var_decl>().at(pos)
 					(std::move(type), id_tok.lexval());
-				return make<ast::local_variable_statement>()
+				return make<ast::local_variable_statement>().at(pos)
 					(std::move(decl), std::move(init));
 			}
 
@@ -372,24 +372,27 @@ namespace minijava
 			ast_ptr<ast::empty_statement> parse_empty_statement()
 			{
 				assert(current_is(token_type::semicolon));
+				auto pos = current().position();
 				advance();
-				return make<ast::empty_statement>()();
+				return make<ast::empty_statement>().at(pos)();
 			}
 
 			ast_ptr<ast::while_statement> parse_while()
 			{
 				assert(current_is(token_type::kw_while));
+				auto pos = current().position();
 				advance();
 				consume(token_type::left_paren);
 				auto cond = parse_expression();
 				consume(token_type::right_paren);
 				auto body = parse_statement();
-				return make<ast::while_statement>()(std::move(cond), std::move(body));
+				return make<ast::while_statement>().at(pos)(std::move(cond), std::move(body));
 			}
 
 			ast_ptr<ast::if_statement> parse_if()
 			{
 				assert(current_is(token_type::kw_if));
+				auto pos = current().position();
 				advance();
 				consume(token_type::left_paren);
 				auto cond = parse_expression();
@@ -400,27 +403,29 @@ namespace minijava
 					advance();
 					else_body = parse_statement();
 				}
-				return make<ast::if_statement>()
+				return make<ast::if_statement>().at(pos)
 					(std::move(cond), std::move(then_body), std::move(else_body));
 			}
 
 			ast_ptr<ast::expression_statement> parse_expression_statement()
 			{
+				auto pos = current().position();
 				auto expr = parse_expression();
 				consume(token_type::semicolon);
-				return make<ast::expression_statement>()(std::move(expr));
+				return make<ast::expression_statement>().at(pos)(std::move(expr));
 			}
 
 			ast_ptr<ast::return_statement> parse_return()
 			{
 				assert(current_is(token_type::kw_return));
+				auto pos = current().position();
 				advance();
 				ast_ptr<ast::expression> ret_expr = nullptr;
 				if (!current_is(token_type::semicolon)) {
 					ret_expr = parse_expression();
 				}
 				consume(token_type::semicolon);
-				return make<ast::return_statement>()(std::move(ret_expr));
+				return make<ast::return_statement>().at(pos)(std::move(ret_expr));
 			}
 
 			static constexpr auto prefix_ops_first = set_t<
@@ -438,13 +443,13 @@ namespace minijava
 				// This function uses an iterative formulation of the
 				// precedence climbing algorithm.
 				auto prec_stack = std::stack<std::tuple<int, ast_ptr<ast::expression>, token_type>>{};
-				auto preop_stack = std::stack<token_type>{};
+				auto preop_stack = std::stack<token>{};
 				auto cur_prec = -1;  // impossible precedence level
 				auto min_prec = 0;
 			outer_loop:
 				assert(preop_stack.empty());
 				while (current_is(prefix_ops_first)) {
-					preop_stack.push(current_type());
+					preop_stack.push(current());
 					advance();
 				}
 				expect(primary_expr_first);
@@ -455,8 +460,9 @@ namespace minijava
 				while (!preop_stack.empty()) {
 					auto op = preop_stack.top();
 					preop_stack.pop();
-					rhs = make<ast::unary_expression>()
-						(to_unary_operation(op), std::move(rhs));
+					// isn't exactly the position of the unary op, but good enough
+					rhs = make<ast::unary_expression>().at(op.position())
+						(to_unary_operation(op.type()), std::move(rhs));
 				}
 			inner_loop:
 				cur_prec = precedence(current_type());
@@ -475,7 +481,7 @@ namespace minijava
 					token_type op_type;
 					std::tie(min_prec, lhs, op_type) = std::move(prec_stack.top());
 					prec_stack.pop();
-					rhs = make<ast::binary_expression>()
+					rhs = make<ast::binary_expression>().at(lhs->position())
 						(to_binary_operation(op_type), std::move(lhs), std::move(rhs));
 					goto inner_loop;
 				}
@@ -522,10 +528,11 @@ namespace minijava
 				assert(current_is(postfix_ops_first));
 				if (current_is(token_type::left_bracket)) {
 					// Array access
+					auto pos = current().position();
 					advance();
 					auto index_expr = parse_expression();
 					consume(token_type::right_bracket);
-					return make<ast::array_access>()
+					return make<ast::array_access>().at(pos)
 						(std::move(inner), std::move(index_expr));
 				} else {
 					// Field access or method invocation
@@ -537,10 +544,10 @@ namespace minijava
 						advance();
 						auto args = parse_arguments();
 						consume(token_type::right_paren);
-						return make<ast::method_invocation>()
+						return make<ast::method_invocation>().at(id_tok.position())
 							(std::move(inner), id_tok.lexval(), std::move(args));
 					} else {
-						return make<ast::variable_access>()
+						return make<ast::variable_access>().at(id_tok.position())
 							(std::move(inner), id_tok.lexval());
 					}
 				}
@@ -560,25 +567,26 @@ namespace minijava
 			ast_ptr<ast::expression> parse_primary()
 			{
 				assert(current_is(primary_expr_first));
+				auto pos = current().position();
 				switch (current_type()) {
 				case token_type::kw_null:
 					advance();
-					return make<ast::null_constant>()();
+					return make<ast::null_constant>().at(pos)();
 				case token_type::kw_false:
 					advance();
-					return make<ast::boolean_constant>()(false);
+					return make<ast::boolean_constant>().at(pos)(false);
 				case token_type::kw_true:
 					advance();
-					return make<ast::boolean_constant>()(true);
+					return make<ast::boolean_constant>().at(pos)(true);
 				case token_type::integer_literal:
 					{
 						auto lit_tok = current();
 						advance();
-						return make<ast::integer_constant>()(lit_tok.lexval());
+						return make<ast::integer_constant>().at(pos)(lit_tok.lexval());
 					}
 				case token_type::kw_this:
 					advance();
-					return make<ast::this_ref>()();
+					return make<ast::this_ref>().at(pos)();
 				case token_type::identifier:
 					{
 						// variable or function call
@@ -588,10 +596,10 @@ namespace minijava
 							advance();
 							auto args = parse_arguments();
 							consume(token_type::right_paren);
-							return make<ast::method_invocation>()
+							return make<ast::method_invocation>().at(pos)
 								(nullptr, id_tok.lexval(), std::move(args));
 						} else {
-							return make<ast::variable_access>()
+							return make<ast::variable_access>().at(pos)
 								(nullptr, id_tok.lexval());
 						}
 					}
@@ -628,6 +636,7 @@ namespace minijava
 			ast_ptr<ast::expression> parse_new_expression()
 			{
 				assert(current_is(token_type::kw_new));
+				auto pos = current().position();
 				advance();
 				const auto type_tok = current();
 				const auto type = consume(type_first);
@@ -638,7 +647,8 @@ namespace minijava
 					}
 					advance();
 					consume(token_type::right_paren);
-					return make<ast::object_instantiation>()(type_tok.lexval());
+					return make<ast::object_instantiation>().at(pos)
+						(type_tok.lexval());
 				case token_type::left_bracket:
 					{
 						std::size_t rank = 1;
@@ -659,7 +669,7 @@ namespace minijava
 							advance();
 						}
 						auto type = make_type(type_tok, rank);
-						return make<ast::array_instantiation>()
+						return make<ast::array_instantiation>().at(pos)
 							(std::move(type), std::move(extent_expr));
 					}
 				default:
@@ -750,9 +760,11 @@ namespace minijava
 			auto make_type(const token& tok, const std::size_t rank)
 			{
 				if (tok.type() == token_type::identifier) {
-					return make<ast::type>()(tok.lexval(), rank);
+					return make<ast::type>().at(tok.position())
+						(tok.lexval(), rank);
 				} else {
-					return make<ast::type>()(to_primitive(tok), rank);
+					return make<ast::type>().at(tok.position())
+						(to_primitive(tok), rank);
 				}
 			}
 
