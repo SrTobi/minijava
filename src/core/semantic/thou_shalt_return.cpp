@@ -16,6 +16,8 @@ namespace minijava
 
 			bool result{true};
 
+			using ast::visitor::visit;
+
 			void visit(const ast::block& blck) override
 			{
 				for (const auto& bstm : blck.body()) {
