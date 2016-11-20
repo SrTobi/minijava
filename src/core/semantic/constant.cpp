@@ -8,13 +8,6 @@
 #include "parser/for_each_node.hpp"
 #include "semantic/semantic_error.hpp"
 
-// Clang issues a strange warning about the visitor defined below that, to my
-// best knowledge, is a false positive.  Kudos for anyone who can provide a
-// better fix than disabling the diagnostic.
-#ifdef __clang__
-#  pragma GCC diagnostic ignored "-Woverloaded-virtual"
-#endif
-
 namespace minijava
 {
 
@@ -38,6 +31,8 @@ namespace minijava
 			}
 
 		protected:
+
+			using for_each_node::visit;
 
 			void visit(const ast::boolean_constant& node) override
 			{

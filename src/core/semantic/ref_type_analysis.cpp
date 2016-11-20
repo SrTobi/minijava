@@ -100,6 +100,8 @@ namespace minijava
 			{
 				bool is_lvalue = false;
 
+				using ast::visitor::visit;
+
 				void visit(const ast::array_access&) override
 				{
 					is_lvalue = true;
@@ -165,6 +167,8 @@ namespace minijava
 					assert(cur_class);
 					return cur_class->type();
 				}
+
+				using ast::visitor::visit;
 
 				void visit(const ast::var_decl& node) override
 				{
