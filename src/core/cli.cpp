@@ -24,6 +24,7 @@
 #include "semantic/ref_type_analysis.hpp"
 #include "semantic/symbol_def.hpp"
 #include "semantic/thou_shalt_return.hpp"
+#include "semantic/unique_entry_point.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
 
@@ -202,6 +203,7 @@ namespace minijava
 				};
 				extract_constants(*ast, handler);
 				check_return_paths(*ast);
+				check_unique_entry_point(*ast);
 				return;
 			}
 			// If we get until here, we have a problem...

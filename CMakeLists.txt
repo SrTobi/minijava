@@ -50,6 +50,7 @@ set(COMPONENTS
 	semantic/symbol_def
 	semantic/thou_shalt_return
 	semantic/type_system
+	semantic/unique_entry_point
 	symbol/symbol
 	symbol/symbol_anchor
 	symbol/symbol_entry
