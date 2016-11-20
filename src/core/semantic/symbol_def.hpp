@@ -101,7 +101,6 @@ namespace minijava
 			std::vector<const var_def*> _parameters;
 			symbol _name;
 			t_type _ret_type;
-			bool _static;
 			const class_def& _class;
 			const ast::method* _decl;
 			def_annotations& _def_a;
