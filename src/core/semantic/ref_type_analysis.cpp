@@ -324,6 +324,9 @@ namespace minijava
 
 				void visit(const ast::this_ref& node) override
 				{
+					if(_in_main) {
+						throw semantic_error("Can not reference 'this' in static method!");
+					}
 					assert(!type_a.count(&node));
 					type_a.emplace(&node, current_this_type());
 				}
