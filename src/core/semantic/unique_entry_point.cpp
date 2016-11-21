@@ -20,7 +20,7 @@ namespace minijava
 			{
 				using namespace std::string_literals;
 				if ("main"s != node.name().c_str()) {
-					throw semantic_error{"Static methods must be named 'main'"};
+					throw semantic_error{"Program entry point must be named 'main'"};
 				}
 				if (found) {
 					throw semantic_error{"Program has multiple entry points"};

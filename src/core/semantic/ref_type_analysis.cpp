@@ -162,6 +162,30 @@ namespace minijava
 					return cur_class->type();
 				}
 
+			protected:
+
+				void visit_method(const ast::method& node) override
+				{
+					using namespace std::string_literals;
+					assert(!cur_method);
+					symbols.enter_scope(true);
+					cur_method = &_def_a[node];
+
+					for (auto&& param: cur_method->parameters()) {
+						if (symbols.is_defined_in_dependend_scope(param->name())) {
+							throw semantic_error("Parameter '"s + param->name().c_str() + "' has already been defined in the current scope!");
+						}
+						symbols.add_def(*param);
+					}
+
+					do_visit(node.body());
+
+					cur_method = nullptr;
+					symbols.leave_scope();
+				}
+
+			public:
+
 				using ast::visitor::visit;
 
 				void visit(const ast::var_decl& node) override
@@ -278,12 +302,12 @@ namespace minijava
 					using namespace std::string_literals;
 					t_type target_type = cur_class->type();
 					if (node.target()) {
-						// access the methods of an object
+						// access the instance methods of an object
 						do_visit(*node.target());
 						target_type = type_of(*node.target());
 
 						if (!target_type.has_member()) {
-							throw semantic_error(target_type.to_string() + " has no methods!");
+							throw semantic_error(target_type.to_string() + " has no instance methods!");
 						}
 					} else if (_in_main) {
 						throw semantic_error{"Unqualified method invocation in main method"};
@@ -293,7 +317,7 @@ namespace minijava
 					const auto& clazz = target_type.objref();
 					const auto* method = clazz.method(node.name());
 					if (!method) {
-						throw semantic_error(target_type.to_string() + " has no method '" + node.name().c_str() +"'");
+						throw semantic_error(target_type.to_string() + " has no instance method '" + node.name().c_str() +"'");
 					}
 
 					// check parameter
@@ -408,30 +432,15 @@ namespace minijava
 					/* nothing to do */
 				}
 
-				void visit(const ast::method& node) override
+				void visit(const ast::instance_method& node) override
 				{
-					using namespace std::string_literals;
-					assert(!cur_method);
-					symbols.enter_scope(true);
-					cur_method = &_def_a[node];
-
-					for (auto&& param: cur_method->parameters()) {
-						if(symbols.is_defined_in_dependend_scope(param->name())) {
-							throw semantic_error("Parameter '"s + param->name().c_str() + "' has already been defined in the current scope!");
-						}
-						symbols.add_def(*param);
-					}
-
-					do_visit(node.body());
-
-					cur_method = nullptr;
-					symbols.leave_scope();
+					visit_method(node);
 				}
 
 				void visit(const ast::main_method& node) override
 				{
 					_in_main = true;
-					visit(static_cast<const ast::method&>(node));
+					visit_method(node);
 					_in_main = false;
 				}
 
@@ -446,7 +455,7 @@ namespace minijava
 						symbols.add_def(*field_pair.second);
 					}
 
-					do_visit_all(node.methods());
+					do_visit_all(node.instance_methods());
 					do_visit_all(node.main_methods());
 
 					symbols.leave_scope();

@@ -526,7 +526,7 @@ namespace minijava
 			node.body().accept(*this);
 		}
 
-		void pretty_printer::visit(const method& node)
+		void pretty_printer::visit(const instance_method& node)
 		{
 			_print("public ");
 			node.return_type().accept(*this);
@@ -546,7 +546,7 @@ namespace minijava
 
 		void pretty_printer::visit(const class_declaration& node)
 		{
-			if (node.main_methods().empty() && node.methods().empty()
+			if (node.main_methods().empty() && node.instance_methods().empty()
 					&& node.fields().empty()) {
 				_println("class "s + node.name().c_str() + " { }");
 				return;
@@ -565,11 +565,11 @@ namespace minijava
 				const auto on_the_level_guard = make_guard_incr(_indentation_level);
 				auto members = std::vector<member_pair>{};
 				members.reserve(std::max(
-					node.methods().size() + node.main_methods().size(),
+						node.instance_methods().size() + node.main_methods().size(),
 					node.fields().size()
 				));
 				std::transform(
-					std::begin(node.methods()), std::end(node.methods()),
+					std::begin(node.instance_methods()), std::end(node.instance_methods()),
 					std::back_inserter(members), ext
 				);
 				std::transform(

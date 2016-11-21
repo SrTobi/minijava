@@ -28,6 +28,11 @@ namespace minijava
 			visit_block_statement(node);
 		}
 
+		void visitor::visit_method(const method& node)
+		{
+			visit_node(node);
+		}
+
 		void visitor::visit(const type& node)
 		{
 			visit_node(node);
@@ -98,7 +103,6 @@ namespace minijava
 			visit_block_statement(node);
 		}
 
-
 		void visitor::visit(const expression_statement& node)
 		{
 			visit_statement(node);
@@ -131,12 +135,12 @@ namespace minijava
 
 		void visitor::visit(const main_method& node)
 		{
-			visit_node(node);
+			visit_method(node);
 		}
 
-		void visitor::visit(const method& node)
+		void visitor::visit(const instance_method& node)
 		{
-			visit_node(node);
+			visit_method(node);
 		}
 
 		void visitor::visit(const class_declaration& node)

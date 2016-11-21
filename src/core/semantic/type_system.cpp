@@ -20,7 +20,7 @@ namespace minijava
 
 				using ast::visitor::visit;
 
-				void visit(const ast::method& node) override
+				void visit(const ast::instance_method& node) override
 				{
 					auto ret_type = typesystem.resolve(node.return_type());
 					auto* method_d = clazz_def.new_method(ret_type, node.name(), &node);
@@ -46,7 +46,7 @@ namespace minijava
 				virtual void visit(const ast::class_declaration& node) override
 				{
 					do_visit_all(node.fields());
-					do_visit_all(node.methods());
+					do_visit_all(node.instance_methods());
 					do_visit_all(node.main_methods());
 				}
 

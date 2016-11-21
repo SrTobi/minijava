@@ -19,6 +19,7 @@ namespace minijava
 		{
 
 			using for_each_node::visit;
+
 			dont_use_main_args_visitor(const def_annotations& def_a, const ref_annotation& ref_a)
 				: _def_a(def_a)
 				, _ref_a(ref_a)
@@ -38,11 +39,6 @@ namespace minijava
 			{
 				_arg_def = _def_a[node].parameters().front();
 				do_visit(node.body());
-			}
-
-			void visit(const ast::method& /*node*/) override
-			{
-				/* Only visit the main method */
 			}
 
 		private:

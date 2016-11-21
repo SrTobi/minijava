@@ -135,7 +135,7 @@ namespace minijava
 				advance();
 				auto id_tok = current();
 				std::vector<ast_ptr<ast::var_decl>> fields;
-				std::vector<ast_ptr<ast::method>> methods;
+				std::vector<ast_ptr<ast::instance_method>> methods;
 				std::vector<ast_ptr<ast::main_method>> main_methods;
 				consume(token_type::identifier);
 				consume(token_type::left_brace);
@@ -153,7 +153,7 @@ namespace minijava
 			}
 
 			void parse_class_member(std::vector<ast_ptr<ast::var_decl>>& fields,
-			                        std::vector<ast_ptr<ast::method>>& methods,
+			                        std::vector<ast_ptr<ast::instance_method>>& methods,
 			                        std::vector<ast_ptr<ast::main_method>>& main_methods)
 			{
 				assert(current_is(token_type::kw_public));
@@ -176,7 +176,7 @@ namespace minijava
 						consume(token_type::right_paren);
 						expect(token_type::left_brace);
 						auto body = parse_block();
-						auto method = make<ast::method>()(
+						auto method = make<ast::instance_method>()(
 							id_tok.lexval(),
 							std::move(type),
 							std::move(params),

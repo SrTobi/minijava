@@ -40,8 +40,9 @@ namespace /* anonymous */
 		ast::while_statement,
 		ast::return_statement,
 		ast::empty_statement,
-		ast::main_method,
 		ast::method,
+		ast::main_method,
+		ast::instance_method,
 		ast::class_declaration,
 		ast::program
 	>;

@@ -24,7 +24,7 @@ namespace /* anonymous */
 	auto as_program(std::vector<std::unique_ptr<ast::block_statement>> body,
 	                std::unique_ptr<ast::type> rettype)
 	{
-		auto meth = g_fact.make<ast::method>()(
+		auto meth = g_fact.make<ast::instance_method>()(
 			g_pool.normalize("test"),
 			std::move(rettype),
 			testaux::make_unique_ptr_vector<ast::var_decl>(),
@@ -35,7 +35,7 @@ namespace /* anonymous */
 				g_fact.make<ast::class_declaration>()(
 					g_pool.normalize("Test"),
 					testaux::make_unique_ptr_vector<ast::var_decl>(),
-					testaux::make_unique_ptr_vector<ast::method>(std::move(meth)),
+					testaux::make_unique_ptr_vector<ast::instance_method>(std::move(meth)),
 					testaux::make_unique_ptr_vector<ast::main_method>(
 					g_fact.make<ast::main_method>()(
 							g_pool.normalize("main"),

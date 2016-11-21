@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_single_class)
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("test_class"),
 					        ast_vector<ast::var_decl>{},
-					        ast_vector<ast::method>{},
+					        ast_vector<ast::instance_method>{},
 					        ast_vector<ast::main_method>{}
 					)
 			)
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_class_with_method)
 	std::ostringstream oss {};
 	auto pool = minijava::symbol_pool<>{};
 
-	auto foo_method = std::make_unique<ast::method>(
+	auto foo_method = std::make_unique<ast::instance_method>(
 			pool.normalize("foo"),
 			std::make_unique<ast::type>(ast::primitive_type::type_int, 0),
 			ast_vector<ast::var_decl>{},
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_class_with_method)
 	auto hello_world_class = std::make_unique<ast::class_declaration>(
 			pool.normalize("HelloWorld"),
 	        ast_vector<ast::var_decl>{},
-	        testaux::make_unique_ptr_vector<ast::method>(
+	        testaux::make_unique_ptr_vector<ast::instance_method>(
 			        std::move(foo_method)
 	        ),
 	        ast_vector<ast::main_method>{}
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE(class_with_var_decl)
 					        pool.normalize("date")
 			        )
 	        ),
-	        ast_vector<ast::method>{},
+	        ast_vector<ast::instance_method>{},
 	        ast_vector<ast::main_method>{}
 	);
 	BOOST_REQUIRE_EQUAL(std::size_t{7}, cls->fields().size());  // sanity-check

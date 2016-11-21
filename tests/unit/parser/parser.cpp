@@ -497,7 +497,7 @@ BOOST_AUTO_TEST_CASE(ast_single_empty_class)
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Example"),
 					        ast_vector<ast::var_decl>{},
-					        ast_vector<ast::method>{},
+					        ast_vector<ast::instance_method>{},
 					        ast_vector<ast::main_method>{}
 					)
 			)
@@ -523,25 +523,25 @@ BOOST_AUTO_TEST_CASE(ast_multiple_empty_classes)
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Alpha"),
 							ast_vector<ast::var_decl>{},
-							ast_vector<ast::method>{},
+							ast_vector<ast::instance_method>{},
 							ast_vector<ast::main_method>{}
 					),
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Beta"),
 							ast_vector<ast::var_decl>{},
-							ast_vector<ast::method>{},
+							ast_vector<ast::instance_method>{},
 							ast_vector<ast::main_method>{}
 					),
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Gamma"),
 							ast_vector<ast::var_decl>{},
-							ast_vector<ast::method>{},
+							ast_vector<ast::instance_method>{},
 							ast_vector<ast::main_method>{}
 					),
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Delta"),
 							ast_vector<ast::var_decl>{},
-							ast_vector<ast::method>{},
+							ast_vector<ast::instance_method>{},
 							ast_vector<ast::main_method>{}
 					)
 			)
@@ -616,7 +616,7 @@ BOOST_AUTO_TEST_CASE(ast_class_with_fields)
 											pool.normalize("questionable")
 									)
 							),
-					        ast_vector<ast::method>{},
+					        ast_vector<ast::instance_method>{},
 					        ast_vector<ast::main_method>{}
 					)
 			)
@@ -655,8 +655,8 @@ BOOST_AUTO_TEST_CASE(ast_methods_primitive)
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Example"),
 					        ast_vector<ast::var_decl>{},
-					        testaux::make_unique_ptr_vector<ast::method>(
-							        std::make_unique<ast::method>(
+					        testaux::make_unique_ptr_vector<ast::instance_method>(
+							        std::make_unique<ast::instance_method>(
 									        pool.normalize("nullary"),
 									        std::make_unique<ast::type>(
 											        ast::primitive_type::type_int
@@ -666,7 +666,7 @@ BOOST_AUTO_TEST_CASE(ast_methods_primitive)
 											        ast_vector<ast::block_statement>{}
 									        )
 							        ),
-							        std::make_unique<ast::method>(
+							        std::make_unique<ast::instance_method>(
 									        pool.normalize("unary"),
 									        std::make_unique<ast::type>(
 											        ast::primitive_type::type_int
@@ -683,7 +683,7 @@ BOOST_AUTO_TEST_CASE(ast_methods_primitive)
 											        ast_vector<ast::block_statement>{}
 									        )
 							        ),
-							        std::make_unique<ast::method>(
+							        std::make_unique<ast::instance_method>(
 									        pool.normalize("binary"),
 									        std::make_unique<ast::type>(
 											        ast::primitive_type::type_int
@@ -706,7 +706,7 @@ BOOST_AUTO_TEST_CASE(ast_methods_primitive)
 											        ast_vector<ast::block_statement>{}
 									        )
 							        ),
-							        std::make_unique<ast::method>(
+							        std::make_unique<ast::instance_method>(
 									        pool.normalize("ternary"),
 									        std::make_unique<ast::type>(
 											        ast::primitive_type::type_int
@@ -764,8 +764,8 @@ BOOST_AUTO_TEST_CASE(ast_methods_udt)
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Example"),
 							ast_vector<ast::var_decl>{},
-							testaux::make_unique_ptr_vector<ast::method>(
-									std::make_unique<ast::method>(
+							testaux::make_unique_ptr_vector<ast::instance_method>(
+									std::make_unique<ast::instance_method>(
 											pool.normalize("doStuff"),
 											std::make_unique<ast::type>(
 													pool.normalize("Alpha"), 1
@@ -810,7 +810,7 @@ BOOST_AUTO_TEST_CASE(ast_methods_main)
 					std::make_unique<ast::class_declaration>(
 							pool.normalize("Example"),
 							ast_vector<ast::var_decl>{},
-							ast_vector<ast::method>{},
+							ast_vector<ast::instance_method>{},
 							testaux::make_unique_ptr_vector<ast::main_method>(
 									std::make_unique<ast::main_method>(
 											pool.normalize("notmain"),

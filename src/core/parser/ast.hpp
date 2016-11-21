@@ -54,8 +54,9 @@ namespace minijava
 		class while_statement;
 		class return_statement;
 		class empty_statement;
-		class main_method;
 		class method;
+		class main_method;
+		class instance_method;
 		class class_declaration;
 		class program;
 
@@ -110,6 +111,15 @@ namespace minijava
 			 *     The node
 			 */
 			virtual void visit_statement(const statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a method AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_method(const method& node);
 
 		public:
 			/**
@@ -303,12 +313,12 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Visits a method AST node.
+			 *     Visits an instance_method AST node.
 			 *
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(const method& node);
+			virtual void visit(const instance_method& node);
 
 			/**
 			 * @brief
@@ -1752,95 +1762,9 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Main method AST node
+		 *     Base class for both types of method nodes.
 		 */
-		class main_method final : public node
-		{
-
-		public:
-
-			/**
-			 * @brief
-			 *     Constructs a main method node.
-			 *
-			 * @param main
-			 *     method name (usually `main`)
-			 *
-			 * @param args
-			 *     parameter name (usually `args`)
-			 *
-			 * @param body
-			 *     method body
-			 *
-			 */
-			main_method(symbol main, symbol args, std::unique_ptr<block> body)
-				: _name{main}, _argname{args}, _body{std::move(body)}
-			{
-				assert(!_name.empty());
-				assert(_body);
-			}
-
-			/**
-			 * @brief
-			 *     Returns the name of this method.
-			 *
-			 * @return
-			 *     method name
-			 *
-			 */
-			symbol name() const noexcept
-			{
-				return _name;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the name of the declared parameter.
-			 *
-			 * @return
-			 *     name of declared parameter
-			 *
-			 */
-			symbol argname() const noexcept
-			{
-				return _argname;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the body of this method.
-			 *
-			 * @return
-			 *     method body
-			 *
-			 */
-			const block& body() const noexcept
-			{
-				return *_body;
-			}
-
-			void accept(visitor& v) const override
-			{
-				v.visit(*this);
-			}
-
-		private:
-
-			/** @brief method name */
-			symbol _name;
-
-			/** @brief Declared paramter name */
-			symbol _argname;
-
-			/** @brief method body */
-			std::unique_ptr<block> _body;
-		};
-
-		/**
-		 * @brief
-		 *     Method AST node
-		 */
-		class method final : public node
+		class method : public node
 		{
 
 		public:
@@ -1863,8 +1787,8 @@ namespace minijava
 			 *
 			 */
 			method(symbol name, std::unique_ptr<type> return_type,
-				   std::vector<std::unique_ptr<var_decl>> parameters,
-				   std::unique_ptr<block> body)
+			       std::vector<std::unique_ptr<var_decl>> parameters,
+			       std::unique_ptr<block> body)
 					: _name{name}, _return_type{std::move(return_type)},
 					  _parameters{std::move(parameters)}, _body{std::move(body)}
 			{
@@ -1926,11 +1850,6 @@ namespace minijava
 				return *_body;
 			}
 
-			void accept(visitor& v) const override
-			{
-				v.visit(*this);
-			}
-
 		private:
 
 			/** @brief method name */
@@ -1944,6 +1863,84 @@ namespace minijava
 
 			/** @brief method body */
 			std::unique_ptr<block> _body;
+		};
+
+		/**
+		 * @brief
+		 *     Main method AST node
+		 */
+		class main_method final : public method
+		{
+
+		public:
+
+			/**
+			 * @brief
+			 *     Constructs a main method node.
+			 *
+			 * @param main
+			 *     method name (usually `main`)
+			 *
+			 * @param args
+			 *     parameter name (usually `args`)
+			 *
+			 * @param body
+			 *     method body
+			 *
+			 */
+			main_method(symbol main, symbol args, std::unique_ptr<block> body)
+				: method{main, std::make_unique<type>(primitive_type::type_void), {}, std::move(body)},
+				  _argname{args}
+			{
+				assert(!_argname.empty());
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the declared parameter.
+			 *
+			 * @return
+			 *     name of declared parameter
+			 *
+			 */
+			symbol argname() const noexcept
+			{
+				return _argname;
+			}
+
+			void accept(visitor& v) const override
+			{
+				v.visit(*this);
+			}
+
+		private:
+
+			/** @brief method name */
+			symbol _name;
+
+			/** @brief declared parameter name */
+			symbol _argname;
+
+			/** @brief method body */
+			std::unique_ptr<block> _body;
+		};
+
+		/**
+		 * @brief
+		 *     Instance method AST node
+		 */
+		class instance_method final : public method
+		{
+
+		public:
+
+			using method::method;
+
+			void accept(visitor& v) const override
+			{
+				v.visit(*this);
+			}
+
 		};
 
 		/**
@@ -1966,7 +1963,7 @@ namespace minijava
 			 *     fields inside the class
 			 *
 			 * @param methods
-			 *     class methods
+			 *     instance methods inside the class
 			 *
 			 * @param main_methods
 			 *     main methods inside the class
@@ -1974,7 +1971,7 @@ namespace minijava
 			 */
 			class_declaration(symbol name,
 			                  std::vector<std::unique_ptr<var_decl>> fields,
-			                  std::vector<std::unique_ptr<method>> methods,
+			                  std::vector<std::unique_ptr<instance_method>> methods,
 			                  std::vector<std::unique_ptr<main_method>> main_methods)
 					: _name{name}, _fields{std::move(fields)},
 					  _methods{std::move(methods)},
@@ -2014,13 +2011,13 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Returns the methods declared in this class.
+			 *     Returns the instance methods declared in this class.
 			 *
 			 * @return
-			 *     list of methods
+			 *     list of instance methods
 			 *
 			 */
-			const std::vector<std::unique_ptr<method>>& methods() const noexcept
+			const std::vector<std::unique_ptr<instance_method>>& instance_methods() const noexcept
 			{
 				return _methods;
 			}
@@ -2051,8 +2048,8 @@ namespace minijava
 			/** @brief declared fields */
 			std::vector<std::unique_ptr<var_decl>> _fields;
 
-			/** @brief declared methods */
-			std::vector<std::unique_ptr<method>> _methods;
+			/** @brief declared instance methods */
+			std::vector<std::unique_ptr<instance_method>> _methods;
 
 			/** @brief declared main methods */
 			std::vector<std::unique_ptr<main_method>> _main_methods;

@@ -349,8 +349,8 @@ BOOST_AUTO_TEST_CASE(complete_program)
 						pool.normalize("whatever")
 					)
 				),
-				testaux::make_unique_ptr_vector<ast::method>(
-					astbldr<ast::method>{5}(
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					astbldr<ast::instance_method>{5}(
 						pool.normalize("f"),
 						astbldr<ast::type>{6}(ast::primitive_type::type_int),
 						testaux::make_unique_ptr_vector<ast::var_decl>(),

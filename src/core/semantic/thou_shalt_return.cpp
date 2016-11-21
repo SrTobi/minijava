@@ -85,7 +85,7 @@ namespace minijava
 	void check_return_paths(const ast::program& prog)
 	{
 		for (const auto& claz : prog.classes()) {
-			for (const auto& mthd : claz->methods()) {
+			for (const auto& mthd : claz->instance_methods()) {
 				if (!is_void(*mthd)) {
 					check_method(*mthd);
 				}

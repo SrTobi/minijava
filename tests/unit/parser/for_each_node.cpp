@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(count_nodes_in_simple_ast)
 						pool.normalize("foos")
 					)
 				),
-				testaux::make_unique_ptr_vector<ast::method>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(),
 				testaux::make_unique_ptr_vector<ast::main_method>()
 			)
 		)
