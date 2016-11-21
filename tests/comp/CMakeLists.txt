@@ -57,3 +57,13 @@ add_test(
 	        --
 			"${minijava_exec}" --check
 )
+
+add_test(
+		NAME comptest-semantic-invalid-noescape
+		COMMAND ${comptest_exec}
+		"--input=${CMAKE_CURRENT_SOURCE_DIR}/sem/invalid_noescape/*.mj"
+		"--status=1"
+		"--message=error: "
+		--
+		"${minijava_exec}" --check
+)

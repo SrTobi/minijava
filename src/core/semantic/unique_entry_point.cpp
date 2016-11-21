@@ -35,5 +35,8 @@ namespace minijava
 	{
 		auto visitor = unique_entry_point_visitor{};
 		ast.accept(visitor);
+		if (!visitor.found) {
+			throw semantic_error{"Program has no entry point"};
+		}
 	}
 }
