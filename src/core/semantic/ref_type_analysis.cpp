@@ -410,11 +410,15 @@ namespace minijava
 
 				void visit(const ast::method& node) override
 				{
+					using namespace std::string_literals;
 					assert(!cur_method);
 					symbols.enter_scope(true);
 					cur_method = &_def_a[node];
 
 					for (auto&& param: cur_method->parameters()) {
+						if(symbols.is_defined_in_dependend_scope(param->name())) {
+							throw semantic_error("Parameter '"s + param->name().c_str() + "' has already been defined in the current scope!");
+						}
 						symbols.add_def(*param);
 					}
 
@@ -433,6 +437,7 @@ namespace minijava
 
 				void visit(const ast::class_declaration& node) override
 				{
+					using namespace std::string_literals;
 					assert(!cur_class);
 					cur_class = &_def_a[node];
 					symbols.enter_scope(true);
