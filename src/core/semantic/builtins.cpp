@@ -29,7 +29,7 @@ namespace minijava
 				// Equality
 				case ast::binary_operation_type::equal:
 				case ast::binary_operation_type::not_equal:
-					return lhs == rhs || (lhs.is_reference() && rhs.is_reference())
+					return typesystem.is_assignable(rhs, lhs) || typesystem.is_assignable(lhs, rhs)
 						? type_system::t_boolean()
 						: none;
 
