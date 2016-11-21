@@ -55,6 +55,7 @@ set(COMPONENTS
 	semantic/thou_shalt_return
 	semantic/type_system
 	semantic/unique_entry_point
+	semantic/dont_use_main_args
 	symbol/symbol
 	symbol/symbol_anchor
 	symbol/symbol_entry

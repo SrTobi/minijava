@@ -9,6 +9,7 @@
 #include "semantic/symbol_def.hpp"
 #include "semantic/thou_shalt_return.hpp"
 #include "semantic/unique_entry_point.hpp"
+#include "semantic/dont_use_main_args.hpp"
 
 namespace minijava
 {
@@ -27,6 +28,7 @@ namespace minijava
 		auto constants = extract_constants(ast, handler);
 		check_return_paths(ast);
 		check_unique_entry_point(ast);
+		check_args_usage(ast);
 		// FIXME: return everything we want to keep
 		(void) annotations;
 		(void) constants;
