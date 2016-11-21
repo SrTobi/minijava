@@ -1750,12 +1750,97 @@ namespace minijava
 
 		// region structural elements
 
+		/**
+		 * @brief
+		 *     Main method AST node
+		 */
+		class main_method final : public node
+		{
+
+		public:
+
+			/**
+			 * @brief
+			 *     Constructs a main method node.
+			 *
+			 * @param main
+			 *     method name (usually `main`)
+			 *
+			 * @param args
+			 *     parameter name (usually `args`)
+			 *
+			 * @param body
+			 *     method body
+			 *
+			 */
+			main_method(symbol main, symbol args, std::unique_ptr<block> body)
+				: _name{main}, _argname{args}, _body{std::move(body)}
+			{
+				assert(!_name.empty());
+				assert(_body);
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of this method.
+			 *
+			 * @return
+			 *     method name
+			 *
+			 */
+			symbol name() const noexcept
+			{
+				return _name;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the declared parameter.
+			 *
+			 * @return
+			 *     name of declared parameter
+			 *
+			 */
+			symbol argname() const noexcept
+			{
+				return _argname;
+			}
+
+			/**
+			 * @brief
+			 *     Returns the body of this method.
+			 *
+			 * @return
+			 *     method body
+			 *
+			 */
+			const block& body() const noexcept
+			{
+				return *_body;
+			}
+
+			void accept(visitor& v) const override
+			{
+				v.visit(*this);
+			}
+
+		private:
+
+			/** @brief method name */
+			symbol _name;
+
+			/** @brief Declared paramter name */
+			symbol _argname;
+
+			/** @brief method body */
+			std::unique_ptr<block> _body;
+		};
 
 		/**
 		 * @brief
 		 *     Method AST node
 		 */
-		class method : public node
+		class method final : public node
 		{
 
 		public:
@@ -1856,66 +1941,6 @@ namespace minijava
 
 			/** @brief method parameters */
 			std::vector<std::unique_ptr<var_decl>> _parameters;
-
-			/** @brief method body */
-			std::unique_ptr<block> _body;
-		};
-
-
-		/**
-		 * @brief
-		 *     Main method AST node
-		 */
-		class main_method final : public method
-		{
-
-		public:
-
-			/**
-			 * @brief
-			 *     Constructs a main method node.
-			 *
-			 * @param main
-			 *     method name (usually `main`)
-			 *
-			 * @param args
-			 *     parameter name (usually `args`)
-			 *
-			 * @param body
-			 *     method body
-			 *
-			 */
-			main_method(symbol main, symbol args, std::unique_ptr<block> body)
-				: method(std::move(main), std::make_unique<type>(primitive_type::type_void), {}, std::move(body)), _argname{args}
-			{
-			}
-
-
-			/**
-			 * @brief
-			 *     Returns the name of the declared parameter.
-			 *
-			 * @return
-			 *     name of declared parameter
-			 *
-			 */
-			symbol argname() const noexcept
-			{
-				return _argname;
-			}
-
-			void accept(visitor& v) const override
-			{
-				v.visit(*this);
-			}
-
-		private:
-
-			/** @brief method name */
-			symbol _name;
-
-			/** @brief Declared paramter name */
-			symbol _argname;
 
 			/** @brief method body */
 			std::unique_ptr<block> _body;
