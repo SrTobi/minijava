@@ -7,11 +7,10 @@ include(CheckIncludeFileCXX)
 include("extras/cmake/activate_cpp14.cmake")
 include("extras/cmake/enable_diagnostics.cmake")
 
-include(FindPythonInterp)
-find_package(PythonInterp 3.4)
-
 buildx_activate_cpp14()
 buildx_enable_diagnostics()
+
+find_package(PythonInterp 3.4)
 
 if(WIN32)
 	set(Boost_USE_STATIC_LIBS ON)
