@@ -133,7 +133,12 @@ do
 			fi
 		fi
 		cmake --build . || exit
-		[ ${dodocs} -eq 0 ] || cmake --build . --target docs || exit
+		[ ${dodocs} -eq 0 ] || cmake --build . --target docs 2>doxygen.err || exit
+		if [ -s doxygen.err ]
+		then
+			cat doxygen.err >&2
+			die "Doxygen warnings treated as errors"
+		fi
 		case ${howtotest}
 		in
 			CMake)
