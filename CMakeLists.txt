@@ -47,15 +47,16 @@ set(COMPONENTS
 	parser/parser
 	parser/pretty_printer
 	semantic/analyze
+	semantic/attribute
 	semantic/builtins
 	semantic/constant
+	semantic/dont_use_main_args
 	semantic/ref_type_analysis
 	semantic/semantic_error
 	semantic/symbol_def
 	semantic/thou_shalt_return
 	semantic/type_system
 	semantic/unique_entry_point
-	semantic/dont_use_main_args
 	symbol/symbol
 	symbol/symbol_anchor
 	symbol/symbol_entry
