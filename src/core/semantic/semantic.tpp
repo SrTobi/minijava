@@ -2,6 +2,7 @@
 #error "Never `#include <semantic/analyze.tpp>` directly; `#include <semantic/analyze.hpp>` instead."
 #endif
 
+#include <algorithm>
 #include <memory>
 
 #include "semantic/builtins.hpp"
@@ -10,6 +11,7 @@
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_def.hpp"
 #include "semantic/thou_shalt_return.hpp"
+#include "semantic/type_info.hpp"
 #include "semantic/unique_entry_point.hpp"
 #include "semantic/dont_use_main_args.hpp"
 
@@ -22,8 +24,8 @@ namespace minijava
 			namespace ast = minijava::ast;
 
 			template<typename AllocT>
-			std::unique_ptr<ast::program> make_builtin_ast(
-					symbol_pool<AllocT>& pool) {
+			std::unique_ptr<ast::program> make_builtin_ast(symbol_pool<AllocT>& pool)
+			{
 				auto println_arg = std::make_unique<ast::var_decl>(
 						std::make_unique<ast::type>(
 								ast::primitive_type::type_int
@@ -76,6 +78,29 @@ namespace minijava
 				clazzes.push_back(std::move(string_class));
 				return std::make_unique<ast::program>(std::move(clazzes));
 			}
+
+			template<typename AllocT>
+			type_definitions make_non_class_types(symbol_pool<AllocT>& pool)
+			{
+				type_definitions result{};
+				result.insert(std::make_pair(
+						pool.normalize("null"),
+						sem::basic_type_info::make_null_type()
+				));
+				result.insert(std::make_pair(
+						pool.normalize("void"),
+						sem::basic_type_info::make_void_type()
+				));
+				result.insert(std::make_pair(
+						pool.normalize("int"),
+						sem::basic_type_info::make_int_type()
+				));
+				result.insert(std::make_pair(
+						pool.normalize("boolean"),
+						sem::basic_type_info::make_boolean_type()
+				));
+				return result;
+			}
 		}
 	}
 
@@ -84,8 +109,10 @@ namespace minijava
 								symbol_pool<AllocT>& pool)
 	{
 		auto builtin_ast = sem::detail::make_builtin_ast(pool);
+		auto types = sem::detail::make_non_class_types(pool);
+		sem::extract_type_info(builtin_ast, true, types);
+		sem::extract_type_info(ast, false, types);
 		// FIXME
-		(void) builtin_ast;
 		throw nullptr;
 	}
 

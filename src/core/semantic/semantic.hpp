@@ -13,6 +13,7 @@
 
 #include "parser/ast.hpp"
 #include "semantic/attribute.hpp"
+#include "semantic/type_info.hpp"
 #include "symbol/symbol_pool.hpp"
 
 
@@ -29,14 +30,16 @@ namespace minijava
 	 *
 	 */
 	// FIXME: define constraints for attribute types
-	struct semantic_info
+	class semantic_info
 	{
+
+	public:
+
 		/**
 		 * @brief
 		 *     Type of the map containing all type definitions.
 		 */
-		// FIXME: map string -> type_info
-		using type_definitions = int;
+		using type_definitions = sem::type_definitions;
 
 		/**
 		 * @brief
@@ -91,16 +94,27 @@ namespace minijava
 		 * @param constants
 		 *     constant value annotations
 		 *
+		 * @param builtin_ast
+		 *     AST containing definitions of the built-in reference types
+		 *
 		 */
 		semantic_info(type_definitions types, type_annotations ast_types,
 		              locals locals, var_declarations var_decls,
 		              method_declarations method_decls,
-					  constant_values constants)
+					  constant_values constants,
+					  std::unique_ptr<ast::program> builtin_ast)
 				: _types{std::move(types)}, _ast_types{std::move(ast_types)},
 				  _locals{std::move(locals)}, _var_decls{std::move(var_decls)},
 				  _method_decls{std::move(method_decls)},
-				  _constants{std::move(constants)}
-		{}
+				  _constants{std::move(constants)},
+				  _builtin_ast{std::move(builtin_ast)}
+		{
+			assert (_builtin_ast);
+		}
+
+		// FIXME: getter for all except _builtin_ast
+
+	private:
 
 		/** @brief types in the program */
 		type_definitions _types;
@@ -119,6 +133,10 @@ namespace minijava
 
 		/** @brief constant value annotations */
 		constant_values _constants;
+
+		/** @brief AST containing definitions of the built-in reference types */
+		std::unique_ptr<ast::program> _builtin_ast;
+
 	};
 
 	/**
