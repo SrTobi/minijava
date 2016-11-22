@@ -1154,13 +1154,7 @@ namespace minijava
 			 *
 			 */
 			method_invocation(std::unique_ptr<expression> target, symbol name,
-							  std::vector<std::unique_ptr<expression>> arguments)
-					: _target{std::move(target)}, _name{name}
-					, _arguments{std::move(arguments)}
-			{
-				assert(!_name.empty());
-				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el){ return !!el; }));
-			}
+							  std::vector<std::unique_ptr<expression>> arguments);
 
 			/**
 			 * @brief
@@ -1501,11 +1495,7 @@ namespace minijava
 			 *     statements inside the block
 			 *
 			 */
-			block(std::vector<std::unique_ptr<block_statement>> statements)
-					: _body{std::move(statements)}
-			{
-				assert(std::all_of(_body.begin(), _body.end(), [](auto&& el){ return !!el; }));
-			}
+			block(std::vector<std::unique_ptr<block_statement>> statements);
 
 			/**
 			 * @brief
@@ -1788,15 +1778,7 @@ namespace minijava
 			 */
 			method(symbol name, std::unique_ptr<type> return_type,
 			       std::vector<std::unique_ptr<var_decl>> parameters,
-			       std::unique_ptr<block> body)
-					: _name{name}, _return_type{std::move(return_type)},
-					  _parameters{std::move(parameters)}, _body{std::move(body)}
-			{
-				assert(!_name.empty());
-				assert(_return_type);
-				assert(std::all_of(_parameters.begin(), _parameters.end(), [](auto&& el) { return !!el; }));
-				assert(_body);
-			}
+			       std::unique_ptr<block> body);
 
 			/**
 			 * @brief
@@ -1972,16 +1954,7 @@ namespace minijava
 			class_declaration(symbol name,
 			                  std::vector<std::unique_ptr<var_decl>> fields,
 			                  std::vector<std::unique_ptr<instance_method>> methods,
-			                  std::vector<std::unique_ptr<main_method>> main_methods)
-					: _name{name}, _fields{std::move(fields)},
-					  _methods{std::move(methods)},
-					  _main_methods{std::move(main_methods)}
-			{
-				assert(!_name.empty());
-				assert(std::all_of(_fields.begin(), _fields.end(), [](auto&& el){ return !!el; }));
-				assert(std::all_of(_methods.begin(), _methods.end(), [](auto&& el){ return !!el; }));
-				assert(std::all_of(_main_methods.begin(), _main_methods.end(), [](auto&& el){ return !!el; }));
-			}
+			                  std::vector<std::unique_ptr<main_method>> main_methods);
 
 			/**
 			 * @brief
@@ -2011,6 +1984,23 @@ namespace minijava
 
 			/**
 			 * @brief
+			 *     Finds all fields with the given name in this class.
+			 *
+			 * There may be more than one field with the given name or none.
+			 *
+			 * @param name
+			 *     name of the field
+			 *
+			 * @return
+			 *     range of matching fields
+			 *
+			 */
+			// TODO: use some kind or array view
+			std::pair<const std::unique_ptr<var_decl>*, const std::unique_ptr<var_decl>*>
+			find_fields(symbol name) const noexcept;
+
+			/**
+			 * @brief
 			 *     Returns the instance methods declared in this class.
 			 *
 			 * @return
@@ -2021,6 +2011,23 @@ namespace minijava
 			{
 				return _methods;
 			}
+
+			/**
+			 * @brief
+			 *     Finds all instance methods with the given name in this class.
+			 *
+			 * There may be more than one method with the given name or none.
+			 *
+			 * @param name
+			 *     name of the method
+			 *
+			 * @return
+			 *     range of matching instance methods
+			 *
+			 */
+			// TODO: use some kind or array view
+			std::pair<const std::unique_ptr<instance_method>*, const std::unique_ptr<instance_method>*>
+			find_instance_methods(symbol name) const noexcept;
 
 			/**
 			 * @brief
@@ -2072,11 +2079,7 @@ namespace minijava
 			 *     classes in the program
 			 *
 			 */
-			program(std::vector<std::unique_ptr<class_declaration>> classes)
-					: _classes{std::move(classes)}
-			{
-				assert(std::all_of(_classes.begin(), _classes.end(), [](auto&& el){ return !!el; }));
-			}
+			program(std::vector<std::unique_ptr<class_declaration>> classes);
 
 			/**
 			 * @brief

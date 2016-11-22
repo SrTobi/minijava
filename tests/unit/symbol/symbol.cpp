@@ -1,13 +1,18 @@
 #include "symbol/symbol.hpp"
 
+#include "testaux/random_tokens.hpp"
 #include "testaux/static_symbol_pool.hpp"
 
+#include <algorithm>
 #include <cstring>
+#include <random>
 #include <sstream>
 #include <string>
 
 #define BOOST_TEST_MODULE  symbol_symbol
 #include <boost/test/unit_test.hpp>
+
+#include "symbol/symbol_pool.hpp"
 
 
 BOOST_AUTO_TEST_CASE(same_pointers_compare_equal)
@@ -265,4 +270,24 @@ BOOST_AUTO_TEST_CASE(comparison_between_empty_symbols_and_strings)
 	BOOST_REQUIRE_EQUAL(minijava::symbol{}, "");
 	BOOST_REQUIRE_NE(minijava::symbol{}, "\0"s);
 	BOOST_REQUIRE_NE(minijava::symbol{}, " ");
+}
+
+
+BOOST_AUTO_TEST_CASE(symbol_pointer_comparison_defines_total_ordering)
+{
+	auto engine = std::default_random_engine{};
+	auto pool = minijava::symbol_pool<>{};
+	auto symbols = std::vector<minijava::symbol>{200};
+	std::generate(symbols.begin(), symbols.end(), [&pool](){
+		return pool.normalize(
+				testaux::get_random_identifier(engine, std::size_t{50})
+		);
+	});
+	std::sort(symbols.begin(), symbols.end(), minijava::symbol_comparator{});
+	BOOST_REQUIRE(
+			std::adjacent_find(symbols.begin(), symbols.end(), [](const auto& s1, const auto& s2) {
+				const auto pointer_greater_than = std::greater<const void*>{};
+				return pointer_greater_than(s1.data(), s2.data());
+			}) == symbols.end()
+	);
 }
