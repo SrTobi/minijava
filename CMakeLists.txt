@@ -57,6 +57,7 @@ set(COMPONENTS
 	semantic/ref_type_analysis
 	semantic/semantic_error
 	semantic/symbol_def
+	semantic/symbol_table
 	semantic/thou_shalt_return
 	semantic/type_system
 	semantic/unique_entry_point
