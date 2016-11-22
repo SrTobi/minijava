@@ -48,12 +48,12 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
-	semantic/analyze
 	semantic/attribute
 	semantic/builtins
 	semantic/constant
 	semantic/dont_use_main_args
 	semantic/ref_type_analysis
+	semantic/semantic
 	semantic/semantic_error
 	semantic/symbol_def
 	semantic/thou_shalt_return

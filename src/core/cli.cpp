@@ -21,7 +21,7 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
 #include "parser/pretty_printer.hpp"
-#include "semantic/analyze.hpp"
+#include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
 

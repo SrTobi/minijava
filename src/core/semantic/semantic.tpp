@@ -1,4 +1,4 @@
-#ifndef MINIJAVA_INCLUDED_FROM_SEMANTIC_ANALYZE_HPP
+#ifndef MINIJAVA_INCLUDED_FROM_SEMANTIC_SEMANTIC_HPP
 #error "Never `#include <semantic/analyze.tpp>` directly; `#include <semantic/analyze.hpp>` instead."
 #endif
 

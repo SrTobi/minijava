@@ -19,6 +19,6 @@ namespace minijava
 	void analyze_ast(const ast::program& ast, symbol_pool<AllocT>& pool);
 }
 
-#define MINIJAVA_INCLUDED_FROM_SEMANTIC_ANALYZE_HPP
-#include "semantic/analyze.tpp"
-#undef MINIJAVA_INCLUDED_FROM_SEMANTIC_ANALYZE_HPP
+#define MINIJAVA_INCLUDED_FROM_SEMANTIC_SEMANTIC_HPP
+#include "semantic/semantic.tpp"
+#undef MINIJAVA_INCLUDED_FROM_SEMANTIC_SEMANTIC_HPP
