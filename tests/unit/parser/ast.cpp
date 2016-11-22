@@ -47,6 +47,10 @@ namespace /* anonymous */
 		ast::program
 	>;
 
+	template<typename T>
+	struct is_abstract_or_final : std::integral_constant<bool, std::is_abstract<T>{} || std::is_final<T>{}>
+	{};
+
 	struct vertex : ast::node
 	{
 
@@ -64,6 +68,7 @@ BOOST_AUTO_TEST_CASE(type_checks)
 	constexpr auto ants = all_ast_node_types{};
 	static_assert(testaux::meta::all<std::is_class>(ants), "");
 	static_assert(testaux::meta::all<std::has_virtual_destructor>(ants), "");
+	static_assert(testaux::meta::all<is_abstract_or_final>(ants), "");
 	static_assert(testaux::meta::none<std::is_copy_constructible>(ants), "");
 	static_assert(testaux::meta::none<std::is_copy_assignable>(ants), "");
 	static_assert(testaux::meta::none<std::is_move_constructible>(ants), "");
