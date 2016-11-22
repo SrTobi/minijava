@@ -102,22 +102,22 @@ namespace minijava
 				  _constants{std::move(constants)}
 		{}
 
-		/** @brief types in the program **/
+		/** @brief types in the program */
 		type_definitions _types;
 
-		/** @brief type annotations **/
+		/** @brief type annotations */
 		type_annotations _ast_types;
 
-		/** @brief local variables annotations of methods **/
+		/** @brief local variables annotations of methods */
 		locals _locals;
 
-		/** @brief variable declaration pointer annotations **/
+		/** @brief variable declaration pointer annotations */
 		var_declarations _var_decls;
 
-		/** @brief method declaration pointer annotations **/
+		/** @brief method declaration pointer annotations */
 		method_declarations _method_decls;
 
-		/** @brief constant value annotations **/
+		/** @brief constant value annotations */
 		constant_values _constants;
 	};
 
