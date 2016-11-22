@@ -7,10 +7,10 @@
 #define BOOST_TEST_MODULE  parser_ast
 #include <boost/test/unit_test.hpp>
 
+#include "meta/meta.hpp"
 #include "symbol/symbol.hpp"
 #include "symbol/symbol_pool.hpp"
 
-#include "testaux/meta.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
 namespace ast = minijava::ast;
@@ -19,7 +19,7 @@ namespace ast = minijava::ast;
 namespace /* anonymous */
 {
 
-	using all_ast_node_types = testaux::meta::type_list
+	using all_ast_node_types = minijava::meta::types_t
 	<
 		ast::node,
 		ast::type,
@@ -72,13 +72,13 @@ namespace /* anonymous */
 BOOST_AUTO_TEST_CASE(type_checks)
 {
 	constexpr auto ants = all_ast_node_types{};
-	static_assert(testaux::meta::all<std::is_class>(ants), "");
-	static_assert(testaux::meta::all<std::has_virtual_destructor>(ants), "");
-	static_assert(testaux::meta::all<is_abstract_or_final>(ants), "");
-	static_assert(testaux::meta::none<std::is_copy_constructible>(ants), "");
-	static_assert(testaux::meta::none<std::is_copy_assignable>(ants), "");
-	static_assert(testaux::meta::none<std::is_move_constructible>(ants), "");
-	static_assert(testaux::meta::none<std::is_move_assignable>(ants), "");
+	static_assert(minijava::meta::all<std::is_class>(ants), "");
+	static_assert(minijava::meta::all<std::has_virtual_destructor>(ants), "");
+	static_assert(minijava::meta::all<is_abstract_or_final>(ants), "");
+	static_assert(minijava::meta::none<std::is_copy_constructible>(ants), "");
+	static_assert(minijava::meta::none<std::is_copy_assignable>(ants), "");
+	static_assert(minijava::meta::none<std::is_move_constructible>(ants), "");
+	static_assert(minijava::meta::none<std::is_move_assignable>(ants), "");
 }
 
 

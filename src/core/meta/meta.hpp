@@ -10,12 +10,12 @@
 
 #include <type_traits>
 
-#define TESTAUX_INCLUDED_FROM_META_HPP
-#include "testaux/meta_preamble.tpp"
-#undef TESTAUX_INCLUDED_FROM_META_HPP
+#define MINIJAVA_INCLUDED_FROM_META_META_HPP
+#include "meta/meta_preamble.tpp"
+#undef MINIJAVA_INCLUDED_FROM_META_META_HPP
 
 
-namespace testaux
+namespace minijava
 {
 
 	/**
@@ -31,6 +31,17 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     An empty `struct` that can be used for type singletons.
+		 *
+		 * @tparam T
+		 *     types to store
+		 *
+		 */
+		template <typename T>
+		struct type_t {};
+
+		/**
+		 * @brief
 		 *     An empty `struct` that can be used for type sequences.
 		 *
 		 * @tparam Ts
@@ -38,7 +49,7 @@ namespace testaux
 		 *
 		 */
 		template <typename... Ts>
-		struct type_list {};
+		struct types_t {};
 
 		/**
 		 * @brief
@@ -211,9 +222,9 @@ namespace testaux
 
 	}  // namespace meta
 
-}  // namespace testaux
+}  // namespace minijava
 
 
-#define TESTAUX_INCLUDED_FROM_META_HPP
-#include "testaux/meta_postamble.tpp"
-#undef TESTAUX_INCLUDED_FROM_META_HPP
+#define MINIJAVA_INCLUDED_FROM_META_META_HPP
+#include "meta/meta_postamble.tpp"
+#undef MINIJAVA_INCLUDED_FROM_META_META_HPP

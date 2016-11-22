@@ -1,9 +1,9 @@
-#ifndef TESTAUX_INCLUDED_FROM_META_HPP
-#error "Never `#include <testaux/meta_postamble.tpp>` directly; `#include <testaux/meta.hpp>` instead."
+#ifndef MINIJAVA_INCLUDED_FROM_META_META_HPP
+#error "Never `#include <meta/meta_postamble.tpp>` directly; `#include <meta/meta.hpp>` instead."
 #endif
 
 
-namespace testaux
+namespace minijava
 {
 
 	namespace meta
@@ -46,4 +46,4 @@ namespace testaux
 
 	}  // namespace meta
 
-}  // namespace testaux
+}  // namespace minijava
