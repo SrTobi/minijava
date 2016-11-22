@@ -7,6 +7,9 @@ include(CheckIncludeFileCXX)
 include("extras/cmake/activate_cpp14.cmake")
 include("extras/cmake/enable_diagnostics.cmake")
 
+include(FindPythonInterp)
+find_package(PythonInterp 3)
+
 buildx_activate_cpp14()
 buildx_enable_diagnostics()
 

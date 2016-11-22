@@ -12,4 +12,5 @@ foreach(fuzz ${FUZZERS})
 		LINK_PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARIES}
 	)
 	add_test(fuzztest-${fuzz} ${fuzz})
+	add_dependencies(check ${fuzz})
 endforeach(fuzz)
