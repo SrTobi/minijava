@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(symbol_pointer_comparison_defines_total_ordering)
 	auto engine = std::default_random_engine{};
 	auto pool = minijava::symbol_pool<>{};
 	auto symbols = std::vector<minijava::symbol>{200};
-	std::generate(symbols.begin(), symbols.end(), [&pool](){
+	std::generate(symbols.begin(), symbols.end(), [&](){
 		return pool.normalize(
 				testaux::get_random_identifier(engine, std::size_t{50})
 		);

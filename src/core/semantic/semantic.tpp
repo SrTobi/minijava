@@ -86,6 +86,7 @@ namespace minijava
 		auto builtin_ast = sem::detail::make_builtin_ast(pool);
 		// FIXME
 		(void) builtin_ast;
+		(void) ast;
 		throw nullptr;
 	}
 
