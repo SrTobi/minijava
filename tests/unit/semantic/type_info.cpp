@@ -45,7 +45,7 @@ namespace /* anonymous */
 BOOST_AUTO_TEST_CASE(properties_of_null_t)
 {
 	constexpr auto t = minijava::sem::basic_type_info::make_null_type();
-	static_assert(nullptr == t.declaration(), "there out to be no declaration of void");
+	static_assert(nullptr == t.declaration(), "there ought to be no declaration of void");
 	static_assert(    t.is_builtin(),      "null ought to be a builtin");
 	static_assert(not t.is_primitive(),    "null ought to be a primitive");
 	static_assert(not t.is_instantiable(), "null ought to be not instantiable");
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(properties_of_null_t)
 BOOST_AUTO_TEST_CASE(properties_of_void_t)
 {
 	constexpr auto t = minijava::sem::basic_type_info::make_void_type();
-	static_assert(nullptr == t.declaration(), "there out to be no declaration of void");
+	static_assert(nullptr == t.declaration(), "there ought to be no declaration of void");
 	static_assert(    t.is_builtin(),      "void ought to be a builtin");
 	static_assert(    t.is_primitive(),    "void ought to be a primitive");
 	static_assert(not t.is_instantiable(), "void ought to be not instantiable");
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(properties_of_void_t)
 BOOST_AUTO_TEST_CASE(properties_of_int_t)
 {
 	constexpr auto t = minijava::sem::basic_type_info::make_int_type();
-	static_assert(nullptr == t.declaration(), "there out to be no declaration of int");
+	static_assert(nullptr == t.declaration(), "there ought to be no declaration of int");
 	static_assert(    t.is_builtin(),      "int ought to be a builtin");
 	static_assert(    t.is_primitive(),    "int ought to be a primitive");
 	static_assert(    t.is_instantiable(), "int ought to be instantiable");
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(properties_of_int_t)
 BOOST_AUTO_TEST_CASE(properties_of_boolean_t)
 {
 	constexpr auto t = minijava::sem::basic_type_info::make_boolean_type();
-	static_assert(nullptr == t.declaration(), "there out to be no declaration of boolean");
+	static_assert(nullptr == t.declaration(), "there ought to be no declaration of boolean");
 	static_assert(    t.is_builtin(),      "boolean ought to be a builtin");
 	static_assert(    t.is_primitive(),    "boolean ought to be a primitive");
 	static_assert(    t.is_instantiable(), "boolean ought to be instantiable");
