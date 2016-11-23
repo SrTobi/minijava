@@ -6,6 +6,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #define BOOST_TEST_MODULE  parser_parser
 #include <boost/test/unit_test.hpp>
@@ -14,6 +15,7 @@
 #include "lexer/token.hpp"
 #include "lexer/token_type.hpp"
 #include "parser/ast.hpp"
+#include "parser/ast_factory.hpp"
 #include "parser/pretty_printer.hpp"
 #include "symbol/symbol_pool.hpp"
 
@@ -833,4 +835,26 @@ BOOST_AUTO_TEST_CASE(ast_methods_main)
 	auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
 	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
 	testaux::check_ids_strict(*actual_ast);
+}
+
+
+BOOST_AUTO_TEST_CASE(external_ast_factory)
+{
+	const token_sequence test_data{
+		CLASS("Another", EMPTY_BLOCK),
+        CLASS("Example", EMPTY_BLOCK)
+	};
+	auto factory = minijava::ast_factory{10};
+	auto ast = minijava::parse_program(
+			std::begin(test_data), std::end(test_data), factory
+	);
+	// Check that the factory was not copied.
+	BOOST_REQUIRE_EQUAL(14, factory.make<ast::empty_statement>()()->id());
+	// Check that the IDs are correct.
+	auto ids = std::vector<std::size_t>{};
+	auto collector = testaux::ast_id_collector{ids};
+	ast->accept(collector);
+	std::sort(std::begin(ids), std::end(ids));
+	const auto expected_ids = std::vector<std::size_t>{11, 12, 13};
+	BOOST_REQUIRE(expected_ids == ids);
 }
