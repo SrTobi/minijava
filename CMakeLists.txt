@@ -43,6 +43,7 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	meta/meta
 	parser/ast
 	parser/ast_factory
 	parser/for_each_node

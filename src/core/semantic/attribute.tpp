@@ -2,11 +2,30 @@
 #error "Never `#include <semantic/attribute.tpp>` directly; `#include <semantic/attribute.hpp>` instead."
 #endif
 
+#include <algorithm>
 #include <cassert>
+#include <initializer_list>
+#include <utility>
 
 
 namespace minijava
 {
+
+	template <typename... NodeTs>
+	bool ast_node_filter<NodeTs...>::dynamic_check(const ast::node& node) const noexcept
+	{
+		if (node.id() == 0) {
+			return false;
+		}
+		const std::initializer_list<const void*> pointers = {
+			dynamic_cast<const NodeTs*>(&node)...
+		};
+		return std::any_of(
+			std::begin(pointers), std::end(pointers),
+			[](auto p){ return p != nullptr; }
+		);
+	}
+
 
 	template <typename T, typename NodeFilterT, typename AllocT>
 	ast_attributes<T, NodeFilterT, AllocT>::ast_attributes() noexcept

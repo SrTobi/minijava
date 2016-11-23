@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(allocator_is_a_thing)
 {
 	using alloc_type = std::allocator<std::pair<const ast::node*const, int>>;
 	const auto alloc = alloc_type{};
-	const auto atmap = minijava::ast_attributes<int, minijava::ast_node_filter, alloc_type>{alloc};
+	const auto atmap = minijava::ast_attributes<int, minijava::ast_node_filter<ast::node>, alloc_type>{alloc};
 	BOOST_REQUIRE(alloc == atmap.get_allocator());
 	BOOST_REQUIRE_NO_THROW(atmap.get_allocator().deallocate(atmap.get_allocator().allocate(0), 0));
 }
