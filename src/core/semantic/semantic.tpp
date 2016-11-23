@@ -117,8 +117,6 @@ namespace minijava
 				return result;
 			}
 
-			// FIXME: give builtin AST non-conflicting node ids
-
 		}  // namespace detail
 
 	}  // namespace sem
@@ -128,17 +126,17 @@ namespace minijava
 	{
 		auto builtin_ast = sem::detail::make_builtin_ast(pool, factory);
 		auto globals = sem::detail::make_globals(pool);
-		auto classes = sem::detail::make_non_class_types(pool);  // WTF?!
+		auto classes = sem::type_definitions{};
 		sem::extract_type_info(*builtin_ast, true, classes);
 		sem::extract_type_info(ast, false, classes);
 		auto type_annotations = sem::type_attributes{};
 		auto locals_annotations = sem::locals_attributes{};
 		auto vardecl_annotations = sem::vardecl_attributes{};
 		auto method_annotations = sem::method_attributes{};
-		// TODO: Is this correct?  I don't think so.
-		sem::perform_shallow_type_analysis(*builtin_ast, type_annotations);
+		sem::perform_shallow_type_analysis(*builtin_ast, classes, type_annotations);
 		sem::perform_full_name_type_analysis(
 				ast,
+				classes,
 				globals,
 				type_annotations,
 				locals_annotations,

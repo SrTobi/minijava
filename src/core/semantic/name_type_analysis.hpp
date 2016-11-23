@@ -90,7 +90,9 @@ namespace minijava
 		 *     type annotation data structure to use
 		 *
 		 */
-		void perform_shallow_type_analysis(const ast::program& ast, type_attributes& type_annotations);
+		void perform_shallow_type_analysis(const ast::program& ast,
+		                                   const type_definitions& classes,
+		                                   type_attributes& type_annotations);
 
 		/**
 		 * @brief
@@ -115,12 +117,13 @@ namespace minijava
 		 *     variable declaration annotation data structure to use
 		 *
 		 */
-		void perform_full_name_type_analysis(const ast::program& ast,
-											 const globals_map&  globals,
-											 type_attributes&    type_annotations,
-											 locals_attributes&  locals_annotations,
-											 vardecl_attributes& vardecl_annotations,
-											 method_attributes&  method_annotations);
+		void perform_full_name_type_analysis(const ast::program&     ast,
+											 const type_definitions& classes,
+											 const globals_map&      globals,
+											 type_attributes&        type_annotations,
+											 locals_attributes&      locals_annotations,
+											 vardecl_attributes&     vardecl_annotations,
+											 method_attributes&      method_annotations);
 
 	}  // namespace sem
 
