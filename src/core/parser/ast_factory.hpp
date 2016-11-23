@@ -153,7 +153,7 @@ namespace minijava
 		 *     one before the next ID to use
 		 *
 		 */
-		ast_factory(const std::size_t lastid = 0) noexcept;
+		explicit ast_factory(const std::size_t lastid = 0) noexcept;
 
 		/**
 		 * @brief
