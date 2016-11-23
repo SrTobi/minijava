@@ -17,13 +17,17 @@
 #include "semantic/type_info.hpp"
 #include "symbol/symbol.hpp"
 
+
 namespace minijava
 {
+
 	namespace sem
 	{
+
 		/**
 		 * @brief
 		 *     (Semantic) type
+		 *
 		 */
 		struct type
 		{
@@ -38,92 +42,127 @@ namespace minijava
 			 *     rank of the array or 0 if this type is not an array
 			 *
 			 */
-			type(basic_type_info info, std::size_t rank)
-					: info{info}, rank{rank} {}
+			type(const basic_type_info info, const std::size_t rank) noexcept
+					: info{info}, rank{rank}
+			{
+			}
 
-			/** @brief meta information about this type's basic type */
-			const basic_type_info info;
+			/** @brief Meta information about this type's basic type. */
+			basic_type_info info;
 
-			/** @brief rank of the array or 0 if this type is not an array */
-			const std::size_t rank;
+			/** @brief Rank of the array or 0 if this type is not an array. */
+			std::size_t rank;
 		};
 
-		/**
-		 * @brief
-		 *     Type of the map containing the global variables.
-		 */
+		/** @brief Global identifier to class name mapping type. */
 		using globals_map = std::unordered_map<symbol, symbol>;
 
-		/**
-		 * @brief
-		 *     Type of the type annotations on expressions and other AST nodes.
-		 */
-		using type_attributes = ast_attributes<type, ast_node_filter<ast::expression, ast::var_decl, ast::method>>;
+		/** @brief Type mapping typed AST nodes to type definitions. */
+		using type_attributes = ast_attributes<
+			type,
+			ast_node_filter<ast::expression, ast::var_decl, ast::method>
+		>;
+
+		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
+		using locals_attributes = ast_attributes<
+			std::unordered_set<const ast::var_decl*>,
+			ast_node_filter<ast::method>
+		>;
+
+		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
+		using vardecl_attributes = ast_attributes<
+			const ast::var_decl*,
+			ast_node_filter<ast::array_access, ast::variable_access>
+		>;
+
+		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
+		using method_attributes = ast_attributes<
+			const ast::instance_method*,
+			ast_node_filter<ast::method_invocation>
+		>;
 
 		/**
 		 * @brief
-		 *     Type of the local variable list annotations on method nodes.
-		 */
-		using locals_attributes = ast_attributes<std::unordered_set<const ast::var_decl*>, ast_node_filter<ast::method>>;
-
-		/**
-		 * @brief
-		 *     Type of the annotations pointing to variable declarations.
-		 */
-		using vardecl_attributes = ast_attributes<const ast::var_decl*, ast_node_filter<ast::array_access, ast::variable_access>>;
-
-		/**
-		 * @brief
-		 *     Type of the annotations pointing to method declarations.
-		 */
-		using method_attributes = ast_attributes<const ast::instance_method*, ast_node_filter<ast::method_invocation>>;
-
-		/**
-		 * @brief
-		 *     Analyzes the types of fields, parameters and return types in the
-		 *     given AST.
+		 *     Extract the types of fields, method parameters and method return
+		 *     types in the given AST.
+		 *
+		 * If there are class definitions in the `ast` that have no entry in
+		 * `classes`, the behavior is undefined.  On the other hand, `classes`
+		 * may contain types that are not defined in `ast`.  For the purpose of
+		 * the type analysis performed by this function, those types are
+		 * treated as if they were defined in `ast`.
+		 *
+		 * The `ast_attributes` container that is passed in to be populated
+		 * with results may already contain some entries but only for
+		 * non-conflicting nodes.  If the container already sets an attribute
+		 * on a node that this analysis would also set, the behavior is
+		 * undefined.
 		 *
 		 * @param ast
 		 *     AST to analyze
 		 *
-		 * @param types
-		 *     type annotation data structure to use
+		 * @param classes
+		 *     all class types in the program
+		 *
+		 * @param type_annotations
+		 *     data structure to populate with the extracted types
+		 *
+		 * @throws semantic_error
+		 *     if a field or method declaration is not typed correctly
 		 *
 		 */
 		void perform_shallow_type_analysis(const ast::program& ast,
-		                                   const type_definitions& classes,
+		                                   const class_definitions& classes,
 		                                   type_attributes& type_annotations);
 
 		/**
 		 * @brief
-		 *     Performs a full name/type analysis on the given AST
+		 *     Extracts all types in a program.
+		 *
+		 * If there are class definitions in the `ast` that have no entry in
+		 * `classes`, the behavior is undefined.  On the other hand, `classes`
+		 * may contain types that are not defined in `ast`.  For the purpose of
+		 * the type analysis performed by this function, those types are
+		 * treated as if they were defined in `ast`.
+		 *
+		 * The behavior is further undefined if `globals` mentions types that
+		 * are not found in `classes`.
+		 *
+		 * The `ast_attributes` containers that are passed in to be populated
+		 * with results may already contain some entries but only for
+		 * non-conflicting nodes.  If a container already sets an attribute on
+		 * a node that this analysis would also set, the behavior is undefined.
 		 *
 		 * @param ast
 		 *     AST to analyze
 		 *
+		 * @param classes
+		 *     all class types in the program
+		 *
 		 * @param globals
 		 *     implicit global variables in the program
 		 *
-		 * @param types
-		 *     type annotation data structure to use
+		 * @param type_annotations
+		 *     data structure to populate with extracted type annotations
 		 *
-		 * @param locals
-		 *     locals annotation data structure to use
+		 * @param locals_annotations
+		 *     data structure to populate with extracted local variable
+		 *     declarations
 		 *
-		 * @param var_decls
-		 *     variable declaration annotation data structure to use
+		 * @param vardecl_annotations
+		 *     data structure to populate with extracted declaration pointer
 		 *
-		 * @param method_decls
-		 *     variable declaration annotation data structure to use
+		 * @param method_annotations
+		 *     data structure to populate with extracted declaration pointers
 		 *
 		 */
-		void perform_full_name_type_analysis(const ast::program&     ast,
-											 const type_definitions& classes,
-											 const globals_map&      globals,
-											 type_attributes&        type_annotations,
-											 locals_attributes&      locals_annotations,
-											 vardecl_attributes&     vardecl_annotations,
-											 method_attributes&      method_annotations);
+		void perform_full_name_type_analysis(const ast::program& ast,
+		                                     const class_definitions& classes,
+		                                     const globals_map& globals,
+		                                     type_attributes& type_annotations,
+		                                     locals_attributes& locals_annotations,
+		                                     vardecl_attributes& vardecl_annotations,
+		                                     method_attributes& method_annotations);
 
 	}  // namespace sem
 

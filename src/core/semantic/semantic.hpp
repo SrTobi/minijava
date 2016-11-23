@@ -39,7 +39,7 @@ namespace minijava
 	public:
 
 		/** @brief Type mapping class names to type definitions. */
-		using class_definitions = sem::type_definitions;  // TODO
+		using class_definitions = sem::class_definitions;
 
 		/** @brief Type mapping typed AST nodes to type definitions. */
 		using type_attributes = sem::type_attributes;

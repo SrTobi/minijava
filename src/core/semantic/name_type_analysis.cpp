@@ -14,7 +14,7 @@ namespace minijava
 	{
 
 		void perform_shallow_type_analysis(const ast::program& program,
-										   const type_definitions& all_types,
+										   const class_definitions& classes,
 										   type_attributes& types)
 		{
 			using namespace std::string_literals;
@@ -28,7 +28,7 @@ namespace minijava
 						};
 					}
 					// FIXME
-					(void) all_types;
+					(void) classes;
 					(void) types;
 					//auto type_name = field->var_type().name();
 					//auto type = types.find(field->var_type().name());
@@ -62,13 +62,13 @@ namespace minijava
 			}
 		}
 
-		void perform_full_name_type_analysis(const ast::program&     ast,
-											 const type_definitions& classes,
-											 const globals_map&      /* globals             */,
-											 type_attributes&        type_annotations,
-											 locals_attributes&      /* locals_annotations  */,
-											 vardecl_attributes&     /* vardecl_annotations */,
-											 method_attributes&      /* method_annotations  */)
+		void perform_full_name_type_analysis(const ast::program&      ast,
+											 const class_definitions& classes,
+											 const globals_map&       /* globals             */,
+											 type_attributes&         type_annotations,
+											 locals_attributes&       /* locals_annotations  */,
+											 vardecl_attributes&      /* vardecl_annotations */,
+											 method_attributes&       /* method_annotations  */)
 		{
 			perform_shallow_type_analysis(ast, classes, type_annotations);
 			MINIJAVA_THROW_ICE(not_implemented_error);

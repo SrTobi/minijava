@@ -9,9 +9,10 @@ namespace minijava
 	namespace sem
 	{
 		void extract_type_info(const ast::program& ast, bool builtin,
-							   type_definitions& definitions)
+							   class_definitions& definitions)
 		{
 			using namespace std::string_literals;
+			// TODO: No need to use find() here.
 			for (const auto& clazz : ast.classes()) {
 				if (definitions.find(clazz->name()) != definitions.end()) {
 					throw semantic_error{"Duplicate class name: "s + clazz->name().c_str()};

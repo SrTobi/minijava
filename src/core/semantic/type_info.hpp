@@ -24,6 +24,7 @@ namespace minijava
 		/**
 		 * @brief
 		 *     Meta information describing a basic, i.e. non-array, type.
+		 *
 		 */
 		class basic_type_info
 		{
@@ -225,9 +226,18 @@ namespace minijava
 			 */
 			const ast::class_declaration* const _declaration;
 
-			/** @brief private constructor for non-class types */
+			/**
+			 * @brief
+			 *     Private constructor for non-class types.
+			 *
+			 * @param cat
+			 *     category of the type
+			 *
+			 */
 			constexpr /* implicit */ basic_type_info(category cat)
-					: _cat{cat}, _declaration{nullptr} {}
+					: _cat{cat}, _declaration{nullptr}
+			{
+			}
 
 		public:
 
@@ -335,6 +345,7 @@ namespace minijava
 			return basic_type_info::equal(lhs, rhs);
 		}
 
+
 		/**
 		 * @brief
 		 *     Compares two basic types for inequality.
@@ -354,37 +365,31 @@ namespace minijava
 			return !basic_type_info::equal(lhs, rhs);
 		}
 
-		/**
-		 * @brief
-		 *     Type of the map containing all type definitions.
-		 *
-		 * This is not implemented as an `ast_attribute` since some types are
-		 * not represented in the program's AST.
-		 *
-		 */
-		using type_definitions = std::unordered_map<symbol, basic_type_info>;
+
+		/** @brief Mapping from class names to their types. */
+		using class_definitions = std::unordered_map<symbol, basic_type_info>;
 
 
 		/**
 		 * @brief
-		 *     Extracts types from the given AST and adds them to the given
-		 *     definitions.
+		 *     Extracts classes from `ast` and adds them to `definitions`.
 		 *
 		 * @param ast
 		 *     AST to process
 		 *
 		 * @param builtin
-		 *     whether the discovered types should be marked as built-in
+		 *     whether the discovered types should be marked as builtins
 		 *
 		 * @param definitions
-		 *     type definition data structure to use
+		 *     data structure to populate with the results
 		 *
 		 * @throws semantic_error
 		 *     if a duplicate class name is found
 		 *
 		 */
 		void extract_type_info(const ast::program& ast, bool builtin,
-							   type_definitions& definitions);
+		                       class_definitions& definitions);
+
 
 	}  // namespace sem
 

@@ -84,30 +84,7 @@ namespace minijava
 			}
 
 			template<typename PoolT>
-			type_definitions make_non_class_types(PoolT& pool)
-			{
-				auto result = type_definitions{};
-				result.insert(std::make_pair(
-						pool.normalize("null"),
-						sem::basic_type_info::make_null_type()
-				));
-				result.insert(std::make_pair(
-						pool.normalize("void"),
-						sem::basic_type_info::make_void_type()
-				));
-				result.insert(std::make_pair(
-						pool.normalize("int"),
-						sem::basic_type_info::make_int_type()
-				));
-				result.insert(std::make_pair(
-						pool.normalize("boolean"),
-						sem::basic_type_info::make_boolean_type()
-				));
-				return result;
-			}
-
-			template<typename AllocT>
-			globals_map make_globals(symbol_pool<AllocT>& pool)
+			globals_map make_globals(PoolT& pool)
 			{
 				sem::globals_map result{};
 				result.insert(std::make_pair(
@@ -126,7 +103,7 @@ namespace minijava
 	{
 		auto builtin_ast = sem::detail::make_builtin_ast(pool, factory);
 		auto globals = sem::detail::make_globals(pool);
-		auto classes = sem::type_definitions{};
+		auto classes = sem::class_definitions{};
 		sem::extract_type_info(*builtin_ast, true, classes);
 		sem::extract_type_info(ast, false, classes);
 		auto type_annotations = sem::type_attributes{};
