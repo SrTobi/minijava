@@ -152,6 +152,9 @@ namespace minijava
 	 * @return
 	 *     semantic information, including AST annotations
 	 *
+	 * @throws semantic_error
+	 *     if the program is semantically invalid
+	 *
 	 */
 	template<typename AllocT>
 	semantic_info check_program(const ast::program& ast,

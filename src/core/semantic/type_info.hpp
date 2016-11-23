@@ -379,6 +379,9 @@ namespace minijava
 		 * @param definitions
 		 *     type definition data structure to use
 		 *
+		 * @throws semantic_error
+		 *     if a duplicate class name is found
+		 *
 		 */
 		void extract_type_info(const ast::program& ast, bool builtin,
 							   type_definitions& definitions);
