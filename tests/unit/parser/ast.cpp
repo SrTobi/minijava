@@ -258,11 +258,11 @@ BOOST_AUTO_TEST_CASE(program_classes_sorted)
 	auto pool = minijava::symbol_pool<>{};
 	auto program = std::make_unique<ast::program>(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					make_empty_class("test1", pool),
-					make_empty_class("test1", pool),
-					make_empty_class("test2", pool),
-					make_empty_class("test2", pool),
-					make_empty_class("test3", pool)
+					testaux::make_empty_class("test1", pool),
+					testaux::make_empty_class("test1", pool),
+					testaux::make_empty_class("test2", pool),
+					testaux::make_empty_class("test2", pool),
+					testaux::make_empty_class("test3", pool)
 			)
 	);
 	BOOST_CHECK(std::is_sorted(
