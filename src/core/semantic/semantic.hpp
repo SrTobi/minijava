@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include "parser/ast.hpp"
+#include "parser/ast_factory.hpp"
 #include "semantic/constant.hpp"
 #include "semantic/name_type_analysis.hpp"
 #include "semantic/type_info.hpp"
@@ -315,7 +316,7 @@ namespace minijava
 	 *
 	 */
 	template<typename PoolT>
-	semantic_info check_program(const ast::program& ast, PoolT& pool);
+	semantic_info check_program(const ast::program& ast, PoolT& pool, ast_factory& factory);
 
 	// TODO: remove
 	template<typename AllocT>

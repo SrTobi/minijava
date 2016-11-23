@@ -149,7 +149,7 @@ namespace minijava
 		 *     Creates a factory that will create nodes with successive IDs
 		 *     starting at `lastid + 1`.
 		 *
-		 * @brief lastid
+		 * @param lastid
 		 *     one before the next ID to use
 		 *
 		 */
