@@ -12,8 +12,3 @@
 #include <boost/test/data/test_case.hpp>
 
 #include "symbol/symbol_pool.hpp"
-
-
-BOOST_AUTO_TEST_CASE(is_ok)
-{
-}
