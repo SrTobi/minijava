@@ -237,7 +237,8 @@ namespace minijava
 				return;
 			}
 			if (stage == compilation_stage::semantic) {
-				analyze_ast(*ast, pool);
+				// FIXME
+				//analyze_ast(*ast, pool);
 				return;
 			}
 			// If we get until here, we have a problem...
