@@ -1,5 +1,6 @@
 add_library(support
 	testaux/ast_id_checker
+	testaux/ast_test_factory
 	testaux/benchmark
 	testaux/temporary_file
 )

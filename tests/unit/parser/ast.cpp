@@ -11,6 +11,7 @@
 #include "symbol/symbol.hpp"
 #include "symbol/symbol_pool.hpp"
 
+#include "testaux/ast_test_factory.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
 namespace ast = minijava::ast;
@@ -137,16 +138,6 @@ namespace /* anonymous */
 				std::make_unique<ast::block>(
 						std::vector<std::unique_ptr<ast::block_statement>>{}
 				)
-		);
-	}
-
-	std::unique_ptr<ast::class_declaration>
-	make_empty_class(const char* name, minijava::symbol_pool<>& pool) {
-		return std::make_unique<ast::class_declaration>(
-				pool.normalize(name),
-				testaux::make_unique_ptr_vector<ast::var_decl>(),
-				testaux::make_unique_ptr_vector<ast::instance_method>(),
-				testaux::make_unique_ptr_vector<ast::main_method>()
 		);
 	}
 
