@@ -29,7 +29,6 @@ namespace minijava
 	 * annotations.
 	 *
 	 */
-	// FIXME: define constraints for attribute types
 	class semantic_info
 	{
 
@@ -46,31 +45,31 @@ namespace minijava
 		 *     Type of the type annotations on expressions and other AST nodes.
 		 */
 		// FIXME: type_info + rank data structure
-		using type_annotations = ast_attributes<int>;
+		using type_annotations = ast_attributes<int, ast_node_filter<ast::expression, ast::var_decl, ast::method>>;
 
 		/**
 		 * @brief
 		 *     Type of the local variable list annotations on method nodes.
 		 */
-		using locals = ast_attributes<std::unordered_set<const ast::var_decl*>>;
+		using locals = ast_attributes<std::unordered_set<const ast::var_decl*>, ast_node_filter<ast::method>>;
 
 		/**
 		 * @brief
 		 *     Type of the annotations pointing to variable declarations.
 		 */
-		using var_declarations = ast_attributes<const ast::var_decl*>;
+		using var_declarations = ast_attributes<const ast::var_decl*, ast_node_filter<ast::array_access, ast::variable_access>>;
 
 		/**
 		 * @brief
 		 *     Type of the annotations pointing to method declarations.
 		 */
-		using method_declarations = ast_attributes<const ast::instance_method*>;
+		using method_declarations = ast_attributes<const ast::instance_method*, ast_node_filter<ast::method_invocation>>;
 
 		/**
 		 * @brief
 		 *     Type of the constant value expression annotations.
 		 */
-		using constant_values = ast_attributes<std::int32_t>;
+		using constant_values = ast_attributes<std::int32_t, ast_node_filter<ast::expression>>;
 
 		/**
 		 * @brief
