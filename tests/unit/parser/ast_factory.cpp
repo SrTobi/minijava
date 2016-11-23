@@ -108,3 +108,14 @@ BOOST_AUTO_TEST_CASE(factory_created_nodes_have_successive_ids_starting_at_one)
 		}
 	}
 }
+
+
+BOOST_AUTO_TEST_CASE(factory_can_start_at_explicit_id)
+{
+	const auto offset = std::size_t{1234};
+	auto af = minijava::ast_factory{offset};
+	for (auto i = std::size_t{1}; i < std::size_t{10}; ++i) {
+		auto np = af.make<minijava::ast::empty_statement>()();
+		BOOST_REQUIRE_EQUAL(offset + i, np->id());
+	}
+}

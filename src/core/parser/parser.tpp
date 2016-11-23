@@ -14,7 +14,6 @@
 #include "lexer/token.hpp"
 
 #include "parser/ast.hpp"
-#include "parser/ast_factory.hpp"
 #include "parser/operator.tpp"
 
 
@@ -112,8 +111,8 @@ namespace minijava
 			template<token_type... TTs>
 			using set_t = token_type_set<TTs...>;
 
-			parser(InIterT first, InIterT /*last*/)
-				: it(first)
+			parser(InIterT first, InIterT /*last*/, ast_factory& factory)
+				: it{first}, factory{factory}
 			{
 				token_buffer.push(*it);
 			}
@@ -765,11 +764,11 @@ namespace minijava
 				}
 			}
 
-			std::stack<token> token_buffer;
+			std::stack<token> token_buffer{};
 
-			InIterT it;
+			InIterT it{};
 
-			ast_factory factory{};
+			ast_factory& factory{};
 
 		};  // struct parser
 
@@ -777,10 +776,19 @@ namespace minijava
 
 
 	template<typename InIterT>
-	std::unique_ptr<ast::program> parse_program(InIterT first, InIterT last)
+	std::unique_ptr<ast::program>
+	parse_program(const InIterT first, const InIterT last, ast_factory& factory)
 	{
-		auto parser = detail::parser<InIterT>(first, last);
+		auto parser = detail::parser<InIterT>(first, last, factory);
 		return parser.parse_program();
+	}
+
+	template<typename InIterT>
+	std::unique_ptr<ast::program>
+	parse_program(const InIterT first, const InIterT last)
+	{
+		auto factory = ast_factory{};
+		return parse_program(first, last, factory);
 	}
 
 }  // namespace minijava

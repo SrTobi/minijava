@@ -146,6 +146,17 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Creates a factory that will create nodes with successive IDs
+		 *     starting at `lastid + 1`.
+		 *
+		 * @brief lastid
+		 *     one before the next ID to use
+		 *
+		 */
+		explicit ast_factory(const std::size_t lastid = 0) noexcept;
+
+		/**
+		 * @brief
 		 *     `return`s an `ast_builder` that will create `node`s of type
 		 *     `NodeT` with the next Id.
 		 *
