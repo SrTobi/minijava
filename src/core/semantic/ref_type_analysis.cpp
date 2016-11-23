@@ -1,97 +1,25 @@
 #include "ref_type_analysis.hpp"
 
-#include "exceptions.hpp"
-#include "parser/ast.hpp"
-#include "semantic/semantic_error.hpp"
-#include "semantic/symbol_def.hpp"
-#include "semantic/builtins.hpp"
-
 #include <stack>
 #include <utility>
+
+#include "exceptions.hpp"
+#include "parser/ast.hpp"
+#include "semantic/builtins.hpp"
+#include "semantic/semantic_error.hpp"
+#include "semantic/symbol_def.hpp"
+#include "semantic/symbol_table.hpp"
+
 
 namespace minijava
 {
 	namespace semantic
 	{
+
+		using namespace minijava::sem;
+
 		namespace
 		{
-			class symbol_table
-			{
-				struct scope
-				{
-					scope* pred = nullptr;
-					bool may_overwrite = true;
-					std::unordered_map<symbol, const symbol_def*> symbols;
-				};
-			public:
-				symbol_table()
-				{
-					scopes.emplace();
-				}
-
-				bool is_defined_in_dependend_scope(symbol name) const
-				{
-					for (auto scope = current(); scope; scope = scope->pred) {
-						if (scope->symbols.count(name))
-							return true;
-
-						if (scope->may_overwrite)
-							break;
-					}
-					return false;
-				}
-
-				const symbol_def* lookup(symbol name) const
-				{
-					for (auto scope = current(); scope; scope = scope->pred) {
-						auto it = scope->symbols.find(name);
-
-						if (it != scope->symbols.end()) {
-							return it->second;
-						}
-					}
-					return nullptr;
-				}
-
-				void add_def(const symbol_def& def)
-				{
-					assert(!is_defined_in_dependend_scope(def.name()));
-					current()->symbols.emplace(def.name(), &def);
-				}
-
-				void enter_scope(bool may_overwrite)
-				{
-					auto pred = current();
-					scopes.emplace();
-					auto cur = current();
-					cur->pred = pred->symbols.empty() && pred->may_overwrite == may_overwrite
-								? pred->pred
-								: pred;
-					cur->may_overwrite = may_overwrite;
-				}
-
-				void leave_scope()
-				{
-					scopes.pop();
-					assert(!scopes.empty());
-				}
-
-			private:
-				scope* current()
-				{
-					assert(!scopes.empty());
-					return &scopes.top();
-				}
-
-				const scope* current() const
-				{
-					assert(!scopes.empty());
-					return &scopes.top();
-				}
-
-			private:
-				std::stack<scope> scopes;
-			};
 
 			struct lvalue_visitor final : public ast::visitor
 			{
@@ -125,7 +53,7 @@ namespace minijava
 				{
 					for (auto&& gdef : globals) {
 						auto def = std::make_unique<global_def>(gdef.first, gdef.second);
-						symbols.add_def(*def);
+						symbols.add_def(gdef.first, nullptr);  // FIXME
 						_def_a.store(std::move(def));
 					}
 				}
@@ -172,10 +100,8 @@ namespace minijava
 					cur_method = &_def_a[node];
 
 					for (auto&& param: cur_method->parameters()) {
-						if (symbols.is_defined_in_dependend_scope(param->name())) {
-							throw semantic_error("Parameter '"s + param->name().c_str() + "' has already been defined in the current scope!");
-						}
-						symbols.add_def(*param);
+						(void) param;  // FIXME
+						//symbols.add_def(*param);
 					}
 
 					do_visit(node.body());
@@ -192,13 +118,10 @@ namespace minijava
 				{
 					using namespace std::string_literals;
 					assert(cur_method && "check that no fields or parameter are visited with this");
-					if (symbols.is_defined_in_dependend_scope(node.name())) {
-						throw semantic_error("Variable '"s + node.name().c_str() + "' has already been defined in the current scope!");
-					}
 					auto ty = type_of(node);
 					check_not_void(ty);
 					auto vdef = std::make_unique<var_def>(node.name(), ty, *cur_method, &node);
-					symbols.add_def(*vdef);
+					symbols.add_def(node.name(), nullptr);  // FIXME
 					_def_a.store(std::move(vdef));
 				}
 
@@ -283,17 +206,17 @@ namespace minijava
 						name_a.emplace(&node, field);
 						type_a.emplace(&node, field->type());
 					} else {
-						auto* def = symbols.lookup(node.name());
+						auto def = symbols.lookup(node.name());
 
 						if (!def) {
 							throw semantic_error("No variable '"s + node.name().c_str() + "' defined in current scope");
 						}
-						if (_in_main && !def->is_external() && !def->is_local()) {
-							throw semantic_error{"Unqualified member access in main method"};
-						}
+						// if (_in_main && !def->is_external() && !def->is_local()) {
+						//  throw semantic_error{"Unqualified member access in main method"};
+						// }
 
-						name_a.emplace(&node, def);
-						type_a.emplace(&node, def->type());
+						// name_a.emplace(&node, def);
+						// type_a.emplace(&node, def->type());
 					}
 				}
 
@@ -452,7 +375,8 @@ namespace minijava
 					symbols.enter_scope(true);
 
 					for (auto&& field_pair: cur_class->fields()) {
-						symbols.add_def(*field_pair.second);
+						(void) field_pair;  // FIXME
+						//symbols.add_def(*field_pair.second);
 					}
 
 					do_visit_all(node.instance_methods());
@@ -469,7 +393,7 @@ namespace minijava
 
 
 				bool _in_main{false};
-				symbol_table symbols;
+				symbol_table symbols{};
 				const method_def* cur_method = nullptr;
 				const class_def* cur_class = nullptr;
 				const type_system& _typesystem;

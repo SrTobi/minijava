@@ -615,6 +615,9 @@ namespace minijava
 	 *
 	 * This struct can be used to order symbols by pointer address.
 	 *
+	 * The resulting sorting is dependent on each `symbol_pool` instance. Pools
+	 * may assign addresses in a nondeterministic fashion.
+	 *
 	 */
 	struct symbol_comparator
 	{

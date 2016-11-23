@@ -1973,8 +1973,11 @@ namespace minijava
 			 * @brief
 			 *     Returns the fields declared in this class.
 			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
+			 *
 			 * @return
-			 *     list of fields
+			 *     sorted list of fields
 			 *
 			 */
 			const std::vector<std::unique_ptr<var_decl>>& fields() const noexcept
@@ -1995,13 +1998,15 @@ namespace minijava
 			 *     range of matching fields
 			 *
 			 */
-			// TODO: use some kind or array view
 			std::pair<const std::unique_ptr<var_decl>*, const std::unique_ptr<var_decl>*>
 			find_fields(symbol name) const noexcept;
 
 			/**
 			 * @brief
 			 *     Returns the instance methods declared in this class.
+			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
 			 *
 			 * @return
 			 *     list of instance methods
@@ -2025,13 +2030,15 @@ namespace minijava
 			 *     range of matching instance methods
 			 *
 			 */
-			// TODO: use some kind or array view
 			std::pair<const std::unique_ptr<instance_method>*, const std::unique_ptr<instance_method>*>
 			find_instance_methods(symbol name) const noexcept;
 
 			/**
 			 * @brief
 			 *     Returns the main methods declared in this class.
+			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
 			 *
 			 * @return
 			 *     list of main methods
@@ -2041,6 +2048,22 @@ namespace minijava
 			{
 				return _main_methods;
 			}
+
+			/**
+			 * @brief
+			 *     Finds all main methods with the given name in this class.
+			 *
+			 * There may be more than one method with the given name or none.
+			 *
+			 * @param name
+			 *     name of the method
+			 *
+			 * @return
+			 *     range of matching main methods
+			 *
+			 */
+			std::pair<const std::unique_ptr<main_method>*, const std::unique_ptr<main_method>*>
+			find_main_methods(symbol name) const noexcept;
 
 			void accept(visitor& v) const override
 			{
@@ -2084,6 +2107,9 @@ namespace minijava
 			/**
 			 * @brief
 			 *     Returns the classes declared in this program.
+			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
 			 *
 			 * @return
 			 *     list of classes

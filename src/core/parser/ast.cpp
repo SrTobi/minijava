@@ -196,7 +196,6 @@ namespace minijava
 			assert(std::all_of(_fields.begin(), _fields.end(), [](auto&& el){ return !!el; }));
 			assert(std::all_of(_methods.begin(), _methods.end(), [](auto&& el){ return !!el; }));
 			assert(std::all_of(_main_methods.begin(), _main_methods.end(), [](auto&& el){ return !!el; }));
-			// sort to enable binary search for symbol in find_*
 			const auto comparator = symbol_comparator{};
 			std::sort(_fields.begin(), _fields.end(), [comparator](const auto& f1, const auto& f2) {
 				return comparator(f1->name(), f2->name());
@@ -204,54 +203,66 @@ namespace minijava
 			std::sort(_methods.begin(), _methods.end(), [comparator](const auto& m1, const auto& m2) {
 				return comparator(m1->name(), m2->name());
 			});
+			std::sort(_main_methods.begin(), _main_methods.end(), [comparator](const auto& m1, const auto& m2) {
+				return comparator(m1->name(), m2->name());
+			});
+		}
+
+		namespace /* anonymous */
+		{
+			// TODO: use some kind of array view or iterator to return something
+			// TODO: better than a pair of unique_ptrs
+			template<typename AstT>
+			std::pair<const std::unique_ptr<AstT>*, const std::unique_ptr<AstT>*>
+			find_in_sorted_vector(symbol name,
+								  const std::vector<std::unique_ptr<AstT>>& v) noexcept
+			{
+				struct {
+					const symbol_comparator sym_cmp{};
+
+					bool operator()(const std::unique_ptr<AstT>& f,
+									const symbol& sym) {
+						return sym_cmp(f->name(), sym);
+					}
+
+					bool operator()(const symbol& sym,
+									const std::unique_ptr<AstT>& f) {
+						return sym_cmp(sym, f->name());
+					}
+				} comparator;
+
+				return std::equal_range(
+						v.data(), v.data() + v.size(), name, comparator
+				);
+			}
 		}
 
 		std::pair<const std::unique_ptr<var_decl>*, const std::unique_ptr<var_decl>*>
 		class_declaration::find_fields(symbol name) const noexcept
 		{
-			struct {
-				const symbol_comparator sym_cmp{};
-
-				bool operator()(const std::unique_ptr<var_decl>& f,
-								const symbol& sym) {
-					return sym_cmp(f->name(), sym);
-				}
-
-				bool operator()(const symbol& sym,
-								const std::unique_ptr<var_decl>& f) {
-					return sym_cmp(sym, f->name());
-				}
-			} comparator;
-			return std::equal_range(
-					_fields.data(), _fields.data() + _fields.size(), name, comparator
-			);
+			return find_in_sorted_vector(name, _fields);
 		}
 
 		std::pair<const std::unique_ptr<instance_method>*, const std::unique_ptr<instance_method>*>
 		class_declaration::find_instance_methods(symbol name) const noexcept
 		{
-			struct {
-				const symbol_comparator sym_cmp{};
+			return find_in_sorted_vector(name, _methods);
+		}
 
-				bool operator()(const std::unique_ptr<instance_method>& m,
-								const symbol sym) {
-					return sym_cmp(m->name(), sym);
-				}
-
-				bool operator()(const symbol sym,
-								const std::unique_ptr<instance_method>& m) {
-					return sym_cmp(sym, m->name());
-				}
-			} comparator;
-			return std::equal_range(
-					_methods.data(), _methods.data() + _methods.size(), name, comparator
-			);
+		std::pair<const std::unique_ptr<main_method>*, const std::unique_ptr<main_method>*>
+		class_declaration::find_main_methods(symbol name) const noexcept
+		{
+			return find_in_sorted_vector(name, _main_methods);
 		}
 
 		program::program(std::vector<std::unique_ptr<class_declaration>> classes)
 				: _classes{std::move(classes)}
 		{
 			assert(std::all_of(_classes.begin(), _classes.end(), [](auto&& el){ return !!el; }));
+			const auto comparator = symbol_comparator{};
+			std::sort(_classes.begin(), _classes.end(), [comparator](const auto& c1, const auto& c2) {
+				return comparator(c1->name(), c2->name());
+			});
 		}
 	}
 }
