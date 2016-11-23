@@ -11,6 +11,7 @@
 #include "symbol/symbol.hpp"
 #include "symbol/symbol_pool.hpp"
 
+#include "testaux/ast_test_factory.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
 namespace ast = minijava::ast;
@@ -140,16 +141,6 @@ namespace /* anonymous */
 		);
 	}
 
-	std::unique_ptr<ast::class_declaration>
-	make_empty_class(const char* name, minijava::symbol_pool<>& pool) {
-		return std::make_unique<ast::class_declaration>(
-				pool.normalize(name),
-				testaux::make_unique_ptr_vector<ast::var_decl>(),
-				testaux::make_unique_ptr_vector<ast::instance_method>(),
-				testaux::make_unique_ptr_vector<ast::main_method>()
-		);
-	}
-
 	template<typename AstT>
 	struct node_comparator {
 		const minijava::symbol_comparator sym_cmp{};
@@ -267,11 +258,11 @@ BOOST_AUTO_TEST_CASE(program_classes_sorted)
 	auto pool = minijava::symbol_pool<>{};
 	auto program = std::make_unique<ast::program>(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					make_empty_class("test1", pool),
-					make_empty_class("test1", pool),
-					make_empty_class("test2", pool),
-					make_empty_class("test2", pool),
-					make_empty_class("test3", pool)
+					testaux::make_empty_class("test1", pool),
+					testaux::make_empty_class("test1", pool),
+					testaux::make_empty_class("test2", pool),
+					testaux::make_empty_class("test2", pool),
+					testaux::make_empty_class("test3", pool)
 			)
 	);
 	BOOST_CHECK(std::is_sorted(
