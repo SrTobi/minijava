@@ -13,6 +13,7 @@
 #include <unordered_map>
 
 #include "parser/ast.hpp"
+#include "symbol/symbol.hpp"
 
 namespace minijava
 {
@@ -28,7 +29,7 @@ namespace minijava
 		 * not represented in the program's AST.
 		 *
 		 */
-		using type_definitions = std::unordered_map<std::string, basic_type_info>;
+		using type_definitions = std::unordered_map<symbol, basic_type_info>;
 
 		/**
 		 * @brief
@@ -279,7 +280,7 @@ namespace minijava
 		 *     whether the discovered types should be marked as built-in
 		 *
 		 * @param definitions
-		 *     existing definitions
+		 *     type definition data structure to use
 		 *
 		 */
 		void extract_type_info(const ast::program& ast, bool builtin,

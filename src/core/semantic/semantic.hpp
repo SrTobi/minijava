@@ -1,5 +1,5 @@
 /**
- * @file analyze.hpp
+ * @file semantic.hpp
  *
  * @brief
  *     Public interface for semantic analysis.
@@ -9,10 +9,10 @@
 #pragma once
 
 #include <cstdint>
-#include <unordered_set>
 
 #include "parser/ast.hpp"
 #include "semantic/attribute.hpp"
+#include "semantic/name_type_analysis.hpp"
 #include "semantic/type_info.hpp"
 #include "symbol/symbol_pool.hpp"
 
@@ -44,31 +44,31 @@ namespace minijava
 		 * @brief
 		 *     Type of the type annotations on expressions and other AST nodes.
 		 */
-		// FIXME: type_info + rank data structure
-		using type_annotations = ast_attributes<int, ast_node_filter<ast::expression, ast::var_decl, ast::method>>;
+		using type_annotations = sem::type_annotations;
 
 		/**
 		 * @brief
 		 *     Type of the local variable list annotations on method nodes.
 		 */
-		using locals = ast_attributes<std::unordered_set<const ast::var_decl*>, ast_node_filter<ast::method>>;
+		using locals = sem::locals;
 
 		/**
 		 * @brief
 		 *     Type of the annotations pointing to variable declarations.
 		 */
-		using var_declarations = ast_attributes<const ast::var_decl*, ast_node_filter<ast::array_access, ast::variable_access>>;
+		using var_declarations = sem::var_declarations;
 
 		/**
 		 * @brief
 		 *     Type of the annotations pointing to method declarations.
 		 */
-		using method_declarations = ast_attributes<const ast::instance_method*, ast_node_filter<ast::method_invocation>>;
+		using method_declarations = sem::method_declarations;
 
 		/**
 		 * @brief
 		 *     Type of the constant value expression annotations.
 		 */
+		// FIXME: move to constant.hpp
 		using constant_values = ast_attributes<std::int32_t, ast_node_filter<ast::expression>>;
 
 		/**
@@ -134,6 +134,7 @@ namespace minijava
 		constant_values _constants;
 
 		/** @brief AST containing definitions of the built-in reference types */
+		// retained here to make sure it doesn't go out of scope prematurely
 		std::unique_ptr<ast::program> _builtin_ast;
 
 	};
@@ -146,7 +147,7 @@ namespace minijava
 	 *     program ast
 	 *
 	 * @param pool
-	 *     symbol pool used for identifiers
+	 *     symbol pool to use for built-in identifiers
 	 *
 	 * @return
 	 *     semantic information, including AST annotations

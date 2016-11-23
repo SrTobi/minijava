@@ -53,6 +53,7 @@ set(COMPONENTS
 	semantic/builtins
 	semantic/constant
 	semantic/dont_use_main_args
+	semantic/name_type_analysis
 	semantic/ref_type_analysis
 	semantic/semantic
 	semantic/semantic_error
