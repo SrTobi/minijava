@@ -25,49 +25,50 @@ namespace minijava
 			namespace ast = minijava::ast;
 
 			template<typename AllocT>
-			std::unique_ptr<ast::program> make_builtin_ast(symbol_pool<AllocT>& pool)
+			std::unique_ptr<ast::program> make_builtin_ast(
+					symbol_pool<AllocT>& pool, ast_factory& factory)
 			{
-				auto println_arg = std::make_unique<ast::var_decl>(
-						std::make_unique<ast::type>(
+				auto println_arg = factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(
 								ast::primitive_type::type_int
 						),
 						pool.normalize(".")
 				);
 				std::vector<std::unique_ptr<ast::var_decl>> args{};
 				args.push_back(std::move(println_arg));
-				auto println = std::make_unique<ast::instance_method>(
+				auto println = factory.make<ast::instance_method>()(
 						pool.normalize("println"),
-						std::make_unique<ast::type>(
+						factory.make<ast::type>()(
 								ast::primitive_type::type_void
 						),
 						std::move(args),
-						std::make_unique<ast::block>(
+						factory.make<ast::block>()(
 								std::vector<std::unique_ptr<ast::block_statement>>{}
 						)
 				);
 				std::vector<std::unique_ptr<ast::instance_method>> methods{};
 				methods.push_back(std::move(println));
-				auto print_class = std::make_unique<ast::class_declaration>(
+				auto print_class = factory.make<ast::class_declaration>()(
 						pool.normalize("java.io.PrintStream"),
 						std::vector<std::unique_ptr<ast::var_decl>>{},
 						std::move(methods),
 						std::vector<std::unique_ptr<ast::main_method>>{}
 				);
-				auto out = std::make_unique<ast::var_decl>(
-						std::make_unique<ast::type>(
+				auto out = factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(
 								pool.normalize("java.io.PrintStream")
 						),
 						pool.normalize("out")
 				);
 				std::vector<std::unique_ptr<ast::var_decl>> fields{};
 				fields.push_back(std::move(out));
-				auto system_class = std::make_unique<ast::class_declaration>(
+				auto system_class = factory.make<ast::class_declaration>()(
 						pool.normalize("java.lang.System"),
 						std::move(fields),
 						std::vector<std::unique_ptr<ast::instance_method>>{},
 						std::vector<std::unique_ptr<ast::main_method>>{}
 				);
-				auto string_class = std::make_unique<ast::class_declaration>(
+				auto string_class = factory.make<ast::class_declaration>()(
 						pool.normalize("java.lang.String"),
 						std::vector<std::unique_ptr<ast::var_decl>>{},
 						std::vector<std::unique_ptr<ast::instance_method>>{},
@@ -77,7 +78,7 @@ namespace minijava
 				clazzes.push_back(std::move(print_class));
 				clazzes.push_back(std::move(system_class));
 				clazzes.push_back(std::move(string_class));
-				return std::make_unique<ast::program>(std::move(clazzes));
+				return factory.make<ast::program>()(std::move(clazzes));
 			}
 
 			template<typename AllocT>
@@ -120,10 +121,11 @@ namespace minijava
 
 	template<typename AllocT>
 	semantic_info check_program(const ast::program& ast,
-								symbol_pool<AllocT>& pool)
+								symbol_pool<AllocT>& pool,
+								ast_factory& factory)
 	{
 		// collect types
-		auto builtin_ast = sem::detail::make_builtin_ast(pool);
+		auto builtin_ast = sem::detail::make_builtin_ast(pool, factory);
 		auto types = sem::detail::make_non_class_types(pool);
 		sem::extract_type_info(*builtin_ast, true, types);
 		sem::extract_type_info(ast, false, types);

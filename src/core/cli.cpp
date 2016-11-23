@@ -228,7 +228,8 @@ namespace minijava
 				std::for_each(tokfirst, toklast, [&out](auto&& t){ print_token(out, t); });
 				return;
 			}
-			auto ast = parse_program(tokfirst, toklast);
+			auto factory = ast_factory{};
+			auto ast = parse_program(tokfirst, toklast, factory);
 			if (stage == compilation_stage::parser) {
 				return;
 			}
@@ -236,7 +237,7 @@ namespace minijava
 				print_ast(out, *ast);
 				return;
 			}
-			auto sem_info = check_program(*ast, pool);
+			auto sem_info = check_program(*ast, pool, factory);
 			if (stage == compilation_stage::semantic) {
 				return;
 			}

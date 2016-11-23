@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include "parser/ast.hpp"
+#include "parser/ast_factory.hpp"
 #include "semantic/attribute.hpp"
 #include "semantic/name_type_analysis.hpp"
 #include "semantic/type_info.hpp"
@@ -144,10 +145,13 @@ namespace minijava
 	 *     Checks the semantic validity of the given program.
 	 *
 	 * @param ast
-	 *     program ast
+	 *     program AST
 	 *
 	 * @param pool
 	 *     symbol pool to use for built-in identifiers
+	 *
+	 * @param factory
+	 *     AST factory which was used to create the program AST
 	 *
 	 * @return
 	 *     semantic information, including AST annotations
@@ -158,7 +162,8 @@ namespace minijava
 	 */
 	template<typename AllocT>
 	semantic_info check_program(const ast::program& ast,
-							    symbol_pool<AllocT>& pool);
+							    symbol_pool<AllocT>& pool,
+								ast_factory& factory);
 
 	// FIXME: remove
 	template<typename AllocT>
