@@ -9,26 +9,15 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 #include <unordered_map>
 
 #include "parser/ast.hpp"
+#include "symbol/symbol.hpp"
 
 namespace minijava
 {
 	namespace sem
 	{
-		class basic_type_info;
-
-		/**
-		 * @brief
-		 *     Type of the map containing all type definitions.
-		 *
-		 * This is not implemented as an `ast_attribute` since some types are
-		 * not represented in the program's AST.
-		 *
-		 */
-		using type_definitions = std::unordered_map<std::string, basic_type_info>;
 
 		/**
 		 * @brief
@@ -39,24 +28,23 @@ namespace minijava
 
 		private:
 
-			/** @brief mask indicating that the type is built-in */
-			static const std::uint8_t builtin_mask{1};
+			/** @brief Mask indicating that the type is built-in. */
+			static constexpr std::uint8_t builtin_mask{1 << 0};
 
-			/** @brief mask indicating that the type is primitive */
-			static const std::uint8_t primitive_mask{1 << 1};
+			/** @brief Mask indicating that the type is primitive. */
+			static constexpr std::uint8_t primitive_mask{1 << 1};
 
-			/** @brief mask indicating that the type is instantiable */
-			static const std::uint8_t instantiable_mask{1 << 2};
+			/** @brief Mask indicating that the type is instantiable. */
+			static constexpr std::uint8_t instantiable_mask{1 << 2};
 
-			/** @brief type categories */
+			/** @brief Type categories. */
 			enum class category : std::uint8_t {
-				user_defined = instantiable_mask,
+				user_defined  = instantiable_mask,
 				builtin_class = builtin_mask | instantiable_mask,
-				null_type = builtin_mask,
-				void_type = builtin_mask | primitive_mask,
-				int_type = builtin_mask | primitive_mask | instantiable_mask,
-				boolean_type = builtin_mask | primitive_mask | instantiable_mask
-						| (1 << 7)
+				null_type     = builtin_mask,
+				void_type     = builtin_mask | primitive_mask,
+				int_type      = builtin_mask | primitive_mask | instantiable_mask,
+				boolean_type  = builtin_mask | primitive_mask | instantiable_mask | (1 << 7)
 			};
 
 		public:
@@ -85,7 +73,8 @@ namespace minijava
 			 *     whether this type is built-in
 			 *
 			 */
-			constexpr bool is_builtin() noexcept {
+			constexpr bool is_builtin() const noexcept
+			{
 				return ((static_cast<std::uint8_t>(_cat) + 0u) & builtin_mask);
 			}
 
@@ -98,7 +87,8 @@ namespace minijava
 			 *     whether this type is a primitive type
 			 *
 			 */
-			constexpr bool is_primitive() noexcept {
+			constexpr bool is_primitive() const noexcept
+			{
 				return ((static_cast<std::uint8_t>(_cat) + 0u) & primitive_mask);
 			}
 
@@ -115,7 +105,8 @@ namespace minijava
 			 *     whether this type is instantiable
 			 *
 			 */
-			constexpr bool is_instantiable() noexcept {
+			constexpr bool is_instantiable() const noexcept
+			{
 				return ((static_cast<std::uint8_t>(_cat) + 0u) & instantiable_mask);
 			}
 
@@ -128,7 +119,8 @@ namespace minijava
 			 *     whether this type is a reference type
 			 *
 			 */
-			constexpr bool is_reference() noexcept {
+			constexpr bool is_reference() const noexcept
+			{
 				return !is_primitive();
 			}
 
@@ -140,8 +132,9 @@ namespace minijava
 			 *     whether this type is `null`
 			 *
 			 */
-			constexpr bool is_null() noexcept {
-				return _cat == category::null_type;
+			constexpr bool is_null() const noexcept
+			{
+				return (_cat == category::null_type);
 			}
 
 			/**
@@ -152,8 +145,36 @@ namespace minijava
 			 *     whether this type is `void`
 			 *
 			 */
-			constexpr bool is_void() noexcept {
-				return _cat == category::null_type;
+			constexpr bool is_void() const noexcept
+			{
+				return (_cat == category::void_type);
+			}
+
+			/**
+			 * @brief
+			 *     Checks whether the type represented by this object is `int`.
+			 *
+			 * @return
+			 *     whether this type is `int`
+			 *
+			 */
+			constexpr bool is_int() const noexcept
+			{
+				return (_cat == category::int_type);
+			}
+
+			/**
+			 * @brief
+			 *     Checks whether the type represented by this object is
+			 *     `boolean`.
+			 *
+			 * @return
+			 *     whether this type is `boolean`
+			 *
+			 */
+			constexpr bool is_boolean() const noexcept
+			{
+				return (_cat == category::boolean_type);
 			}
 
 			/**
@@ -165,8 +186,9 @@ namespace minijava
 			 *     whether this type is user-defined
 			 *
 			 */
-			constexpr bool is_user_defined() noexcept {
-				return _cat == category::user_defined;
+			constexpr bool is_user_defined() const noexcept
+			{
+				return (_cat == category::user_defined);
 			}
 
 			/**
@@ -180,7 +202,8 @@ namespace minijava
 			 *     declaration or `nullptr`
 			 *
 			 */
-			constexpr const ast::class_declaration* declaration() noexcept {
+			constexpr const ast::class_declaration* declaration() const noexcept
+			{
 				return _declaration;
 			}
 
@@ -215,10 +238,10 @@ namespace minijava
 			 *     `null` type
 			 *
 			 */
-			static basic_type_info make_null_type()
+			static constexpr basic_type_info make_null_type()
 			{
 				return {category::null_type};
-			};
+			}
 
 			/**
 			 * @brief
@@ -230,10 +253,10 @@ namespace minijava
 			 *     `void` type
 			 *
 			 */
-			static basic_type_info make_void_type()
+			static constexpr basic_type_info make_void_type()
 			{
 				return {category::void_type};
-			};
+			}
 
 			/**
 			 * @brief
@@ -245,10 +268,10 @@ namespace minijava
 			 *     `int` type
 			 *
 			 */
-			static basic_type_info make_int_type()
+			static constexpr basic_type_info make_int_type()
 			{
 				return {category::int_type};
-			};
+			}
 
 			/**
 			 * @brief
@@ -260,12 +283,24 @@ namespace minijava
 			 *     `boolean` type
 			 *
 			 */
-			static basic_type_info make_boolean_type()
+			static constexpr basic_type_info make_boolean_type()
 			{
 				return {category::boolean_type};
-			};
+			}
 
-		};
+		};  // class basic_type_info
+
+
+		/**
+		 * @brief
+		 *     Type of the map containing all type definitions.
+		 *
+		 * This is not implemented as an `ast_attribute` since some types are
+		 * not represented in the program's AST.
+		 *
+		 */
+		using type_definitions = std::unordered_map<symbol, basic_type_info>;
+
 
 		/**
 		 * @brief
