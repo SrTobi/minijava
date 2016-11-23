@@ -14,8 +14,10 @@
 #include "parser/ast.hpp"
 #include "symbol/symbol.hpp"
 
+
 namespace minijava
 {
+
 	namespace sem
 	{
 
@@ -38,7 +40,8 @@ namespace minijava
 			static constexpr std::uint8_t instantiable_mask{1 << 2};
 
 			/** @brief Type categories. */
-			enum class category : std::uint8_t {
+			enum class category : std::uint8_t
+			{
 				user_defined  = instantiable_mask,
 				builtin_class = builtin_mask | instantiable_mask,
 				null_type     = builtin_mask,
@@ -288,8 +291,68 @@ namespace minijava
 				return {category::boolean_type};
 			}
 
+			/**
+			 * @brief
+			 *     Compares two basic types.
+			 *
+			 * Two `basic_type_info` instances are equal if and only if they
+			 * both have the same category and same point of definition.
+			 *
+			 * @param lhs
+			 *     first basic type to compare
+			 *
+			 * @param rhs
+			 *     second basic type to compare
+			 *
+			 * @returns
+			 *     whether `lhs` and `rhs` are the same type
+			 *
+			 */
+			static constexpr bool equal(basic_type_info lhs, basic_type_info rhs) noexcept
+			{
+				return (lhs._cat == rhs._cat) && (lhs._declaration == rhs._declaration);
+			}
+
 		};  // class basic_type_info
 
+
+		/**
+		 * @brief
+		 *     Compares two basic types for equality.
+		 *
+		 * @param lhs
+		 *     first basic type to compare
+		 *
+		 * @param rhs
+		 *     second basic type to compare
+		 *
+		 * @returns
+		 *     `basic_type_info::equal(lhs, rhs)`
+		 *
+		 */
+		constexpr bool operator==(basic_type_info lhs, basic_type_info rhs) noexcept
+		{
+			return basic_type_info::equal(lhs, rhs);
+		}
+
+		/**
+		 * @brief
+		 *     Compares two basic types for inequality.
+		 *
+		 * @param lhs
+		 *     first basic type to compare
+		 *
+		 * @param rhs
+		 *     second basic type to compare
+		 *
+		 * @returns
+		 *     `!basic_type_info::equal(lhs, rhs)`
+		 *
+		 */
+		constexpr bool operator!=(basic_type_info lhs, basic_type_info rhs) noexcept
+		{
+			return !basic_type_info::equal(lhs, rhs);
+		}
 
 		/**
 		 * @brief
@@ -319,5 +382,7 @@ namespace minijava
 		 */
 		void extract_type_info(const ast::program& ast, bool builtin,
 							   type_definitions& definitions);
-	}
-}
+
+	}  // namespace sem
+
+}  // namespace minijava
