@@ -1,10 +1,11 @@
 #ifndef MINIJAVA_INCLUDED_FROM_SEMANTIC_SEMANTIC_HPP
-#error "Never `#include <semantic/analyze.tpp>` directly; `#include <semantic/analyze.hpp>` instead."
+#error "Never `#include <semantic/semantic.tpp>` directly; `#include <semantic/semantic.hpp>` instead."
 #endif
 
 #include <algorithm>
 #include <memory>
 
+#include "exceptions.hpp"
 #include "semantic/builtins.hpp"
 #include "semantic/constant.hpp"
 #include "semantic/dont_use_main_args.hpp"
@@ -16,16 +17,18 @@
 #include "semantic/type_info.hpp"
 #include "semantic/unique_entry_point.hpp"
 
+
 namespace minijava
 {
+
 	namespace sem
 	{
+
 		namespace detail
 		{
-			namespace ast = minijava::ast;
 
-			template<typename AllocT>
-			std::unique_ptr<ast::program> make_builtin_ast(symbol_pool<AllocT>& pool)
+			template<typename PoolT>
+			std::unique_ptr<ast::program> make_builtin_ast(PoolT& pool)
 			{
 				auto println_arg = std::make_unique<ast::var_decl>(
 						std::make_unique<ast::type>(
@@ -80,10 +83,10 @@ namespace minijava
 				return std::make_unique<ast::program>(std::move(clazzes));
 			}
 
-			template<typename AllocT>
-			type_definitions make_non_class_types(symbol_pool<AllocT>& pool)
+			template<typename PoolT>
+			type_definitions make_non_class_types(PoolT& pool)
 			{
-				type_definitions result{};
+				auto result = type_definitions{};
 				result.insert(std::make_pair(
 						pool.normalize("null"),
 						sem::basic_type_info::make_null_type()
@@ -115,51 +118,49 @@ namespace minijava
 			}
 
 			// FIXME: give builtin AST non-conflicting node ids
-		}
-	}
 
-	template<typename AllocT>
-	semantic_info check_program(const ast::program& ast,
-								symbol_pool<AllocT>& pool)
+		}  // namespace detail
+
+	}  // namespace sem
+
+	template<typename PoolT>
+	semantic_info check_program(const ast::program& ast, PoolT& pool)
 	{
-		// collect types
 		auto builtin_ast = sem::detail::make_builtin_ast(pool);
-		auto types = sem::detail::make_non_class_types(pool);
-		sem::extract_type_info(*builtin_ast, true, types);
-		sem::extract_type_info(ast, false, types);
-		// perform name/type analysis
-		sem::type_annotations ast_types{};
-		sem::locals locals{};
-		sem::var_declarations var_decls{};
-		sem::method_declarations method_decls{};
-		sem::perform_shallow_type_analysis(*builtin_ast, ast_types);
 		auto globals = sem::detail::make_globals(pool);
+		auto classes = sem::detail::make_non_class_types(pool);  // WTF?!
+		sem::extract_type_info(*builtin_ast, true, classes);
+		sem::extract_type_info(ast, false, classes);
+		auto type_annotations = sem::type_attributes{};
+		auto locals_annotations = sem::locals_attributes{};
+		auto vardecl_annotations = sem::vardecl_attributes{};
+		auto method_annotations = sem::method_attributes{};
+		// TODO: Is this correct?  I don't think so.
+		sem::perform_shallow_type_analysis(*builtin_ast, type_annotations);
 		sem::perform_full_name_type_analysis(
-				ast, globals, ast_types, locals, var_decls, method_decls
+				ast,
+				globals,
+				type_annotations,
+				locals_annotations,
+				vardecl_annotations,
+				method_annotations
 		);
-		// get constant values
-		// FIXME: analyze constants
-		throw nullptr;
+		auto const_annotations = sem::extract_constants(ast);
+		return semantic_info{
+				std::move(classes),
+				std::move(type_annotations),
+				std::move(locals_annotations),
+				std::move(vardecl_annotations),
+				std::move(method_annotations),
+				std::move(const_annotations),
+				std::move(builtin_ast)
+		};
 	}
 
 	template<typename AllocT>
-	void analyze_ast(const ast::program& ast, symbol_pool<AllocT>& pool)
+	void analyze_ast(const ast::program&, symbol_pool<AllocT>&)
 	{
-		auto defa = semantic::def_annotations{};
-		auto typs = semantic::extract_typesystem(ast, defa, pool);
-		auto syst = semantic::builtins::register_system(typs, pool);
-		auto annotations = semantic::analyse_program(ast, {{pool.normalize("System"), syst}}, typs, defa);
-		const auto handler = [](const ast::node& /* n */){
-			// FIXME: add source code location to exception object
-			// FIXME: actually throw exception (binary_arithmetic.mj is supposed to be valid ATM)
-			// throw semantic_error{"Result of expression is undefined"};
-		};
-		auto constants = extract_constants(ast, handler);
-		check_return_paths(ast);
-		check_unique_entry_point(ast);
-		check_args_usage(ast, defa, annotations.second);
-		// FIXME: return everything we want to keep
-		(void) annotations;
-		(void) constants;
+		MINIJAVA_THROW_ICE(internal_compiler_error);
 	}
-}
+
+}  // namespace minijava

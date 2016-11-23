@@ -21,16 +21,13 @@
 
 
 namespace ast = minijava::ast;
-
-template <typename T>
-using astbldr = minijava::ast_builder<T>;
-
+namespace sem = minijava::sem;
 
 namespace /* anonymous */
 {
 
-	constexpr auto max32 = minijava::ast_int_type{INT32_MAX};
-	constexpr auto min32 = minijava::ast_int_type{INT32_MIN};
+	constexpr auto max32 = sem::ast_int_type{INT32_MAX};
+	constexpr auto min32 = sem::ast_int_type{INT32_MIN};
 
 	std::string random_integer_literal(const std::size_t length)
 	{
@@ -41,7 +38,7 @@ namespace /* anonymous */
 }  // namespace /* anonymous */
 
 
-static const std::tuple<std::string, minijava::ast_int_type> integer_literal_data[] = {
+static const std::tuple<std::string, sem::ast_int_type> integer_literal_data[] = {
 	{"0", 0},
 	{"1", 1},
 	{"42", 42},
@@ -55,14 +52,14 @@ BOOST_AUTO_TEST_CASE(integer_literals)
 		auto factory = minijava::ast_factory{};
 		const auto lexval = pool.normalize(std::get<0>(sample));
 		const auto ast = factory.make<ast::integer_constant>()(lexval);
-		const auto extracted = minijava::extract_constants(*ast);
+		const auto extracted = sem::extract_constants(*ast);
 		BOOST_REQUIRE_EQUAL(1, extracted.size());
-		BOOST_REQUIRE_EQUAL(std::get<1>(sample), extracted.at(ast->id()));
+		BOOST_REQUIRE_EQUAL(std::get<1>(sample), extracted.at(*ast));
 	}
 }
 
 
-static const std::tuple<bool, minijava::ast_int_type> boolean_literal_data[] = {
+static const std::tuple<bool, sem::ast_int_type> boolean_literal_data[] = {
 	{false, 0},
 	{true, 1},
 };
@@ -72,9 +69,9 @@ BOOST_AUTO_TEST_CASE(boolean_literals)
 	for (const auto& sample : boolean_literal_data) {
 		auto factory = minijava::ast_factory{};
 		const auto ast = factory.make<ast::boolean_constant>()(std::get<0>(sample));
-		const auto extracted = minijava::extract_constants(*ast);
+		const auto extracted = sem::extract_constants(*ast);
 		BOOST_REQUIRE_EQUAL(1, extracted.size());
-		BOOST_REQUIRE_EQUAL(std::get<1>(sample), extracted.at(ast->id()));
+		BOOST_REQUIRE_EQUAL(std::get<1>(sample), extracted.at(*ast));
 	}
 }
 
@@ -99,13 +96,13 @@ BOOST_DATA_TEST_CASE(positve_integer_literal_overflow, positve_integer_literal_o
 	const auto lexval = pool.normalize(sample);
 	const auto ast = factory.make<ast::integer_constant>()(lexval);
 	BOOST_REQUIRE_THROW(
-		minijava::extract_constants(*ast),
+		sem::extract_constants(*ast),
 		minijava::semantic_error
 	);
 }
 
 
-static const std::tuple<std::string, minijava::ast_int_type> negative_integer_literal_data[] = {
+static const std::tuple<std::string, sem::ast_int_type> negative_integer_literal_data[] = {
 	{"0", 0},
 	{"1", 1},
 	{"10", 10},
@@ -117,23 +114,24 @@ BOOST_AUTO_TEST_CASE(negative_integer_literals)
 	for (const auto& sample : negative_integer_literal_data) {
 		auto pool = minijava::symbol_pool<>{};
 		const auto lexval = pool.normalize(std::get<0>(sample));
-		auto ast = astbldr<ast::unary_expression>{2}(
+		auto factory = minijava::ast_factory{};
+		auto ast = factory.make<ast::unary_expression>()(
 			ast::unary_operation_type::minus,
-			astbldr<ast::integer_constant>{1}(lexval)
+			factory.make<ast::integer_constant>()(lexval)
 		);
-		const auto extracted = minijava::extract_constants(*ast);
+		const auto extracted = sem::extract_constants(*ast);
 		BOOST_REQUIRE_EQUAL(2, extracted.size());
-		BOOST_REQUIRE_EQUAL(+std::get<1>(sample), extracted.at(1));
-		BOOST_REQUIRE_EQUAL(-std::get<1>(sample), extracted.at(2));
+		BOOST_REQUIRE_EQUAL(+std::get<1>(sample), extracted.at(ast->target()));
+		BOOST_REQUIRE_EQUAL(-std::get<1>(sample), extracted.at(*ast));
 	}
 }
 
 
 static const std::tuple<
 	ast::binary_operation_type,
-	minijava::ast_int_type,
-	minijava::ast_int_type,
-	minijava::ast_int_type
+	sem::ast_int_type,
+	sem::ast_int_type,
+	sem::ast_int_type
 > binop_data[] = {
 	// ||
 	{ast::binary_operation_type::logical_or, 0, 0, 0},
@@ -211,16 +209,17 @@ BOOST_AUTO_TEST_CASE(binary_operations)
 		const auto lhs = std::get<1>(sample);
 		const auto rhs = std::get<2>(sample);
 		const auto res = std::get<3>(sample);
-		const auto ast = astbldr<ast::binary_expression>{3}(
+		auto factory = minijava::ast_factory{};
+		const auto ast = factory.make<ast::binary_expression>()(
 			bop,
-			astbldr<ast::integer_constant>{1}(pool.normalize(std::to_string(lhs))),
-			astbldr<ast::integer_constant>{2}(pool.normalize(std::to_string(rhs)))
+			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(lhs))),
+			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(rhs)))
 		);
-		const auto extracted = minijava::extract_constants(*ast);
+		const auto extracted = sem::extract_constants(*ast);
 		BOOST_REQUIRE_EQUAL(3, extracted.size());
-		BOOST_REQUIRE_EQUAL(lhs, extracted.at(1));
-		BOOST_REQUIRE_EQUAL(rhs, extracted.at(2));
-		BOOST_REQUIRE_EQUAL(res, extracted.at(3));
+		BOOST_REQUIRE_EQUAL(res, extracted.at(*ast));
+		BOOST_REQUIRE_EQUAL(lhs, extracted.at(ast->lhs()));
+		BOOST_REQUIRE_EQUAL(rhs, extracted.at(ast->rhs()));
 	}
 }
 
@@ -228,80 +227,84 @@ BOOST_AUTO_TEST_CASE(binary_operations)
 BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_1st)
 {
 	auto pool = minijava::symbol_pool<>{};
-	const auto ast = astbldr<ast::binary_expression>{4}(
+	auto factory = minijava::ast_factory{};
+	const auto ast = factory.make<ast::binary_expression>()(
 		ast::binary_operation_type::modulo,
-		astbldr<ast::integer_constant>{1}(pool.normalize("10")),
-		astbldr<ast::unary_expression>{3}(
+		factory.make<ast::integer_constant>()(pool.normalize("10")),
+		factory.make<ast::unary_expression>()(
 			ast::unary_operation_type::minus,
-			astbldr<ast::integer_constant>{2}(pool.normalize("3"))
+			factory.make<ast::integer_constant>()(pool.normalize("3"))
 		)
 	);
-	const auto extracted = minijava::extract_constants(*ast);
-	BOOST_REQUIRE_EQUAL(1, extracted.at(4));
+	const auto extracted = sem::extract_constants(*ast);
+	BOOST_REQUIRE_EQUAL(1, extracted.at(*ast));
 }
 
 
 BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_2nd)
 {
 	auto pool = minijava::symbol_pool<>{};
-	const auto ast = astbldr<ast::binary_expression>{4}(
+	auto factory = minijava::ast_factory{};
+	const auto ast = factory.make<ast::binary_expression>()(
 		ast::binary_operation_type::modulo,
-		astbldr<ast::unary_expression>{2}(
+		factory.make<ast::unary_expression>()(
 			ast::unary_operation_type::minus,
-			astbldr<ast::integer_constant>{1}(pool.normalize("10"))
+			factory.make<ast::integer_constant>()(pool.normalize("10"))
 		),
-		astbldr<ast::integer_constant>{3}(pool.normalize("3"))
+		factory.make<ast::integer_constant>()(pool.normalize("3"))
 	);
-	const auto extracted = minijava::extract_constants(*ast);
-	BOOST_REQUIRE_EQUAL(-1, extracted.at(4));
+	const auto extracted = sem::extract_constants(*ast);
+	BOOST_REQUIRE_EQUAL(-1, extracted.at(*ast));
 }
 
 
 BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_3rd)
 {
 	auto pool = minijava::symbol_pool<>{};
-	const auto ast = astbldr<ast::binary_expression>{5}(
+	auto factory = minijava::ast_factory{};
+	const auto ast = factory.make<ast::binary_expression>()(
 		ast::binary_operation_type::modulo,
-		astbldr<ast::unary_expression>{3}(
+		factory.make<ast::unary_expression>()(
 			ast::unary_operation_type::minus,
-			astbldr<ast::integer_constant>{1}(pool.normalize("10"))
+			factory.make<ast::integer_constant>()(pool.normalize("10"))
 		),
-		astbldr<ast::unary_expression>{4}(
+		factory.make<ast::unary_expression>()(
 			ast::unary_operation_type::minus,
-			astbldr<ast::integer_constant>{2}(pool.normalize("3"))
+			factory.make<ast::integer_constant>()(pool.normalize("3"))
 		)
 	);
-	const auto extracted = minijava::extract_constants(*ast);
-	BOOST_REQUIRE_EQUAL(-1, extracted.at(5));
+	const auto extracted = sem::extract_constants(*ast);
+	BOOST_REQUIRE_EQUAL(-1, extracted.at(*ast));
 }
 
 
 BOOST_AUTO_TEST_CASE(unary_integer_invalid)
 {
 	auto pool = minijava::symbol_pool<>{};
+	auto factory = minijava::ast_factory{};
 	const auto lexval = pool.normalize(std::to_string(-min32));
-	auto ast = astbldr<ast::unary_expression>{3}(
+	auto ast = factory.make<ast::unary_expression>()(
 		ast::unary_operation_type::minus,
-		astbldr<ast::unary_expression>{2}(
+		factory.make<ast::unary_expression>()(
 			ast::unary_operation_type::minus,
-			astbldr<ast::integer_constant>{1}(lexval)
+			factory.make<ast::integer_constant>()(lexval)
 		)
 	);
-	auto problems = std::vector<std::size_t>{};
-	auto handler = [&problems](const ast::node& n){ problems.push_back(n.id()); };
-	const auto extracted = minijava::extract_constants(*ast, handler);
+	auto problems = std::vector<const ast::node*>{};
+	auto handler = [&problems](const ast::node& n){ problems.push_back(&n); };
+	const auto extracted = sem::extract_constants(*ast, handler);
 	BOOST_REQUIRE_EQUAL(2, extracted.size());
-	BOOST_REQUIRE_EQUAL(-min32, extracted.at(1));
-	BOOST_REQUIRE_EQUAL(min32, extracted.at(2));
+	BOOST_REQUIRE_EQUAL(-min32, extracted.at(dynamic_cast<const ast::unary_expression&>(ast->target()).target()));
+	BOOST_REQUIRE_EQUAL(min32, extracted.at(ast->target()));
 	BOOST_REQUIRE_EQUAL(1, problems.size());
-	BOOST_REQUIRE_EQUAL(3, problems.front());
+	BOOST_REQUIRE_EQUAL(ast.get(), problems.front());
 }
 
 
 static const std::tuple<
 	ast::binary_operation_type,
-	minijava::ast_int_type,
-	minijava::ast_int_type
+	sem::ast_int_type,
+	sem::ast_int_type
 > binop_invalid_data[] = {
 	{ast::binary_operation_type::plus, max32, 1},
 	{ast::binary_operation_type::multiply, max32, max32},
@@ -319,58 +322,67 @@ BOOST_AUTO_TEST_CASE(binary_operations_invalid)
 		const auto bop = std::get<0>(sample);
 		const auto lhs = std::get<1>(sample);
 		const auto rhs = std::get<2>(sample);
-		const auto ast = astbldr<ast::binary_expression>{3}(
+		auto factory = minijava::ast_factory{};
+		const auto ast = factory.make<ast::binary_expression>()(
 			bop,
-			astbldr<ast::integer_constant>{1}(pool.normalize(std::to_string(lhs))),
-			astbldr<ast::integer_constant>{2}(pool.normalize(std::to_string(rhs)))
+			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(lhs))),
+			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(rhs)))
 		);
-		auto problems = std::vector<std::size_t>{};
-		auto handler = [&problems](const ast::node& n){ problems.push_back(n.id()); };
-		const auto extracted = minijava::extract_constants(*ast, handler);
+		auto problems = std::vector<const ast::node*>{};
+		auto handler = [&problems](const ast::node& n){ problems.push_back(&n); };
+		const auto extracted = sem::extract_constants(*ast, handler);
 		BOOST_REQUIRE_EQUAL(2, extracted.size());
-		BOOST_REQUIRE_EQUAL(lhs, extracted.at(1));
-		BOOST_REQUIRE_EQUAL(rhs, extracted.at(2));
+		BOOST_REQUIRE_EQUAL(lhs, extracted.at(ast->lhs()));
+		BOOST_REQUIRE_EQUAL(rhs, extracted.at(ast->rhs()));
 		BOOST_REQUIRE_EQUAL(1, problems.size());
-		BOOST_REQUIRE_EQUAL(3, problems.front());
+		BOOST_REQUIRE_EQUAL(ast.get(), problems.front());
 	}
 }
 
 
+namespace /* anonymous */
+{
+
+	template <typename T>
+	using ab = minijava::ast_builder<T>;
+
+}
+
 BOOST_AUTO_TEST_CASE(complete_program)
 {
 	auto pool = minijava::symbol_pool<>{};
-	auto ast = astbldr<ast::program>{1}(
+	auto ast = ab<ast::program>{1}(
 		testaux::make_unique_ptr_vector<ast::class_declaration>(
-			astbldr<ast::class_declaration>{2}(
+			ab<ast::class_declaration>{2}(
 				pool.normalize("Test"),
 				testaux::make_unique_ptr_vector<ast::var_decl>(
-					astbldr<ast::var_decl>{3}(
-						astbldr<ast::type>{4}(ast::primitive_type::type_int),
+					ab<ast::var_decl>{3}(
+						ab<ast::type>{4}(ast::primitive_type::type_int),
 						pool.normalize("whatever")
 					)
 				),
 				testaux::make_unique_ptr_vector<ast::instance_method>(
-					astbldr<ast::instance_method>{5}(
+					ab<ast::instance_method>{5}(
 						pool.normalize("f"),
-						astbldr<ast::type>{6}(ast::primitive_type::type_int),
+						ab<ast::type>{6}(ast::primitive_type::type_int),
 						testaux::make_unique_ptr_vector<ast::var_decl>(),
-						astbldr<ast::block>{7}(
+						ab<ast::block>{7}(
 							testaux::make_unique_ptr_vector<ast::block_statement>(
-								astbldr<ast::local_variable_statement>{8}(
-									astbldr<ast::var_decl>{9}(
-										astbldr<ast::type>{10}(ast::primitive_type::type_int),
+								ab<ast::local_variable_statement>{8}(
+									ab<ast::var_decl>{9}(
+										ab<ast::type>{10}(ast::primitive_type::type_int),
 										pool.normalize("a")
 									),
-									astbldr<ast::binary_expression>{11}(
+									ab<ast::binary_expression>{11}(
 										ast::binary_operation_type::plus,
-										astbldr<ast::integer_constant>{12}(pool.normalize("5")),
-										astbldr<ast::integer_constant>{13}(pool.normalize("7"))
+										ab<ast::integer_constant>{12}(pool.normalize("5")),
+										ab<ast::integer_constant>{13}(pool.normalize("7"))
 									)
 								),
-								astbldr<ast::return_statement>{14}(
-									astbldr<ast::unary_expression>{15}(
+								ab<ast::return_statement>{14}(
+									ab<ast::unary_expression>{15}(
 										ast::unary_operation_type::minus,
-										astbldr<ast::variable_access>{16}(
+										ab<ast::variable_access>{16}(
 											std::unique_ptr<ast::expression>{},
 											pool.normalize("a")
 										)
@@ -384,9 +396,16 @@ BOOST_AUTO_TEST_CASE(complete_program)
 			)
 		)
 	);
-	const auto extracted = minijava::extract_constants(*ast);
+	const auto extracted = sem::extract_constants(*ast);
+	const auto find_in_constants = [&extracted](const auto needle){
+		const auto pos = std::find_if(
+			std::begin(extracted), std::end(extracted),
+			[needle](auto&& kv){ return kv.second == needle; }
+		);
+		return (pos == std::end(extracted)) ? 0 : pos->first->id();
+	};
 	BOOST_REQUIRE_EQUAL(3, extracted.size());
-	BOOST_REQUIRE_EQUAL(5, extracted.at(12));
-	BOOST_REQUIRE_EQUAL(7, extracted.at(13));
-	BOOST_REQUIRE_EQUAL(12, extracted.at(11));
+	BOOST_REQUIRE_EQUAL(12, find_in_constants(5));
+	BOOST_REQUIRE_EQUAL(13, find_in_constants(7));
+	BOOST_REQUIRE_EQUAL(11, find_in_constants(12));
 }

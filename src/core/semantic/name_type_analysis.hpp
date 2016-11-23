@@ -58,25 +58,25 @@ namespace minijava
 		 * @brief
 		 *     Type of the type annotations on expressions and other AST nodes.
 		 */
-		using type_annotations = ast_attributes<type, ast_node_filter<ast::expression, ast::var_decl, ast::method>>;
+		using type_attributes = ast_attributes<type, ast_node_filter<ast::expression, ast::var_decl, ast::method>>;
 
 		/**
 		 * @brief
 		 *     Type of the local variable list annotations on method nodes.
 		 */
-		using locals = ast_attributes<std::unordered_set<const ast::var_decl*>, ast_node_filter<ast::method>>;
+		using locals_attributes = ast_attributes<std::unordered_set<const ast::var_decl*>, ast_node_filter<ast::method>>;
 
 		/**
 		 * @brief
 		 *     Type of the annotations pointing to variable declarations.
 		 */
-		using var_declarations = ast_attributes<const ast::var_decl*, ast_node_filter<ast::array_access, ast::variable_access>>;
+		using vardecl_attributes = ast_attributes<const ast::var_decl*, ast_node_filter<ast::array_access, ast::variable_access>>;
 
 		/**
 		 * @brief
 		 *     Type of the annotations pointing to method declarations.
 		 */
-		using method_declarations = ast_attributes<const ast::instance_method*, ast_node_filter<ast::method_invocation>>;
+		using method_attributes = ast_attributes<const ast::instance_method*, ast_node_filter<ast::method_invocation>>;
 
 		/**
 		 * @brief
@@ -90,8 +90,7 @@ namespace minijava
 		 *     type annotation data structure to use
 		 *
 		 */
-		void perform_shallow_type_analysis(const ast::program& ast,
-										   type_annotations& types);
+		void perform_shallow_type_analysis(const ast::program& ast, type_attributes& type_annotations);
 
 		/**
 		 * @brief
@@ -117,10 +116,12 @@ namespace minijava
 		 *
 		 */
 		void perform_full_name_type_analysis(const ast::program& ast,
-											 const globals_map& globals,
-											 type_annotations& types,
-											 locals& locals,
-											 var_declarations& var_decls,
-											 method_declarations& method_decls);
-	}
-}
+											 const globals_map&  globals,
+											 type_attributes&    type_annotations,
+											 locals_attributes&  locals_annotations,
+											 vardecl_attributes& vardecl_annotations,
+											 method_attributes&  method_annotations);
+
+	}  // namespace sem
+
+}  // namespace minijava
