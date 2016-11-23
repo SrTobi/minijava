@@ -4,6 +4,9 @@
  * @brief
  *     Attributes for AST nodes.
  *
+ * TODO: Insert some musings about the generality of the `NodeFilterPolicy`
+ * concept here...
+ *
  */
 
 #pragma once
@@ -15,40 +18,89 @@
 #include <unordered_map>
 
 #include "exceptions.hpp"
+#include "meta/meta.hpp"
 #include "parser/ast.hpp"
+
 
 namespace minijava
 {
 
-	namespace meta
-	{
-
-		template <typename T>
-		struct type {};
-
-		template <typename... Ts>
-		struct types {};
-
-	}
-
+	/**
+	 * @brief
+	 *     Generic `NodeFilterPolicy` that can be used to restrict keys to any
+	 *     sub-set of AST node types.
+	 *
+	 * The static and dynamic check will both test whether the node in question
+	 * (either statically or dynamically) derives from at least one of the
+	 * `NodeTs...`.  The dynamic check additionally checks that the ID is
+	 * non-zero.
+	 *
+	 * @tparam NodeTs
+	 *     allowable base classes of key nodes
+	 *
+	 */
+	template <typename... NodeTs>
 	struct ast_node_filter
 	{
 
+		/**
+		 * @brief
+		 *     Tests whether the type `T` (wrapped in the tag `TypeT`) is
+		 *     derived from any of the types `NodeTs...`.
+		 *
+		 * @tparam TypeT
+		 *     any `template` that can wrap a single type
+		 *
+		 * @tparam T
+		 *     type to check
+		 *
+		 * @returns
+		 *     whether the type is okay
+		 *
+		 */
 		template<template <typename> class TypeT, typename T>
 		static constexpr bool static_check(TypeT<T>) noexcept
 		{
-			return std::is_base_of<ast::node, T>{};
+			return meta::disjunction< std::is_base_of<NodeTs, T>... >{};
 		}
 
-		bool dynamic_check(const ast::node& node) const noexcept
-		{
-			return (node.id() != 0);
-		}
+		/**
+		 * @brief
+		 *     Tests whether the *dynamic* type of `node` is derived from any
+		 *     of the types `NodeTs...` and `node` has a non-zero ID.
+		 *
+		 * @tparam node
+		 *     AST node to check
+		 *
+		 * @returns
+		 *     whether the node is okay
+		 *
+		 */
+		bool dynamic_check(const ast::node& node) const noexcept;
 
 	};
 
+	/**
+	 * @brief
+	 *     Extractor for the ID of an AST node.
+	 *
+	 */
 	struct ast_node_ptr_hash
 	{
+		/**
+		 * @brief
+		 *     `return`s the non-zero ID of the node pointed to by `nodeptr`.
+		 *
+		 * If `nodeptr == nullptr` or `nodeptr->id() == 0`, the behavior is
+		 * undefined.
+		 *
+		 * @param nodeptr
+		 *     pointer to AST node
+		 *
+		 * @returns
+		 *     `nodeptr->id()`
+		 *
+		 */
 		std::size_t operator()(const ast::node* nodeptr) const
 		{
 			assert((nodeptr != nullptr) && (nodeptr->id() != 0));
@@ -57,21 +109,59 @@ namespace minijava
 	};
 
 	/**
+	 * @brief
+	 *     A data structure that associates arbitrary attributes with AST
+	 *     nodes.
+	 *
+	 * To the extent where this makes sense, this type models the interface of
+	 * a `std::unordered_map` mapping pointers to AST nodes to attributes.
+	 * This is the low-level interface that can be used with STL algorithms.
+	 * Unfortunately, it is not always type-safe and only `assert`s at run-time
+	 * certain properties of the AST nodes that are used as keys.  Atop of (or
+	 * besides) this, there are the higher-level subscript operator and `at`
+	 * function that operate on references to AST nodes rather than pointers.
+	 * More importantly, they will remove themselves from the overload set if
+	 * the static node type does not neet the predicate defined by the
+	 * `NodeFilterT` policy.  The latter may be any type that meets the
+	 * `NodeFilterPolicy` as defined in the file-level documentation of this
+	 * component.
+	 *
+	 * Unlike `std::unordered_map`, the internal memory representation of this
+	 * container is completely unspecified.  Furthermore, iterators are
+	 * potentially invalidated on every non-`const` quialified operation.
+	 *
+	 * Since the data structure has no control over the lifetime of the AST
+	 * nodes it stores pointers to, it is the user's responsibility to keep the
+	 * referenced AST alive for at least as long as this structure is used.
+	 *
+	 * AST nodes are hashed by their IDs which must be unique positive values.
+	 * It can generally be assumed that the performance will be better if the
+	 * numerical values of the IDs are compact, though holes are not forbidden.
+	 * On the other hand, if a node with ID zero or two nodes with the same IDs
+	 * but different addresses are ever passed into the same instance of an
+	 * attribute map, the behavior is undefined.
 	 *
 	 * The policy types `NodeFilterT` and `AllocT` shall not `throw` exceptions
 	 * in their copy constructors and assignment operators and (if they are
-	 * default-constructible) their default constructors.  This is not enforced
-	 * via `static_assert`ions, though, because doing so would perclude a lot
-	 * of potentially useful policies (in particular, lambdas) which are known
-	 * to never `throw` but just are not formally declared `noexcept`.  If this
-	 * constraint is violated and any policy object does `throw`, the behavior
-	 * is undefined.
+	 * default-constructible) their default constructors.  If this constraint
+	 * is violated and any policy object does `throw`, the behavior is
+	 * undefined.
+	 *
+	 * @tparam T
+	 *     type of the attribute to associate with (some) AST nodes
+	 *
+	 * @tparam NodeFilterT
+	 *     `NodeFilterPolicy` that specifies what nodes are allowed as keys
+	 *
+	 * @tparam AllocT
+	 *     allocator to use internally (must have a `value_type` of
+	 *     `std::pair<std::pair<const ast::node *const, T>`)
 	 *
 	 */
 	template
 	<
 		typename T,
-		typename NodeFilterT = ast_node_filter,
+		typename NodeFilterT = ast_node_filter<ast::node>,
 		typename AllocT = std::allocator<std::pair<const ast::node *const, T>>
 	>
 	class ast_attributes : private NodeFilterT
@@ -89,26 +179,55 @@ namespace minijava
 
 		template <typename NodeT, typename ResultT = void>
 		using apply_static_node_filter_t = std::enable_if_t<
-			NodeFilterT::static_check(meta::type<std::decay_t<NodeT>>{}),
+			NodeFilterT::static_check(meta::type_t<std::decay_t<NodeT>>{}),
 			ResultT
 		>;
 
 	public:
 
+		/** @brief Type of the keys. */
 		using key_type = const ast::node*;
+
+		/** @brief Type of the attributes. */
 		using mapped_type = T;
+
+		/** @brief Type of a `const` key and its attribute. */
 		using value_type = std::pair<const key_type, mapped_type>;
+
+		/** @brief Hash function that `return`s the node ID. */
 		using hasher = ast_node_ptr_hash;
+
+		/** @brief Comparison function that compares node addresses. */
 		using key_equal = std::equal_to<key_type>;
+
+		/** @brief Allocator type. */
 		using allocator_type = AllocT;
+
+		/** @brief Pointer type used by the allocator. */
 		using pointer = typename std::allocator_traits<allocator_type>::pointer;
+
+		/** @brief `const` pointer type used by the allocator. */
 		using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
+
+		/** @brief Reference type. */
 		using reference = value_type&;
+
+		/** @brief `const` reference type. */
 		using const_reference = const value_type&;
+
+		/** @brief `unsigned` integer type. */
 		using size_type = std::size_t;
+
+		/** @brief `signed` integer type. */
 		using difference_type = std::ptrdiff_t;
+
+		/** @brief Iterator over (key, value) pairs in unspecified order. */
 		using iterator = typename std::unordered_map<key_type, mapped_type, hasher, key_equal, allocator_type>::iterator;
+
+		/** @brief `const` iterator over (key, value) pairs in unspecified order. */
 		using const_iterator = typename std::unordered_map<key_type, mapped_type, hasher, key_equal, allocator_type>::const_iterator;
+
+		/** @brief `NodeFilterPolicy`. */
 		using node_filter_type = NodeFilterT;
 
 		/**
@@ -135,7 +254,7 @@ namespace minijava
 		 *     filter policy object
 		 *
 		 */
-		ast_attributes(const node_filter_type& filter) noexcept;
+		explicit ast_attributes(const node_filter_type& filter) noexcept;
 
 		/**
 		 * @brief
@@ -150,7 +269,7 @@ namespace minijava
 		 *     allocator object
 		 *
 		 */
-		ast_attributes(const allocator_type& alloc) noexcept;
+		explicit ast_attributes(const allocator_type& alloc) noexcept;
 
 		/**
 		 * @brief

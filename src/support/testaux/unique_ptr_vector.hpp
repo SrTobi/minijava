@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "meta.hpp"
+#include "meta/meta.hpp"
 
 namespace testaux
 {
@@ -34,8 +34,8 @@ namespace testaux
 	 */
 	template <typename T, typename... ArgTs>
 	std::enable_if_t<
-			meta::conjunction<std::is_convertible<ArgTs, std::unique_ptr<T>>...>{},
-			std::vector<std::unique_ptr<T>>
+		minijava::meta::conjunction<std::is_convertible<ArgTs, std::unique_ptr<T>>...>{},
+		std::vector<std::unique_ptr<T>>
 	>
 	make_unique_ptr_vector(ArgTs... args);
 }

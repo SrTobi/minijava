@@ -3,7 +3,3 @@
 #define BOOST_TEST_MODULE  semantic_symbol_type_analysis
 #include <boost/test/unit_test.hpp>
 
-
-BOOST_AUTO_TEST_CASE(todo)
-{
-}

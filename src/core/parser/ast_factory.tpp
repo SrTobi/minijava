@@ -44,6 +44,11 @@ namespace minijava
 		return np;
 	}
 
+	inline ast_factory::ast_factory(const std::size_t lastid) noexcept
+		: _id{lastid}
+	{
+	}
+
 	template <typename NodeT>
 	std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
 	ast_factory::make()

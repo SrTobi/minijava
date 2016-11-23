@@ -377,7 +377,7 @@ namespace minijava
 		 *     whether the discovered types should be marked as built-in
 		 *
 		 * @param definitions
-		 *     existing definitions
+		 *     type definition data structure to use
 		 *
 		 */
 		void extract_type_info(const ast::program& ast, bool builtin,

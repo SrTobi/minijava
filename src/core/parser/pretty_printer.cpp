@@ -566,23 +566,23 @@ namespace minijava
 				auto members = std::vector<member_pair>{};
 				members.reserve(std::max(
 						node.instance_methods().size() + node.main_methods().size(),
-					node.fields().size()
+						node.fields().size()
 				));
 				std::transform(
-					std::begin(node.instance_methods()), std::end(node.instance_methods()),
-					std::back_inserter(members), ext
+						std::begin(node.instance_methods()), std::end(node.instance_methods()),
+						std::back_inserter(members), ext
 				);
 				std::transform(
-					std::begin(node.main_methods()), std::end(node.main_methods()),
-					std::back_inserter(members), ext
+						std::begin(node.main_methods()), std::end(node.main_methods()),
+						std::back_inserter(members), ext
 				);
 				std::stable_sort(std::begin(members), std::end(members), cmp);
 				std::for_each(std::begin(members), std::end(members), vst);
 				members.clear();  // recycle the storage
 				const auto in_the_fields_guard = make_guard(_in_fields, true);
 				std::transform(
-					std::begin(node.fields()), std::end(node.fields()),
-					std::back_inserter(members), ext
+						std::begin(node.fields()), std::end(node.fields()),
+						std::back_inserter(members), ext
 				);
 				std::stable_sort(std::begin(members), std::end(members), cmp);
 				std::for_each(std::begin(members), std::end(members), vst);
@@ -592,8 +592,19 @@ namespace minijava
 
 		void pretty_printer::visit(const program& node)
 		{
+			auto classes = std::vector<class_declaration*>{};
+			classes.reserve(node.classes().size());
+			std::transform(
+					std::begin(node.classes()), std::end(node.classes()),
+					std::back_inserter(classes), [](auto&& n){ return n.get(); }
+			);
+			std::sort(std::begin(classes), std::end(classes),
+					[](auto&& p1, auto&& p2){
+						return std::strcmp(p1->name().c_str(), p2->name().c_str()) < 0;
+					}
+			);
 			for_each_glue_c(
-				node.classes(),
+				classes,
 				[this](auto&& cls){ cls->accept(*this); },
 				[this](){ _output << '\n'; }
 			);

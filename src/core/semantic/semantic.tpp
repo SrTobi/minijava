@@ -7,13 +7,14 @@
 
 #include "semantic/builtins.hpp"
 #include "semantic/constant.hpp"
+#include "semantic/dont_use_main_args.hpp"
+#include "semantic/name_type_analysis.hpp"
 #include "semantic/ref_type_analysis.hpp"
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_def.hpp"
 #include "semantic/thou_shalt_return.hpp"
 #include "semantic/type_info.hpp"
 #include "semantic/unique_entry_point.hpp"
-#include "semantic/dont_use_main_args.hpp"
 
 namespace minijava
 {
@@ -41,7 +42,7 @@ namespace minijava
 						),
 						std::move(args),
 						std::make_unique<ast::block>(
-								std::vector<ast::block_statement>{}
+								std::vector<std::unique_ptr<ast::block_statement>>{}
 						)
 				);
 				std::vector<std::unique_ptr<ast::instance_method>> methods{};
@@ -58,7 +59,7 @@ namespace minijava
 						),
 						pool.normalize("out")
 				);
-				std::vector<std::unique_ptr<ast::instance_method>> fields{};
+				std::vector<std::unique_ptr<ast::var_decl>> fields{};
 				fields.push_back(std::move(out));
 				auto system_class = std::make_unique<ast::class_declaration>(
 						pool.normalize("java.lang.System"),
@@ -101,6 +102,19 @@ namespace minijava
 				));
 				return result;
 			}
+
+			template<typename AllocT>
+			globals_map make_globals(symbol_pool<AllocT>& pool)
+			{
+				sem::globals_map result{};
+				result.insert(std::make_pair(
+						pool.normalize("System"),
+						pool.normalize("java.lang.System")
+				));
+				return result;
+			}
+
+			// FIXME: give builtin AST non-conflicting node ids
 		}
 	}
 
@@ -108,11 +122,23 @@ namespace minijava
 	semantic_info check_program(const ast::program& ast,
 								symbol_pool<AllocT>& pool)
 	{
+		// collect types
 		auto builtin_ast = sem::detail::make_builtin_ast(pool);
 		auto types = sem::detail::make_non_class_types(pool);
-		sem::extract_type_info(builtin_ast, true, types);
+		sem::extract_type_info(*builtin_ast, true, types);
 		sem::extract_type_info(ast, false, types);
-		// FIXME
+		// perform name/type analysis
+		sem::type_annotations ast_types{};
+		sem::locals locals{};
+		sem::var_declarations var_decls{};
+		sem::method_declarations method_decls{};
+		sem::perform_shallow_type_analysis(*builtin_ast, ast_types);
+		auto globals = sem::detail::make_globals(pool);
+		sem::perform_full_name_type_analysis(
+				ast, globals, ast_types, locals, var_decls, method_decls
+		);
+		// get constant values
+		// FIXME: analyze constants
 		throw nullptr;
 	}
 

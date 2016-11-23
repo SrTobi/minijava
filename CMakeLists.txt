@@ -43,6 +43,7 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	meta/meta
 	parser/ast
 	parser/ast_factory
 	parser/for_each_node
@@ -52,6 +53,7 @@ set(COMPONENTS
 	semantic/builtins
 	semantic/constant
 	semantic/dont_use_main_args
+	semantic/name_type_analysis
 	semantic/ref_type_analysis
 	semantic/semantic
 	semantic/semantic_error

@@ -236,10 +236,11 @@ namespace minijava
 				print_ast(out, *ast);
 				return;
 			}
+			auto sem_info = check_program(*ast, pool);
 			if (stage == compilation_stage::semantic) {
-				analyze_ast(*ast, pool);
 				return;
 			}
+			(void) sem_info; // FIXME
 			// If we get until here, we have a problem...
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
