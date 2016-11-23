@@ -154,16 +154,14 @@ BOOST_AUTO_TEST_CASE(types_are_equal_only_to_themselves)
 			std::begin(classdecls), std::end(classdecls),
 			std::back_inserter(btis),
 			[&engine, &builtindist](auto&& clsdcl) {
-				return minijava::sem::basic_type_info{*clsdcl,
-													  builtindist(engine)};
+				return minijava::sem::basic_type_info{*clsdcl, builtindist(engine)};
 			}
 	);
 	for (auto it = std::begin(btis); it != std::end(btis); ++it) {
 		const auto isme = [it](auto&& you) {
 			return *it == you;
 		};
-		const auto clones = std::vector<minijava::sem::basic_type_info>(10,
-				*it);
+		const auto clones = std::vector<minijava::sem::basic_type_info>(10, *it);
 		BOOST_REQUIRE(std::all_of(std::begin(clones), std::end(clones), isme));
 		for (auto jt = std::begin(btis); jt != std::end(btis); ++jt) {
 			BOOST_REQUIRE_EQUAL((it == jt), (*it == *jt));
@@ -175,18 +173,30 @@ BOOST_AUTO_TEST_CASE(extract_type_info_success)
 {
 	minijava::symbol_pool<> pool{};
 	minijava::sem::type_definitions types{};
+	auto class_1 = testaux::make_empty_class("builtin.Test", pool);
+	auto classp_1 = class_1.get();
+	auto class_2 = testaux::make_empty_class("builtin.My", pool);
+	auto classp_2 = class_2.get();
+	auto class_3 = testaux::make_empty_class("builtin.Class", pool);
+	auto classp_3 = class_3.get();
 	auto program_builtin = std::make_unique<ast::program>(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					testaux::make_empty_class("builtin.Test", pool),
-					testaux::make_empty_class("builtin.My", pool),
-					testaux::make_empty_class("builtin.Class", pool)
+					std::move(class_1),
+					std::move(class_2),
+					std::move(class_3)
 			)
 	);
+	auto class_4 = testaux::make_empty_class("Test", pool);
+	auto classp_4 = class_4.get();
+	auto class_5 = testaux::make_empty_class("My", pool);
+	auto classp_5 = class_5.get();
+	auto class_6 = testaux::make_empty_class("Class", pool);
+	auto classp_6 = class_6.get();
 	auto program = std::make_unique<ast::program>(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					testaux::make_empty_class("Test", pool),
-					testaux::make_empty_class("My", pool),
-					testaux::make_empty_class("Class", pool)
+					std::move(class_4),
+					std::move(class_5),
+					std::move(class_6)
 			)
 	);
 	minijava::sem::extract_type_info(*program_builtin, true, types);
@@ -194,46 +204,40 @@ BOOST_AUTO_TEST_CASE(extract_type_info_success)
 	minijava::symbol s = pool.normalize("builtin.Test");
 	BOOST_CHECK(types.find(s) != types.end());
 	BOOST_CHECK(types.find(s)->second.is_builtin());
-	BOOST_CHECK(types.find(s)->second.is_instantiable());
-	BOOST_CHECK(types.find(s)->second.is_reference());
 	BOOST_CHECK(!types.find(s)->second.is_user_defined());
+	BOOST_CHECK(types.find(s)->second.declaration() == classp_1);
 	s = pool.normalize("builtin.My");
 	BOOST_CHECK(types.find(s) != types.end());
 	BOOST_CHECK(types.find(s)->second.is_builtin());
-	BOOST_CHECK(types.find(s)->second.is_instantiable());
-	BOOST_CHECK(types.find(s)->second.is_reference());
 	BOOST_CHECK(!types.find(s)->second.is_user_defined());
+	BOOST_CHECK(types.find(s)->second.declaration() == classp_2);
 	s = pool.normalize("builtin.Class");
 	BOOST_CHECK(types.find(s) != types.end());
 	BOOST_CHECK(types.find(s)->second.is_builtin());
-	BOOST_CHECK(types.find(s)->second.is_instantiable());
-	BOOST_CHECK(types.find(s)->second.is_reference());
 	BOOST_CHECK(!types.find(s)->second.is_user_defined());
+	BOOST_CHECK(types.find(s)->second.declaration() == classp_3);
 	s = pool.normalize("Test");
 	BOOST_CHECK(types.find(s) != types.end());
 	BOOST_CHECK(!types.find(s)->second.is_builtin());
-	BOOST_CHECK(types.find(s)->second.is_instantiable());
-	BOOST_CHECK(types.find(s)->second.is_reference());
 	BOOST_CHECK(types.find(s)->second.is_user_defined());
+	BOOST_CHECK(types.find(s)->second.declaration() == classp_4);
 	s = pool.normalize("My");
 	BOOST_CHECK(types.find(s) != types.end());
 	BOOST_CHECK(!types.find(s)->second.is_builtin());
-	BOOST_CHECK(types.find(s)->second.is_instantiable());
-	BOOST_CHECK(types.find(s)->second.is_reference());
 	BOOST_CHECK(types.find(s)->second.is_user_defined());
+	BOOST_CHECK(types.find(s)->second.declaration() == classp_5);
 	s = pool.normalize("Class");
 	BOOST_CHECK(types.find(s) != types.end());
 	BOOST_CHECK(!types.find(s)->second.is_builtin());
-	BOOST_CHECK(types.find(s)->second.is_instantiable());
-	BOOST_CHECK(types.find(s)->second.is_reference());
 	BOOST_CHECK(types.find(s)->second.is_user_defined());
+	BOOST_CHECK(types.find(s)->second.declaration() == classp_6);
 	s = pool.normalize("builtin.Unknown");
 	BOOST_CHECK(types.find(s) == types.end());
 	s = pool.normalize("Unknown");
 	BOOST_CHECK(types.find(s) == types.end());
 }
 
-BOOST_AUTO_TEST_CASE(extract_type_info_failure)
+BOOST_AUTO_TEST_CASE(extract_type_info_class_name_clash)
 {
 	minijava::symbol_pool<> pool{};
 	minijava::sem::type_definitions types{};
@@ -250,17 +254,9 @@ BOOST_AUTO_TEST_CASE(extract_type_info_failure)
 			minijava::sem::extract_type_info(*program, false, types),
 			minijava::semantic_error
 	);
-	auto program_builtin = std::make_unique<ast::program>(
-			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					testaux::make_empty_class("builtin_Test", pool),
-					testaux::make_empty_class("builtin_My", pool),
-					testaux::make_empty_class("builtin_Class", pool),
-					testaux::make_empty_class("builtin_DoubleTrouble", pool),
-					testaux::make_empty_class("builtin_DoubleTrouble", pool)
-			)
-	);
+	minijava::sem::type_definitions builtin_types{};
 	BOOST_CHECK_THROW(
-			minijava::sem::extract_type_info(*program, true, types),
+			minijava::sem::extract_type_info(*program, true, builtin_types),
 			minijava::semantic_error
 	);
 }

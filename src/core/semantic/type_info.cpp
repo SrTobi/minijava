@@ -12,7 +12,7 @@ namespace minijava
 							   type_definitions& definitions)
 		{
 			using namespace std::string_literals;
-			for (auto& clazz : ast.classes()) {
+			for (const auto& clazz : ast.classes()) {
 				if (definitions.find(clazz->name()) != definitions.end()) {
 					throw semantic_error{"Duplicate class name: "s + clazz->name().c_str()};
 				}
