@@ -109,4 +109,80 @@ namespace minijava
 	 *
 	 */
 	std::ostream& operator<<(std::ostream& os, const minijava::position& pos);
+
+	/**
+	 * @brief
+	 *     Compares if `lhs` is lower `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` is lower than `rhs`
+	 *
+	 */
+	constexpr bool operator<(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	{
+		return lhs.line() < rhs.line() || (lhs.line() == rhs.line() && lhs.column() < rhs.column());
+	}
+
+	/**
+	 * @brief
+	 *     Compares if `lhs` is lower or equal `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` is lower or equal than `rhs`
+	 *
+	 */
+	constexpr bool operator<=(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	{
+		return lhs == rhs || lhs < rhs;
+	}
+
+	/**
+	 * @brief
+	 *     Compares if `lhs` is greater `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` is greater than `rhs`
+	 *
+	 */
+	constexpr bool operator>(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	{
+		return lhs != rhs && !(lhs < rhs);
+	}
+
+	/**
+	 * @brief
+	 *     Compares if `lhs` is greater or equal `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` is greater or equal than `rhs`
+	 *
+	 */
+	constexpr bool operator>=(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	{
+		return !(lhs < rhs);
+	}
 }
