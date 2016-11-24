@@ -7,6 +7,8 @@
  * TODO: Insert some musings about the generality of the `NodeFilterPolicy`
  * concept here...
  *
+ * TODO: Remove everything from the interface that violates the AG idea...
+ *
  */
 
 #pragma once
@@ -14,6 +16,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -690,12 +693,9 @@ namespace minijava
 		 * @param attr
 		 *     value of the attribute to set
 		 *
-		 * @throws std::out_of_range
-		 *     if `count(&node) == 0`
-		 *
 		 */
 		template <typename NodeT>
-		apply_static_node_filter_t<NodeT> assign(NodeT&& node, mapped_type attr)
+		apply_static_node_filter_t<NodeT> insert_or_assign(NodeT&& node, mapped_type attr)
 		{
 			assert(get_filter().dynamic_check(node));
 			const auto pos = this->find(&node);
@@ -704,6 +704,46 @@ namespace minijava
 				assert(status.second);
 			} else {
 				pos->second = std::move(attr);
+			}
+		}
+
+		/**
+		 * @brief
+		 *     Inserts a new mapping but only if it doesn't exist yet.
+		 *
+		 * This function only participates in overload resolution if
+		 *
+		 *     get_filter().static_check(meta::type<NodeT>{})
+		 *
+		 * passes.  If this is the case but
+		 *
+		 *     get_filter().dynamic_check(node)
+		 *
+		 * still doesn't pass, the behavior is undefined.
+		 *
+		 * @param NodeT
+		 *     static type of the node to look up
+		 *
+		 * @param node
+		 *     key to set the attribute to
+		 *
+		 * @param attr
+		 *     value of the attribute to set
+		 *
+		 * @throws std::out_of_range
+		 *     if `count(&node) != 0`
+		 *
+		 */
+		template <typename NodeT>
+		apply_static_node_filter_t<NodeT> put(NodeT&& node, mapped_type attr)
+		{
+			assert(get_filter().dynamic_check(node));
+			const auto pos = this->find(&node);
+			if (pos == this->end()) {
+				const auto status = this->insert({&node, std::move(attr)});
+				assert(status.second);
+			} else {
+				throw std::out_of_range{"minijava::sem::ast_attributes::put"};
 			}
 		}
 

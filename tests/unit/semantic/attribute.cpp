@@ -352,24 +352,50 @@ BOOST_AUTO_TEST_CASE(at_throws_for_non_existing_element)
 }
 
 
-BOOST_AUTO_TEST_CASE(assign_inserts_new_element)
+BOOST_AUTO_TEST_CASE(insert_or_assign_inserts_new_element)
 {
 	auto nodeptr = minijava::ast_factory{}.make<dummy_ast_node>()();
 	auto atmap = minijava::ast_attributes<not_default_constructible>{};
 	const auto value = not_default_constructible{42};
-	atmap.assign(*nodeptr, value);
+	atmap.insert_or_assign(*nodeptr, value);
 	BOOST_REQUIRE_EQUAL(1, atmap.size());
 	BOOST_REQUIRE_EQUAL(value.tag, atmap.at(*nodeptr).tag);
 }
 
 
-BOOST_AUTO_TEST_CASE(assign_overwrites_existing_element)
+BOOST_AUTO_TEST_CASE(insert_or_assign_overwrites_existing_element)
 {
 	auto nodeptr = minijava::ast_factory{}.make<dummy_ast_node>()();
 	auto atmap = minijava::ast_attributes<not_default_constructible>{};
 	const auto value = not_default_constructible{42};
 	atmap.insert({nodeptr.get(), not_default_constructible{0}});
-	atmap.assign(*nodeptr, value);
+	atmap.insert_or_assign(*nodeptr, value);
+	BOOST_REQUIRE_EQUAL(1, atmap.size());
+	BOOST_REQUIRE_EQUAL(value.tag, atmap.at(*nodeptr).tag);
+}
+
+
+BOOST_AUTO_TEST_CASE(put_inserts_new_element)
+{
+	auto nodeptr = minijava::ast_factory{}.make<dummy_ast_node>()();
+	auto atmap = minijava::ast_attributes<not_default_constructible>{};
+	const auto value = not_default_constructible{42};
+	atmap.put(*nodeptr, value);
+	BOOST_REQUIRE_EQUAL(1, atmap.size());
+	BOOST_REQUIRE_EQUAL(value.tag, atmap.at(*nodeptr).tag);
+}
+
+
+BOOST_AUTO_TEST_CASE(put_overwrites_existing_element)
+{
+	auto nodeptr = minijava::ast_factory{}.make<dummy_ast_node>()();
+	auto atmap = minijava::ast_attributes<not_default_constructible>{};
+	const auto value = not_default_constructible{42};
+	atmap.insert({nodeptr.get(), value});
+	BOOST_REQUIRE_THROW(
+		atmap.put(*nodeptr, not_default_constructible{10}),
+		std::out_of_range
+	);
 	BOOST_REQUIRE_EQUAL(1, atmap.size());
 	BOOST_REQUIRE_EQUAL(value.tag, atmap.at(*nodeptr).tag);
 }
