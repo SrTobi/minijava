@@ -26,6 +26,7 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_empty_program)
 	);
 	auto classes = sem::class_definitions{};
 	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
 	BOOST_REQUIRE_THROW(
 		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
 		minijava::semantic_error
@@ -40,6 +41,7 @@ BOOST_AUTO_TEST_CASE(shallow_accepts_hello_world)
 	const auto ast = testaux::make_hello_world("Test", pool, factory);
 	auto classes = sem::class_definitions{};
 	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
 	sem::perform_shallow_type_analysis(*ast, classes, type_annotations);
 }
 
@@ -54,6 +56,7 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_bogous_main)
 	);
 	auto classes = sem::class_definitions{};
 	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
 	BOOST_REQUIRE_THROW(
 		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
 		minijava::semantic_error
@@ -80,6 +83,7 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_main_in_same_class)
 	);
 	auto classes = sem::class_definitions{};
 	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
 	BOOST_REQUIRE_THROW(
 		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
 		minijava::semantic_error
@@ -99,6 +103,7 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_main_in_different_classes)
 	);
 	auto classes = sem::class_definitions{};
 	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
 	BOOST_REQUIRE_THROW(
 		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
 		minijava::semantic_error
@@ -106,18 +111,96 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_main_in_different_classes)
 }
 
 
-BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_classes)
+BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_methods)
 {
 	auto pool = minijava::symbol_pool<>{};
 	auto factory = minijava::ast_factory{};
 	const auto ast = factory.make<ast::program>()(
 		testaux::make_unique_ptr_vector<ast::class_declaration>(
-			testaux::as_class("Test", testaux::make_empty_main("main", pool, factory), pool, factory),
-			testaux::make_empty_class("Test", pool, factory)
+			factory.make<ast::class_declaration>()(
+				pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					testaux::make_empty_method("foo", pool, factory),
+					testaux::make_empty_method("foo", pool, factory)
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>()
+			)
 		)
 	);
 	auto classes = sem::class_definitions{};
 	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	BOOST_REQUIRE_THROW(
+		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
+		minijava::semantic_error
+	);
+}
+
+
+BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_fields_of_same_type)
+{
+	auto pool = minijava::symbol_pool<>{};
+	auto factory = minijava::ast_factory{};
+	const auto ast = factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			factory.make<ast::class_declaration>()(
+				pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(
+					factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(ast::primitive_type::type_int),
+						pool.normalize("foo")
+					),
+					factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(ast::primitive_type::type_int),
+						pool.normalize("foo")
+					)
+				),
+				testaux::make_unique_ptr_vector<ast::instance_method>(),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					testaux::make_empty_main("main", pool, factory)
+				)
+			)
+		)
+	);
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	BOOST_REQUIRE_THROW(
+		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
+		minijava::semantic_error
+	);
+}
+
+
+BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_fields_of_different_type)
+{
+	auto pool = minijava::symbol_pool<>{};
+	auto factory = minijava::ast_factory{};
+	const auto ast = factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			factory.make<ast::class_declaration>()(
+				pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(
+					factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(pool.normalize("Test")),
+						pool.normalize("foo")
+					),
+					factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(ast::primitive_type::type_boolean),
+						pool.normalize("foo")
+					)
+				),
+				testaux::make_unique_ptr_vector<ast::instance_method>(),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					testaux::make_empty_main("main", pool, factory)
+				)
+			)
+		)
+	);
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
 	BOOST_REQUIRE_THROW(
 		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
 		minijava::semantic_error

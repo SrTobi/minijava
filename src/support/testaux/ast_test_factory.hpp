@@ -42,6 +42,31 @@ namespace testaux
 
 	/**
 	 * @brief
+	 *     Creates an empty method.
+	 *
+	 * The method will be of type `void`, take no parameters and have an empty
+	 * body.
+	 *
+	 * @param name
+	 *     name of the method
+	 *
+	 * @param pool
+	 *     string pool to use for creating the identifier
+	 *
+	 * @param factory
+	 *     factory to use for creating the AST node
+	 *
+	 * @returns
+	 *     instance method AST
+	 *
+	 */
+	std::unique_ptr<minijava::ast::instance_method>
+	make_empty_method(const std::string& name,
+					  minijava::symbol_pool<>& pool,
+					  minijava::ast_factory& factory);
+
+	/**
+	 * @brief
 	 *     Creates an empty class with the given name.
 	 *
 	 * @param name

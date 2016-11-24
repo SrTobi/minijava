@@ -25,6 +25,21 @@ namespace testaux
 		);
 	}
 
+	std::unique_ptr<ast::instance_method>
+	make_empty_method(const std::string& name,
+					  minijava::symbol_pool<>& pool,
+					  minijava::ast_factory& factory)
+	{
+		return factory.make<ast::instance_method>()(
+			pool.normalize(name),
+			factory.make<ast::type>()(ast::primitive_type::type_void),
+			make_unique_ptr_vector<ast::var_decl>(),
+			factory.make<ast::block>()(
+				make_unique_ptr_vector<ast::block_statement>()
+			)
+		);
+	}
+
 	std::unique_ptr<ast::class_declaration>
 	make_empty_class(const std::string& name, pool_type& pool)
 	{
