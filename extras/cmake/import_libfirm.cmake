@@ -16,6 +16,7 @@ function(import_libfirm target)
 
 	add_library(${target} INTERFACE)
 	target_link_libraries(${target} INTERFACE "${install_dir}/lib/libfirm.a")
+	target_link_libraries(${target} INTERFACE "m")
 	target_include_directories(${target} INTERFACE "${install_dir}/include")
 
 endfunction(import_libfirm)
