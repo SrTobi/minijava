@@ -5,6 +5,7 @@
 
 #include "parser/ast.hpp"
 
+using pos = minijava::position;
 
 BOOST_AUTO_TEST_CASE(builder_default)
 {
@@ -13,7 +14,7 @@ BOOST_AUTO_TEST_CASE(builder_default)
 	const auto node = ab(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->id());
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
@@ -25,8 +26,8 @@ BOOST_AUTO_TEST_CASE(builder_id)
 	const auto ab = minijava::ast_builder<minijava::ast::type>{42};
 	const auto node = ab(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{42}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{}, node->position().line());
+	BOOST_REQUIRE_EQUAL(std::size_t{}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
@@ -36,10 +37,10 @@ BOOST_AUTO_TEST_CASE(builder_line)
 {
 	const auto integer = minijava::ast::primitive_type::type_int;
 	auto ab = minijava::ast_builder<minijava::ast::type>{};
-	const auto node = ab.at_line(5)(integer, 100);
+	const auto node = ab.at(pos(5, 0))(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{5}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{5}, node->position().line());
+	BOOST_REQUIRE_EQUAL(std::size_t{0}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
@@ -49,10 +50,10 @@ BOOST_AUTO_TEST_CASE(builder_column)
 {
 	const auto integer = minijava::ast::primitive_type::type_int;
 	auto ab = minijava::ast_builder<minijava::ast::type>{};
-	const auto node = ab.at_column(8)(integer, 100);
+	const auto node = ab.at(pos(0, 8))(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{8}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{0}, node->position().line());
+	BOOST_REQUIRE_EQUAL(std::size_t{8}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
@@ -62,10 +63,10 @@ BOOST_AUTO_TEST_CASE(builder_line_and_column)
 {
 	const auto integer = minijava::ast::primitive_type::type_int;
 	auto ab = minijava::ast_builder<minijava::ast::type>{};
-	const auto node = ab.at_line(3).at_column(6)(integer, 100);
+	const auto node = ab.at(pos(3, 6))(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{3}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{6}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{3}, node->position().line());
+	BOOST_REQUIRE_EQUAL(std::size_t{6}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
@@ -75,10 +76,10 @@ BOOST_AUTO_TEST_CASE(builder_column_and_line)
 {
 	const auto integer = minijava::ast::primitive_type::type_int;
 	auto ab = minijava::ast_builder<minijava::ast::type>{};
-	const auto node = ab.at_column(6).at_line(3)(integer, 100);
+	const auto node = ab.at(pos(3, 6))(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{3}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{6}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{3}, node->position().line());
+	BOOST_REQUIRE_EQUAL(std::size_t{6}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
@@ -88,10 +89,10 @@ BOOST_AUTO_TEST_CASE(builder_explicit)
 {
 	const auto integer = minijava::ast::primitive_type::type_int;
 	auto ab = minijava::ast_builder<minijava::ast::type>{12};
-	const auto node = ab.at_line(23).at_column(34)(integer, 100);
+	const auto node = ab.at(pos(23, 34))(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{12}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{23}, node->line());
-	BOOST_REQUIRE_EQUAL(std::size_t{34}, node->column());
+	BOOST_REQUIRE_EQUAL(std::size_t{23}, node->position().line());
+	BOOST_REQUIRE_EQUAL(std::size_t{34}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
 }
