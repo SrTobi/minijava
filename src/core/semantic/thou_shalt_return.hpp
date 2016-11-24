@@ -38,26 +38,36 @@
 #pragma once
 
 #include "parser/ast.hpp"
-
+#include "semantic/name_type_analysis.hpp"
 
 namespace minijava
 {
 
-	/**
-	 * @brief
-	 *     Checks that all non-`void` methods in the program `return` a value
-	 *     on all possible paths.
-	 *
-	 * If the program is not well-typed, the behavior is undefined.  Therefore,
-	 * this function shall only be called after type-checking was successful.
-	 *
-	 * @param ast
-	 *     program to check
-	 *
-	 * @throws semantic_error
-	 *     if there are paths that might `return` without a value
-	 *
-	 */
-	void check_return_paths(const ast::program& ast);
+	namespace sem
+	{
+
+		/**
+		 * @brief
+		 *     Checks that all non-`void` methods in the program `return` a
+		 *     value on all possible paths.
+		 *
+		 * If the program is not well-typed, the behavior is undefined.
+		 * Therefore, this function shall only be called after type-checking was
+		 * successful.
+		 *
+		 * @param ast
+		 *     program to check
+		 *
+		 * @param types
+		 *     type annotations
+		 *
+		 * @throws semantic_error
+		 *     if there are paths that might `return` without a value
+		 *
+		 */
+		void check_return_paths(const ast::program& ast,
+								const type_attributes& types);
+
+	}  // namespace sem
 
 }  // namespace minijava

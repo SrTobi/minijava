@@ -56,6 +56,39 @@ namespace /* anonymous */
 		return as_program(std::move(body), std::move(rettype));
 	}
 
+	minijava::sem::type_attributes
+	fake_broken_shallow_type_analysis(const ast::program& ast)
+	{
+		// this "type analysis" is completely broken and relies on
+		// implementation details of check_return_paths, namely that it will
+		// only check the method return type for equality to void
+		auto result = minijava::sem::type_attributes{};
+		for (const auto& clazz : ast.classes()) {
+			for (const auto& method : clazz->instance_methods()) {
+				auto declared_basic_type = method->return_type().name();
+				auto primitive = boost::get<ast::primitive_type>(&declared_basic_type);
+				if (primitive && *primitive == ast::primitive_type::type_void) {
+					result.insert(std::make_pair(
+							method.get(),
+							minijava::sem::type{
+									minijava::sem::basic_type_info::make_void_type(), 0
+							}
+					));
+				} else {
+					result.insert(std::make_pair(
+							method.get(),
+							minijava::sem::type{
+									// I warned you that this "type analysis" was broken
+									// Only you are to blame if you experience physical pain while reading this
+									minijava::sem::basic_type_info::make_int_type(), 0
+							}
+					));
+				}
+			}
+		}
+		return result;
+	}
+
 }  // namespace /* anonymous */
 
 
@@ -65,7 +98,8 @@ BOOST_AUTO_TEST_CASE(empty_void_function_is_okay)
 		testaux::make_unique_ptr_vector<ast::block_statement>(),
 		g_fact.make<ast::type>()(ast::primitive_type::type_void)
 	);
-	minijava::check_return_paths(*ast);
+	auto types = fake_broken_shallow_type_analysis(*ast);
+	minijava::sem::check_return_paths(*ast, types);
 }
 
 
@@ -74,8 +108,9 @@ BOOST_AUTO_TEST_CASE(empty_int_function_is_not_okay)
 	const auto ast = as_program(
 		testaux::make_unique_ptr_vector<ast::block_statement>()
 	);
+	auto types = fake_broken_shallow_type_analysis(*ast);
 	BOOST_REQUIRE_THROW(
-		minijava::check_return_paths(*ast),
+		minijava::sem::check_return_paths(*ast, types),
 		minijava::semantic_error
 	);
 }
@@ -87,8 +122,9 @@ BOOST_AUTO_TEST_CASE(empty_ref_function_is_not_okay)
 		testaux::make_unique_ptr_vector<ast::block_statement>(),
 		g_fact.make<ast::type>()(g_pool.normalize("Object"))
 	);
+	auto types = fake_broken_shallow_type_analysis(*ast);
 	BOOST_REQUIRE_THROW(
-		minijava::check_return_paths(*ast),
+		minijava::sem::check_return_paths(*ast, types),
 		minijava::semantic_error
 	);
 }
@@ -103,7 +139,8 @@ BOOST_AUTO_TEST_CASE(int_with_return_is_okay)
 			)
 		)
 	);
-	minijava::check_return_paths(*ast);
+	auto types = fake_broken_shallow_type_analysis(*ast);
+	minijava::sem::check_return_paths(*ast, types);
 }
 
 
@@ -120,8 +157,9 @@ BOOST_AUTO_TEST_CASE(int_with_conditional_return_is_not_okay_1st)
 			)
 		)
 	);
+	auto types = fake_broken_shallow_type_analysis(*ast);
 	BOOST_REQUIRE_THROW(
-		minijava::check_return_paths(*ast),
+		minijava::sem::check_return_paths(*ast, types),
 		minijava::semantic_error
 	);
 }
@@ -140,8 +178,9 @@ BOOST_AUTO_TEST_CASE(int_with_conditional_return_is_not_okay_2nd)
 			)
 		)
 	);
+	auto types = fake_broken_shallow_type_analysis(*ast);
 	BOOST_REQUIRE_THROW(
-		minijava::check_return_paths(*ast),
+		minijava::sem::check_return_paths(*ast, types),
 		minijava::semantic_error
 	);
 }
@@ -160,8 +199,9 @@ BOOST_AUTO_TEST_CASE(int_with_conditional_return_is_not_okay_3rd)
 			)
 		)
 	);
+	auto types = fake_broken_shallow_type_analysis(*ast);
 	BOOST_REQUIRE_THROW(
-		minijava::check_return_paths(*ast),
+		minijava::sem::check_return_paths(*ast, types),
 		minijava::semantic_error
 	);
 }
@@ -179,8 +219,9 @@ BOOST_AUTO_TEST_CASE(returning_once_in_a_while_is_not_sufficient)
 			)
 		)
 	);
+	auto types = fake_broken_shallow_type_analysis(*ast);
 	BOOST_REQUIRE_THROW(
-		minijava::check_return_paths(*ast),
+		minijava::sem::check_return_paths(*ast, types),
 		minijava::semantic_error
 	);
 }
@@ -201,7 +242,8 @@ BOOST_AUTO_TEST_CASE(int_with_double_conditional_return_is_okay)
 			)
 		)
 	);
-	minijava::check_return_paths(*ast);
+	auto types = fake_broken_shallow_type_analysis(*ast);
+	minijava::sem::check_return_paths(*ast, types);
 }
 
 
@@ -226,7 +268,8 @@ BOOST_AUTO_TEST_CASE(int_with_triple_conditional_return_is_okay)
 			)
 		)
 	);
-	minijava::check_return_paths(*ast);
+	auto types = fake_broken_shallow_type_analysis(*ast);
+	minijava::sem::check_return_paths(*ast, types);
 }
 
 
@@ -254,7 +297,8 @@ BOOST_AUTO_TEST_CASE(return_cascase_is_okay)
 			)
 		)
 	);
-	minijava::check_return_paths(*ast);
+	auto types = fake_broken_shallow_type_analysis(*ast);
+	minijava::sem::check_return_paths(*ast, types);
 }
 
 
@@ -279,5 +323,6 @@ BOOST_AUTO_TEST_CASE(single_return_from_deeply_nested_block_is_okay)
 			)
 		)
 	);
-	minijava::check_return_paths(*ast);
+	auto types = fake_broken_shallow_type_analysis(*ast);
+	minijava::sem::check_return_paths(*ast, types);
 }

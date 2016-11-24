@@ -120,6 +120,7 @@ namespace minijava
 				vardecl_annotations,
 				method_annotations
 		);
+		sem::check_return_paths(ast, type_annotations);
 		auto const_annotations = sem::extract_constants(ast);
 		return semantic_info{
 				std::move(classes),
