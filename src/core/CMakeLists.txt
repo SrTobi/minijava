@@ -8,6 +8,7 @@ target_include_directories(core
 
 target_link_libraries(core
 	LINK_PUBLIC ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+	LINK_PRIVATE libFirm
 )
 
 add_custom_command(

@@ -6,6 +6,7 @@ enable_testing()
 include(CheckIncludeFileCXX)
 include("extras/cmake/activate_cpp14.cmake")
 include("extras/cmake/enable_diagnostics.cmake")
+include("extras/cmake/import_libfirm.cmake")
 
 buildx_activate_cpp14()
 buildx_enable_diagnostics()
@@ -22,6 +23,8 @@ find_package(Boost REQUIRED COMPONENTS
 	system
 	unit_test_framework
 )
+
+import_libfirm(libFirm)
 
 check_include_file_cxx("sys/resource.h" MINIJAVA_HAVE_RLIMIT)
 
