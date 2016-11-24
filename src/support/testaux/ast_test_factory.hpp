@@ -44,6 +44,20 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Wraps a single block statement as a block.
+		 *
+		 * @param blkstmt
+		 *     statement to wrap
+		 *
+		 * @returns
+		 *     block AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::block>
+		as_block(std::unique_ptr<minijava::ast::block_statement> blkstmt);
+
+		/**
+		 * @brief
 		 *     Creates an empty main method.
 		 *
 		 * @param name
@@ -54,14 +68,14 @@ namespace testaux
 		 *
 		 */
 		std::unique_ptr<minijava::ast::main_method>
-		make_empty_main(const std::string& name);
+		make_empty_main(const std::string& name = "main");
 
 		/**
 		 * @brief
 		 *     Creates an empty method.
 		 *
-		 * The method will be of type `void`, take no parameters and have an empty
-		 * body.
+		 * The method will be of type `void`, take no parameters and have an
+		 * empty body.
 		 *
 		 * @param name
 		 *     name of the method
@@ -72,6 +86,46 @@ namespace testaux
 		 */
 		std::unique_ptr<minijava::ast::instance_method>
 		make_empty_method(const std::string& name);
+
+		/**
+		 * @brief
+		 *     Creates a variable declaration (class type).
+		 *
+		 * @param name
+		 *     name of the declared variable
+		 *
+		 * @param type
+		 *     name of the (class) type
+		 *
+		 * @param rank
+		 *     rank of the array
+		 *
+		 * @returns
+		 *     variable declaration AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::var_decl>
+		make_declaration(const std::string& name, const std::string& type, std::size_t rank = 0);
+
+		/**
+		 * @brief
+		 *     Creates a variable declaration (primitive type).
+		 *
+		 * @param name
+		 *     name of the declared variable
+		 *
+		 * @param type
+		 *     primitive type
+		 *
+		 * @param rank
+		 *     rank of the array
+		 *
+		 * @returns
+		 *     variable declaration AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::var_decl>
+		make_declaration(const std::string& name, minijava::ast::primitive_type type, std::size_t rank = 0);
 
 		/**
 		 * @brief
@@ -129,6 +183,40 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Wraps an instance method into a class.
+		 *
+		 * @param name
+		 *     name of the class
+		 *
+		 * @param method
+		 *     instance method to wrap
+		 *
+		 * @returns
+		 *     AST for class
+		 *
+		 */
+		std::unique_ptr<minijava::ast::class_declaration>
+		as_class(const std::string& name, std::unique_ptr<minijava::ast::instance_method> method);
+
+		/**
+		 * @brief
+		 *     Wraps a (field) declaration into a class.
+		 *
+		 * @param name
+		 *     name of the class
+		 *
+		 * @param decl
+		 *     declaration to wrap
+		 *
+		 * @returns
+		 *     AST for class
+		 *
+		 */
+		std::unique_ptr<minijava::ast::class_declaration>
+		as_class(const std::string& name, std::unique_ptr<minijava::ast::var_decl> decl);
+
+		/**
+		 * @brief
 		 *     Wraps a main method into a program with a single class.
 		 *
 		 * @param method
@@ -140,6 +228,20 @@ namespace testaux
 		 */
 		std::unique_ptr<minijava::ast::program>
 		as_program(std::unique_ptr<minijava::ast::main_method> method);
+
+		/**
+		 * @brief
+		 *     Wraps a block as a program as the body of the main method.
+		 *
+		 * @param body
+		 *     body of main
+		 *
+		 * @returns
+		 *     AST for complete program
+		 *
+		 */
+		std::unique_ptr<minijava::ast::program>
+		as_program(std::unique_ptr<minijava::ast::block> body);
 
 		/**
 		 * @brief

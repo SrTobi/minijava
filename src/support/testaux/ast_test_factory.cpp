@@ -9,6 +9,14 @@ namespace ast = minijava::ast;
 namespace testaux
 {
 
+	std::unique_ptr<ast::block>
+	ast_test_factory::as_block(std::unique_ptr<ast::block_statement> blkstmt)
+	{
+		return factory.make<ast::block>()(
+			make_unique_ptr_vector<ast::block_statement>(std::move(blkstmt))
+		);
+	}
+
 	std::unique_ptr<ast::main_method>
 	ast_test_factory::make_empty_main(const std::string& name)
 	{
@@ -45,6 +53,28 @@ namespace testaux
 		);
 	}
 
+	std::unique_ptr<ast::var_decl>
+	ast_test_factory::make_declaration(const std::string& name,
+									   const std::string& type,
+									   const std::size_t rank)
+	{
+		return factory.make<ast::var_decl>()(
+			factory.make<ast::type>()(pool.normalize(type), rank),
+			pool.normalize(name)
+		);
+	}
+
+	std::unique_ptr<ast::var_decl>
+	ast_test_factory::make_declaration(const std::string& name,
+									   const ast::primitive_type type,
+									   const std::size_t rank)
+	{
+		return factory.make<ast::var_decl>()(
+			factory.make<ast::type>()(type, rank),
+			pool.normalize(name)
+		);
+	}
+
 	std::unique_ptr<ast::class_declaration>
 	ast_test_factory::make_empty_class()
 	{
@@ -70,12 +100,46 @@ namespace testaux
 		);
 	}
 
+	std::unique_ptr<ast::class_declaration>
+	ast_test_factory::as_class(const std::string& name, std::unique_ptr<ast::instance_method> method)
+	{
+		return factory.make<ast::class_declaration>()(
+			pool.normalize(name),
+			make_unique_ptr_vector<ast::var_decl>(),
+			make_unique_ptr_vector<ast::instance_method>(std::move(method)),
+			make_unique_ptr_vector<ast::main_method>()
+		);
+	}
+
+	std::unique_ptr<ast::class_declaration>
+	ast_test_factory::as_class(const std::string& name, std::unique_ptr<ast::var_decl> decl)
+	{
+		return factory.make<ast::class_declaration>()(
+			pool.normalize(name),
+			make_unique_ptr_vector<ast::var_decl>(std::move(decl)),
+			make_unique_ptr_vector<ast::instance_method>(),
+			make_unique_ptr_vector<ast::main_method>()
+		);
+	}
+
 	std::unique_ptr<ast::program>
 	ast_test_factory::as_program(std::unique_ptr<ast::main_method> method)
 	{
 		return factory.make<ast::program>()(
 			make_unique_ptr_vector<ast::class_declaration>(
 				as_class("Test", std::move(method))
+			)
+		);
+	}
+
+	std::unique_ptr<ast::program>
+	ast_test_factory::as_program(std::unique_ptr<ast::block> body)
+	{
+		return as_program(
+			factory.make<ast::main_method>()(
+				pool.normalize("main"),
+				pool.normalize("args"),
+				std::move(body)
 			)
 		);
 	}
