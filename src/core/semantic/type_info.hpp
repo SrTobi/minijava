@@ -224,7 +224,7 @@ namespace minijava
 			 * this object is null or a primitive type.
 			 *
 			 */
-			const ast::class_declaration* const _declaration;
+			const ast::class_declaration* _declaration;
 
 			/**
 			 * @brief

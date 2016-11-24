@@ -68,21 +68,21 @@ namespace /* anonymous */
 				auto declared_basic_type = method->return_type().name();
 				auto primitive = boost::get<ast::primitive_type>(&declared_basic_type);
 				if (primitive && *primitive == ast::primitive_type::type_void) {
-					result.insert(std::make_pair(
-							method.get(),
+					result.put(
+							*method,
 							minijava::sem::type{
 									minijava::sem::basic_type_info::make_void_type(), 0
 							}
-					));
+					);
 				} else {
-					result.insert(std::make_pair(
-							method.get(),
+					result.put(
+							*method,
 							minijava::sem::type{
 									// I warned you that this "type analysis" was broken
 									// Only you are to blame if you experience physical pain while reading this
 									minijava::sem::basic_type_info::make_int_type(), 0
 							}
-					));
+					);
 				}
 			}
 		}

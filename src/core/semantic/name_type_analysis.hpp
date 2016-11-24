@@ -69,7 +69,12 @@ namespace minijava
 			ast_node_filter<ast::method>
 		>;
 
-		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
+		/**
+		 * @brief
+		 *     Type mapping `var_access` and `array_access` nodes to `var_decl` nodes.
+		 *
+		 * Contains `nullptr` is the referenced variable is global.
+		 */
 		using vardecl_attributes = ast_attributes<
 			const ast::var_decl*,
 			ast_node_filter<ast::array_access, ast::variable_access>
@@ -90,10 +95,11 @@ namespace minijava
 		 * `classes`, the behavior is undefined.  On the other hand, `classes`
 		 * may contain types that are not defined in `ast`.  For the purpose of
 		 * the type analysis performed by this function, those types are
-		 * treated as if they were defined in `ast`.
+		 * treated as if they were defined in `ast`.  If `ast` contains
+		 * duplicate classes, the behavior is undefined as well.
 		 *
 		 * The `ast_attributes` container that is passed in to be populated
-		 * with results may already contain some entries but only for
+		 * with results may already contain some entries, but only for
 		 * non-conflicting nodes.  If the container already sets an attribute
 		 * on a node that this analysis would also set, the behavior is
 		 * undefined.
@@ -108,9 +114,13 @@ namespace minijava
 		 *     data structure to populate with the extracted types
 		 *
 		 * @throws semantic_error
-		 *     if the declarations of fields and methods is not valid MiniJava
+		 *     if duplicate field or method names, invalid main methods or
+		 *     unknown types are encountered or if there is not exactly one
+		 *     entry point (main method) in the program; also throws if it
+		 *     finds a field or argument declared as void
 		 *
 		 */
+		 // FIXME: check whether we need to expose this or whether we can just perform a full analysis on the builtin AST
 		void perform_shallow_type_analysis(const ast::program& ast,
 		                                   const class_definitions& classes,
 		                                   type_attributes& type_annotations);
@@ -129,7 +139,7 @@ namespace minijava
 		 * are not found in `classes`.
 		 *
 		 * The `ast_attributes` containers that are passed in to be populated
-		 * with results may already contain some entries but only for
+		 * with results may already contain some entries, but only for
 		 * non-conflicting nodes.  If a container already sets an attribute on
 		 * a node that this analysis would also set, the behavior is undefined.
 		 *
@@ -154,6 +164,9 @@ namespace minijava
 		 *
 		 * @param method_annotations
 		 *     data structure to populate with extracted declaration pointers
+		 *
+		 * @throws semantic_error
+		 *     if `perform_shallow_type_analysis` throws or {...FIXME...}
 		 *
 		 */
 		void perform_full_name_type_analysis(const ast::program& ast,
