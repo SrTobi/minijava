@@ -108,7 +108,7 @@ namespace minijava
 		 *     data structure to populate with the extracted types
 		 *
 		 * @throws semantic_error
-		 *     if a field or method declaration is not typed correctly
+		 *     if the declarations of fields and methods is not valid MiniJava
 		 *
 		 */
 		void perform_shallow_type_analysis(const ast::program& ast,
