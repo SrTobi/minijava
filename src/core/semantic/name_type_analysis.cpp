@@ -47,20 +47,14 @@ namespace minijava
 					if (*primitive == ast::primitive_type::type_void) {
 						throw semantic_error{"Field declared as type 'void'."};
 					}
-					type_annotations.insert(std::make_pair(
-							&field,
-							type{primitive_type_info(*primitive), declared_type.rank()}
-					));
+					type_annotations.put(field, type{primitive_type_info(*primitive), declared_type.rank()});
 				} else {
 					auto type_name = boost::get<symbol>(&declared_basic_type);
 					assert(type_name);
 					if (classes.find(*type_name) == classes.end()) {
 						throw semantic_error{"Field declared as unknown type '"s + type_name->c_str() + "'."};
 					}
-					type_annotations.insert(std::make_pair(
-							&field,
-							type{classes.at(*type_name), declared_type.rank()}
-					));
+					type_annotations.put(field, type{classes.at(*type_name), declared_type.rank()});
 				}
 			}
 
@@ -72,20 +66,14 @@ namespace minijava
 				auto& declared_return_type = method.return_type();
 				auto& declared_return_basic_type = declared_return_type.name();
 				if (auto primitive = boost::get<ast::primitive_type>(&declared_return_basic_type)) {
-					type_annotations.insert(std::make_pair(
-							&method,
-							type{primitive_type_info(*primitive), declared_return_type.rank()}
-					));
+					type_annotations.put(method, type{primitive_type_info(*primitive), declared_return_type.rank()});
 				} else {
 					auto type_name = boost::get<symbol>(&declared_return_basic_type);
 					assert(type_name);
 					if (classes.find(*type_name) == classes.end()) {
 						throw semantic_error{"Unknown type '"s + type_name->c_str() + "' declared as method return type."};
 					}
-					type_annotations.insert(std::make_pair(
-							&method,
-							type{classes.at(*type_name), declared_return_type.rank()}
-					));
+					type_annotations.put(method, type{classes.at(*type_name), declared_return_type.rank()});
 				}
 
 				for (auto& param : method.parameters()) {
@@ -95,20 +83,14 @@ namespace minijava
 						if (*primitive == ast::primitive_type::type_void) {
 							throw semantic_error{"Argument declared as type 'void'."};
 						}
-						type_annotations.insert(std::make_pair(
-								param.get(),
-								type{primitive_type_info(*primitive), declared_type.rank()}
-						));
+						type_annotations.put(*param, type{primitive_type_info(*primitive), declared_type.rank()});
 					} else {
 						auto type_name = boost::get<symbol>(&declared_basic_type);
 						assert(type_name);
 						if (classes.find(*type_name) == classes.end()) {
 							throw semantic_error{"Argument declared as unknown type '"s + type_name->c_str() + "'."};
 						}
-						type_annotations.insert(std::make_pair(
-								param.get(),
-								type{classes.at(*type_name), declared_type.rank()}
-						));
+						type_annotations.put(*param, type{classes.at(*type_name), declared_type.rank()});
 					}
 				}
 			}
@@ -221,6 +203,43 @@ namespace minijava
 				throw_no_main();
 			}
 		}
+
+		namespace /* anonymous */
+		{
+
+			class lvalue_visitor final : public ast::visitor
+			{
+
+			public:
+
+				lvalue_visitor(const type_attributes& types)
+						: _types{types} {}
+
+				bool is_lvalue{false};
+
+				using ast::visitor::visit;
+
+				void visit(const ast::array_access& node) override
+				{
+					auto& type_info = _types.at(node).info;
+					assert (!type_info.is_void());
+					is_lvalue = type_info.is_user_defined() || type_info.is_primitive();
+				}
+
+				void visit(const ast::variable_access& node) override
+				{
+					auto& type_info = _types.at(node).info;
+					assert (!type_info.is_void());
+					is_lvalue = type_info.is_user_defined() || type_info.is_primitive();
+				}
+
+			private:
+
+				const type_attributes& _types;
+
+			};
+
+		}  // namespace /* anonymous */
 
 		void perform_full_name_type_analysis(const ast::program&      ast,
 											 const class_definitions& classes,
