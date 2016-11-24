@@ -584,6 +584,10 @@ namespace minijava
 		template <typename NodeT>
 		apply_static_node_filter_t<NodeT, mapped_type&> operator[](NodeT&& node)
 		{
+			static_assert(
+				!std::is_void<NodeT>{} && std::is_default_constructible<mapped_type>{},
+				"You can only use operator[] on maps with default-constructible mapped types"
+			);
 			assert(get_filter().dynamic_check(node));
 			return _data[&node];
 		}
