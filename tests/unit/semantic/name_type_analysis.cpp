@@ -114,7 +114,9 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_methods)
 					tf.make_empty_method("foo"),
 					tf.make_empty_method("foo")
 				),
-				testaux::make_unique_ptr_vector<ast::main_method>()
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					tf.make_empty_main("main")
+				)
 			)
 		)
 	);
