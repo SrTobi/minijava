@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(builder_default)
 	const auto ab = minijava::ast_builder<minijava::ast::type>{};
 	const auto node = ab(integer, 100);
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->id());
-	BOOST_REQUIRE_EQUAL(std::size_t{}, node->line());
+	BOOST_REQUIRE_EQUAL(std::size_t{}, node->position().line());
 	BOOST_REQUIRE_EQUAL(std::size_t{}, node->position().column());
 	BOOST_REQUIRE(integer == boost::get<minijava::ast::primitive_type>(node->name()));
 	BOOST_REQUIRE_EQUAL(std::size_t{100}, node->rank());
