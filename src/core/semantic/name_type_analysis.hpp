@@ -69,7 +69,12 @@ namespace minijava
 			ast_node_filter<ast::method>
 		>;
 
-		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
+		/**
+		 * @brief
+		 *     Type mapping `var_access` and `array_access` nodes to `var_decl` nodes.
+		 *
+		 * Contains `nullptr` is the referenced variable is global.
+		 */
 		using vardecl_attributes = ast_attributes<
 			const ast::var_decl*,
 			ast_node_filter<ast::array_access, ast::variable_access>

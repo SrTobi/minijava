@@ -47,7 +47,12 @@ namespace minijava
 		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
 		using locals_attributes = sem::locals_attributes;
 
-		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
+		/**
+		 * @brief
+		 *     Type mapping `var_access` and `array_access` nodes to `var_decl` nodes.
+		 *
+		 * Contains `nullptr` is the referenced variable is global.
+		 */
 		using vardecl_attributes = sem::vardecl_attributes;
 
 		/** @brief Type mapping `method_invocation` nodes to `instance_method` nodes. */
@@ -193,6 +198,8 @@ namespace minijava
 		 * All `var_access` and `array_access` nodes will be mapped for if the
 		 * point of declaration of the referenced identifier cannot be
 		 * determined, the program is ill-formed and will be rejected.
+		 * `nullptr` is a valid value, though, and denotes that the referenced
+		 * identifier is global and therefore was not declared in the program.
 		 *
 		 * @returns
 		 *     `const` reference to variable declaration annotations
