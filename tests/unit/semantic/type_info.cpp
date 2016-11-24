@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -11,7 +10,6 @@
 
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"
-#include "symbol/symbol_pool.hpp"
 
 #include "testaux/ast_test_factory.hpp"
 #include "testaux/random_tokens.hpp"
@@ -19,17 +17,6 @@
 
 namespace ast = minijava::ast;
 
-
-namespace /* anonymous */
-{
-	template <typename EngineT, typename PoolT>
-	std::unique_ptr<ast::class_declaration>
-	make_random_class_decl(EngineT& engine, PoolT& pool)
-	{
-		const auto name = testaux::get_random_identifier(engine);
-		return testaux::make_empty_class(name.c_str(), pool);
-	}
-}  // namespace /* anonymous */
 
 BOOST_AUTO_TEST_CASE(properties_of_null_t)
 {
@@ -97,8 +84,8 @@ BOOST_AUTO_TEST_CASE(properties_of_boolean_t)
 
 BOOST_AUTO_TEST_CASE(properties_of_builtin_reference_types)
 {
-	auto pool = minijava::symbol_pool<>{};
-	auto clazz = testaux::make_empty_class("Elephant", pool);
+	auto tf = testaux::ast_test_factory{};
+	auto clazz = tf.make_empty_class();
 	const auto tb = minijava::sem::basic_type_info{*clazz, true};
 	BOOST_REQUIRE_EQUAL(clazz.get(), tb.declaration());
 	BOOST_REQUIRE( tb.is_builtin());
@@ -115,8 +102,8 @@ BOOST_AUTO_TEST_CASE(properties_of_builtin_reference_types)
 
 BOOST_AUTO_TEST_CASE(properties_of_user_defined_types)
 {
-	auto pool = minijava::symbol_pool<>{};
-	auto clazz = testaux::make_empty_class("Elephant", pool);
+	auto tf = testaux::ast_test_factory{};
+	auto clazz = tf.make_empty_class();
 	const auto tu = minijava::sem::basic_type_info{*clazz, false};
 	BOOST_REQUIRE_EQUAL(clazz.get(), tu.declaration());
 	BOOST_REQUIRE(!tu.is_builtin());
@@ -133,22 +120,20 @@ BOOST_AUTO_TEST_CASE(properties_of_user_defined_types)
 
 BOOST_AUTO_TEST_CASE(types_are_equal_only_to_themselves)
 {
+	auto tf = testaux::ast_test_factory{};
 	auto btis = std::vector<minijava::sem::basic_type_info>{
 			minijava::sem::basic_type_info::make_null_type(),
 			minijava::sem::basic_type_info::make_void_type(),
 			minijava::sem::basic_type_info::make_int_type(),
 			minijava::sem::basic_type_info::make_boolean_type(),
 	};
-	auto pool = minijava::symbol_pool<>{};
 	auto classdecls = std::vector<std::unique_ptr<ast::class_declaration>>{};
 	auto engine = std::default_random_engine{};
 	auto builtindist = std::bernoulli_distribution{};
 	std::generate_n(
 			std::back_inserter(classdecls),
 			100,
-			[&engine, &pool]() {
-				return make_random_class_decl(engine, pool);
-			}
+			[&tf](){ return tf.make_empty_class(); }
 	);
 	std::transform(
 			std::begin(classdecls), std::end(classdecls),
@@ -171,13 +156,13 @@ BOOST_AUTO_TEST_CASE(types_are_equal_only_to_themselves)
 
 BOOST_AUTO_TEST_CASE(extract_type_info_success)
 {
-	auto pool = minijava::symbol_pool<>{};
+	auto tf = testaux::ast_test_factory{};
 	auto classes = minijava::sem::class_definitions{};
-	auto class_1 = testaux::make_empty_class("builtin.Test", pool);
+	auto class_1 = tf.make_empty_class("builtin.Test");
 	auto classp_1 = class_1.get();
-	auto class_2 = testaux::make_empty_class("builtin.My", pool);
+	auto class_2 = tf.make_empty_class("builtin.My");
 	auto classp_2 = class_2.get();
-	auto class_3 = testaux::make_empty_class("builtin.Class", pool);
+	auto class_3 = tf.make_empty_class("builtin.Class");
 	auto classp_3 = class_3.get();
 	auto program_builtin = std::make_unique<ast::program>(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
@@ -186,11 +171,11 @@ BOOST_AUTO_TEST_CASE(extract_type_info_success)
 					std::move(class_3)
 			)
 	);
-	auto class_4 = testaux::make_empty_class("Test", pool);
+	auto class_4 = tf.make_empty_class("Test");
 	auto classp_4 = class_4.get();
-	auto class_5 = testaux::make_empty_class("My", pool);
+	auto class_5 = tf.make_empty_class("My");
 	auto classp_5 = class_5.get();
-	auto class_6 = testaux::make_empty_class("Class", pool);
+	auto class_6 = tf.make_empty_class("Class");
 	auto classp_6 = class_6.get();
 	auto program = std::make_unique<ast::program>(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
@@ -201,53 +186,53 @@ BOOST_AUTO_TEST_CASE(extract_type_info_success)
 	);
 	minijava::sem::extract_type_info(*program_builtin, true, classes);
 	minijava::sem::extract_type_info(*program, false, classes);
-	minijava::symbol s = pool.normalize("builtin.Test");
+	minijava::symbol s = tf.pool.normalize("builtin.Test");
 	BOOST_CHECK(classes.find(s) != classes.end());
 	BOOST_CHECK(classes.find(s)->second.is_builtin());
 	BOOST_CHECK(!classes.find(s)->second.is_user_defined());
 	BOOST_CHECK(classes.find(s)->second.declaration() == classp_1);
-	s = pool.normalize("builtin.My");
+	s = tf.pool.normalize("builtin.My");
 	BOOST_CHECK(classes.find(s) != classes.end());
 	BOOST_CHECK(classes.find(s)->second.is_builtin());
 	BOOST_CHECK(!classes.find(s)->second.is_user_defined());
 	BOOST_CHECK(classes.find(s)->second.declaration() == classp_2);
-	s = pool.normalize("builtin.Class");
+	s = tf.pool.normalize("builtin.Class");
 	BOOST_CHECK(classes.find(s) != classes.end());
 	BOOST_CHECK(classes.find(s)->second.is_builtin());
 	BOOST_CHECK(!classes.find(s)->second.is_user_defined());
 	BOOST_CHECK(classes.find(s)->second.declaration() == classp_3);
-	s = pool.normalize("Test");
+	s = tf.pool.normalize("Test");
 	BOOST_CHECK(classes.find(s) != classes.end());
 	BOOST_CHECK(!classes.find(s)->second.is_builtin());
 	BOOST_CHECK(classes.find(s)->second.is_user_defined());
 	BOOST_CHECK(classes.find(s)->second.declaration() == classp_4);
-	s = pool.normalize("My");
+	s = tf.pool.normalize("My");
 	BOOST_CHECK(classes.find(s) != classes.end());
 	BOOST_CHECK(!classes.find(s)->second.is_builtin());
 	BOOST_CHECK(classes.find(s)->second.is_user_defined());
 	BOOST_CHECK(classes.find(s)->second.declaration() == classp_5);
-	s = pool.normalize("Class");
+	s = tf.pool.normalize("Class");
 	BOOST_CHECK(classes.find(s) != classes.end());
 	BOOST_CHECK(!classes.find(s)->second.is_builtin());
 	BOOST_CHECK(classes.find(s)->second.is_user_defined());
 	BOOST_CHECK(classes.find(s)->second.declaration() == classp_6);
-	s = pool.normalize("builtin.Unknown");
+	s = tf.pool.normalize("builtin.Unknown");
 	BOOST_CHECK(classes.find(s) == classes.end());
-	s = pool.normalize("Unknown");
+	s = tf.pool.normalize("Unknown");
 	BOOST_CHECK(classes.find(s) == classes.end());
 }
 
 
 BOOST_AUTO_TEST_CASE(extract_type_info_class_name_clash)
 {
-	auto pool = minijava::symbol_pool<>{};
-	auto program = std::make_unique<ast::program>(
+	auto tf = testaux::ast_test_factory{};
+	auto program = tf.factory.make<ast::program>()(
 			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					testaux::make_empty_class("Test", pool),
-					testaux::make_empty_class("My", pool),
-					testaux::make_empty_class("Class", pool),
-					testaux::make_empty_class("DoubleTrouble", pool),
-					testaux::make_empty_class("DoubleTrouble", pool)
+					tf.make_empty_class("Test"),
+					tf.make_empty_class("My"),
+					tf.make_empty_class("Class"),
+					tf.make_empty_class("DoubleTrouble"),
+					tf.make_empty_class("DoubleTrouble")
 			)
 	);
 	auto classes = minijava::sem::class_definitions{};
@@ -265,15 +250,15 @@ BOOST_AUTO_TEST_CASE(extract_type_info_class_name_clash)
 
 BOOST_AUTO_TEST_CASE(extract_type_info_empty)
 {
-	auto pool = minijava::symbol_pool<>{};
+	auto tf = testaux::ast_test_factory{};
 	auto classes = minijava::sem::class_definitions{};
-	auto program_empty = std::make_unique<ast::program>(
+	auto program_empty = tf.factory.make<ast::program>()(
 			testaux::make_unique_ptr_vector<ast::class_declaration>()
 	);
 	minijava::sem::extract_type_info(*program_empty, false, classes);
 	auto engine = std::default_random_engine{};
 	for (auto i = 0; i < 100; ++i) {
 		const auto name = testaux::get_random_identifier(engine);
-		BOOST_CHECK(classes.find(pool.normalize(name.c_str())) == classes.end());
+		BOOST_CHECK(classes.find(tf.pool.normalize(name.c_str())) == classes.end());
 	}
 }

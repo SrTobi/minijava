@@ -174,6 +174,19 @@ namespace minijava
 		std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
 		make();
 
+		/**
+		 * @brief
+		 *     `return`s the current internal ID.
+		 *
+		 * The `return`ed value is the value that was passed to the constructor
+		 * as `lastid` plus the number of times `make` was called since.
+		 *
+		 * @returns
+		 *     current internal ID
+		 *
+		 */
+		std::size_t id() const noexcept;
+
 	private:
 
 		/** @brief Last ID that was used. */

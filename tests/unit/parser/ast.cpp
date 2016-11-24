@@ -253,18 +253,17 @@ BOOST_AUTO_TEST_CASE(class_find_methods_and_find_fields_return_correct_range)
 	BOOST_CHECK_EQUAL(main_range_3.first, main_range_3.second);
 }
 
-BOOST_AUTO_TEST_CASE(program_classes_sorted)
+
+BOOST_AUTO_TEST_CASE(program_classes_are_sorted)
 {
-	auto pool = minijava::symbol_pool<>{};
-	auto program = std::make_unique<ast::program>(
-			testaux::make_unique_ptr_vector<ast::class_declaration>(
-					testaux::make_empty_class("test1", pool),
-					testaux::make_empty_class("test1", pool),
-					testaux::make_empty_class("test2", pool),
-					testaux::make_empty_class("test2", pool),
-					testaux::make_empty_class("test3", pool)
-			)
+	auto tf = testaux::ast_test_factory{};
+	auto classes = testaux::make_unique_ptr_vector<ast::class_declaration>();
+	std::generate_n(
+		std::back_inserter(classes),
+		1000,
+		[&tf](){ return tf.make_empty_random_class(); }
 	);
+	auto program = tf.factory.make<ast::program>()(std::move(classes));
 	BOOST_CHECK(std::is_sorted(
 			std::begin(program->classes()), std::end(program->classes()),
 			node_comparator<ast::class_declaration>{}

@@ -56,4 +56,9 @@ namespace minijava
 		return ast_builder<NodeT>{++_id};
 	}
 
+	inline std::size_t ast_factory::id() const noexcept
+	{
+		return _id;
+	}
+
 }  // namespace minijava

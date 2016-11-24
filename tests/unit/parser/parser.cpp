@@ -849,7 +849,7 @@ BOOST_AUTO_TEST_CASE(external_ast_factory)
 			std::begin(test_data), std::end(test_data), factory
 	);
 	// Check that the factory was not copied.
-	BOOST_REQUIRE_EQUAL(14, factory.make<ast::empty_statement>()()->id());
+	BOOST_REQUIRE_EQUAL(13, factory.id());
 	// Check that the IDs are correct.
 	auto ids = std::vector<std::size_t>{};
 	auto collector = testaux::ast_id_collector{ids};
