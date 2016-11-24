@@ -91,6 +91,6 @@ BOOST_AUTO_TEST_CASE(node_can_be_mutated_with_mutator)
 	ast::node::mutator m{1, minijava::position(2, 3)};
 	m(v);
 	BOOST_REQUIRE_EQUAL(1, v.id());
-	BOOST_REQUIRE_EQUAL(2, v.position()->line());
-	BOOST_REQUIRE_EQUAL(3, v.position()->column());
+	BOOST_REQUIRE_EQUAL(2, v.position().line());
+	BOOST_REQUIRE_EQUAL(3, v.position().column());
 }
