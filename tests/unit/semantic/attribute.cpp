@@ -4,6 +4,7 @@
 #include <iterator>
 #include <random>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #define BOOST_TEST_MODULE  semantic_attribute
@@ -19,6 +20,14 @@ namespace ast = minijava::ast;
 
 namespace /* anonymous */
 {
+
+	struct not_default_constructible
+	{
+		explicit not_default_constructible(const int t) : tag{t} {}
+		int tag{};
+	};
+
+	static_assert(!std::is_default_constructible<not_default_constructible>{}, "");
 
 	const void* voided(const void* p) noexcept
 	{
@@ -340,6 +349,29 @@ BOOST_AUTO_TEST_CASE(at_throws_for_non_existing_element)
 	auto atmap = minijava::ast_attributes<int>{};
 	BOOST_REQUIRE_THROW(atmap.at(*nodeptr), std::out_of_range);
 	BOOST_REQUIRE_THROW(testaux::as_const(atmap).at(*nodeptr), std::out_of_range);
+}
+
+
+BOOST_AUTO_TEST_CASE(assign_inserts_new_element)
+{
+	auto nodeptr = minijava::ast_factory{}.make<dummy_ast_node>()();
+	auto atmap = minijava::ast_attributes<not_default_constructible>{};
+	const auto value = not_default_constructible{42};
+	atmap.assign(*nodeptr, value);
+	BOOST_REQUIRE_EQUAL(1, atmap.size());
+	BOOST_REQUIRE_EQUAL(value.tag, atmap.at(*nodeptr).tag);
+}
+
+
+BOOST_AUTO_TEST_CASE(assign_overwrites_existing_element)
+{
+	auto nodeptr = minijava::ast_factory{}.make<dummy_ast_node>()();
+	auto atmap = minijava::ast_attributes<not_default_constructible>{};
+	const auto value = not_default_constructible{42};
+	atmap.insert({nodeptr.get(), not_default_constructible{0}});
+	atmap.assign(*nodeptr, value);
+	BOOST_REQUIRE_EQUAL(1, atmap.size());
+	BOOST_REQUIRE_EQUAL(value.tag, atmap.at(*nodeptr).tag);
 }
 
 

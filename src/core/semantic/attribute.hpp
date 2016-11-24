@@ -16,6 +16,7 @@
 #include <memory>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 #include "exceptions.hpp"
 #include "meta/meta.hpp"
@@ -577,6 +578,9 @@ namespace minijava
 		 * @param NodeT
 		 *     static type of the node to look up
 		 *
+		 * @param node
+		 *     key to look up
+		 *
 		 * @returns
 		 *     mutable reference to the mapped value
 		 *
@@ -609,6 +613,9 @@ namespace minijava
 		 * @param NodeT
 		 *     static type of the node to look up
 		 *
+		 * @param node
+		 *     key to look up
+		 *
 		 * @returns
 		 *     mutable reference to the mapped value
 		 *
@@ -640,6 +647,9 @@ namespace minijava
 		 * @param NodeT
 		 *     static type of the node to look up
 		 *
+		 * @param node
+		 *     key to look up
+		 *
 		 * @returns
 		 *     constant reference to the mapped value
 		 *
@@ -652,6 +662,49 @@ namespace minijava
 		{
 			assert(get_filter().dynamic_check(node));
 			return _data.at(&node);
+		}
+
+		/**
+		 * @brief
+		 *     Assigns a mapped value.
+		 *
+		 * If the key is already mapped, the existing mapping is overwritten.
+		 * Otherwise, a new mapping is inserted.
+		 *
+		 * This function only participates in overload resolution if
+		 *
+		 *     get_filter().static_check(meta::type<NodeT>{})
+		 *
+		 * passes.  If this is the case but
+		 *
+		 *     get_filter().dynamic_check(node)
+		 *
+		 * still doesn't pass, the behavior is undefined.
+		 *
+		 * @param NodeT
+		 *     static type of the node to look up
+		 *
+		 * @param node
+		 *     key to assign the attribute to
+		 *
+		 * @param attr
+		 *     value of the attribute to set
+		 *
+		 * @throws std::out_of_range
+		 *     if `count(&node) == 0`
+		 *
+		 */
+		template <typename NodeT>
+		apply_static_node_filter_t<NodeT> assign(NodeT&& node, mapped_type attr)
+		{
+			assert(get_filter().dynamic_check(node));
+			const auto pos = this->find(&node);
+			if (pos == this->end()) {
+				const auto status = this->insert({&node, std::move(attr)});
+				assert(status.second);
+			} else {
+				pos->second = std::move(attr);
+			}
 		}
 
 		/**
