@@ -4,6 +4,7 @@
 #include <cassert>
 #include <iterator>
 #include <sstream>
+#include <string>
 #include <utility>
 
 #include <boost/optional.hpp>
@@ -21,47 +22,148 @@ namespace minijava
 
 		namespace /* anonymous */
 		{
+			using namespace std::string_literals;
 
-			template <typename ContainerT>
-			auto get_first_name_clash(ContainerT&& nodes)
-			{
-				using pointer_type = decltype(nodes.front().get());
-				auto clash = boost::optional<std::pair<pointer_type, pointer_type>>{};
-				const auto samename = [](auto&& lhs, auto&& rhs){
-					return (lhs->name() == rhs->name());
-				};
-				const auto first = std::begin(nodes);
-				const auto last = std::end(nodes);
-				const auto pos = std::adjacent_find(first, last, samename);
-			    if (pos != last) {
-					clash = std::make_pair(pos->get(), std::next(pos)->get());
+			basic_type_info primitive_type_info(ast::primitive_type primitive) {
+				switch (primitive) {
+				case ast::primitive_type::type_void:
+					return basic_type_info::make_void_type();
+				case ast::primitive_type::type_int:
+					return basic_type_info::make_int_type();
+				case ast::primitive_type::type_boolean:
+					return basic_type_info::make_boolean_type();
 				}
-				return clash;
+				MINIJAVA_NOT_REACHED();
 			}
 
-			void
-			register_method(const ast::method& method,
-							type_attributes& type_annotations)
-			{
-				assert(!type_annotations.count(&method));
-			}
-
-			void
-			register_field(const ast::var_decl& field,
-						   type_attributes& type_annotations)
+			void annotate_field(const ast::var_decl& field,
+								const class_definitions& classes,
+								type_attributes& type_annotations)
 			{
 				assert(!type_annotations.count(&field));
+				auto& declared_type = field.var_type();
+				auto& declared_basic_type = declared_type.name();
+				if (auto primitive = boost::get<ast::primitive_type>(&declared_basic_type)) {
+					if (*primitive == ast::primitive_type::type_void) {
+						throw semantic_error{"Field declared as type 'void'."};
+					}
+					type_annotations.insert(std::make_pair(
+							&field,
+							type{primitive_type_info(*primitive), declared_type.rank()}
+					));
+				} else {
+					auto type_name = boost::get<symbol>(&declared_basic_type);
+					assert(type_name);
+					if (classes.find(*type_name) == classes.end()) {
+						throw semantic_error{"Field declared as unknown type '"s + type_name->c_str() + "'."};
+					}
+					type_annotations.insert(std::make_pair(
+							&field,
+							type{classes.at(*type_name), declared_type.rank()}
+					));
+				}
+			}
+
+			void annotate_method(const ast::method& method,
+								 const class_definitions& classes,
+								 type_attributes& type_annotations)
+			{
+				assert(!type_annotations.count(&method));
+				auto& declared_return_type = method.return_type();
+				auto& declared_return_basic_type = declared_return_type.name();
+				if (auto primitive = boost::get<ast::primitive_type>(&declared_return_basic_type)) {
+					type_annotations.insert(std::make_pair(
+							&method,
+							type{primitive_type_info(*primitive), declared_return_type.rank()}
+					));
+				} else {
+					auto type_name = boost::get<symbol>(&declared_return_basic_type);
+					assert(type_name);
+					if (classes.find(*type_name) == classes.end()) {
+						throw semantic_error{"Unknown type '"s + type_name->c_str() + "' declared as method return type."};
+					}
+					type_annotations.insert(std::make_pair(
+							&method,
+							type{classes.at(*type_name), declared_return_type.rank()}
+					));
+				}
+
+				for (auto& param : method.parameters()) {
+					auto& declared_type = param->var_type();
+					auto& declared_basic_type = declared_type.name();
+					if (auto primitive = boost::get<ast::primitive_type>(&declared_basic_type)) {
+						if (*primitive == ast::primitive_type::type_void) {
+							throw semantic_error{"Argument declared as type 'void'."};
+						}
+						type_annotations.insert(std::make_pair(
+								param.get(),
+								type{primitive_type_info(*primitive), declared_type.rank()}
+						));
+					} else {
+						auto type_name = boost::get<symbol>(&declared_basic_type);
+						assert(type_name);
+						if (classes.find(*type_name) == classes.end()) {
+							throw semantic_error{"Argument declared as unknown type '"s + type_name->c_str() + "'."};
+						}
+						type_annotations.insert(std::make_pair(
+								param.get(),
+								type{classes.at(*type_name), declared_type.rank()}
+						));
+					}
+				}
 			}
 
 			[[noreturn]] void
-			throw_another_main(const ast::class_declaration& has_another_main,
-							   const ast::class_declaration& alredy_had_a_main)
+			throw_duplicate_field(const ast::var_decl* f1,
+								  const ast::var_decl* f2)
 			{
+				const ast::var_decl* first = f1;
+				const ast::var_decl* second = f2;
+				if (f1->line() > f2->line() || (f1->line() == f2->line()
+						&& f1->column() > f2->column())) {
+					std::swap(f1, f2);
+				}
 				auto oss = std::ostringstream{};
-				oss << "Class '" << has_another_main.name() << "'"
+				oss << "Declaration of field '" << first->name() << "'"
+					<< " on line " << first->line()
+					<< " conflicts with previous declaration on line "
+					<< second->line() << ".";
+				throw semantic_error{oss.str()};
+			}
+
+			[[noreturn]] void
+			throw_duplicate_method(const ast::instance_method* m1,
+								   const ast::instance_method* m2)
+			{
+				const ast::instance_method* first = m1;
+				const ast::instance_method* second = m2;
+				if (m1->line() > m2->line() || (m1->line() == m2->line()
+						&& m1->column() > m2->column())) {
+					std::swap(m1, m2);
+				}
+				auto oss = std::ostringstream{};
+				oss << "Declaration of field '" << first->name() << "'"
+					<< " on line " << first->line()
+					<< " conflicts with previous declaration on line "
+					<< second->line() << ".";
+				throw semantic_error{oss.str()};
+			}
+
+			[[noreturn]] void
+			throw_another_main(const ast::class_declaration* c1,
+							   const ast::class_declaration* c2)
+			{
+				const ast::class_declaration* first = c1;
+				const ast::class_declaration* second = c2;
+				if (c1->line() > c2->line() || (c1->line() == c2->line()
+						&& c1->column() > c2->column())) {
+					std::swap(c1, c2);
+				}
+				auto oss = std::ostringstream{};
+				oss << "Class '" << second->name() << "'"
 					<< " cannot declare another method 'public static main'"
 					<< " because 'main' was already declared by class"
-					<< " '" << alredy_had_a_main.name() << "'"
+					<< " '" << first->name() << "'"
 					<< " and there can only be a single 'main' in a program";
 				throw semantic_error{oss.str()};
 			}
@@ -75,40 +177,42 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
-			throw_class_name_clash(const std::pair<const ast::class_declaration*, const ast::class_declaration*> clash)
-			{
-				auto oss = std::ostringstream{};
-				oss << "Declaration of class '" << clash.first->name() << "'"
-					<< " conflicts with previous declaration";
-				throw semantic_error{oss.str()};
-			}
-
 		}  // namespace /* anonymous */
 
 
 		void perform_shallow_type_analysis(const ast::program& program,
-										   const class_definitions& /* classes */,
+										   const class_definitions& classes,
 										   type_attributes& type_annotations)
 		{
 			const ast::class_declaration* main_class_ptr = nullptr;
-			if (const auto clash = get_first_name_clash(program.classes())) {
-				throw_class_name_clash(clash.get());
-			}
 			for (const auto& clazz : program.classes()) {
+				auto last_name = symbol{};
+				const ast::var_decl* last_field = nullptr;
 				for (const auto& field : clazz->fields()) {
-					register_field(*field, type_annotations);
+					if (field->name() == last_name) {
+						throw_duplicate_field(field.get(), last_field);
+					}
+					last_field = field.get();
+					last_name = field->name();
+					annotate_field(*field, classes, type_annotations);
 				}
+				last_name = symbol{};
+				const ast::instance_method* last_method = nullptr;
 				for (const auto& method : clazz->instance_methods()) {
-					register_method(*method, type_annotations);
+					if (method->name() == last_name) {
+						throw_duplicate_method(method.get(), last_method);
+					}
+					last_method = method.get();
+					last_name = method->name();
+					annotate_method(*method, classes, type_annotations);
 				}
-				for (const auto& method : clazz->main_methods()) {
-					register_method(*method, type_annotations);
-					if (method->name() != "main") {
+				for (const auto& main : clazz->main_methods()) {
+					annotate_method(*main, classes, type_annotations);
+					if (main->name() != "main") {
 						throw semantic_error{"Only 'main' can be 'static'"};
 					}
 					if (main_class_ptr != nullptr) {
-						throw_another_main(*clazz, *main_class_ptr);
+						throw_another_main(clazz.get(), main_class_ptr);
 					}
 					main_class_ptr = clazz.get();
 				}
