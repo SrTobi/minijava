@@ -13,6 +13,8 @@
 #include "semantic/semantic_error.hpp"
 #include "symbol/symbol.hpp"
 
+using namespace std::string_literals;
+
 
 namespace minijava
 {
@@ -22,7 +24,6 @@ namespace minijava
 
 		namespace /* anonymous */
 		{
-			using namespace std::string_literals;
 
 			basic_type_info primitive_type_info(ast::primitive_type primitive) {
 				switch (primitive) {
@@ -36,62 +37,49 @@ namespace minijava
 				MINIJAVA_NOT_REACHED();
 			}
 
+			type get_type(const ast::type& declared_type,
+						  const class_definitions& classes,
+						  const bool voidok)
+			{
+				const auto& declared_basic_type = declared_type.name();
+				const auto rank = declared_type.rank();
+				if (const auto primitive = boost::get<ast::primitive_type>(&declared_basic_type)) {
+					const auto pti = primitive_type_info(*primitive);
+					if (pti.is_void()) {
+						if (rank > 0) {
+							throw semantic_error{"Cannot have array of 'void'"};
+						}
+						if (!voidok) {
+							throw semantic_error{"Variable cannot be 'void'"};
+						}
+					}
+					return type{pti, rank};
+				}
+				const auto type_name = boost::get<symbol>(declared_basic_type);
+				const auto pos = classes.find(type_name);
+				if (pos == classes.end()) {
+					throw semantic_error{"Unknown type '"s + type_name.c_str() + "'"};
+				}
+				return type{pos->second, rank};
+			}
+
 			void annotate_field(const ast::var_decl& field,
 								const class_definitions& classes,
 								type_attributes& type_annotations)
 			{
-				assert(!type_annotations.count(&field));
-				auto& declared_type = field.var_type();
-				auto& declared_basic_type = declared_type.name();
-				if (auto primitive = boost::get<ast::primitive_type>(&declared_basic_type)) {
-					if (*primitive == ast::primitive_type::type_void) {
-						throw semantic_error{"Field declared as type 'void'."};
-					}
-					type_annotations.put(field, type{primitive_type_info(*primitive), declared_type.rank()});
-				} else {
-					auto type_name = boost::get<symbol>(&declared_basic_type);
-					assert(type_name);
-					if (classes.find(*type_name) == classes.end()) {
-						throw semantic_error{"Field declared as unknown type '"s + type_name->c_str() + "'."};
-					}
-					type_annotations.put(field, type{classes.at(*type_name), declared_type.rank()});
-				}
+				const auto thetype = get_type(field.var_type(), classes, false);
+				type_annotations.put(field, thetype);
 			}
 
 			void annotate_method(const ast::method& method,
 								 const class_definitions& classes,
 								 type_attributes& type_annotations)
 			{
-				assert(!type_annotations.count(&method));
-				auto& declared_return_type = method.return_type();
-				auto& declared_return_basic_type = declared_return_type.name();
-				if (auto primitive = boost::get<ast::primitive_type>(&declared_return_basic_type)) {
-					type_annotations.put(method, type{primitive_type_info(*primitive), declared_return_type.rank()});
-				} else {
-					auto type_name = boost::get<symbol>(&declared_return_basic_type);
-					assert(type_name);
-					if (classes.find(*type_name) == classes.end()) {
-						throw semantic_error{"Unknown type '"s + type_name->c_str() + "' declared as method return type."};
-					}
-					type_annotations.put(method, type{classes.at(*type_name), declared_return_type.rank()});
-				}
-
-				for (auto& param : method.parameters()) {
-					auto& declared_type = param->var_type();
-					auto& declared_basic_type = declared_type.name();
-					if (auto primitive = boost::get<ast::primitive_type>(&declared_basic_type)) {
-						if (*primitive == ast::primitive_type::type_void) {
-							throw semantic_error{"Argument declared as type 'void'."};
-						}
-						type_annotations.put(*param, type{primitive_type_info(*primitive), declared_type.rank()});
-					} else {
-						auto type_name = boost::get<symbol>(&declared_basic_type);
-						assert(type_name);
-						if (classes.find(*type_name) == classes.end()) {
-							throw semantic_error{"Argument declared as unknown type '"s + type_name->c_str() + "'."};
-						}
-						type_annotations.put(*param, type{classes.at(*type_name), declared_type.rank()});
-					}
+				const auto thetype = get_type(method.return_type(), classes, true);
+				type_annotations.put(method, thetype);
+				for (const auto& param : method.parameters()) {
+					const auto thetype = get_type(param->var_type(), classes, false);
+					type_annotations.put(*param, thetype);
 				}
 			}
 
@@ -252,5 +240,7 @@ namespace minijava
 			perform_shallow_type_analysis(ast, classes, type_annotations);
 			MINIJAVA_THROW_ICE(not_implemented_error);
 		}
-	}
-}
+
+	}  // namespace sem
+
+}  // namespace minijava

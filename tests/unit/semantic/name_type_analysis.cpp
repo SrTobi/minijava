@@ -395,6 +395,38 @@ BOOST_DATA_TEST_CASE(shallow_rejects_parameters_of_type_void, some_ranks)
 }
 
 
+BOOST_AUTO_TEST_CASE(shallow_rejects_method_of_type_void_array)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					tf.factory.make<ast::instance_method>()(
+						tf.pool.normalize("questionable"),
+						tf.factory.make<ast::type>()(ast::primitive_type::type_void, 1),
+						testaux::make_unique_ptr_vector<ast::var_decl>(),
+						tf.factory.make<ast::block>()(
+							testaux::make_unique_ptr_vector<ast::block_statement>()
+						)
+					)
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>(tf.make_empty_main())
+			)
+		)
+	);
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	BOOST_REQUIRE_THROW(
+		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
+		minijava::semantic_error
+	);
+}
+
+
 BOOST_DATA_TEST_CASE(full_rejects_local_variables_of_type_void, some_ranks)
 {
 	auto tf = testaux::ast_test_factory{};
