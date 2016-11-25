@@ -44,6 +44,34 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     `return`s a default-constructed (ie empty)
+		 *     `std::unique_ptr<minijava::ast::expression>`.
+		 *
+		 * @returns
+		 *     empty smart pointer
+		 *
+		 */
+		std::unique_ptr<minijava::ast::expression> nox()
+		{
+			return {};
+		}
+
+		/**
+		 * @brief
+		 *     Creates an integer literal.
+		 *
+		 * @param lexval
+		 *     lexical value of the integer literal
+		 *
+		 * @returns
+		 *     integer literal AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::integer_constant>
+		make_literal(const std::string& lexval);
+
+		/**
+		 * @brief
 		 *     Creates an empty block.
 		 *
 		 * @returns
@@ -256,6 +284,21 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Wraps a list of statements a program as the body of the main
+		 *     method.
+		 *
+		 * @param stmts
+		 *     statements in body of of main
+		 *
+		 * @returns
+		 *     AST for complete program
+		 *
+		 */
+		std::unique_ptr<minijava::ast::program>
+		as_program(std::vector<std::unique_ptr<minijava::ast::block_statement>> stmts);
+
+		/**
+		 * @brief
 		 *     Wraps a single statement as a program as the body of the main
 		 *     method.
 		 *
@@ -297,6 +340,46 @@ namespace testaux
 		 */
 		std::unique_ptr<minijava::ast::program>
 		make_hello_world(const std::string& name = "MiniJava");
+
+		/**
+		 * @brief
+		 *     Extracts the pointed-to address of a smart pointer, stores it
+		 *     into a pointer and `return`s the smart pointer.
+		 *
+		 * Usage example (silly):
+		 *
+		 *     ast_test_factory tf{};
+		 *     int* p{};
+		 *     std::unique_ptr<int> sp = tf.x(std::make_unique<int>(42));
+		 *     assert(p == sp.get());
+		 *
+		 * This feature will of course be more useful if the smart pointer you
+		 * want to get the address out of is never saved into a named variable
+		 * but only occurs inside an expression that passes it on to a
+		 * consumer.
+		 *
+		 * @tparam SmartPtrT
+		 *     smart pointer type
+		 *
+		 * @tparam PtrT
+		 *     raw pointer type
+		 *
+		 * @param p
+		 *     pointer that should  be set to the pointed-to address
+		 *
+		 * @param sp
+		 *     smart pointer to extract the address out of
+		 *
+		 * @returns
+		 *     `sp`
+		 *
+		 */
+		template <typename SmartPtrT, typename PtrT = typename SmartPtrT::pointer>
+		decltype(auto) x(PtrT& p, SmartPtrT&& sp)
+		{
+			p = sp.get();
+			return std::forward<SmartPtrT>(sp);
+		}
 
 	};  // class ast_test_factory
 

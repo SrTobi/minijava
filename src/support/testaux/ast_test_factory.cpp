@@ -9,6 +9,12 @@ namespace ast = minijava::ast;
 namespace testaux
 {
 
+	std::unique_ptr<minijava::ast::integer_constant>
+	ast_test_factory::make_literal(const std::string& lexval)
+	{
+		return factory.make<ast::integer_constant>()(pool.normalize(lexval));
+	}
+
 	std::unique_ptr<minijava::ast::block>
 	ast_test_factory::make_empty_block()
 	{
@@ -138,6 +144,12 @@ namespace testaux
 				as_class("Test", std::move(method))
 			)
 		);
+	}
+
+	std::unique_ptr<minijava::ast::program>
+	ast_test_factory::as_program(std::vector<std::unique_ptr<minijava::ast::block_statement>> stmts)
+	{
+		return as_program(factory.make<ast::block>()(std::move(stmts)));
 	}
 
 	std::unique_ptr<ast::program>

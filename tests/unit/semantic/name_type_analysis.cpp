@@ -20,6 +20,39 @@ namespace ast = minijava::ast;
 namespace sem = minijava::sem;
 
 
+namespace /* anonymous */
+{
+
+	struct full_analysis
+	{
+		sem::class_definitions classes{};
+		sem::globals_map globals{};
+		sem::type_attributes type_annotations{};
+		sem::locals_attributes locals_annotations{};
+		sem::vardecl_attributes vardecl_annotations{};
+		sem::method_attributes method_annotations{};
+
+		full_analysis() {}
+
+		explicit full_analysis(const ast::program& ast) : full_analysis{}
+		{
+			(*this)(ast);
+		}
+
+		void operator()(const ast::program& ast)
+		{
+			sem::extract_type_info(ast, false, classes);
+			sem::perform_full_name_type_analysis(
+				ast, classes, globals, type_annotations, locals_annotations,
+				vardecl_annotations, method_annotations
+			);
+		}
+
+	};  // struct full_analysis
+
+}  // namespace /* anonymous */
+
+
 static const std::size_t some_ranks[] = {0, 1, 2, 3, 100};
 
 
@@ -610,41 +643,63 @@ BOOST_DATA_TEST_CASE(full_rejects_local_variables_of_type_void, some_ranks)
 			)
 		)
 	);
-	auto classes = sem::class_definitions{};
-	auto globals = sem::globals_map{};
-	auto type_annotations = sem::type_attributes{};
-	auto locals_annotations = sem::locals_attributes{};
-	auto vardecl_annotations = sem::vardecl_attributes{};
-	auto method_annotations = sem::method_attributes{};
-	sem::extract_type_info(*ast, false, classes);
-	BOOST_REQUIRE_THROW(
-		sem::perform_full_name_type_analysis(*ast, classes, globals, type_annotations, locals_annotations, vardecl_annotations, method_annotations),
-		minijava::semantic_error
-	);
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
 }
 
 
-BOOST_AUTO_TEST_CASE(full_extracts_expression_types_1st)
+BOOST_AUTO_TEST_CASE(full_extracts_types_1st)
 {
 	auto tf = testaux::ast_test_factory{};
-	const auto ast = tf.as_program(
-		tf.factory.make<ast::integer_constant>()(tf.pool.normalize("0"))
-	);
-	auto classes = sem::class_definitions{};
-	auto globals = sem::globals_map{};
-	auto type_annotations = sem::type_attributes{};
-	auto locals_annotations = sem::locals_attributes{};
-	auto vardecl_annotations = sem::vardecl_attributes{};
-	auto method_annotations = sem::method_attributes{};
-	sem::extract_type_info(*ast, false, classes);
-	sem::perform_full_name_type_analysis(*ast, classes, globals, type_annotations, locals_annotations, vardecl_annotations, method_annotations);
+	const ast::integer_constant* nodeptr = nullptr;
+	const auto ast = tf.as_program(tf.x(nodeptr, tf.make_literal("0")));
+	const auto analysis = full_analysis{*ast};
 	{
 		const auto expected_bti = sem::basic_type_info::make_int_type();
 		const auto expected = sem::type{expected_bti, 0};
-		const auto nodeptr = &dynamic_cast<const ast::expression_statement&>(
-			*ast->classes().front()->main_methods().front()->body().body().front()
-		).inner_expression();
-		const auto actual = type_annotations.at(*nodeptr);
+		const auto actual = analysis.type_annotations.at(*nodeptr);
 		BOOST_REQUIRE_EQUAL(expected, actual);
 	}
+}
+
+
+BOOST_AUTO_TEST_CASE(full_extracts_types_2nd)
+{
+	auto tf = testaux::ast_test_factory{};
+	const ast::integer_constant* lit_0 = nullptr;
+	const ast::integer_constant* lit_1 = nullptr;
+	const ast::var_decl* decl_zero = nullptr;
+	const ast::var_decl* decl_broken = nullptr;
+	const ast::variable_access* ref_zero = nullptr;
+	const ast::binary_expression* rel_expr = nullptr;
+	const auto ast = tf.as_program(
+		testaux::make_unique_ptr_vector<ast::block_statement>(
+			tf.factory.make<ast::local_variable_statement>()(
+				tf.x(decl_zero, tf.make_declaration("zero", ast::primitive_type::type_int)),
+				tf.x(lit_0, tf.make_literal("0"))
+			),
+			tf.factory.make<ast::local_variable_statement>()(
+				tf.x(decl_broken,
+					 tf.make_declaration("mathIsBroken", ast::primitive_type::type_boolean)
+				),
+				tf.x(rel_expr,
+					tf.factory.make<ast::binary_expression>()(
+						ast::binary_operation_type::equal,
+						tf.x(ref_zero, tf.factory.make<ast::variable_access>()(
+							tf.nox(), tf.pool.normalize("zero"))
+						),
+						tf.x(lit_1, tf.make_literal("1"))
+					)
+				)
+			)
+		)
+	);
+	const auto analysis = full_analysis{*ast};
+	const auto integer = sem::type{sem::basic_type_info::make_int_type(), 0};
+	const auto boolean = sem::type{sem::basic_type_info::make_boolean_type(), 0};
+	BOOST_REQUIRE_EQUAL(integer, analysis.type_annotations.at(*lit_0));
+	BOOST_REQUIRE_EQUAL(integer, analysis.type_annotations.at(*lit_1));
+	BOOST_REQUIRE_EQUAL(integer, analysis.type_annotations.at(*decl_zero));
+	BOOST_REQUIRE_EQUAL(boolean, analysis.type_annotations.at(*rel_expr));
+	BOOST_REQUIRE_EQUAL(boolean, analysis.type_annotations.at(*decl_broken));
 }
