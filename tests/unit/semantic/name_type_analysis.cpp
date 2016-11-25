@@ -887,9 +887,61 @@ BOOST_AUTO_TEST_CASE(analysis_extracts_locals_correctly)
 }
 
 
+BOOST_AUTO_TEST_CASE(analysis_sets_method_annotations_correctly)
+{
+	using namespace std::string_literals;
+	auto tf = testaux::ast_test_factory{};
+	const ast::method_invocation* p1 = nullptr;
+	const ast::method_invocation* p2 = nullptr;
+	const auto ast = tf.factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Alpha"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					tf.factory.make<ast::instance_method>()(
+						tf.pool.normalize("foo"),
+						tf.factory.make<ast::type>()(ast::primitive_type::type_void),
+						testaux::make_unique_ptr_vector<ast::var_decl>(),
+						tf.as_block(tf.x(p1, tf.make_call("foo")))
+					)
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>()
+			),
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Beta"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					tf.make_empty_method("bar"),
+					tf.make_empty_method("baz")
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					tf.factory.make<ast::main_method>()(
+						tf.pool.normalize("main"),
+						tf.pool.normalize("args"),
+						tf.as_block(
+							tf.x(p2,
+								tf.factory.make<ast::method_invocation>()(
+									tf.factory.make<ast::object_instantiation>()(tf.pool.normalize("Beta")),
+									tf.pool.normalize("bar"),
+									testaux::make_unique_ptr_vector<ast::expression>()
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	);
+	const auto analysis = analyzer{*ast};
+	BOOST_REQUIRE_EQUAL("foo"s, analysis.method_annotations.at(*p1)->name());
+	BOOST_REQUIRE_EQUAL("bar"s, analysis.method_annotations.at(*p2)->name());
+}
+
 // TODO: Write unit tests for
 //
-//  - subscriptions to method return values
+//  - all kinds of annotations
 //  - new expressions
-//  - locals annotations
 //  - tests for (non-)required main
+//  - tests for type checks on assignments, operations and returns
+//  - lvalue / assignable tests
