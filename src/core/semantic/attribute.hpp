@@ -702,6 +702,7 @@ namespace minijava
 			if (pos == this->end()) {
 				const auto status = this->insert({&node, std::move(attr)});
 				assert(status.second);
+				(void) status;
 			} else {
 				pos->second = std::move(attr);
 			}
@@ -742,6 +743,7 @@ namespace minijava
 			if (pos == this->end()) {
 				const auto status = this->insert({&node, std::move(attr)});
 				assert(status.second);
+				(void) status;
 			} else {
 				throw std::out_of_range{"minijava::sem::ast_attributes::put"};
 			}
