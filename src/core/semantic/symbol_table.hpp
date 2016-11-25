@@ -80,7 +80,7 @@ namespace minijava
 			 *     symbol to look up
 			 *
 			 * @returns
-			 *     pointer to definition if any
+			 *     pointer to definition or `nullptr` if no definition exists
 			 *
 			 */
 			const ast::var_decl* lookup(const symbol name) const;
@@ -102,7 +102,8 @@ namespace minijava
 			 *     symbol to check
 			 *
 			 * @returns
-			 *     pointer to conflicting definition if any
+			 *     pointer to conflicting definition or `nullptr` if no such
+			 *     definition exists
 			 *
 			 */
 			const ast::var_decl* get_conflicting_definitions(symbol name) const;

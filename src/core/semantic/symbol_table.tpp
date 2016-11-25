@@ -38,7 +38,7 @@ namespace minijava
 					return pos->second;
 				}
 			}
-			return {};
+			return nullptr;
 		}
 
 		inline const ast::var_decl*
@@ -55,7 +55,7 @@ namespace minijava
 					}
 				}
 			}
-			return {};
+			return nullptr;
 		}
 
 		inline void symbol_table::add_def(const ast::var_decl* def)
