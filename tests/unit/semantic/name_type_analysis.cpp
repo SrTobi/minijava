@@ -830,6 +830,63 @@ BOOST_DATA_TEST_CASE(analysis_rejects_assignment_to_global_but_allows_comparison
 }
 
 
+BOOST_AUTO_TEST_CASE(analysis_extracts_locals_correctly)
+{
+	for (auto n = 0; n < 10; ++n) {
+		for (auto m = 0; m < 10; ++m) {
+			auto tf = testaux::ast_test_factory{};
+			auto paramdecls = std::vector<std::unique_ptr<ast::var_decl>>{};
+			for (auto i = 1; i <= n; ++i) {
+				const auto id = "p" + std::to_string(i);
+				paramdecls.push_back(tf.make_declaration(id, ast::primitive_type::type_int));
+			}
+			auto blkstmts = std::vector<std::unique_ptr<ast::block_statement>>{};
+			for (auto i = 1; i <= m; ++i) {
+				const auto id = "v" + std::to_string(i);
+				blkstmts.push_back(
+					tf.factory.make<ast::local_variable_statement>()(
+						tf.factory.make<ast::var_decl>()(
+							tf.factory.make<ast::type>()(ast::primitive_type::type_int),
+							tf.pool.normalize(id)
+						),
+						tf.nox()
+					)
+				);
+			}
+			blkstmts.push_back(
+				tf.factory.make<ast::return_statement>()(tf.make_literal("0"))
+			);
+			const auto ast = tf.as_program(
+				tf.factory.make<ast::class_declaration>()(
+					tf.pool.normalize("Test"),
+					testaux::make_unique_ptr_vector<ast::var_decl>(),
+					testaux::make_unique_ptr_vector<ast::instance_method>(
+						tf.factory.make<ast::instance_method>()(
+							tf.pool.normalize("test"),
+							tf.factory.make<ast::type>()(ast::primitive_type::type_int),
+								std::move(paramdecls),
+								tf.factory.make<ast::block>()(std::move(blkstmts))
+							)
+					),
+					testaux::make_unique_ptr_vector<ast::main_method>(
+						tf.make_empty_main()
+					)
+				)
+			);
+			auto analysis = analyzer{*ast};
+			{
+				const auto nodeptr = ast->classes().front()->instance_methods().front().get();
+				BOOST_REQUIRE_EQUAL(n + m, analysis.locals_annotations.at(*nodeptr).size());
+			}
+			{
+				const auto nodeptr = ast->classes().front()->main_methods().front().get();
+				BOOST_REQUIRE_EQUAL(0, analysis.locals_annotations.at(*nodeptr).size());
+			}
+		}
+	}
+}
+
+
 // TODO: Write unit tests for
 //
 //  - subscriptions to method return values
