@@ -141,7 +141,7 @@ namespace minijava
 		 *     ignored (only used to deduce `Ts...`)
 		 *
 		 * @returns
-		 *     whether `PredT<T>::value` is `true` for each `T` in `Ts...`
+		 *     whether `%PredT<T>::%value` is `true` for each `T` in `Ts...`
 		 *
 		 */
 		template
@@ -175,7 +175,7 @@ namespace minijava
 		 *     ignored (only used to deduce `Ts...`)
 		 *
 		 * @returns
-		 *     whether `PredT<T>::value` is `true` for any `T` in `Ts...`
+		 *     whether `%PredT<T>::%value` is `true` for any `T` in `Ts...`
 		 *
 		 */
 		template
@@ -209,7 +209,7 @@ namespace minijava
 		 *     ignored (only used to deduce `Ts...`)
 		 *
 		 * @returns
-		 *     whether `PredT<T>::value` is `false` for each `T` in `Ts...`
+		 *     whether `%PredT<T>::%value` is `false` for each `T` in `Ts...`
 		 *
 		 */
 		template

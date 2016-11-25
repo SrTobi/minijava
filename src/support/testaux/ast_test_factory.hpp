@@ -425,7 +425,7 @@ namespace testaux
 
 		/**
 		 * @brief
-		 *     Creates a <q>hello world</q> program in a class with the given name.
+		 *     Creates a "hello world" program in a class with the given name.
 		 *
 		 * @param name
 		 *     name of the class

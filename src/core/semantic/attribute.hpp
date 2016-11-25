@@ -73,7 +73,7 @@ namespace minijava
 		 *     Tests whether the *dynamic* type of `node` is derived from any
 		 *     of the types `NodeTs...` and `node` has a non-zero ID.
 		 *
-		 * @tparam node
+		 * @param node
 		 *     AST node to check
 		 *
 		 * @returns
@@ -578,7 +578,7 @@ namespace minijava
 		 *
 		 * If `T` is not default constructible, the behavior is also undefined.
 		 *
-		 * @param NodeT
+		 * @tparam NodeT
 		 *     static type of the node to look up
 		 *
 		 * @param node
@@ -613,7 +613,7 @@ namespace minijava
 		 *
 		 * still doesn't pass, the behavior is undefined.
 		 *
-		 * @param NodeT
+		 * @tparam NodeT
 		 *     static type of the node to look up
 		 *
 		 * @param node
@@ -647,7 +647,7 @@ namespace minijava
 		 *
 		 * still doesn't pass, the behavior is undefined.
 		 *
-		 * @param NodeT
+		 * @tparam NodeT
 		 *     static type of the node to look up
 		 *
 		 * @param node
@@ -684,7 +684,7 @@ namespace minijava
 		 *
 		 * still doesn't pass, the behavior is undefined.
 		 *
-		 * @param NodeT
+		 * @tparam NodeT
 		 *     static type of the node to look up
 		 *
 		 * @param node
@@ -721,7 +721,7 @@ namespace minijava
 		 *
 		 * still doesn't pass, the behavior is undefined.
 		 *
-		 * @param NodeT
+		 * @tparam NodeT
 		 *     static type of the node to look up
 		 *
 		 * @param node

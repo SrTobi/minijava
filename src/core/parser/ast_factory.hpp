@@ -170,10 +170,13 @@ namespace minijava
 		 *     type of `node` to create
 		 *
 		 * @tparam ForbiddenTs
-		 *     must no be used
+		 *     must not be used
 		 *
 		 * @param forbidden
-		 *     must no be used
+		 *     must not be used
+		 *
+		 * @returns
+		 *     suitable `ast_builder`
 		 *
 		 */
 		template <typename NodeT, typename... ForbiddenTs>

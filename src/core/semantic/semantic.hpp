@@ -332,6 +332,9 @@ namespace minijava
 	 * @param pool
 	 *     symbol pool that was used for identifiers in the AST
 	 *
+	 * @param factory
+	 *     factory that was used to create the original AST
+	 *
 	 * @returns
 	 *     semantic information about valid programs
 	 *
