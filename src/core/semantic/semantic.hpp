@@ -73,8 +73,8 @@ namespace minijava
 		 *     declarations
 		 *
 		 * @param vardecl_annotations
-		 *     mapping of `var_access` and `array_access` nodes to the node
-		 *     that declare the used identifier
+		 *     mapping of `var_access` nodes to the node that declares the used
+		 *     identifier
 		 *
 		 * @param method_annotations
 		 *     mapping of `method_invocation` nodes to the node that defines
@@ -181,8 +181,8 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s the mapping from `var_access` and `array_access` nodes
-		 *     to the `var_decl` node that declare the used identifier.
+		 *     `return`s the mapping from `var_access` node to the `var_decl`
+		 *     node that declares the used identifier.
 		 *
 		 * For example, in this snippet (which invokes undefined behavior at
 		 * run-time due to using an unitialized variable, but never mind that),
@@ -197,9 +197,9 @@ namespace minijava
 		 * be mapped to the `var_decl` node for the declaration of `a` on the
 		 * first line.
 		 *
-		 * All `var_access` and `array_access` nodes will be mapped for if the
-		 * point of declaration of the referenced identifier cannot be
-		 * determined, the program is ill-formed and will be rejected.
+		 * All `var_access` nodes will be mapped for if the point of declaration
+		 * of the referenced identifier cannot be determined, the program is
+		 * ill-formed and will be rejected.
 		 *
 		 * @returns
 		 *     `const` reference to variable declaration annotations
@@ -301,7 +301,7 @@ namespace minijava
 		/** @brief Mapping of `method` nodes to the set of their local variable declarations. */
 		locals_attributes _locals_annotations;
 
-		/** @brief Mapping of `var_access` and `array_access` nodes to the node that declare the used identifier. */
+		/** @brief Mapping of `var_access` nodes to the node that declare the used identifier. */
 		vardecl_attributes _vardecl_annotations;
 
 		/** @brief Mapping of `method_invocation` nodes to the node that defines the called method. */
@@ -342,9 +342,6 @@ namespace minijava
 	template<typename PoolT>
 	semantic_info check_program(const ast::program& ast, PoolT& pool, ast_factory& factory);
 
-	// TODO: remove
-	template<typename AllocT>
-	void analyze_ast(const ast::program& ast, symbol_pool<AllocT>& pool);
 }
 
 #define MINIJAVA_INCLUDED_FROM_SEMANTIC_SEMANTIC_HPP

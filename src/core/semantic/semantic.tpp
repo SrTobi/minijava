@@ -6,16 +6,11 @@
 #include <memory>
 
 #include "exceptions.hpp"
-#include "semantic/builtins.hpp"
 #include "semantic/constant.hpp"
-#include "semantic/dont_use_main_args.hpp"
 #include "semantic/name_type_analysis.hpp"
-#include "semantic/ref_type_analysis.hpp"
 #include "semantic/semantic_error.hpp"
-#include "semantic/symbol_def.hpp"
 #include "semantic/thou_shalt_return.hpp"
 #include "semantic/type_info.hpp"
-#include "semantic/unique_entry_point.hpp"
 
 
 namespace minijava
@@ -162,12 +157,6 @@ namespace minijava
 				std::move(builtin_ast),
 				std::move(globals)
 		};
-	}
-
-	template<typename AllocT>
-	void analyze_ast(const ast::program&, symbol_pool<AllocT>&)
-	{
-		MINIJAVA_THROW_ICE(internal_compiler_error);
 	}
 
 }  // namespace minijava

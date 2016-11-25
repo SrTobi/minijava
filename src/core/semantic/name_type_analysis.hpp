@@ -128,10 +128,10 @@ namespace minijava
 			ast_node_filter<ast::method>
 		>;
 
-		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
+		/** @brief Type mapping `var_access` nodes to `var_decl` nodes. */
 		using vardecl_attributes = ast_attributes<
 			const ast::var_decl*,
-			ast_node_filter<ast::array_access, ast::variable_access>
+			ast_node_filter<ast::variable_access>
 		>;
 
 		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */

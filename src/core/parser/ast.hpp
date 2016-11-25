@@ -338,20 +338,6 @@ namespace minijava
 			 */
 			virtual void visit(const program& node);
 
-			template<typename NodeT>
-			void do_visit(const NodeT& node)
-			{
-				static_assert(std::is_base_of<ast::node, NodeT>{}, "NodeT must be derived from ast::node");
-				node.accept(*this);
-			}
-
-			template<typename Container>
-			void do_visit_all(Container& cont)
-			{
-				for (auto&& node : cont) {
-					do_visit(*node);
-				}
-			}
 		};
 
 		/**
