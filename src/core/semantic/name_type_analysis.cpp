@@ -309,6 +309,15 @@ namespace minijava
 			}
 
 			[[noreturn]] void
+			throw_illegal_shadow(const ast::var_decl& node)
+			{
+				std::ostringstream oss{};
+				oss << "Tried to re-declare '" << node.name().c_str()
+				    << "', which is illegal.";
+				throw semantic_error{oss.str()};
+			}
+
+			[[noreturn]] void
 			throw_unqualified_method_access_in_main(const ast::method_invocation& node)
 			{
 				std::ostringstream oss{};
@@ -421,6 +430,9 @@ namespace minijava
 
 				void visit(const ast::var_decl& node) override
 				{
+					if (node.name() == _poisoned_symbol) {
+						throw_illegal_shadow(node);
+					}
 					auto type = get_type(node.var_type(), _classes, false);
 					_symbols.add_def(&node);
 					if (_cur_method) {
@@ -557,7 +569,7 @@ namespace minijava
 					if (target) {
 						target->accept(*this);
 						auto target_type = _type_annotations.at(*target);
-						if (target_type.rank > 0 || !target_type.info.is_reference()) {
+						if (target_type.rank > 0 || !target_type.info.is_reference() || target_type.info.is_null()) {
 							throw_invalid_field_access(target_type, node);
 						}
 						auto clazz = target_type.info.declaration();
