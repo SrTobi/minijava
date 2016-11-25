@@ -53,7 +53,7 @@ namespace minijava
 				{
 					for (auto&& gdef : globals) {
 						auto def = std::make_unique<global_def>(gdef.first, gdef.second);
-						symbols.add_def(gdef.first, nullptr);  // FIXME
+						symbols.add_def(nullptr);  // FIXME
 						_def_a.store(std::move(def));
 					}
 				}
@@ -121,7 +121,7 @@ namespace minijava
 					auto ty = type_of(node);
 					check_not_void(ty);
 					auto vdef = std::make_unique<var_def>(node.name(), ty, *cur_method, &node);
-					symbols.add_def(node.name(), nullptr);  // FIXME
+					symbols.add_def(nullptr);  // FIXME
 					_def_a.store(std::move(vdef));
 				}
 

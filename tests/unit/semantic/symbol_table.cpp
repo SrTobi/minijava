@@ -17,11 +17,6 @@ namespace ast = minijava::ast;
 namespace /* anonymous */
 {
 
-	const void* voided(const void* p) noexcept
-	{
-		return p;
-	}
-
 	std::unique_ptr<ast::var_decl>
 	make_decl(minijava::symbol_pool<>& pool, const std::string& name)
 	{
@@ -87,8 +82,8 @@ BOOST_AUTO_TEST_CASE(contains_definition_after_adding)
 	auto st = minijava::sem::symbol_table{};
 	st.enter_scope();
 	const auto dcl = make_decl(pool, "alpha");
-	st.add_def(dcl->name(), dcl.get());
-	BOOST_REQUIRE_EQUAL(dcl.get(), st.lookup(dcl->name()).get());
+	st.add_def(dcl.get());
+	BOOST_REQUIRE_EQUAL(dcl.get(), st.lookup(dcl->name()));
 }
 
 
@@ -101,32 +96,18 @@ BOOST_AUTO_TEST_CASE(forgets_definition_at_scope_exit)
 	st.enter_scope();
 	BOOST_REQUIRE(!bool(st.lookup(dcl1st->name())));
 	BOOST_REQUIRE(!bool(st.lookup(dcl2nd->name())));
-	st.add_def(dcl1st->name(), dcl1st.get());
-	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()).get());
+	st.add_def(dcl1st.get());
+	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()));
 	BOOST_REQUIRE(!bool(st.lookup(dcl2nd->name())));
 	st.enter_scope();
-	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()).get());
+	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()));
 	BOOST_REQUIRE(!bool(st.lookup(dcl2nd->name())));
-	st.add_def(dcl2nd->name(), dcl2nd.get());
-	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()).get());
-	BOOST_REQUIRE_EQUAL(dcl2nd.get(), st.lookup(dcl2nd->name()).get());
+	st.add_def(dcl2nd.get());
+	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()));
+	BOOST_REQUIRE_EQUAL(dcl2nd.get(), st.lookup(dcl2nd->name()));
 	st.leave_scope();
-	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()).get());
+	BOOST_REQUIRE_EQUAL(dcl1st.get(), st.lookup(dcl1st->name()));
 	BOOST_REQUIRE(!bool(st.lookup(dcl2nd->name())));
-}
-
-
-BOOST_AUTO_TEST_CASE(accepts_nullptr)
-{
-	auto pool = minijava::symbol_pool<>{};
-	auto st = minijava::sem::symbol_table{};
-	const auto p = pool.normalize("p");
-	const auto q = pool.normalize("q");
-	st.enter_scope();
-	st.add_def(p, nullptr);
-	st.add_def(q, nullptr);
-	BOOST_REQUIRE_EQUAL(voided(nullptr), voided(st.lookup(p).get()));
-	BOOST_REQUIRE_EQUAL(voided(nullptr), voided(st.lookup(q).get()));
 }
 
 
@@ -139,9 +120,9 @@ BOOST_DATA_TEST_CASE(always_rejects_same_name_twice_in_scope, all_bools)
 	const auto def1st = make_decl(pool, "alpha");
 	const auto def2nd = make_decl(pool, "alpha");
 	st.enter_scope(sample);
-	st.add_def(def1st->name(), def1st.get());
+	st.add_def(def1st.get());
 	BOOST_REQUIRE_THROW(
-		st.add_def(def2nd->name(), def2nd.get()),
+		st.add_def(def2nd.get()),
 		minijava::semantic_error
 	);
 }
@@ -155,20 +136,20 @@ BOOST_AUTO_TEST_CASE(shadowing_allowed)
 	const auto a2 = make_decl(pool, "alpha");
 	const auto b = make_decl(pool, "beta");
 	st.enter_scope(true);
-	st.add_def(b->name(), b.get());
-	st.add_def(a1->name(), a1.get());
+	st.add_def(b.get());
+	st.add_def(a1.get());
 	st.enter_scope();
-	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a1->name()).get());
-	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a2->name()).get());
-	BOOST_REQUIRE_EQUAL(b.get(), st.lookup(b->name()).get());
-	st.add_def(a2->name(), a2.get());
-	BOOST_REQUIRE_EQUAL(a2.get(), st.lookup(a1->name()).get());
-	BOOST_REQUIRE_EQUAL(a2.get(), st.lookup(a2->name()).get());
-	BOOST_REQUIRE_EQUAL(b.get(), st.lookup(b->name()).get());
+	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a1->name()));
+	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a2->name()));
+	BOOST_REQUIRE_EQUAL(b.get(), st.lookup(b->name()));
+	st.add_def(a2.get());
+	BOOST_REQUIRE_EQUAL(a2.get(), st.lookup(a1->name()));
+	BOOST_REQUIRE_EQUAL(a2.get(), st.lookup(a2->name()));
+	BOOST_REQUIRE_EQUAL(b.get(), st.lookup(b->name()));
 	st.leave_scope();
-	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a1->name()).get());
-	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a2->name()).get());
-	BOOST_REQUIRE_EQUAL(b.get(), st.lookup(b->name()).get());
+	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a1->name()));
+	BOOST_REQUIRE_EQUAL(a1.get(), st.lookup(a2->name()));
+	BOOST_REQUIRE_EQUAL(b.get(), st.lookup(b->name()));
 }
 
 
@@ -179,11 +160,11 @@ BOOST_AUTO_TEST_CASE(shadowing_disallowed)
 	const auto a1 = make_decl(pool, "alpha");
 	const auto a2 = make_decl(pool, "alpha");
 	st.enter_scope();
-	st.add_def(a1->name(), a1.get());
+	st.add_def(a1.get());
 	st.enter_scope();
 	BOOST_REQUIRE_THROW(
-		st.add_def(a2->name(), a2.get()),
+		st.add_def(a2.get()),
 		minijava::semantic_error
 	);
-	BOOST_REQUIRE_EQUAL(a1.get(), st.get_conflicting_definitions(a1->name()).get());
+	BOOST_REQUIRE_EQUAL(a1.get(), st.get_conflicting_definitions(a1->name()));
 }

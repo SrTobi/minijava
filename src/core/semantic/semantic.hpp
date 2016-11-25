@@ -9,6 +9,9 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "parser/ast.hpp"
 #include "parser/ast_factory.hpp"
@@ -47,12 +50,7 @@ namespace minijava
 		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
 		using locals_attributes = sem::locals_attributes;
 
-		/**
-		 * @brief
-		 *     Type mapping `var_access` and `array_access` nodes to `var_decl` nodes.
-		 *
-		 * Contains `nullptr` is the referenced variable is global.
-		 */
+		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
 		using vardecl_attributes = sem::vardecl_attributes;
 
 		/** @brief Type mapping `method_invocation` nodes to `instance_method` nodes. */
@@ -89,6 +87,9 @@ namespace minijava
 		 * @param builtin_ast
 		 *     AST with definitions of built-in classes
 		 *
+		 * @param globals
+		 *     global variables, sorted by memory address of the AST node
+		 *
 		 */
 		semantic_info(class_definitions classes,
 		              type_attributes type_annotations,
@@ -96,7 +97,8 @@ namespace minijava
 		              vardecl_attributes vardecl_annotations,
 		              method_attributes method_annotations,
 		              const_attributes const_annotations,
-		              std::unique_ptr<ast::program> builtin_ast)
+		              std::unique_ptr<ast::program> builtin_ast,
+					  std::vector<std::unique_ptr<ast::var_decl>> globals)
 				: _classes{std::move(classes)}
 				, _type_annotations{std::move(type_annotations)}
 				, _locals_annotations{std::move(locals_annotations)}
@@ -104,6 +106,7 @@ namespace minijava
 				, _method_annotations{std::move(method_annotations)}
 				, _const_annotations{std::move(const_annotations)}
 				, _builtin_ast{std::move(builtin_ast)}
+				, _globals{std::move(globals)}
 		{
 			assert(_builtin_ast);
 		}
@@ -198,8 +201,6 @@ namespace minijava
 		 * All `var_access` and `array_access` nodes will be mapped for if the
 		 * point of declaration of the referenced identifier cannot be
 		 * determined, the program is ill-formed and will be rejected.
-		 * `nullptr` is a valid value, though, and denotes that the referenced
-		 * identifier is global and therefore was not declared in the program.
 		 *
 		 * @returns
 		 *     `const` reference to variable declaration annotations
@@ -276,28 +277,45 @@ namespace minijava
 			return _const_annotations;
 		}
 
+		/**
+		 * @brief
+		 *     Checks whether the given declaration declares global variable.
+		 *
+		 * @param declaration
+		 *     declaration to check
+		 *
+		 * @return
+		 *     `true` if the given declaration is one of the global variable
+		 *     declarations, `false` otherwise
+		 *
+		 */
+		bool is_global(const ast::var_decl* declaration) const noexcept;
+
 	private:
 
 		/** @brief Classes (built-in and user-defined) in the program. */
-		class_definitions _classes{};
+		class_definitions _classes;
 
 		/** @brief Mapping of typed AST nodes to the definition of their type. */
-		type_attributes _type_annotations{};
+		type_attributes _type_annotations;
 
 		/** @brief Mapping of `method` nodes to the set of their local variable declarations. */
-		locals_attributes _locals_annotations{};
+		locals_attributes _locals_annotations;
 
 		/** @brief Mapping of `var_access` and `array_access` nodes to the node that declare the used identifier. */
-		vardecl_attributes _vardecl_annotations{};
+		vardecl_attributes _vardecl_annotations;
 
 		/** @brief Mapping of `method_invocation` nodes to the node that defines the called method. */
-		method_attributes _method_annotations{};
+		method_attributes _method_annotations;
 
 		/** @brief Mapping of constant `expression` nodes to their value. */
-		const_attributes _const_annotations{};
+		const_attributes _const_annotations;
 
 		/** @brief AST with definitions of built-in classes. */
-		std::unique_ptr<ast::program> _builtin_ast{};
+		std::unique_ptr<ast::program> _builtin_ast;
+
+		/** @brief global variables, sorted by memory address of the AST node */
+		std::vector<std::unique_ptr<ast::var_decl>> _globals;
 
 	};
 
