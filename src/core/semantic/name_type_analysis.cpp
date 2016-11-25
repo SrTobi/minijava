@@ -603,7 +603,7 @@ namespace minijava
 					if (target) {
 						target->accept(*this);
 						auto target_type = _type_annotations.at(*target);
-						if (target_type.rank > 0 || !target_type.info.is_reference()) {
+						if (target_type.rank > 0 || !target_type.info.is_reference() || target_type.info.is_null()) {
 							throw_invalid_method_access(target_type, node);
 						}
 						clazz = target_type.info.declaration();
@@ -784,8 +784,8 @@ namespace minijava
 				}
 
 				static bool is_assignable(type target, type source) {
-					return source == target || (source.info.is_null()
-							&& target.rank == 0 && target.info.is_reference());
+					return source == target || (source.info.is_null() &&
+							(target.info.is_reference() || target.rank > 0));
 				}
 
 				void check_boolean(const ast::expression& expr) {
