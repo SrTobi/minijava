@@ -611,7 +611,7 @@ BOOST_DATA_TEST_CASE(full_rejects_local_variables_of_type_void, some_ranks)
 		)
 	);
 	auto classes = sem::class_definitions{};
-	auto globals = sem::globals_map{};
+	auto globals = sem::globals_vector{};
 	auto type_annotations = sem::type_attributes{};
 	auto locals_annotations = sem::locals_attributes{};
 	auto vardecl_annotations = sem::vardecl_attributes{};
@@ -631,7 +631,7 @@ BOOST_AUTO_TEST_CASE(full_extracts_expression_types_1st)
 		tf.factory.make<ast::integer_constant>()(tf.pool.normalize("0"))
 	);
 	auto classes = sem::class_definitions{};
-	auto globals = sem::globals_map{};
+	auto globals = sem::globals_vector{};
 	auto type_annotations = sem::type_attributes{};
 	auto locals_annotations = sem::locals_attributes{};
 	auto vardecl_annotations = sem::vardecl_attributes{};

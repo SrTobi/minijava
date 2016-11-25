@@ -83,14 +83,44 @@ namespace minijava
 				return factory.make<ast::program>()(std::move(clazzes));
 			}
 
-			template<typename PoolT>
-			globals_map make_globals(PoolT& pool)
+			template<typename T>
+			struct mem_comparator
 			{
-				sem::globals_map result{};
-				result.insert(std::make_pair(
-						pool.normalize("System"),
-						pool.normalize("java.lang.System")
+				using comparator = std::less<const void*>;
+
+				bool operator()(const std::unique_ptr<T>& lhs,
+								const std::unique_ptr<T>& rhs) const
+				{
+					return comparator{}(lhs.get(), rhs.get());
+				}
+
+				bool operator()(const T* lhs,
+								const std::unique_ptr<T>& rhs) const
+				{
+					return comparator{}(lhs, rhs.get());
+				}
+
+				bool operator()(const std::unique_ptr<T>& lhs,
+								const T* rhs) const
+				{
+					return comparator{}(lhs.get(), rhs);
+				}
+			};
+
+			template<typename PoolT>
+			globals_vector make_globals(PoolT& pool, ast_factory& factory)
+			{
+				sem::globals_vector result{};
+				result.push_back(factory.make<ast::var_decl>()(
+						factory.make<ast::type>()(
+								pool.normalize("java.lang.System")
+						),
+						pool.normalize("System")
 				));
+				std::sort(
+						std::begin(result), std::end(result),
+						mem_comparator<ast::var_decl>{}
+				);
 				return result;
 			}
 
@@ -102,7 +132,7 @@ namespace minijava
 	semantic_info check_program(const ast::program& ast, PoolT& pool, ast_factory& factory)
 	{
 		auto builtin_ast = sem::detail::make_builtin_ast(pool, factory);
-		auto globals = sem::detail::make_globals(pool);
+		auto globals = sem::detail::make_globals(pool, factory);
 		auto classes = sem::class_definitions{};
 		sem::extract_type_info(*builtin_ast, true, classes);
 		sem::extract_type_info(ast, false, classes);
@@ -129,7 +159,8 @@ namespace minijava
 				std::move(vardecl_annotations),
 				std::move(method_annotations),
 				std::move(const_annotations),
-				std::move(builtin_ast)
+				std::move(builtin_ast),
+				std::move(globals)
 		};
 	}
 

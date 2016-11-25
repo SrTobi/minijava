@@ -9,8 +9,9 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <iosfwd>
-#include <unordered_map>
+#include <vector>
 #include <unordered_set>
 
 #include "parser/ast.hpp"
@@ -112,8 +113,8 @@ namespace minijava
 		 */
 		std::ostream& operator<<(std::ostream& os, type typ);
 
-		/** @brief Global identifier to class name mapping type. */
-		using globals_map = std::unordered_map<symbol, symbol>;
+		/** @brief Type of the vector containing all globals. */
+		using globals_vector = std::vector<std::unique_ptr<ast::var_decl>>;
 
 		/** @brief Type mapping typed AST nodes to type definitions. */
 		using type_attributes = ast_attributes<
@@ -127,12 +128,7 @@ namespace minijava
 			ast_node_filter<ast::method>
 		>;
 
-		/**
-		 * @brief
-		 *     Type mapping `var_access` and `array_access` nodes to `var_decl` nodes.
-		 *
-		 * Contains `nullptr` is the referenced variable is global.
-		 */
+		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
 		using vardecl_attributes = ast_attributes<
 			const ast::var_decl*,
 			ast_node_filter<ast::array_access, ast::variable_access>
@@ -229,7 +225,7 @@ namespace minijava
 		 */
 		void perform_full_name_type_analysis(const ast::program& ast,
 		                                     const class_definitions& classes,
-		                                     const globals_map& globals,
+		                                     const globals_vector& globals,
 		                                     type_attributes& type_annotations,
 		                                     locals_attributes& locals_annotations,
 		                                     vardecl_attributes& vardecl_annotations,
