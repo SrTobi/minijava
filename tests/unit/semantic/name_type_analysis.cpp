@@ -236,6 +236,33 @@ BOOST_AUTO_TEST_CASE(shallow_accepts_methods_with_same_name_in_different_classes
 }
 
 
+// The MiniJava specification is unclear whether an instance method named
+// 'main' should be allowed or not.  Our compiler allows this and doing so is
+// the Right Thing to do.
+BOOST_AUTO_TEST_CASE(shallow_accepts_instance_method_with_name_main)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					tf.make_empty_method("main")
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					tf.make_empty_main("main")
+				)
+			)
+		)
+	);
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	sem::perform_shallow_type_analysis(*ast, classes, type_annotations);
+}
+
+
 BOOST_AUTO_TEST_CASE(shallow_rejects_duplicate_fields_of_same_type)
 {
 	auto tf = testaux::ast_test_factory{};
