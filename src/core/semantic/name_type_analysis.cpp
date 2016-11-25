@@ -210,14 +210,14 @@ namespace minijava
 
 				void visit(const ast::array_access& node) override
 				{
-					auto& type_info = _types.at(node).info;
+					const auto type_info = _types.at(node).info;
 					assert (!type_info.is_void());
 					is_lvalue = type_info.is_user_defined() || type_info.is_primitive();
 				}
 
 				void visit(const ast::variable_access& node) override
 				{
-					auto& type_info = _types.at(node).info;
+					const auto type_info = _types.at(node).info;
 					assert (!type_info.is_void());
 					is_lvalue = type_info.is_user_defined() || type_info.is_primitive();
 				}
