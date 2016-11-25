@@ -403,12 +403,13 @@ namespace minijava
 				{
 					_symbols.enter_scope(false);
 					_cur_method = &node;
-					// bracket operator creates the set automatically
-					auto locals_set = _locals_annotations[node];
+					auto locals = locals_attributes::mapped_type{};
 					for (const auto& param : node.parameters()) {
 						_symbols.add_def(param.get());
-						locals_set.insert(param.get());
+						locals.insert(param.get());
 					}
+					_locals_annotations[node].swap(locals);
+					assert(locals.empty());  // First time we see this method
 					visit(node.body());
 					_cur_method = nullptr;
 					_symbols.leave_scope();
@@ -423,8 +424,7 @@ namespace minijava
 					auto type = get_type(node.var_type(), _classes, false);
 					_symbols.add_def(&node);
 					if (_cur_method) {
-						auto locals_set = _locals_annotations[*_cur_method];
-						locals_set.insert(&node);
+						_locals_annotations[*_cur_method].insert(&node);
 					}
 					_type_annotations.put(node, type);
 				}
