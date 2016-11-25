@@ -11,7 +11,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include "parser/ast.hpp"
 #include "parser/ast_factory.hpp"
@@ -98,7 +97,7 @@ namespace minijava
 		              method_attributes method_annotations,
 		              const_attributes const_annotations,
 		              std::unique_ptr<ast::program> builtin_ast,
-					  std::vector<std::unique_ptr<ast::var_decl>> globals)
+					  sem::globals_vector globals)
 				: _classes{std::move(classes)}
 				, _type_annotations{std::move(type_annotations)}
 				, _locals_annotations{std::move(locals_annotations)}
@@ -315,7 +314,7 @@ namespace minijava
 		std::unique_ptr<ast::program> _builtin_ast;
 
 		/** @brief global variables, sorted by memory address of the AST node */
-		std::vector<std::unique_ptr<ast::var_decl>> _globals;
+		sem::globals_vector _globals;
 
 	};
 
