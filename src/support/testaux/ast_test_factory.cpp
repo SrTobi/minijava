@@ -15,6 +15,12 @@ namespace testaux
 		return factory.make<ast::integer_constant>()(pool.normalize(lexval));
 	}
 
+	std::unique_ptr<minijava::ast::variable_access>
+	ast_test_factory::make_idref(const std::string& lexval)
+	{
+		return factory.make<minijava::ast::variable_access>()(nox(), pool.normalize(lexval));
+	}
+
 	std::unique_ptr<minijava::ast::block>
 	ast_test_factory::make_empty_block()
 	{

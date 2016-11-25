@@ -72,6 +72,20 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Creates a variable access node.
+		 *
+		 * @param lexval
+		 *     lexical value of the referenced identifier
+		 *
+		 * @returns
+		 *     variable access AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::variable_access>
+		make_idref(const std::string& lexval);
+
+		/**
+		 * @brief
 		 *     Creates an empty block.
 		 *
 		 * @returns

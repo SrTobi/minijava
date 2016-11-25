@@ -232,7 +232,7 @@ namespace minijava
 
 		void perform_full_name_type_analysis(const ast::program&      ast,
 											 const class_definitions& classes,
-											 const globals_map&       /* globals             */,
+											 const globals_vector&    /* globals             */,
 											 type_attributes&         type_annotations,
 											 locals_attributes&       /* locals_annotations  */,
 											 vardecl_attributes&      /* vardecl_annotations */,

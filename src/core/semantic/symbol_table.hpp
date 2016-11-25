@@ -10,10 +10,8 @@
 
 #include <unordered_map>
 
-#include <boost/optional.hpp>
-
-#include "symbol/symbol.hpp"
 #include "parser/ast.hpp"
+#include "symbol/symbol.hpp"
 
 
 namespace minijava
@@ -32,7 +30,7 @@ namespace minijava
 		 * possible to ask for a symbol what the currently visible definition
 		 * is, or if there is none at all.  Furthermore, new definitions can be
 		 * added to the current scope and those will be checked whether they
-		 * conflict with any previos definition.  Each scope has an attribute
+		 * conflict with any previous definition.  Each scope has an attribute
 		 * that defines whether nested scopes may or may not shadow its
 		 * definitions.  A `symbol_table` must have at least one scope pushed
 		 * in order for the operations on definitions to be well-defined.
@@ -59,17 +57,6 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Convenience typedef for an optional pointer to definition.
-			 *
-			 * Since `nullptr` is valid as pointer to definition, an additional
-			 * level of indirection is needed and provided via
-			 * `boost::optional`.
-			 *
-			 */
-			using optional_var_decl = boost::optional<const ast::var_decl*>;
-
-			/**
-			 * @brief
 			 *     Creates an empty symbol table with no initial scope.
 			 *
 			 * Before an initial scope is pushed, all operations other than
@@ -84,8 +71,7 @@ namespace minijava
 			 *     it exists, or else `nullptr`.
 			 *
 			 * Note that this function may find a definition even if
-			 * %get_conflicting_definitions reports no conflicts.  Further note
-			 * that `nullptr` is a valid point of definition.
+			 * %get_conflicting_definitions reports no conflicts.
 			 *
 			 * The behavior is undefined unless at least one scope has been
 			 * pushed.
@@ -94,10 +80,10 @@ namespace minijava
 			 *     symbol to look up
 			 *
 			 * @returns
-			 *     pointer to definition if any
+			 *     pointer to definition or `nullptr` if no definition exists
 			 *
 			 */
-			optional_var_decl lookup(const symbol name) const;
+			const ast::var_decl* lookup(const symbol name) const;
 
 			/**
 			 * @brief
@@ -107,8 +93,7 @@ namespace minijava
 			 * A symbol may not be defined if there is a definition of the same
 			 * symbol in the same scope or in a parent scope that has the
 			 * `may_shadow` attribute set to `false`.  If such a conflicting
-			 * definition is found, a pointer to it is `return`ed.  Note that
-			 * `nullptr` is a valid point of definition.
+			 * definition is found, a pointer to it is `return`ed.
 			 *
 			 * The behavior is undefined unless at least one scope has been
 			 * pushed.
@@ -117,19 +102,18 @@ namespace minijava
 			 *     symbol to check
 			 *
 			 * @returns
-			 *     pointer to conflicting definition if any
+			 *     pointer to conflicting definition or `nullptr` if no such
+			 *     definition exists
 			 *
 			 */
-			optional_var_decl get_conflicting_definitions(symbol name) const;
+			const ast::var_decl* get_conflicting_definitions(symbol name) const;
 
 			/**
 			 * @brief
 			 *     Adds a definition to the current scope.
 			 *
 			 * If there is a conflicting definition, an exception is `throw`n
-			 * and the scope is left unchanged.  `def == nullptr` is valid.
-			 * However, if `def != nullptr`, then `def->name()` must equal
-			 * `name`.  Otherwise, the behavior will be undefined.
+			 * and the scope is left unchanged.
 			 *
 			 * The behavior is undefined unless at least one scope has been
 			 * pushed.
@@ -141,7 +125,7 @@ namespace minijava
 			 *     if there is a conflicting definition
 			 *
 			 */
-			void add_def(symbol name, const ast::var_decl* def);
+			void add_def(const ast::var_decl* def);
 
 			/**
 			 * @brief

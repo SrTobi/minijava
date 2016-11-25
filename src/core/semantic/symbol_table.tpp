@@ -26,7 +26,7 @@ namespace minijava
 		{
 		}
 
-		inline symbol_table::optional_var_decl
+		inline const ast::var_decl*
 		symbol_table::lookup(const symbol name) const
 		{
 			assert(!_nested_scopes.empty());
@@ -38,10 +38,10 @@ namespace minijava
 					return pos->second;
 				}
 			}
-			return {};
+			return nullptr;
 		}
 
-		inline symbol_table::optional_var_decl
+		inline const ast::var_decl*
 		symbol_table::get_conflicting_definitions(const symbol name) const
 		{
 			assert(!_nested_scopes.empty());
@@ -55,17 +55,17 @@ namespace minijava
 					}
 				}
 			}
-			return {};
+			return nullptr;
 		}
 
-		inline void symbol_table::add_def(const symbol name, const ast::var_decl* def)
+		inline void symbol_table::add_def(const ast::var_decl* def)
 		{
 			assert(!_nested_scopes.empty());
-			assert((def == nullptr) || (def->name() == name));
-			if (const auto xxx = get_conflicting_definitions(name)) {
-				detail::throw_conflicting_symbol_definitions(name, def, xxx.get());
+			assert(def);
+			if (const auto xxx = get_conflicting_definitions(def->name())) {
+				detail::throw_conflicting_symbol_definitions(def->name(), def, xxx);
 			}
-			_nested_scopes.back().defs[name] = def;
+			_nested_scopes.back().defs[def->name()] = def;
 		}
 
 		inline void symbol_table::enter_scope(const bool may_shadow)

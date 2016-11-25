@@ -26,7 +26,7 @@ namespace /* anonymous */
 	struct full_analysis
 	{
 		sem::class_definitions classes{};
-		sem::globals_map globals{};
+		sem::globals_vector globals{};
 		sem::type_attributes type_annotations{};
 		sem::locals_attributes locals_annotations{};
 		sem::vardecl_attributes vardecl_annotations{};
@@ -702,4 +702,44 @@ BOOST_AUTO_TEST_CASE(full_extracts_types_2nd)
 	BOOST_REQUIRE_EQUAL(integer, analysis.type_annotations.at(*decl_zero));
 	BOOST_REQUIRE_EQUAL(boolean, analysis.type_annotations.at(*rel_expr));
 	BOOST_REQUIRE_EQUAL(boolean, analysis.type_annotations.at(*decl_broken));
+}
+
+
+BOOST_AUTO_TEST_CASE(full_extracts_types_3rd)
+{
+	auto tf = testaux::ast_test_factory{};
+	const minijava::ast::variable_access* nodeptr = nullptr;
+	const auto ast = tf.factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(
+					tf.make_declaration("test", "Test")
+				),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					tf.factory.make<ast::instance_method>()(
+						tf.pool.normalize("getTest"),
+						tf.factory.make<ast::type>()(tf.pool.normalize("Test")),
+						testaux::make_unique_ptr_vector<ast::var_decl>(),
+						tf.factory.make<ast::block>()(
+								testaux::make_unique_ptr_vector<ast::block_statement>(
+								tf.factory.make<ast::return_statement>()(
+									tf.x(nodeptr, tf.make_idref("test"))
+								)
+							)
+						)
+					)
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					tf.make_empty_main()
+				)
+			)
+		)
+	);
+	const auto analysis = full_analysis{*ast};
+	//const auto expected = sem::basic_type_info::make_int_type();
+	//  const auto expected = sem::type{expected_bti, 0};
+	//  const auto actual = analysis.type_annotations.at(*nodeptr);
+	//  BOOST_REQUIRE_EQUAL(expected, actual);
+	// }
 }
