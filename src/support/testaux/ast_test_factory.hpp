@@ -165,6 +165,20 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Wraps a single expression in a block.
+		 *
+		 * @param expr
+		 *     expression to wrap
+		 *
+		 * @returns
+		 *     block AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::block>
+		as_block(std::unique_ptr<minijava::ast::expression> expr);
+
+		/**
+		 * @brief
 		 *     Creates an empty main method.
 		 *
 		 * @param name
@@ -321,6 +335,20 @@ namespace testaux
 		 */
 		std::unique_ptr<minijava::ast::class_declaration>
 		as_class(const std::string& name, std::unique_ptr<minijava::ast::var_decl> decl);
+
+		/**
+		 * @brief
+		 *     Wraps a class as a program.
+		 *
+		 * @param clazz
+		 *     class to wrap
+		 *
+		 * @returns
+		 *     AST for complete program
+		 *
+		 */
+		std::unique_ptr<minijava::ast::program>
+		as_program(std::unique_ptr<minijava::ast::class_declaration> clazz);
 
 		/**
 		 * @brief

@@ -770,3 +770,140 @@ BOOST_AUTO_TEST_CASE(full_extracts_types_3rd)
 	BOOST_REQUIRE(test_meth == analysis.method_annotations.at(*p3));
 	BOOST_REQUIRE(test_meth == analysis.method_annotations.at(*p4));
 }
+
+
+BOOST_AUTO_TEST_CASE(full_rejects_access_to_undefined_variable_in_main)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(tf.make_idref("undefined"));
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_rejects_access_to_undefined_variable)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(
+		tf.factory.make<ast::class_declaration>()(
+			tf.pool.normalize("Test"),
+			testaux::make_unique_ptr_vector<ast::var_decl>(),
+			testaux::make_unique_ptr_vector<ast::instance_method>(
+				tf.factory.make<ast::instance_method>()(
+					tf.pool.normalize("useUndefined"),
+					tf.factory.make<ast::type>()(ast::primitive_type::type_void),
+					testaux::make_unique_ptr_vector<ast::var_decl>(),
+					tf.as_block(tf.make_idref_this("undefined"))
+				)
+			),
+			testaux::make_unique_ptr_vector<ast::main_method>(tf.make_empty_main())
+		)
+	);
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_rejects_call_of_undefined_method_in_main)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(tf.make_call("undefined"));
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_rejects_call_of_undefined_method)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(
+		tf.factory.make<ast::class_declaration>()(
+			tf.pool.normalize("Test"),
+			testaux::make_unique_ptr_vector<ast::var_decl>(),
+			testaux::make_unique_ptr_vector<ast::instance_method>(
+				tf.factory.make<ast::instance_method>()(
+					tf.pool.normalize("callUndefined"),
+					tf.factory.make<ast::type>()(ast::primitive_type::type_void),
+					testaux::make_unique_ptr_vector<ast::var_decl>(),
+					tf.as_block(tf.make_call_this("undefined"))
+				)
+			),
+			testaux::make_unique_ptr_vector<ast::main_method>(tf.make_empty_main())
+		)
+	);
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_rejects_access_to_args_in_main)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(
+		tf.factory.make<ast::class_declaration>()(
+			tf.pool.normalize("Test"),
+			testaux::make_unique_ptr_vector<ast::var_decl>(),
+			testaux::make_unique_ptr_vector<ast::instance_method>(),
+			testaux::make_unique_ptr_vector<ast::main_method>(
+				tf.factory.make<ast::main_method>()(
+					tf.pool.normalize("main"),
+					tf.pool.normalize("toxic"),  // deliberately not 'args'
+					tf.as_block(tf.make_idref("quacks"))
+				)
+			)
+		)
+	);
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_rejects_access_to_fields_from_main)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(
+		tf.factory.make<ast::class_declaration>()(
+			tf.pool.normalize("Test"),
+			testaux::make_unique_ptr_vector<ast::var_decl>(
+				tf.make_declaration("field", ast::primitive_type::type_int)
+			),
+			testaux::make_unique_ptr_vector<ast::instance_method>(),
+			testaux::make_unique_ptr_vector<ast::main_method>(
+				tf.factory.make<ast::main_method>()(
+					tf.pool.normalize("main"),
+					tf.pool.normalize("args"),
+					tf.as_block(tf.make_idref("field"))
+				)
+			)
+		)
+	);
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_accepts_args_that_is_not_args_in_main)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(
+		tf.factory.make<ast::class_declaration>()(
+			tf.pool.normalize("Test"),
+			testaux::make_unique_ptr_vector<ast::var_decl>(),
+			testaux::make_unique_ptr_vector<ast::instance_method>(),
+			testaux::make_unique_ptr_vector<ast::main_method>(
+				tf.factory.make<ast::main_method>()(
+					tf.pool.normalize("main"),
+					tf.pool.normalize("toxic"),
+					tf.as_block(
+						tf.factory.make<ast::local_variable_statement>()(
+							tf.make_declaration("args", ast::primitive_type::type_int),
+							tf.make_literal("0")
+						)
+					)
+				)
+			)
+		)
+	);
+	auto analysis = full_analysis{};
+	BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+}

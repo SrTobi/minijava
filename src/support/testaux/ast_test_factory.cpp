@@ -69,6 +69,12 @@ namespace testaux
 		);
 	}
 
+	std::unique_ptr<minijava::ast::block>
+	ast_test_factory::as_block(std::unique_ptr<minijava::ast::expression> expr)
+	{
+		return as_block(factory.make<ast::expression_statement>()(std::move(expr)));
+	}
+
 	std::unique_ptr<ast::main_method>
 	ast_test_factory::make_empty_main(const std::string& name)
 	{
@@ -171,6 +177,14 @@ namespace testaux
 			make_unique_ptr_vector<ast::var_decl>(std::move(decl)),
 			make_unique_ptr_vector<ast::instance_method>(),
 			make_unique_ptr_vector<ast::main_method>()
+		);
+	}
+
+	std::unique_ptr<ast::program>
+	ast_test_factory::as_program(std::unique_ptr<ast::class_declaration> clazz)
+	{
+		return factory.make<ast::program>()(
+			make_unique_ptr_vector<ast::class_declaration>(std::move(clazz))
 		);
 	}
 
