@@ -169,10 +169,16 @@ namespace minijava
 		 * @tparam NodeT
 		 *     type of `node` to create
 		 *
+		 * @tparam ForbiddenTs
+		 *     must no be used
+		 *
+		 * @param forbidden
+		 *     must no be used
+		 *
 		 */
-		template <typename NodeT>
+		template <typename NodeT, typename... ForbiddenTs>
 		std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
-		make();
+		make(ForbiddenTs&&... forbidden);
 
 		/**
 		 * @brief

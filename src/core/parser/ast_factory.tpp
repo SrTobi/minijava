@@ -49,10 +49,14 @@ namespace minijava
 	{
 	}
 
-	template <typename NodeT>
+	template <typename NodeT, typename... ForbiddenTs>
 	std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
-	ast_factory::make()
+	ast_factory::make(ForbiddenTs&&... forbidden)
 	{
+		static_assert(
+			sizeof...(forbidden) == 0,
+			"Oh, no!  You forgot the pair of empty parenthesis after ast_factory.make<NodeT>()(...) again!"
+		);
 		return ast_builder<NodeT>{++_id};
 	}
 
