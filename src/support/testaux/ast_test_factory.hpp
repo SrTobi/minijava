@@ -256,6 +256,36 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Wraps a single statement as a program as the body of the main
+		 *     method.
+		 *
+		 * @param stmt
+		 *     statement to wrap
+		 *
+		 * @returns
+		 *     AST for complete program
+		 *
+		 */
+		std::unique_ptr<minijava::ast::program>
+		as_program(std::unique_ptr<minijava::ast::statement> stmt);
+
+		/**
+		 * @brief
+		 *     Wraps a single expression as a program as the body of the main
+		 *     method.
+		 *
+		 * @param expr
+		 *     expression to wrap
+		 *
+		 * @returns
+		 *     AST for complete program
+		 *
+		 */
+		std::unique_ptr<minijava::ast::program>
+		as_program(std::unique_ptr<minijava::ast::expression> expr);
+
+		/**
+		 * @brief
 		 *     Creates a <q>hello world</q> program in a class with the given name.
 		 *
 		 * @param name

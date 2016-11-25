@@ -329,7 +329,7 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_method_of_unknown_type)
 				testaux::make_unique_ptr_vector<ast::var_decl>(),
 				testaux::make_unique_ptr_vector<ast::instance_method>(
 					tf.factory.make<ast::instance_method>()(
-						tf.pool.normalize("getObjectOfUdeclaredType"),
+						tf.pool.normalize("getObjectOfUndeclaredType"),
 						tf.factory.make<ast::type>()(tf.pool.normalize("Foo")),
 						testaux::make_unique_ptr_vector<ast::var_decl>(),
 						tf.factory.make<ast::block>()(
@@ -541,7 +541,8 @@ BOOST_AUTO_TEST_CASE(shallow_extracts_method_and_parameter_types)
 	{
 		const auto expected_bti = sem::basic_type_info::make_int_type();
 		const auto expected = sem::type{expected_bti, 0};
-		const auto nodeptr = ast->classes().front()->instance_methods().front()->parameters().front().get();
+		const auto nodeptr = ast->classes().front()->instance_methods().front()
+			->parameters().front().get();
 		const auto actual = type_annotations.at(*nodeptr);
 		BOOST_REQUIRE_EQUAL(expected, actual);
 	}
@@ -593,4 +594,30 @@ BOOST_DATA_TEST_CASE(full_rejects_local_variables_of_type_void, some_ranks)
 		sem::perform_full_name_type_analysis(*ast, classes, globals, type_annotations, locals_annotations, vardecl_annotations, method_annotations),
 		minijava::semantic_error
 	);
+}
+
+
+BOOST_AUTO_TEST_CASE(full_extracts_expression_types_1st)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.as_program(
+		tf.factory.make<ast::integer_constant>()(tf.pool.normalize("0"))
+	);
+	auto classes = sem::class_definitions{};
+	auto globals = sem::globals_map{};
+	auto type_annotations = sem::type_attributes{};
+	auto locals_annotations = sem::locals_attributes{};
+	auto vardecl_annotations = sem::vardecl_attributes{};
+	auto method_annotations = sem::method_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	sem::perform_full_name_type_analysis(*ast, classes, globals, type_annotations, locals_annotations, vardecl_annotations, method_annotations);
+	{
+		const auto expected_bti = sem::basic_type_info::make_int_type();
+		const auto expected = sem::type{expected_bti, 0};
+		const auto nodeptr = &dynamic_cast<const ast::expression_statement&>(
+			*ast->classes().front()->main_methods().front()->body().body().front()
+		).inner_expression();
+		const auto actual = type_annotations.at(*nodeptr);
+		BOOST_REQUIRE_EQUAL(expected, actual);
+	}
 }

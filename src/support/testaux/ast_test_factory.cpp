@@ -141,6 +141,18 @@ namespace testaux
 	}
 
 	std::unique_ptr<ast::program>
+	ast_test_factory::as_program(std::unique_ptr<ast::statement> stmt)
+	{
+		return as_program(as_block(std::move(stmt)));
+	}
+
+	std::unique_ptr<minijava::ast::program>
+	ast_test_factory::as_program(std::unique_ptr<minijava::ast::expression> expr)
+	{
+		return as_program(factory.make<ast::expression_statement>()(std::move(expr)));
+	}
+
+	std::unique_ptr<ast::program>
 	ast_test_factory::as_program(std::unique_ptr<ast::block> body)
 	{
 		return as_program(
