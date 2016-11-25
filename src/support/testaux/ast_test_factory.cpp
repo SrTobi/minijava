@@ -9,19 +9,51 @@ namespace ast = minijava::ast;
 namespace testaux
 {
 
-	std::unique_ptr<minijava::ast::integer_constant>
+	std::unique_ptr<ast::integer_constant>
 	ast_test_factory::make_literal(const std::string& lexval)
 	{
 		return factory.make<ast::integer_constant>()(pool.normalize(lexval));
 	}
 
-	std::unique_ptr<minijava::ast::variable_access>
-	ast_test_factory::make_idref(const std::string& lexval)
+	std::unique_ptr<ast::variable_access>
+	ast_test_factory::make_idref(const std::string& name)
 	{
-		return factory.make<minijava::ast::variable_access>()(nox(), pool.normalize(lexval));
+		return factory.make<ast::variable_access>()(nox(), pool.normalize(name));
 	}
 
-	std::unique_ptr<minijava::ast::block>
+	std::unique_ptr<ast::variable_access>
+	ast_test_factory::make_idref_this(const std::string& name)
+	{
+		return factory.make<ast::variable_access>()(make_this(), pool.normalize(name));
+	}
+
+	std::unique_ptr<ast::method_invocation>
+	ast_test_factory::make_call(const std::string& name)
+	{
+		return factory.make<ast::method_invocation>()(
+			nox(),
+			pool.normalize(name),
+			make_unique_ptr_vector<ast::expression>()
+		);
+	}
+
+	std::unique_ptr<ast::method_invocation>
+	ast_test_factory::make_call_this(const std::string& name)
+	{
+		return factory.make<ast::method_invocation>()(
+			make_this(),
+			pool.normalize(name),
+			make_unique_ptr_vector<ast::expression>()
+		);
+	}
+
+	std::unique_ptr<ast::this_ref>
+	ast_test_factory::make_this()
+	{
+		return factory.make<ast::this_ref>()();
+	}
+
+	std::unique_ptr<ast::block>
 	ast_test_factory::make_empty_block()
 	{
 		return factory.make<ast::block>()(
@@ -152,8 +184,8 @@ namespace testaux
 		);
 	}
 
-	std::unique_ptr<minijava::ast::program>
-	ast_test_factory::as_program(std::vector<std::unique_ptr<minijava::ast::block_statement>> stmts)
+	std::unique_ptr<ast::program>
+	ast_test_factory::as_program(std::vector<std::unique_ptr<ast::block_statement>> stmts)
 	{
 		return as_program(factory.make<ast::block>()(std::move(stmts)));
 	}
@@ -164,8 +196,8 @@ namespace testaux
 		return as_program(as_block(std::move(stmt)));
 	}
 
-	std::unique_ptr<minijava::ast::program>
-	ast_test_factory::as_program(std::unique_ptr<minijava::ast::expression> expr)
+	std::unique_ptr<ast::program>
+	ast_test_factory::as_program(std::unique_ptr<ast::expression> expr)
 	{
 		return as_program(factory.make<ast::expression_statement>()(std::move(expr)));
 	}

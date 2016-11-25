@@ -708,7 +708,10 @@ BOOST_AUTO_TEST_CASE(full_extracts_types_2nd)
 BOOST_AUTO_TEST_CASE(full_extracts_types_3rd)
 {
 	auto tf = testaux::ast_test_factory{};
-	const minijava::ast::variable_access* nodeptr = nullptr;
+	const minijava::ast::variable_access* p1 = nullptr;
+	const minijava::ast::variable_access* p2 = nullptr;
+	const minijava::ast::method_invocation* p3 = nullptr;
+	const minijava::ast::method_invocation* p4 = nullptr;
 	const auto ast = tf.factory.make<ast::program>()(
 		testaux::make_unique_ptr_vector<ast::class_declaration>(
 			tf.factory.make<ast::class_declaration>()(
@@ -718,13 +721,24 @@ BOOST_AUTO_TEST_CASE(full_extracts_types_3rd)
 				),
 				testaux::make_unique_ptr_vector<ast::instance_method>(
 					tf.factory.make<ast::instance_method>()(
-						tf.pool.normalize("getTest"),
-						tf.factory.make<ast::type>()(tf.pool.normalize("Test")),
-						testaux::make_unique_ptr_vector<ast::var_decl>(),
+						tf.pool.normalize("test"),
+						tf.factory.make<ast::type>()(ast::primitive_type::type_void),
+						testaux::make_unique_ptr_vector<ast::var_decl>(
+							tf.make_declaration("test", ast::primitive_type::type_int)
+						),
 						tf.factory.make<ast::block>()(
-								testaux::make_unique_ptr_vector<ast::block_statement>(
-								tf.factory.make<ast::return_statement>()(
-									tf.x(nodeptr, tf.make_idref("test"))
+							testaux::make_unique_ptr_vector<ast::block_statement>(
+								tf.factory.make<ast::expression_statement>()(
+									tf.x(p1, tf.make_idref("test"))
+								),
+								tf.factory.make<ast::expression_statement>()(
+									tf.x(p2, tf.make_idref_this("test"))
+								),
+								tf.factory.make<ast::expression_statement>()(
+									tf.x(p3, tf.make_call("test"))
+								),
+								tf.factory.make<ast::expression_statement>()(
+									tf.x(p4, tf.make_call_this("test"))
 								)
 							)
 						)
@@ -737,9 +751,22 @@ BOOST_AUTO_TEST_CASE(full_extracts_types_3rd)
 		)
 	);
 	const auto analysis = full_analysis{*ast};
-	//const auto expected = sem::basic_type_info::make_int_type();
-	//  const auto expected = sem::type{expected_bti, 0};
-	//  const auto actual = analysis.type_annotations.at(*nodeptr);
-	//  BOOST_REQUIRE_EQUAL(expected, actual);
-	// }
+	const auto test_class = ast->classes().front().get();
+	const auto test_field = test_class->fields().front().get();
+	const auto test_meth = test_class->instance_methods().front().get();
+	const auto test_param = test_meth->parameters().front().get();
+	const auto type_test = sem::type{sem::basic_type_info{*test_class, false}, 0};
+	const auto type_int = sem::type{sem::basic_type_info::make_int_type(), 0};
+	const auto type_void = sem::type{sem::basic_type_info::make_void_type(), 0};
+	BOOST_REQUIRE_EQUAL(type_void, analysis.type_annotations.at(*test_meth));
+	BOOST_REQUIRE_EQUAL(type_test, analysis.type_annotations.at(*test_field));
+	BOOST_REQUIRE_EQUAL(type_int, analysis.type_annotations.at(*test_param));
+	BOOST_REQUIRE_EQUAL(type_int, analysis.type_annotations.at(*p1));
+	BOOST_REQUIRE_EQUAL(type_test, analysis.type_annotations.at(*p2));
+	BOOST_REQUIRE_EQUAL(type_void, analysis.type_annotations.at(*p3));
+	BOOST_REQUIRE_EQUAL(type_void, analysis.type_annotations.at(*p4));
+	BOOST_REQUIRE(test_param == analysis.vardecl_annotations.at(*p1));
+	BOOST_REQUIRE(test_field == analysis.vardecl_annotations.at(*p2));
+	BOOST_REQUIRE(test_meth == analysis.method_annotations.at(*p3));
+	BOOST_REQUIRE(test_meth == analysis.method_annotations.at(*p4));
 }

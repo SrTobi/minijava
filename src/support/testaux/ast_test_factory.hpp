@@ -74,15 +74,69 @@ namespace testaux
 		 * @brief
 		 *     Creates a variable access node.
 		 *
-		 * @param lexval
-		 *     lexical value of the referenced identifier
+		 * @param name
+		 *     name of the referenced identifier
 		 *
 		 * @returns
 		 *     variable access AST
 		 *
 		 */
 		std::unique_ptr<minijava::ast::variable_access>
-		make_idref(const std::string& lexval);
+		make_idref(const std::string& name);
+
+		/**
+		 * @brief
+		 *     Creates a `this`-qualified variable access node.
+		 *
+		 * @param name
+		 *     name of the referenced identifier
+		 *
+		 * @returns
+		 *     variable access AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::variable_access>
+		make_idref_this(const std::string& name);
+
+		/**
+		 * @brief
+		 *     Creates a method invocation node with no arguments.
+		 *
+		 * @param name
+		 *     name of the referenced identifier
+		 *
+		 * @returns
+		 *     AST for method invocation
+		 *
+		 */
+		std::unique_ptr<minijava::ast::method_invocation>
+		make_call(const std::string& name);
+
+		/**
+		 * @brief
+		 *     Creates a `this`-qualified method invocation node with no
+		 *     arguments.
+		 *
+		 * @param name
+		 *     name of the referenced identifier
+		 *
+		 * @returns
+		 *     AST for method invocation
+		 *
+		 */
+		std::unique_ptr<minijava::ast::method_invocation>
+		make_call_this(const std::string& name);
+
+		/**
+		 * @brief
+		 *     Creates a `this` access node.
+		 *
+		 * @returns
+		 *     `this` access AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::this_ref>
+		make_this();
 
 		/**
 		 * @brief
