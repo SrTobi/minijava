@@ -9,6 +9,14 @@ namespace ast = minijava::ast;
 namespace testaux
 {
 
+	std::unique_ptr<minijava::ast::block>
+	ast_test_factory::make_empty_block()
+	{
+		return factory.make<ast::block>()(
+			make_unique_ptr_vector<ast::block_statement>()
+		);
+	}
+
 	std::unique_ptr<ast::block>
 	ast_test_factory::as_block(std::unique_ptr<ast::block_statement> blkstmt)
 	{

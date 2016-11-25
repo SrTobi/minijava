@@ -44,6 +44,17 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Creates an empty block.
+		 *
+		 * @returns
+		 *     empty block AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::block>
+		make_empty_block();
+
+		/**
+		 * @brief
 		 *     Wraps a single block statement as a block.
 		 *
 		 * @param blkstmt
@@ -255,7 +266,7 @@ namespace testaux
 		 *
 		 */
 		std::unique_ptr<minijava::ast::program>
-		make_hello_world(const std::string& name);
+		make_hello_world(const std::string& name = "MiniJava");
 
 	};  // class ast_test_factory
 

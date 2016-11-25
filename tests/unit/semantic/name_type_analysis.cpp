@@ -7,8 +7,11 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 
+#include <boost/lexical_cast.hpp>
+
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"
+#include "semantic/type_info.hpp"
 
 #include "testaux/ast_test_factory.cpp"
 #include "testaux/unique_ptr_vector.hpp"
@@ -18,6 +21,50 @@ namespace sem = minijava::sem;
 
 
 static const std::size_t some_ranks[] = {0, 1, 2, 3, 100};
+
+
+BOOST_DATA_TEST_CASE(type_is_equal_to_self, some_ranks)
+{
+	using bti_type = minijava::sem::basic_type_info;
+	const auto lhs = sem::type{bti_type::make_int_type(), sample};
+	const auto rhs = lhs;  // deliberate copy
+	BOOST_CHECK(lhs == rhs);
+	BOOST_CHECK(!(lhs != rhs));
+}
+
+
+BOOST_DATA_TEST_CASE(type_is_not_equal_to_different_basic_type_with_same_rank, some_ranks)
+{
+	using bti_type = minijava::sem::basic_type_info;
+	const auto lhs = sem::type{bti_type::make_int_type(), sample};
+	const auto rhs = sem::type{bti_type::make_boolean_type(), sample};
+	BOOST_CHECK(lhs != rhs);
+	BOOST_CHECK(!(lhs == rhs));
+}
+
+
+BOOST_DATA_TEST_CASE(type_is_not_equal_to_type_with_different_rank, some_ranks)
+{
+	using bti_type = minijava::sem::basic_type_info;
+	const auto lhs = sem::type{bti_type::make_int_type(), sample};
+	const auto rhs = sem::type{bti_type::make_int_type(), sample + 1};
+	BOOST_CHECK(lhs != rhs);
+	BOOST_CHECK(!(lhs == rhs));
+}
+
+
+BOOST_AUTO_TEST_CASE(type_stream_insertion)
+{
+	using namespace std::string_literals;
+	using bti_type = minijava::sem::basic_type_info;
+	const auto stream = [](auto&& x){
+		return boost::lexical_cast<std::string>(x);
+	};
+	BOOST_CHECK_EQUAL("int"s, stream(sem::type{bti_type::make_int_type(), 0}));
+	BOOST_CHECK_EQUAL("int[]"s, stream(sem::type{bti_type::make_int_type(), 1}));
+	BOOST_CHECK_EQUAL("int[][]"s, stream(sem::type{bti_type::make_int_type(), 2}));
+}
+
 
 BOOST_AUTO_TEST_CASE(shallow_rejects_empty_program)
 {
@@ -424,6 +471,103 @@ BOOST_AUTO_TEST_CASE(shallow_rejects_method_of_type_void_array)
 		sem::perform_shallow_type_analysis(*ast, classes, type_annotations),
 		minijava::semantic_error
 	);
+}
+
+
+BOOST_AUTO_TEST_CASE(shallow_extracts_field_types)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(
+					tf.make_declaration("x", ast::primitive_type::type_boolean, 7)
+				),
+				testaux::make_unique_ptr_vector<ast::instance_method>(),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					tf.make_empty_main()
+				)
+			)
+		)
+	);
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	sem::perform_shallow_type_analysis(*ast, classes, type_annotations);
+	const auto expected_bti = sem::basic_type_info::make_boolean_type();
+	const auto expected = sem::type{expected_bti, 7};
+	const auto nodeptr = ast->classes().front()->fields().front().get();
+	const auto actual = type_annotations.at(*nodeptr);
+	BOOST_REQUIRE_EQUAL(expected, actual);
+}
+
+
+BOOST_AUTO_TEST_CASE(shallow_extracts_method_and_parameter_types)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.factory.make<ast::program>()(
+		testaux::make_unique_ptr_vector<ast::class_declaration>(
+			tf.factory.make<ast::class_declaration>()(
+				tf.pool.normalize("Test"),
+				testaux::make_unique_ptr_vector<ast::var_decl>(),
+				testaux::make_unique_ptr_vector<ast::instance_method>(
+					tf.factory.make<ast::instance_method>()(
+						tf.pool.normalize("getTests"),
+						tf.factory.make<ast::type>()(tf.pool.normalize("Test"), 1),
+						testaux::make_unique_ptr_vector<ast::var_decl>(
+							tf.make_declaration("n", ast::primitive_type::type_int)
+						),
+						tf.make_empty_block()
+					)
+				),
+				testaux::make_unique_ptr_vector<ast::main_method>(
+					tf.make_empty_main()
+				)
+			)
+		)
+	);
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	sem::perform_shallow_type_analysis(*ast, classes, type_annotations);
+	{
+		const auto expected_bti = sem::basic_type_info{*ast->classes().front(), false};
+		const auto expected = sem::type{expected_bti, 1};
+		const auto nodeptr = ast->classes().front()->instance_methods().front().get();
+		const auto actual = type_annotations.at(*nodeptr);
+		BOOST_REQUIRE_EQUAL(expected, actual);
+	}
+	{
+		const auto expected_bti = sem::basic_type_info::make_int_type();
+		const auto expected = sem::type{expected_bti, 0};
+		const auto nodeptr = ast->classes().front()->instance_methods().front()->parameters().front().get();
+		const auto actual = type_annotations.at(*nodeptr);
+		BOOST_REQUIRE_EQUAL(expected, actual);
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(shallow_extracts_main_types)
+{
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.make_hello_world();
+	auto classes = sem::class_definitions{};
+	auto type_annotations = sem::type_attributes{};
+	sem::extract_type_info(*ast, false, classes);
+	sem::perform_shallow_type_analysis(*ast, classes, type_annotations);
+	{
+		const auto expected_bti = sem::basic_type_info::make_void_type();
+		const auto expected = sem::type{expected_bti, 0};
+		const auto nodeptr = ast->classes().front()->main_methods().front().get();
+		const auto actual = type_annotations.at(*nodeptr);
+		BOOST_REQUIRE_EQUAL(expected, actual);
+	}
+	{
+		// TODO: Here we would like to test that the parameter types are also
+		//       set correctly.  Alas, due to a collusion of all involved
+		//       players, they don't even exist in the first place...
+	}
 }
 
 

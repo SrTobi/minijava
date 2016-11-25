@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -120,8 +121,8 @@ namespace minijava
 			}
 
 			[[noreturn]] void
-			throw_another_main(const ast::class_declaration* c1,
-							   const ast::class_declaration* c2)
+			throw_duplicate_main(const ast::class_declaration* c1,
+								 const ast::class_declaration* c2)
 			{
 				const ast::class_declaration* first = c1;
 				const ast::class_declaration* second = c2;
@@ -182,7 +183,7 @@ namespace minijava
 						throw semantic_error{"Only 'main' can be 'static'"};
 					}
 					if (main_class_ptr != nullptr) {
-						throw_another_main(clazz.get(), main_class_ptr);
+						throw_duplicate_main(clazz.get(), main_class_ptr);
 					}
 					main_class_ptr = clazz.get();
 				}
@@ -239,6 +240,15 @@ namespace minijava
 		{
 			perform_shallow_type_analysis(ast, classes, type_annotations);
 			MINIJAVA_THROW_ICE(not_implemented_error);
+		}
+
+		std::ostream& operator<<(std::ostream& os, const type typ)
+		{
+			os << typ.info;
+			for (auto i = std::size_t{}; i < typ.rank; ++i) {
+				os << "[]";
+			}
+			return os;
 		}
 
 	}  // namespace sem

@@ -1,5 +1,6 @@
 #include "semantic/type_info.hpp"
 
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -50,5 +51,26 @@ namespace minijava
 				));
 			}
 		}
-	}
-}
+
+
+		std::ostream& operator<<(std::ostream& os, const basic_type_info bti)
+		{
+			if (bti.is_null()) {
+				os << "__null_t";
+			} else if (bti.is_void()) {
+				os << "void";
+			} else if (bti.is_int()) {
+				os << "int";
+			} else if (bti.is_boolean()) {
+				os << "boolean";
+			} else if (const auto declptr = bti.declaration()) {
+				os << declptr->name();
+			} else {
+				os << "__builtin_t";
+			}
+			return os;
+		}
+
+	}  // namespace sem
+
+}  // namespace minijava

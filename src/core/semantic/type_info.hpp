@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iosfwd>
 #include <unordered_map>
 
 #include "parser/ast.hpp"
@@ -364,6 +365,26 @@ namespace minijava
 		{
 			return !basic_type_info::equal(lhs, rhs);
 		}
+
+
+		/**
+		 * @brief
+		 *     Inserts a human-readable representation of the basic type into
+		 *     the stream.
+		 *
+		 * The generated output may not be valid MiniJava.
+		 *
+		 * @param os
+		 *     stream to write to
+		 *
+		 * @param bti
+		 *     `basic_type_info` to write
+		 *
+		 * @returns
+		 *     reference to `os`
+		 *
+		 */
+		std::ostream& operator<<(std::ostream& os, const basic_type_info bti);
 
 
 		/** @brief Mapping from class names to their types. */

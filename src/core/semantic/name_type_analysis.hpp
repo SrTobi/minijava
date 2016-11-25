@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstddef>
+#include <iosfwd>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -42,7 +43,7 @@ namespace minijava
 			 *     rank of the array or 0 if this type is not an array
 			 *
 			 */
-			type(const basic_type_info info, const std::size_t rank) noexcept
+			constexpr type(const basic_type_info info, const std::size_t rank) noexcept
 					: info{info}, rank{rank}
 			{
 			}
@@ -53,6 +54,63 @@ namespace minijava
 			/** @brief Rank of the array or 0 if this type is not an array. */
 			std::size_t rank;
 		};
+
+		/**
+		 * @brief
+		 *     Compares two `type`s for equality.
+		 *
+		 * @param lhs
+		 *     first `type` to compare
+		 *
+		 * @param rhs
+		 *     second `type` to compare
+		 *
+		 * @returns
+		 *     whether `lhs` and `rhs` have same basic type and rank
+		 *
+		 */
+		constexpr bool operator==(const type lhs, const type rhs) noexcept
+		{
+			return ((lhs.info == rhs.info) && (lhs.rank == rhs.rank));
+		}
+
+		/**
+		 * @brief
+		 *     Compares two `type`s for inequality.
+		 *
+		 * @param lhs
+		 *     first `type` to compare
+		 *
+		 * @param rhs
+		 *     second `type` to compare
+		 *
+		 * @returns
+		 *     `!(lhs == rhs)`
+		 *
+		 */
+		constexpr bool operator!=(const type lhs, const type rhs) noexcept
+		{
+			return !(lhs == rhs);
+		}
+
+		/**
+		 * @brief
+		 *     Inserts a human-readable representation of a `type` into a
+		 *     stream.
+		 *
+		 * The written output might not be valid MiniJava.
+		 *
+		 * @param os
+		 *     stream to write to
+		 *
+		 * @param typ
+		 *     `type` to write
+		 *
+		 * @returns
+		 *     reference to `os`
+		 *
+		 */
+		std::ostream& operator<<(std::ostream& os, type typ);
 
 		/** @brief Global identifier to class name mapping type. */
 		using globals_map = std::unordered_map<symbol, symbol>;
