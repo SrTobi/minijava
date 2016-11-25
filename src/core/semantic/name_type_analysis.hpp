@@ -167,17 +167,22 @@ namespace minijava
 		 * @param type_annotations
 		 *     data structure to populate with the extracted types
 		 *
+		 * @param expect_main
+		 *     if `true`, exactly one main method is expected; otherwise no main
+		 *     method is expected
+		 *
 		 * @throws semantic_error
 		 *     if duplicate field or method names, invalid main methods or
-		 *     unknown types are encountered or if there is not exactly one
-		 *     entry point (main method) in the program; also throws if it
-		 *     finds a field or argument declared as void
+		 *     unknown types are encountered or if the number of entry points
+		 *     (main methods) in the program does not match `expect_main`; also
+		 *     throws if it finds a field or argument declared as void
 		 *
 		 */
 		 // FIXME: check whether we need to expose this or whether we can just perform a full analysis on the builtin AST
 		void perform_shallow_type_analysis(const ast::program& ast,
 		                                   const class_definitions& classes,
-		                                   type_attributes& type_annotations);
+		                                   type_attributes& type_annotations,
+										   bool expect_main = true);
 
 		/**
 		 * @brief

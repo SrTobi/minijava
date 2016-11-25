@@ -149,12 +149,20 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
+			[[noreturn]] void throw_unexpected_main()
+			{
+				auto oss = std::ostringstream{};
+				oss << "Program entry point found although none was expected.";
+				throw semantic_error{oss.str()};
+			}
+
 		}  // namespace /* anonymous */
 
 
 		void perform_shallow_type_analysis(const ast::program& program,
 										   const class_definitions& classes,
-										   type_attributes& type_annotations)
+										   type_attributes& type_annotations,
+										   bool expect_main)
 		{
 			const ast::class_declaration* main_class_ptr = nullptr;
 			for (const auto& clazz : program.classes()) {
@@ -190,7 +198,11 @@ namespace minijava
 				}
 			}
 			if (main_class_ptr == nullptr) {
-				throw_no_main();
+				if (expect_main) {
+					throw_no_main();
+				}
+			} else if (!expect_main) {
+				throw_unexpected_main();
 			}
 		}
 
@@ -792,7 +804,7 @@ namespace minijava
 											 vardecl_attributes&      vardecl_annotations,
 											 method_attributes&       method_annotations)
 		{
-			perform_shallow_type_analysis(ast, classes, type_annotations);
+			perform_shallow_type_analysis(ast, classes, type_annotations, true);
 			auto visitor = name_type_visitor{
 					classes, globals, type_annotations, locals_annotations,
 					vardecl_annotations, method_annotations

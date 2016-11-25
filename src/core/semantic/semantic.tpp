@@ -65,6 +65,7 @@ namespace minijava
 						std::vector<std::unique_ptr<ast::instance_method>>{},
 						std::vector<std::unique_ptr<ast::main_method>>{}
 				);
+				// currently unused, but let's keep it anyway
 				auto string_class = factory.make<ast::class_declaration>()(
 						pool.normalize("java.lang.String"),
 						std::vector<std::unique_ptr<ast::var_decl>>{},
@@ -135,7 +136,9 @@ namespace minijava
 		auto locals_annotations = sem::locals_attributes{};
 		auto vardecl_annotations = sem::vardecl_attributes{};
 		auto method_annotations = sem::method_attributes{};
-		sem::perform_shallow_type_analysis(*builtin_ast, classes, type_annotations);
+		sem::perform_shallow_type_analysis(
+				*builtin_ast, classes, type_annotations, false
+		);
 		sem::perform_full_name_type_analysis(
 				ast,
 				classes,
