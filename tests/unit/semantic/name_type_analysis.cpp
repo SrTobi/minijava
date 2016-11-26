@@ -39,11 +39,12 @@ namespace /* anonymous */
 			(*this)(ast);
 		}
 
-		void operator()(const ast::program& ast)
+		void operator()(const ast::program& ast, const bool builtin = false)
 		{
-			sem::extract_type_info(ast, false, classes);
-			sem::perform_full_name_type_analysis(
-				ast, classes, globals, type_annotations, locals_annotations,
+			sem::extract_type_info(ast, builtin, classes);
+			sem::perform_name_type_analysis(
+				ast, !builtin, classes, globals,
+				type_annotations, locals_annotations,
 				vardecl_annotations, method_annotations
 			);
 		}
@@ -800,10 +801,7 @@ BOOST_DATA_TEST_CASE(analysis_rejects_assignment_to_global_but_allows_comparison
 	auto tf = testaux::ast_test_factory{};
 	const auto builtin_ast = tf.as_program(tf.make_empty_class("Global"));
 	auto analysis = analyzer{};
-	sem::extract_type_info(*builtin_ast, true, analysis.classes);
-	sem::perform_shallow_type_analysis(
-		*builtin_ast, analysis.classes, analysis.type_annotations, false
-	);
+	analysis(*builtin_ast, true);
 	analysis.globals.push_back(
 		tf.factory.make<ast::var_decl>()(
 			tf.factory.make<ast::type>()(tf.pool.normalize("Global")),
@@ -823,9 +821,9 @@ BOOST_DATA_TEST_CASE(analysis_rejects_assignment_to_global_but_allows_comparison
 		)
 	);
 	if (sample) {
-		BOOST_REQUIRE_NO_THROW(analysis(*ast));
+		BOOST_REQUIRE_NO_THROW(analysis(*ast, false));
 	} else {
-		BOOST_REQUIRE_THROW(analysis(*ast), minijava::semantic_error);
+		BOOST_REQUIRE_THROW(analysis(*ast, false), minijava::semantic_error);
 	}
 }
 

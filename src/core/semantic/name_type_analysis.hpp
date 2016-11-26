@@ -140,53 +140,48 @@ namespace minijava
 			ast_node_filter<ast::method_invocation>
 		>;
 
-		/**
-		 * @brief
-		 *     Extract the types of fields, method parameters and method return
-		 *     types in the given AST.
-		 *
-		 * If there are class definitions in the `ast` that have no entry in
-		 * `classes`, the behavior is undefined.  On the other hand, `classes`
-		 * may contain types that are not defined in `ast`.  For the purpose of
-		 * the type analysis performed by this function, those types are
-		 * treated as if they were defined in `ast`.  If `ast` contains
-		 * duplicate classes, the behavior is undefined as well.
-		 *
-		 * The `ast_attributes` container that is passed in to be populated
-		 * with results may already contain some entries, but only for
-		 * non-conflicting nodes.  If the container already sets an attribute
-		 * on a node that this analysis would also set, the behavior is
-		 * undefined.
-		 *
-		 * @param ast
-		 *     AST to analyze
-		 *
-		 * @param classes
-		 *     all class types in the program
-		 *
-		 * @param type_annotations
-		 *     data structure to populate with the extracted types
-		 *
-		 * @param expect_main
-		 *     if `true`, exactly one main method is expected; otherwise no main
-		 *     method is expected
-		 *
-		 * @throws semantic_error
-		 *     if duplicate field or method names, invalid main methods or
-		 *     unknown types are encountered or if the number of entry points
-		 *     (main methods) in the program does not match `expect_main`; also
-		 *     throws if it finds a field or argument declared as void
-		 *
-		 */
-		 // FIXME: check whether we need to expose this or whether we can just perform a full analysis on the builtin AST
-		void perform_shallow_type_analysis(const ast::program& ast,
-		                                   const class_definitions& classes,
-		                                   type_attributes& type_annotations,
-										   bool expect_main = true);
 
 		/**
 		 * @brief
-		 *     Extracts all types in a program.
+		 *     Performs name and type analysis on a program and saves the
+		 *     results as annotations.
+		 *
+		 * This function will check the following properties of the program and
+		 * `throw` an exception if any of them is violated.  If this happens,
+		 * it is unspecified what values have been written into the annotation
+		 * containers.
+		 *
+		 * - There are no two methods in any `class` with pairwise identical
+		 *   names.
+		 *
+		 * - The only `static` method is `main`.
+		 *
+		 * - There are exactly `int(expect_main)` `main` methods in the whole
+		 *   program.
+		 *
+		 * - All declarations refer to known types and no arrays of `void` are
+		 *   declared.  `void` is only used as method `return` type.
+		 *
+		 * - All used identifiers are declared and unambiguous as per the
+		 *   language rules.  (No conflicting identifiers, no shadowing of
+		 *   local variables.)
+		 *
+		 * - All expressions in the program are well-typed as per the language
+		 *   rules.
+		 *
+		 * - The number and types of the expressions in argument lists to
+		 *   method calls match the method signature and the type of the
+		 *   expression in a `return` statement matches the type of the method.
+		 *
+		 * - The body of the `main` method (if any) doesn't refer to fields or
+         *   instance methods of the containing `class` and the formal
+         *   parameter of `main` is never accessed.  (For the purpose of
+         *   shadowing, it is trated like a local variable, but it has no
+         *   declaration, no type and won't be included in the set of locals.
+         *   This is because MiniJava is a messy language.)
+		 *
+		 * If there are multiple errors in the program, it is unspecified which
+		 * error will be reported.
 		 *
 		 * If there are class definitions in the `ast` that have no entry in
 		 * `classes`, the behavior is undefined.  On the other hand, `classes`
@@ -204,6 +199,10 @@ namespace minijava
 		 *
 		 * @param ast
 		 *     AST to analyze
+		 *
+		 * @param expect_main
+		 *     if `true`, exactly one `main` method is expected to be found in
+		 *     the AST; otherwise no `main` method is expected
 		 *
 		 * @param classes
 		 *     all class types in the program
@@ -225,16 +224,17 @@ namespace minijava
 		 *     data structure to populate with extracted declaration pointers
 		 *
 		 * @throws semantic_error
-		 *     if `perform_shallow_type_analysis` throws or {...FIXME...}
+		 *     if the program fails any of the checks listed above
 		 *
 		 */
-		void perform_full_name_type_analysis(const ast::program& ast,
-		                                     const class_definitions& classes,
-		                                     const globals_vector& globals,
-		                                     type_attributes& type_annotations,
-		                                     locals_attributes& locals_annotations,
-		                                     vardecl_attributes& vardecl_annotations,
-		                                     method_attributes& method_annotations);
+		void perform_name_type_analysis(const ast::program&      ast,
+		                                bool                     expect_main,
+		                                const class_definitions& classes,
+		                                const globals_vector&    globals,
+		                                type_attributes&         type_annotations,
+		                                locals_attributes&       locals_annotations,
+		                                vardecl_attributes&      vardecl_annotations,
+		                                method_attributes&       method_annotations);
 
 	}  // namespace sem
 

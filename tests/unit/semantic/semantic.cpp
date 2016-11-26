@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(check_program_hello_world)
 	BOOST_CHECK_EQUAL("println"s, p_println->name());
 	// Check locals annotation
 	BOOST_CHECK_EQUAL(0, info.locals_annotations().at(*p_main).size());
-	/* BOOST_CHECK_GE(1, info.locals_annotations().at(*p_println).size()); */
+	BOOST_CHECK_GE(1, info.locals_annotations().at(*p_println).size());
 	// Check const annotations
 	BOOST_CHECK_EQUAL(42, info.const_annotations().at(*p_42));
 }

@@ -100,29 +100,43 @@ namespace minijava
 	template<typename PoolT>
 	semantic_info check_program(const ast::program& ast, PoolT& pool, ast_factory& factory)
 	{
+		// (0) Create the built-in AST.
 		auto builtin_ast = sem::detail::make_builtin_ast(pool, factory);
-		auto globals = sem::detail::make_globals(pool, factory);
-		auto classes = sem::class_definitions{};
-		sem::extract_type_info(*builtin_ast, true, classes);
-		sem::extract_type_info(ast, false, classes);
-		auto type_annotations = sem::type_attributes{};
-		auto locals_annotations = sem::locals_attributes{};
+		// (1) Initialize empty annotation and other containers for the
+		//     attributes that are relevant for both ASTs.
+		auto classes             = sem::class_definitions{};
+		auto globals             = sem::globals_vector{};
+		auto type_annotations    = sem::type_attributes{};
+		auto locals_annotations  = sem::locals_attributes{};
 		auto vardecl_annotations = sem::vardecl_attributes{};
-		auto method_annotations = sem::method_attributes{};
-		sem::perform_shallow_type_analysis(
-				*builtin_ast, classes, type_annotations, false
-		);
-		sem::perform_full_name_type_analysis(
-				ast,
-				classes,
-				globals,
-				type_annotations,
-				locals_annotations,
-				vardecl_annotations,
-				method_annotations
-		);
+		auto method_annotations  = sem::method_attributes{};
+		// (2) Define a convenient lambda that captures theses containers and
+		//     populates them with the results of a single AST.
+		const auto process = [&](const auto& tree, const auto builtin){
+			sem::extract_type_info(tree, builtin, classes);
+			sem::perform_name_type_analysis(
+				tree, !builtin, classes, globals,
+				type_annotations, locals_annotations,
+				vardecl_annotations, method_annotations
+			);
+		};
+		// (3) Process the built-in AST.  We can (and should) do this before we
+		//     have collected the types from the user-provided AST because the
+		//     built-in AST had better not refer to anything in the
+		//     user-defined one.  If the built-in AST doesn't check in
+		//     isolation, there is a bug in the compiler.
+		process(*builtin_ast, true);
+		// (4) Now we have the built-in types, we can set up the globals for
+		//     the user.
+		globals = sem::detail::make_globals(pool, factory);
+		// (5) And with that, we can also process their AST.
+		process(ast, false);
+		// (6) We only check return paths and extract constants on the user's
+		//     AST.  It wouldn't be wrong to do it for the built-in AST too but
+		//     there seems to come no benefit from doing so.
 		sem::check_return_paths(ast, type_annotations);
 		auto const_annotations = sem::extract_constants(ast);
+		// (7) And that's it.  We shall return.
 		return semantic_info{
 				std::move(classes),
 				std::move(type_annotations),

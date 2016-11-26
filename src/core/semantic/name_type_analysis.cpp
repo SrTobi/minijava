@@ -808,15 +808,16 @@ namespace minijava
 
 		}  // namespace /* anonymous */
 
-		void perform_full_name_type_analysis(const ast::program&      ast,
-											 const class_definitions& classes,
-											 const globals_vector&    globals,
-											 type_attributes&         type_annotations,
-											 locals_attributes&       locals_annotations,
-											 vardecl_attributes&      vardecl_annotations,
-											 method_attributes&       method_annotations)
+		void perform_name_type_analysis(const ast::program&      ast,
+		                                const bool               expect_main,
+		                                const class_definitions& classes,
+		                                const globals_vector&    globals,
+		                                type_attributes&         type_annotations,
+		                                locals_attributes&       locals_annotations,
+		                                vardecl_attributes&      vardecl_annotations,
+		                                method_attributes&       method_annotations)
 		{
-			perform_shallow_type_analysis(ast, classes, type_annotations, true);
+			perform_shallow_type_analysis(ast, classes, type_annotations, expect_main);
 			auto visitor = name_type_visitor{
 					classes, globals, type_annotations, locals_annotations,
 					vardecl_annotations, method_annotations
