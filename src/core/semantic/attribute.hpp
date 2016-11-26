@@ -181,11 +181,13 @@ namespace minijava
 			"The allocator must be copyable and this operation shall not throw"
 		);
 
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
 		template <typename NodeT, typename ResultT = void>
 		using apply_static_node_filter_t = std::enable_if_t<
 			NodeFilterT::static_check(meta::type_t<std::decay_t<NodeT>>{}),
 			ResultT
 		>;
+#endif
 
 	public:
 
@@ -589,7 +591,12 @@ namespace minijava
 		 *
 		 */
 		template <typename NodeT>
-		apply_static_node_filter_t<NodeT, mapped_type&> operator[](NodeT&& node)
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
+		apply_static_node_filter_t<NodeT, mapped_type&>
+#else
+		mapped_type&
+#endif
+		operator[](NodeT&& node)
 		{
 			static_assert(
 				!std::is_void<NodeT>{} && std::is_default_constructible<mapped_type>{},
@@ -627,7 +634,12 @@ namespace minijava
 		 *
 		 */
 		template <typename NodeT>
-		apply_static_node_filter_t<NodeT, mapped_type&> at(NodeT&& node)
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
+		apply_static_node_filter_t<NodeT, mapped_type&>
+#else
+		mapped_type&
+#endif
+		at(NodeT&& node)
 		{
 			assert(get_filter().dynamic_check(node));
 			return _data.at(&node);
@@ -661,7 +673,12 @@ namespace minijava
 		 *
 		 */
 		template <typename NodeT>
-		apply_static_node_filter_t<NodeT, const mapped_type&> at(NodeT&& node) const
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
+		apply_static_node_filter_t<NodeT, const mapped_type&>
+#else
+		const mapped_type&
+#endif
+		at(NodeT&& node) const
 		{
 			assert(get_filter().dynamic_check(node));
 			return _data.at(&node);
@@ -695,7 +712,12 @@ namespace minijava
 		 *
 		 */
 		template <typename NodeT>
-		apply_static_node_filter_t<NodeT> insert_or_assign(NodeT&& node, mapped_type attr)
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
+		apply_static_node_filter_t<NodeT>
+#else
+		void
+#endif
+		insert_or_assign(NodeT&& node, mapped_type attr)
 		{
 			assert(get_filter().dynamic_check(node));
 			const auto pos = this->find(&node);
@@ -736,7 +758,12 @@ namespace minijava
 		 *
 		 */
 		template <typename NodeT>
-		apply_static_node_filter_t<NodeT> put(NodeT&& node, mapped_type attr)
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
+		apply_static_node_filter_t<NodeT>
+#else
+		void
+#endif
+		put(NodeT&& node, mapped_type attr)
 		{
 			assert(get_filter().dynamic_check(node));
 			const auto pos = this->find(&node);

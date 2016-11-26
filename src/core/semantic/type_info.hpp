@@ -358,7 +358,7 @@ namespace minijava
 		 *     second basic type to compare
 		 *
 		 * @returns
-		 *     `!basic_type_info::equal(lhs, rhs)`
+		 *     `! basic_type_info::equal(lhs, rhs)`
 		 *
 		 */
 		constexpr bool operator!=(basic_type_info lhs, basic_type_info rhs) noexcept
