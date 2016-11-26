@@ -1989,6 +1989,27 @@ namespace minijava
 
 			/**
 			 * @brief
+			 *     Finds zero or one fields with the given name.
+			 *
+			 * If there is no match, `return`s `nullptr`.  If there is exactly
+			 * one match, `return`s a pointer to it.  Otherwise, if there is
+			 * more than one match, `throws` a `std::out_of_range` exception.
+			 *
+			 * @param name
+			 *     name to find
+			 *
+			 * @return
+			 *     pointer to unique match or `nullptr` if none
+			 *
+			 * @throws std::out_of_range
+			 *     if there are multiple matches
+			 *
+			 */
+			const var_decl*
+			get_field(symbol name) const;
+
+			/**
+			 * @brief
 			 *     Returns the instance methods declared in this class.
 			 *
 			 * The list is sorted according to the order defined by
@@ -2021,6 +2042,27 @@ namespace minijava
 
 			/**
 			 * @brief
+			 *     Finds zero or one instance methods with the given name.
+			 *
+			 * If there is no match, `return`s `nullptr`.  If there is exactly
+			 * one match, `return`s a pointer to it.  Otherwise, if there is
+			 * more than one match, `throws` a `std::out_of_range` exception.
+			 *
+			 * @param name
+			 *     name to find
+			 *
+			 * @return
+			 *     pointer to unique match or `nullptr` if none
+			 *
+			 * @throws std::out_of_range
+			 *     if there are multiple matches
+			 *
+			 */
+			const instance_method*
+			get_instance_method(symbol name) const;
+
+			/**
+			 * @brief
 			 *     Returns the main methods declared in this class.
 			 *
 			 * The list is sorted according to the order defined by
@@ -2050,6 +2092,27 @@ namespace minijava
 			 */
 			std::pair<const std::unique_ptr<main_method>*, const std::unique_ptr<main_method>*>
 			find_main_methods(symbol name) const noexcept;
+
+			/**
+			 * @brief
+			 *     Finds zero or one main methods with the given name.
+			 *
+			 * If there is no match, `return`s `nullptr`.  If there is exactly
+			 * one match, `return`s a pointer to it.  Otherwise, if there is
+			 * more than one match, `throws` a `std::out_of_range` exception.
+			 *
+			 * @param name
+			 *     name to find
+			 *
+			 * @return
+			 *     pointer to unique match or `nullptr` if none
+			 *
+			 * @throws std::out_of_range
+			 *     if there are multiple matches
+			 *
+			 */
+			const main_method*
+			get_main_method(symbol name) const;
 
 			void accept(visitor& v) const override
 			{

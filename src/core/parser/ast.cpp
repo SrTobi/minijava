@@ -1,11 +1,76 @@
 #include "parser/ast.hpp"
 
 #include <algorithm>
+#include <stdexcept>
+#include <utility>
+
 
 namespace minijava
 {
+
+	namespace /* anonymous */
+	{
+
+		template <typename ContainerT>
+		auto all_good(ContainerT&& container)
+		{
+			const auto good = [](auto&& thing){ return bool(thing); };
+			return std::all_of(std::begin(container), std::end(container), good);
+		}
+
+		template <typename ContainerT>
+		void sort_ptrs_by_symbol_name(ContainerT& container)
+		{
+			const auto name_cmp = [](const auto& lhs, const auto& rhs) {
+				const auto comparator = symbol_comparator{};
+				return comparator(lhs->name(), rhs->name());
+			};
+			std::sort(std::begin(container), std::end(container), name_cmp);
+		}
+
+		symbol get_name(const symbol s)
+		{
+			return s;
+		}
+
+		template<typename SmpT>
+		auto get_name(SmpT&& smp) -> decltype(symbol{smp->name()})
+		{
+			return smp->name();
+		}
+
+		// TODO: use some kind of array view or iterator to return something
+		// TODO: better than a pair of unique_ptrs
+
+		template<typename VecT>
+		auto find_in_sorted_vector(const symbol name, const VecT& v) noexcept
+		{
+			const auto cmp = [](auto&& lhs, auto&& rhs){
+				const auto sym_cmp = symbol_comparator{};
+				return sym_cmp(get_name(lhs), get_name(rhs));
+			};
+			return std::equal_range(v.data(), v.data() + v.size(), name, cmp);
+		}
+
+		template <typename PairT>
+		auto uptr_range_to_ptr_or_null(const PairT range, const char* errmsg)
+			-> decltype(range.first->get())
+		{
+			if (range.first == range.second) {
+				return nullptr;
+			} else if (range.first + 1 == range.second) {
+				return range.first->get();
+			} else {
+				throw std::out_of_range{errmsg};
+			}
+		}
+
+	}  // namespace /* anonymous */
+
+
 	namespace ast
 	{
+
 		void visitor::visit_node(const node&)
 		{
 		}
@@ -163,13 +228,13 @@ namespace minijava
 				, _arguments{std::move(arguments)}
 		{
 			assert(!_name.empty());
-			assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el){ return !!el; }));
+			assert(all_good(_arguments));
 		}
 
 		block::block(std::vector<std::unique_ptr<block_statement>> statements)
 				: _body{std::move(statements)}
 		{
-			assert(std::all_of(_body.begin(), _body.end(), [](auto&& el){ return !!el; }));
+			assert(all_good(_body));
 		}
 
 		method::method(symbol name, std::unique_ptr<type> return_type,
@@ -180,7 +245,7 @@ namespace minijava
 		{
 			assert(!_name.empty());
 			assert(_return_type);
-			assert(std::all_of(_parameters.begin(), _parameters.end(), [](auto&& el) { return !!el; }));
+			assert(all_good(_parameters));
 			assert(_body);
 		}
 
@@ -188,53 +253,18 @@ namespace minijava
 											 std::vector<std::unique_ptr<var_decl>> fields,
 											 std::vector<std::unique_ptr<instance_method>> methods,
 											 std::vector<std::unique_ptr<main_method>> main_methods)
-				: _name{name}, _fields{std::move(fields)},
+				: _name{name},
+				  _fields{std::move(fields)},
 				  _methods{std::move(methods)},
 				  _main_methods{std::move(main_methods)}
 		{
 			assert(!_name.empty());
-			assert(std::all_of(_fields.begin(), _fields.end(), [](auto&& el){ return !!el; }));
-			assert(std::all_of(_methods.begin(), _methods.end(), [](auto&& el){ return !!el; }));
-			assert(std::all_of(_main_methods.begin(), _main_methods.end(), [](auto&& el){ return !!el; }));
-			const auto comparator = symbol_comparator{};
-			std::sort(_fields.begin(), _fields.end(), [comparator](const auto& f1, const auto& f2) {
-				return comparator(f1->name(), f2->name());
-			});
-			std::sort(_methods.begin(), _methods.end(), [comparator](const auto& m1, const auto& m2) {
-				return comparator(m1->name(), m2->name());
-			});
-			std::sort(_main_methods.begin(), _main_methods.end(), [comparator](const auto& m1, const auto& m2) {
-				return comparator(m1->name(), m2->name());
-			});
-		}
-
-		namespace /* anonymous */
-		{
-			// TODO: use some kind of array view or iterator to return something
-			// TODO: better than a pair of unique_ptrs
-			template<typename AstT>
-			std::pair<const std::unique_ptr<AstT>*, const std::unique_ptr<AstT>*>
-			find_in_sorted_vector(symbol name,
-								  const std::vector<std::unique_ptr<AstT>>& v) noexcept
-			{
-				struct {
-					const symbol_comparator sym_cmp{};
-
-					bool operator()(const std::unique_ptr<AstT>& f,
-									const symbol& sym) {
-						return sym_cmp(f->name(), sym);
-					}
-
-					bool operator()(const symbol& sym,
-									const std::unique_ptr<AstT>& f) {
-						return sym_cmp(sym, f->name());
-					}
-				} comparator;
-
-				return std::equal_range(
-						v.data(), v.data() + v.size(), name, comparator
-				);
-			}
+			assert(all_good(_fields));
+			assert(all_good(_methods));
+			assert(all_good(_main_methods));
+			sort_ptrs_by_symbol_name(_fields);
+			sort_ptrs_by_symbol_name(_methods);
+			sort_ptrs_by_symbol_name(_main_methods);
 		}
 
 		std::pair<const std::unique_ptr<var_decl>*, const std::unique_ptr<var_decl>*>
@@ -243,10 +273,26 @@ namespace minijava
 			return find_in_sorted_vector(name, _fields);
 		}
 
+		const var_decl* class_declaration::get_field(const symbol name) const
+		{
+			return uptr_range_to_ptr_or_null(
+				find_fields(name),
+				"minijava::ast::class_declaration::get_field"
+			);
+		}
+
 		std::pair<const std::unique_ptr<instance_method>*, const std::unique_ptr<instance_method>*>
 		class_declaration::find_instance_methods(symbol name) const noexcept
 		{
 			return find_in_sorted_vector(name, _methods);
+		}
+
+		const instance_method* class_declaration::get_instance_method(const symbol name) const
+		{
+			return uptr_range_to_ptr_or_null(
+				find_instance_methods(name),
+				"minijava::ast::class_declaration::get_instance_method"
+			);
 		}
 
 		std::pair<const std::unique_ptr<main_method>*, const std::unique_ptr<main_method>*>
@@ -255,14 +301,21 @@ namespace minijava
 			return find_in_sorted_vector(name, _main_methods);
 		}
 
+		const main_method* class_declaration::get_main_method(const symbol name) const
+		{
+			return uptr_range_to_ptr_or_null(
+				find_main_methods(name),
+				"minijava::ast::class_declaration::get_main_method"
+			);
+		}
+
 		program::program(std::vector<std::unique_ptr<class_declaration>> classes)
 				: _classes{std::move(classes)}
 		{
-			assert(std::all_of(_classes.begin(), _classes.end(), [](auto&& el){ return !!el; }));
-			const auto comparator = symbol_comparator{};
-			std::sort(_classes.begin(), _classes.end(), [comparator](const auto& c1, const auto& c2) {
-				return comparator(c1->name(), c2->name());
-			});
+			assert(all_good(_classes));
+			sort_ptrs_by_symbol_name(_classes);
 		}
-	}
-}
+
+	}  // namespace ast
+
+}  // namespace minijava
