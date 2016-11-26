@@ -168,7 +168,7 @@ namespace minijava
 		typename NodeFilterT = ast_node_filter<ast::node>,
 		typename AllocT = std::allocator<std::pair<const ast::node *const, T>>
 	>
-	class ast_attributes : private NodeFilterT
+	class ast_attributes final : private NodeFilterT
 	{
 
 		static_assert(

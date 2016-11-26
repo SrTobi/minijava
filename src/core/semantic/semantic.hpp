@@ -62,6 +62,14 @@ namespace minijava
 		 * @brief
 		 *     Constructs an immutable semantic information aggregate.
 		 *
+		 * Clients are not supposed to use this constructor; they should use
+		 * `check_program` instead.
+		 *
+		 * The behavior is undefined unless the given parameters together form
+		 * a consistent analysis.  The behavior is undefined in particular if
+		 * `builtin_ast.get() == nullptr` or if `globals` constains a
+		 * `nullptr`.
+		 *
 		 * @param classes
 		 *     classes (built-in and user-defined) in the program
 		 *
@@ -87,7 +95,7 @@ namespace minijava
 		 *     AST with definitions of built-in classes
 		 *
 		 * @param globals
-		 *     global variables, sorted by memory address of the AST node
+		 *     global variables
 		 *
 		 */
 		semantic_info(class_definitions classes,
@@ -97,18 +105,7 @@ namespace minijava
 		              method_attributes method_annotations,
 		              const_attributes const_annotations,
 		              std::unique_ptr<ast::program> builtin_ast,
-					  sem::globals_vector globals)
-				: _classes{std::move(classes)}
-				, _type_annotations{std::move(type_annotations)}
-				, _locals_annotations{std::move(locals_annotations)}
-				, _vardecl_annotations{std::move(vardecl_annotations)}
-				, _method_annotations{std::move(method_annotations)}
-				, _const_annotations{std::move(const_annotations)}
-				, _builtin_ast{std::move(builtin_ast)}
-				, _globals{std::move(globals)}
-		{
-			assert(_builtin_ast);
-		}
+		              sem::globals_vector globals);
 
 		/**
 		 * @brief
@@ -119,7 +116,7 @@ namespace minijava
 		 *     `const` reference to class definitions mapping
 		 *
 		 */
-		const auto& classes() const noexcept
+		const class_definitions& classes() const noexcept
 		{
 			return _classes;
 		}
@@ -280,6 +277,9 @@ namespace minijava
 		 * @brief
 		 *     Checks whether the given declaration declares global variable.
 		 *
+		 * If `declaration` does not point to an existing declaration (in
+		 * particular, if `declaration == nullptr`), the behavior is undefined.
+		 *
 		 * @param declaration
 		 *     declaration to check
 		 *
@@ -288,7 +288,7 @@ namespace minijava
 		 *     declarations, `false` otherwise
 		 *
 		 */
-		bool is_global(const ast::var_decl* declaration) const noexcept;
+		bool is_global(const ast::var_decl* declaration) const;
 
 	private:
 
@@ -323,6 +323,12 @@ namespace minijava
 	 *     Checks the semantic validity of a program and extracts semantic
 	 *     information.
 	 *
+	 * This function will use the provided pool and factory to create
+	 * additional identifiers and AST nodes for builtin types.  If the pool is
+	 * different from the one that created the symbols used in the AST or if
+	 * the factory will create nodes with IDs that are already in the given
+	 * AST, the behavior is undefined.
+	 *
 	 * @tparam PoolT
 	 *     symbol pool type
 	 *
@@ -342,10 +348,24 @@ namespace minijava
 	 *     if the AST does not describe a valid MiniJava program
 	 *
 	 */
-	template<typename PoolT>
-	semantic_info check_program(const ast::program& ast, PoolT& pool, ast_factory& factory);
+	template <typename PoolT>
+	semantic_info check_program(const ast::program& ast,
+	                            PoolT& pool,
+	                            ast_factory& factory);
 
-}
+
+	/**
+	 * @brief
+	 *     Details of semantic analysis.
+	 *
+	 * Unlike `detail`, the features provided in this `namespace` are open for
+	 * external use but the intention is that knowing about them will not be
+	 * required in order to use this sub-system of the compiler.
+	 *
+	 */
+	namespace sem {}
+
+}  // namespace minijava
 
 #define MINIJAVA_INCLUDED_FROM_SEMANTIC_SEMANTIC_HPP
 #include "semantic/semantic.tpp"

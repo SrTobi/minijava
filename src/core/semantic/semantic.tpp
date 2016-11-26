@@ -2,8 +2,9 @@
 #error "Never `#include <semantic/semantic.tpp>` directly; `#include <semantic/semantic.hpp>` instead."
 #endif
 
-#include <algorithm>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "exceptions.hpp"
 #include "semantic/constant.hpp"
@@ -65,7 +66,7 @@ namespace minijava
 						std::vector<std::unique_ptr<ast::instance_method>>{},
 						std::vector<std::unique_ptr<ast::main_method>>{}
 				);
-				// currently unused, but let's keep it anyway
+				// Currently unused, but let's keep it anyway
 				auto string_class = factory.make<ast::class_declaration>()(
 						pool.normalize("java.lang.String"),
 						std::vector<std::unique_ptr<ast::var_decl>>{},
@@ -79,30 +80,6 @@ namespace minijava
 				return factory.make<ast::program>()(std::move(clazzes));
 			}
 
-			template<typename T>
-			struct mem_comparator
-			{
-				using comparator = std::less<const void*>;
-
-				bool operator()(const std::unique_ptr<T>& lhs,
-								const std::unique_ptr<T>& rhs) const
-				{
-					return comparator{}(lhs.get(), rhs.get());
-				}
-
-				bool operator()(const T* lhs,
-								const std::unique_ptr<T>& rhs) const
-				{
-					return comparator{}(lhs, rhs.get());
-				}
-
-				bool operator()(const std::unique_ptr<T>& lhs,
-								const T* rhs) const
-				{
-					return comparator{}(lhs.get(), rhs);
-				}
-			};
-
 			template<typename PoolT>
 			globals_vector make_globals(PoolT& pool, ast_factory& factory)
 			{
@@ -113,10 +90,6 @@ namespace minijava
 						),
 						pool.normalize("System")
 				));
-				std::sort(
-						std::begin(result), std::end(result),
-						mem_comparator<ast::var_decl>{}
-				);
 				return result;
 			}
 

@@ -352,7 +352,8 @@ namespace testaux
 
 		/**
 		 * @brief
-		 *     Wraps a main method into a program with a single class.
+		 *     Wraps a main method into a program with a single class named
+		 *     `Test`.
 		 *
 		 * @param method
 		 *     main method to wrap
@@ -366,7 +367,8 @@ namespace testaux
 
 		/**
 		 * @brief
-		 *     Wraps a block as a program as the body of the main method.
+		 *     Wraps a block as a program as the body of the main method in a
+		 *     class named `Test`.
 		 *
 		 * @param body
 		 *     body of main
@@ -381,7 +383,7 @@ namespace testaux
 		/**
 		 * @brief
 		 *     Wraps a list of statements a program as the body of the main
-		 *     method.
+		 *     method in a class named `Test`.
 		 *
 		 * @param stmts
 		 *     statements in body of of main
@@ -396,7 +398,7 @@ namespace testaux
 		/**
 		 * @brief
 		 *     Wraps a single statement as a program as the body of the main
-		 *     method.
+		 *     method in a class named `Test`.
 		 *
 		 * @param stmt
 		 *     statement to wrap
@@ -411,7 +413,7 @@ namespace testaux
 		/**
 		 * @brief
 		 *     Wraps a single expression as a program as the body of the main
-		 *     method.
+		 *     method in a class named `Test`.
 		 *
 		 * @param expr
 		 *     expression to wrap
