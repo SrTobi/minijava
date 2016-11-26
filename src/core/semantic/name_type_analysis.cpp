@@ -95,7 +95,7 @@ namespace minijava
 				}
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_duplicate_field(const ast::var_decl* f1,
 								  const ast::var_decl* f2)
 			{
@@ -108,7 +108,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_duplicate_method(const ast::instance_method* m1,
 								   const ast::instance_method* m2)
 			{
@@ -121,7 +121,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_duplicate_main(const ast::class_declaration* c1,
 								 const ast::class_declaration* c2)
 			{
@@ -135,7 +135,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void throw_no_main()
+			[[noreturn, gnu::cold]] void throw_no_main()
 			{
 				auto oss = std::ostringstream{};
 				oss << "No program entry point found;"
@@ -144,7 +144,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void throw_unexpected_main()
+			[[noreturn, gnu::cold]] void throw_unexpected_main()
 			{
 				throw semantic_error{
 					"Program entry point found although none was expected"
@@ -200,7 +200,7 @@ namespace minijava
 			}
 
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_return_void_expected(const ast::method& m,
 									   const ast::return_statement& /* s */)
 			{
@@ -210,7 +210,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_return_value_expected(const ast::method& m,
 										const ast::return_statement& /* s */)
 			{
@@ -220,7 +220,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_incompatible_type(const type expected, const type actual,
 									const ast::expression& /* expr */)
 			{
@@ -231,7 +231,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_unknown_type(const symbol unknown_type,
 							   const ast::object_instantiation& /* expr */)
 			{
@@ -240,7 +240,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_invalid_subscript(const type actual,
 									const ast::array_access& /* expr */)
 			{
@@ -249,7 +249,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_invalid_field_access(const type actual,
 									   const ast::variable_access& /* expr */)
 			{
@@ -259,7 +259,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_invalid_method_access(const type actual,
 										const ast::method_invocation& /* expr */)
 			{
@@ -269,7 +269,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_unknown_field(const ast::class_declaration& clazz,
 								const ast::variable_access& node)
 			{
@@ -279,7 +279,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_unknown_method(const ast::class_declaration& clazz,
 								 const ast::method_invocation& node)
 			{
@@ -289,7 +289,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_unknown_local_or_field(const ast::variable_access& node)
 			{
 				std::ostringstream oss{};
@@ -297,7 +297,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_illegal_access(const ast::variable_access& node)
 			{
 				// TODO: This might not be the most helpful error message.
@@ -307,7 +307,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_illegal_shadow(const ast::var_decl& node)
 			{
 				// TODO: This might not be the most helpful error message.
@@ -317,7 +317,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_method_from_main(const ast::method_invocation& node)
 			{
 				std::ostringstream oss{};
@@ -327,7 +327,7 @@ namespace minijava
 			}
 
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_incorrect_argument_count(std::size_t expected_size,
 										   std::size_t actual_size,
 										   const ast::method_invocation& node)
@@ -339,7 +339,7 @@ namespace minijava
 				throw semantic_error{oss.str()};
 			}
 
-			[[noreturn]] void
+			[[noreturn, gnu::cold]] void
 			throw_lvalue_expected(const ast::expression& /* expr */)
 			{
 				throw semantic_error{"Expression cannot be used on the left side of an assignment"};
