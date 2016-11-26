@@ -112,7 +112,7 @@ namespace minijava
 			using set_t = token_type_set<TTs...>;
 
 			parser(InIterT first, InIterT /*last*/, ast_factory& factory)
-				: it{first}, factory{factory}
+				: it{first}, factory{&factory}
 			{
 				token_buffer.push(*it);
 			}
@@ -740,7 +740,7 @@ namespace minijava
 			template <typename NodeT>
 			auto make()
 			{
-				return factory.make<NodeT>();
+				return factory->make<NodeT>();
 			}
 
 			auto make_type(const token& tok, const std::size_t rank)
@@ -768,7 +768,7 @@ namespace minijava
 
 			InIterT it{};
 
-			ast_factory& factory{};
+			ast_factory* factory{};
 
 		};  // struct parser
 
