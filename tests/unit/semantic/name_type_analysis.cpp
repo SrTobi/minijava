@@ -1,19 +1,19 @@
 #include "semantic/name_type_analysis.hpp"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #define BOOST_TEST_MODULE  semantic_type_analysis
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 
-#include <boost/lexical_cast.hpp>
-
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"
 #include "semantic/type_info.hpp"
 
-#include "testaux/ast_test_factory.cpp"
+#include "testaux/ast_test_factory.hpp"
+#include "testaux/testaux.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
 namespace ast = minijava::ast;
@@ -93,12 +93,9 @@ BOOST_AUTO_TEST_CASE(type_stream_insertion)
 {
 	using namespace std::string_literals;
 	using bti_type = minijava::sem::basic_type_info;
-	const auto stream = [](auto&& x){
-		return boost::lexical_cast<std::string>(x);
-	};
-	BOOST_CHECK_EQUAL("int"s, stream(sem::type{bti_type::make_int_type(), 0}));
-	BOOST_CHECK_EQUAL("int[]"s, stream(sem::type{bti_type::make_int_type(), 1}));
-	BOOST_CHECK_EQUAL("int[][]"s, stream(sem::type{bti_type::make_int_type(), 2}));
+	BOOST_CHECK_EQUAL("int"s, testaux::stream(sem::type{bti_type::make_int_type(), 0}));
+	BOOST_CHECK_EQUAL("int[]"s, testaux::stream(sem::type{bti_type::make_int_type(), 1}));
+	BOOST_CHECK_EQUAL("int[][]"s, testaux::stream(sem::type{bti_type::make_int_type(), 2}));
 }
 
 

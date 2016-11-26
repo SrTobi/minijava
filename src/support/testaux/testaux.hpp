@@ -11,6 +11,8 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <string>
 
 
 /**
@@ -44,6 +46,29 @@ namespace testaux
 	const T& as_const(const T& obj) noexcept
 	{
 		return obj;
+	}
+
+	/**
+	 * @brief
+	 *     Inserts its aregument into an output stream and `return`s the
+	 *     resulting string.
+	 *
+	 * @tparam T
+	 *     type of the object to stream
+	 *
+	 * @param thing
+	 *     thing to stream
+	 *
+	 * @returns
+	 *     string that was streamed
+	 *
+	 */
+	template <typename T>
+	std::string stream(T&& thing)
+	{
+		std::ostringstream oss{};
+		oss << thing;
+		return oss.str();
 	}
 
 	/**

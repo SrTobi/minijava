@@ -8,13 +8,12 @@
 #define BOOST_TEST_MODULE  semantic_type_info
 #include <boost/test/unit_test.hpp>
 
-#include <boost/lexical_cast.hpp>
-
 #include "parser/ast.hpp"
 #include "semantic/semantic_error.hpp"
 
 #include "testaux/ast_test_factory.hpp"
 #include "testaux/random_tokens.hpp"
+#include "testaux/testaux.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
 namespace ast = minijava::ast;
@@ -161,16 +160,13 @@ BOOST_AUTO_TEST_CASE(stream_insertion)
 {
 	using namespace std::string_literals;
 	using bti_type = minijava::sem::basic_type_info;
-	const auto stream = [](auto&& x){
-		return boost::lexical_cast<std::string>(x);
-	};
-	BOOST_CHECK_EQUAL("__null_t"s, stream(bti_type::make_null_type()));
-	BOOST_CHECK_EQUAL("void"s,     stream(bti_type::make_void_type()));
-	BOOST_CHECK_EQUAL("int"s,      stream(bti_type::make_int_type()));
-	BOOST_CHECK_EQUAL("boolean"s,  stream(bti_type::make_boolean_type()));
+	BOOST_CHECK_EQUAL("__null_t"s, testaux::stream(bti_type::make_null_type()));
+	BOOST_CHECK_EQUAL("void"s,     testaux::stream(bti_type::make_void_type()));
+	BOOST_CHECK_EQUAL("int"s,      testaux::stream(bti_type::make_int_type()));
+	BOOST_CHECK_EQUAL("boolean"s,  testaux::stream(bti_type::make_boolean_type()));
 	auto tf = testaux::ast_test_factory{};
 	const auto clsdecl = tf.make_empty_class("MyType");
-	BOOST_CHECK_EQUAL("MyType"s,  stream(bti_type{*clsdecl, false}));
+	BOOST_CHECK_EQUAL("MyType"s,  testaux::stream(bti_type{*clsdecl, false}));
 }
 
 
