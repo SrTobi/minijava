@@ -6,41 +6,17 @@
  *
  */
 
+#pragma once
+
 #include <memory>
 #include <type_traits>
 #include <vector>
 
+#include "meta/meta.hpp"
+
+
 namespace testaux
 {
-	namespace detail
-	{
-		/**
-		 * @brief
-		 *     Helper function which returns the conjunction of all arguments.
-		 *
-		 * @param args
-		 *     arguments
-		 *
-		 * @tparam Ts
-		 *     types of the arguments, must be convertible to `bool`
-		 *
-		 * @return
-		 *     `true` if all arguments evaluate to `true`, `false` otherwise
-		 *
-		 */
-		template <typename... Ts>
-		constexpr bool conjunction(Ts... args)
-		{
-			const bool values[] = {true, args...};
-			for (const auto v : values) {
-				if (!v) {
-					return false;
-				}
-			}
-			return true;
-		}
-	}
-
 	/**
 	 * @brief
 	 *     Creates a vector out of `unique_ptr`s whose underlying types share
@@ -61,8 +37,8 @@ namespace testaux
 	 */
 	template <typename T, typename... ArgTs>
 	std::enable_if_t<
-			detail::conjunction(std::is_convertible<ArgTs, std::unique_ptr<T>>{}...),
-			std::vector<std::unique_ptr<T>>
+		minijava::meta::conjunction<std::is_convertible<ArgTs, std::unique_ptr<T>>...>{},
+		std::vector<std::unique_ptr<T>>
 	>
 	make_unique_ptr_vector(ArgTs... args);
 }

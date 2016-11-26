@@ -146,6 +146,17 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Creates a factory that will create nodes with successive IDs
+		 *     starting at `lastid + 1`.
+		 *
+		 * @param lastid
+		 *     one before the next ID to use
+		 *
+		 */
+		explicit ast_factory(const std::size_t lastid = 0) noexcept;
+
+		/**
+		 * @brief
 		 *     `return`s an `ast_builder` that will create `node`s of type
 		 *     `NodeT` with the next Id.
 		 *
@@ -158,10 +169,32 @@ namespace minijava
 		 * @tparam NodeT
 		 *     type of `node` to create
 		 *
+		 * @tparam ForbiddenTs
+		 *     must not be used
+		 *
+		 * @param forbidden
+		 *     must not be used
+		 *
+		 * @returns
+		 *     suitable `ast_builder`
+		 *
 		 */
-		template <typename NodeT>
+		template <typename NodeT, typename... ForbiddenTs>
 		std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
-		make();
+		make(ForbiddenTs&&... forbidden);
+
+		/**
+		 * @brief
+		 *     `return`s the current internal ID.
+		 *
+		 * The `return`ed value is the value that was passed to the constructor
+		 * as `lastid` plus the number of times `make` was called since.
+		 *
+		 * @returns
+		 *     current internal ID
+		 *
+		 */
+		std::size_t id() const noexcept;
 
 	private:
 

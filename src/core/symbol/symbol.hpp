@@ -584,6 +584,8 @@ namespace minijava
 			return !(lhs == rhs);
 		}
 
+		friend struct symbol_comparator;
+
 	private:
 
 		/**
@@ -605,6 +607,42 @@ namespace minijava
 		const symbol_entry * _entry{};
 
 	};  // class symbol
+
+
+	/**
+	 * @brief
+	 *     Helper struct to compare the pointer addresses of two symbols.
+	 *
+	 * This struct can be used to order symbols by pointer address.
+	 *
+	 * The resulting sorting is dependent on each `symbol_pool` instance. Pools
+	 * may assign addresses in a nondeterministic fashion.
+	 *
+	 */
+	struct symbol_comparator
+	{
+		/**
+		 * @brief
+		 *     Compares the pointer addresses of the given symbols.
+		 *
+		 * CAUTION: This operator does not look at the strings inside the
+		 * symbols and provides no means for lexicographical sorting.
+		 *
+		 * @param lhs
+		 *     first symbol
+		 * @param rhs
+		 *     second symbol
+		 * @return
+		 *     whether `lhs` points to a lower memory address than `rhs`
+		 *
+		 */
+		bool operator()(const symbol& lhs, const symbol& rhs) const
+		{
+			static const auto comparator = std::less<const void*>{};
+			assert (symbol::have_compatible_pool(lhs, rhs));
+			return comparator(lhs.data(), rhs.data());
+		}
+	};
 
 
 	/**

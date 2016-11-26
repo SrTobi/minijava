@@ -1,0 +1,8 @@
+class A {
+
+	/*** public B foo; ***/
+
+	public static void main(String[] args) {
+	}
+
+}

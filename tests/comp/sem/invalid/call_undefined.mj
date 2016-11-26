@@ -1,0 +1,11 @@
+class A {
+
+	public int test() {
+		/*** foo(); ***/
+		return 0;
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

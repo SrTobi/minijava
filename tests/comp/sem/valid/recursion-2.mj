@@ -1,0 +1,15 @@
+class A {
+
+	public int foo(boolean a) {
+		return 0;
+	}
+
+	public int test(int x) {
+		foo(true);
+		return test(x);
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

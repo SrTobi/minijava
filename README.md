@@ -43,8 +43,8 @@ Good Luck if you're trying anything else.
     $ cmake --build . --target test
     $ cmake --build . --target docs
 
-The last two steps are optional.  They will run all unit tests and build the
-HTML documentation respectively.  The latter will also show you undocumented
+The last two steps are optional.  They will run all tests and build the HTML
+documentation respectively.  The latter will also show you undocumented
 entities and you should fix those.
 
 The compiler executable can be found in `${builddir}/src/minijava`.  Running it
@@ -81,7 +81,10 @@ Here is the directory hierarchy at a glance:
     /src/core/            library providing compiler functionality
     /src/support/         library providing development support
     /src/minijava.cpp     contains 'main' for the compiler
-    /tests/               unit tests
+    /tests/               tests
+    /tests/unit/          unit tests
+    /tests/fuzz/          fuzz tests
+    /tests/comp/          compiler tests
     /benchmarks/          benchmarks
     /benchmarks/micro/    micro-benchmarks
     /benchmarks/macro/    macro-benchmarks
@@ -130,9 +133,9 @@ exercise the following steps.
     to make sure it compiles stand-alone.  Do this even if the source file is
     otherwise empty.
 
- 4. Create the file `/tests/${dir}/feature.cpp` with the unit-tests for your
-    component.  It will be linked against `libcore`.  In this file, you should
-    also `#include "${dir}/feature.hpp"`.
+ 4. Create the file `/tests/unit/${dir}/feature.cpp` with the unit-tests for
+    your component.  It will be linked against `libcore`.  In this file, you
+    should also `#include "${dir}/feature.hpp"`.
 
 A grab bag of utility features that were considered useful for writing unit
 tests can be found in `/src/suport/testaux/`.  If you add new compiled source

@@ -1,0 +1,10 @@
+class A {
+
+	public int foo() { return 0; }
+
+	/*** public boolean foo() { return false; } ***/
+
+	public static void main(String[] args) {
+	}
+
+}

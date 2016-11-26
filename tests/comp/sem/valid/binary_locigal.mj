@@ -1,0 +1,15 @@
+class A {
+
+	public boolean lol;
+
+	public void test(int x, int y) {
+		lol = x == 3 && y != 3;
+		lol = x < 3 || y > 3;
+		lol = x <= 3 == y > 3;
+		lol = x <= 3 != true;
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

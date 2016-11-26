@@ -13,6 +13,7 @@
 
 #include "lexer/token.hpp"
 #include "parser/ast.hpp"
+#include "parser/ast_factory.hpp"
 
 
 namespace minijava
@@ -98,6 +99,36 @@ namespace minijava
 	/**
 	 * @brief
 	 *     Parses a sequence of tokens as a MiniJava program.
+	 *
+	 * @tparam InIterT
+	 *     input iterator type of the token iterator
+	 *
+	 * @param first
+	 *     iterator pointing at the first token of the program
+	 *
+	 * @param last
+	 *     iterator pointing after the last token of the program
+	 *
+	 * @param factory
+	 *     factory to create AST nodes
+	 *
+	 * @returns
+	 *     AST for the given program
+	 *
+	 * @throws syntax_error
+	 *     if the token sequence `[first, last)` is not a syntactical correct
+	 *     MiniJava program
+	 *
+	 */
+	template<typename InIterT>
+	std::unique_ptr<ast::program> parse_program(InIterT first, InIterT last, ast_factory& factory);
+
+	/**
+	 * @brief
+	 *     Parses a sequence of tokens as a MiniJava program.
+	 *
+	 * This function is a convenience overload that uses a newly
+	 * default-constructed `ast_factory`.
 	 *
 	 * @tparam InIterT
 	 *     input iterator type of the token iterator

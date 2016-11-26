@@ -1,0 +1,9 @@
+class A {
+
+	public int test(int x) {
+		return x;
+	}
+
+	public static void main(String[] args) {}
+
+}

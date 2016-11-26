@@ -44,11 +44,25 @@ namespace minijava
 		return np;
 	}
 
-	template <typename NodeT>
-	std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
-	ast_factory::make()
+	inline ast_factory::ast_factory(const std::size_t lastid) noexcept
+		: _id{lastid}
 	{
+	}
+
+	template <typename NodeT, typename... ForbiddenTs>
+	std::enable_if_t<std::is_base_of<ast::node, NodeT>{}, ast_builder<NodeT>>
+	ast_factory::make(ForbiddenTs&&... forbidden)
+	{
+		static_assert(
+			sizeof...(forbidden) == 0,
+			"Oh, no!  You forgot the pair of empty parenthesis after ast_factory.make<NodeT>()(...) again!"
+		);
 		return ast_builder<NodeT>{++_id};
+	}
+
+	inline std::size_t ast_factory::id() const noexcept
+	{
+		return _id;
 	}
 
 }  // namespace minijava

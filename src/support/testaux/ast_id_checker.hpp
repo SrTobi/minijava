@@ -51,6 +51,7 @@ namespace testaux
 
 	private:
 
+		/** @brief collected IDs */
 		std::vector<std::size_t> * _ids{};
 
 	};  // class ast_id_collector

@@ -1,0 +1,11 @@
+class A {
+
+	public boolean test(int a) {
+		/*** (a = a) = 3; ***/
+		return false;
+	}
+
+	public static void main(String[] args) {
+	}
+
+}

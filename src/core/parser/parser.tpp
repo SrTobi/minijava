@@ -14,7 +14,6 @@
 #include "lexer/token.hpp"
 
 #include "parser/ast.hpp"
-#include "parser/ast_factory.hpp"
 #include "parser/operator.tpp"
 
 
@@ -112,8 +111,8 @@ namespace minijava
 			template<token_type... TTs>
 			using set_t = token_type_set<TTs...>;
 
-			parser(InIterT first, InIterT /*last*/)
-				: it(first)
+			parser(InIterT first, InIterT /*last*/, ast_factory& factory)
+				: it{first}, factory{&factory}
 			{
 				token_buffer.push(*it);
 			}
@@ -135,7 +134,7 @@ namespace minijava
 				advance();
 				auto id_tok = current();
 				std::vector<ast_ptr<ast::var_decl>> fields;
-				std::vector<ast_ptr<ast::method>> methods;
+				std::vector<ast_ptr<ast::instance_method>> methods;
 				std::vector<ast_ptr<ast::main_method>> main_methods;
 				consume(token_type::identifier);
 				consume(token_type::left_brace);
@@ -153,7 +152,7 @@ namespace minijava
 			}
 
 			void parse_class_member(std::vector<ast_ptr<ast::var_decl>>& fields,
-			                        std::vector<ast_ptr<ast::method>>& methods,
+			                        std::vector<ast_ptr<ast::instance_method>>& methods,
 			                        std::vector<ast_ptr<ast::main_method>>& main_methods)
 			{
 				assert(current_is(token_type::kw_public));
@@ -176,7 +175,7 @@ namespace minijava
 						consume(token_type::right_paren);
 						expect(token_type::left_brace);
 						auto body = parse_block();
-						auto method = make<ast::method>()(
+						auto method = make<ast::instance_method>()(
 							id_tok.lexval(),
 							std::move(type),
 							std::move(params),
@@ -741,7 +740,7 @@ namespace minijava
 			template <typename NodeT>
 			auto make()
 			{
-				return factory.make<NodeT>();
+				return factory->make<NodeT>();
 			}
 
 			auto make_type(const token& tok, const std::size_t rank)
@@ -765,11 +764,11 @@ namespace minijava
 				}
 			}
 
-			std::stack<token> token_buffer;
+			std::stack<token> token_buffer{};
 
-			InIterT it;
+			InIterT it{};
 
-			ast_factory factory{};
+			ast_factory* factory{};
 
 		};  // struct parser
 
@@ -777,10 +776,19 @@ namespace minijava
 
 
 	template<typename InIterT>
-	std::unique_ptr<ast::program> parse_program(InIterT first, InIterT last)
+	std::unique_ptr<ast::program>
+	parse_program(const InIterT first, const InIterT last, ast_factory& factory)
 	{
-		auto parser = detail::parser<InIterT>(first, last);
+		auto parser = detail::parser<InIterT>(first, last, factory);
 		return parser.parse_program();
+	}
+
+	template<typename InIterT>
+	std::unique_ptr<ast::program>
+	parse_program(const InIterT first, const InIterT last)
+	{
+		auto factory = ast_factory{};
+		return parse_program(first, last, factory);
 	}
 
 }  // namespace minijava

@@ -1,0 +1,8 @@
+class B { }
+
+class A {
+  public static void main(String[] args) {
+    /*** new B() == new A(); ***/
+    /*** new B() != new A(); ***/
+  }
+}

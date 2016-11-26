@@ -10,6 +10,8 @@ include("extras/cmake/enable_diagnostics.cmake")
 buildx_activate_cpp14()
 buildx_enable_diagnostics()
 
+find_package(PythonInterp 3.4)
+
 if(WIN32)
 	set(Boost_USE_STATIC_LIBS ON)
 endif()
@@ -41,11 +43,20 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	meta/meta
 	parser/ast
 	parser/ast_factory
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
+	semantic/attribute
+	semantic/constant
+	semantic/name_type_analysis
+	semantic/semantic
+	semantic/semantic_error
+	semantic/symbol_table
+	semantic/thou_shalt_return
+	semantic/type_info
 	symbol/symbol
 	symbol/symbol_anchor
 	symbol/symbol_entry

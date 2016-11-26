@@ -54,8 +54,9 @@ namespace minijava
 		class while_statement;
 		class return_statement;
 		class empty_statement;
-		class main_method;
 		class method;
+		class main_method;
+		class instance_method;
 		class class_declaration;
 		class program;
 
@@ -110,6 +111,15 @@ namespace minijava
 			 *     The node
 			 */
 			virtual void visit_statement(const statement& node);
+
+			/**
+			 * @brief
+			 *     Visits a method AST node.
+			 *
+			 * @param node
+			 *     The node
+			 */
+			virtual void visit_method(const method& node);
 
 		public:
 			/**
@@ -303,12 +313,12 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Visits a method AST node.
+			 *     Visits an instance_method AST node.
 			 *
 			 * @param node
 			 *     The node
 			 */
-			virtual void visit(const method& node);
+			virtual void visit(const instance_method& node);
 
 			/**
 			 * @brief
@@ -1130,13 +1140,7 @@ namespace minijava
 			 *
 			 */
 			method_invocation(std::unique_ptr<expression> target, symbol name,
-							  std::vector<std::unique_ptr<expression>> arguments)
-					: _target{std::move(target)}, _name{name}
-					, _arguments{std::move(arguments)}
-			{
-				assert(!_name.empty());
-				assert(std::all_of(_arguments.begin(), _arguments.end(), [](auto&& el){ return !!el; }));
-			}
+							  std::vector<std::unique_ptr<expression>> arguments);
 
 			/**
 			 * @brief
@@ -1477,11 +1481,7 @@ namespace minijava
 			 *     statements inside the block
 			 *
 			 */
-			block(std::vector<std::unique_ptr<block_statement>> statements)
-					: _body{std::move(statements)}
-			{
-				assert(std::all_of(_body.begin(), _body.end(), [](auto&& el){ return !!el; }));
-			}
+			block(std::vector<std::unique_ptr<block_statement>> statements);
 
 			/**
 			 * @brief
@@ -1738,95 +1738,9 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     Main method AST node
+		 *     Base class for both types of method nodes.
 		 */
-		class main_method final : public node
-		{
-
-		public:
-
-			/**
-			 * @brief
-			 *     Constructs a main method node.
-			 *
-			 * @param main
-			 *     method name (usually `main`)
-			 *
-			 * @param args
-			 *     parameter name (usually `args`)
-			 *
-			 * @param body
-			 *     method body
-			 *
-			 */
-			main_method(symbol main, symbol args, std::unique_ptr<block> body)
-				: _name{main}, _argname{args}, _body{std::move(body)}
-			{
-				assert(!_name.empty());
-				assert(_body);
-			}
-
-			/**
-			 * @brief
-			 *     Returns the name of this method.
-			 *
-			 * @return
-			 *     method name
-			 *
-			 */
-			symbol name() const noexcept
-			{
-				return _name;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the name of the declared parameter.
-			 *
-			 * @return
-			 *     name of declared parameter
-			 *
-			 */
-			symbol argname() const noexcept
-			{
-				return _argname;
-			}
-
-			/**
-			 * @brief
-			 *     Returns the body of this method.
-			 *
-			 * @return
-			 *     method body
-			 *
-			 */
-			const block& body() const noexcept
-			{
-				return *_body;
-			}
-
-			void accept(visitor& v) const override
-			{
-				v.visit(*this);
-			}
-
-		private:
-
-			/** @brief method name */
-			symbol _name;
-
-			/** @brief Declared paramter name */
-			symbol _argname;
-
-			/** @brief method body */
-			std::unique_ptr<block> _body;
-		};
-
-		/**
-		 * @brief
-		 *     Method AST node
-		 */
-		class method final : public node
+		class method : public node
 		{
 
 		public:
@@ -1849,16 +1763,8 @@ namespace minijava
 			 *
 			 */
 			method(symbol name, std::unique_ptr<type> return_type,
-				   std::vector<std::unique_ptr<var_decl>> parameters,
-				   std::unique_ptr<block> body)
-					: _name{name}, _return_type{std::move(return_type)},
-					  _parameters{std::move(parameters)}, _body{std::move(body)}
-			{
-				assert(!_name.empty());
-				assert(_return_type);
-				assert(std::all_of(_parameters.begin(), _parameters.end(), [](auto&& el) { return !!el; }));
-				assert(_body);
-			}
+			       std::vector<std::unique_ptr<var_decl>> parameters,
+			       std::unique_ptr<block> body);
 
 			/**
 			 * @brief
@@ -1912,11 +1818,6 @@ namespace minijava
 				return *_body;
 			}
 
-			void accept(visitor& v) const override
-			{
-				v.visit(*this);
-			}
-
 		private:
 
 			/** @brief method name */
@@ -1930,6 +1831,84 @@ namespace minijava
 
 			/** @brief method body */
 			std::unique_ptr<block> _body;
+		};
+
+		/**
+		 * @brief
+		 *     Main method AST node
+		 */
+		class main_method final : public method
+		{
+
+		public:
+
+			/**
+			 * @brief
+			 *     Constructs a main method node.
+			 *
+			 * @param main
+			 *     method name (usually `main`)
+			 *
+			 * @param args
+			 *     parameter name (usually `args`)
+			 *
+			 * @param body
+			 *     method body
+			 *
+			 */
+			main_method(symbol main, symbol args, std::unique_ptr<block> body)
+				: method{main, std::make_unique<type>(primitive_type::type_void), {}, std::move(body)},
+				  _argname{args}
+			{
+				assert(!_argname.empty());
+			}
+
+			/**
+			 * @brief
+			 *     Returns the name of the declared parameter.
+			 *
+			 * @return
+			 *     name of declared parameter
+			 *
+			 */
+			symbol argname() const noexcept
+			{
+				return _argname;
+			}
+
+			void accept(visitor& v) const override
+			{
+				v.visit(*this);
+			}
+
+		private:
+
+			/** @brief method name */
+			symbol _name;
+
+			/** @brief declared parameter name */
+			symbol _argname;
+
+			/** @brief method body */
+			std::unique_ptr<block> _body;
+		};
+
+		/**
+		 * @brief
+		 *     Instance method AST node
+		 */
+		class instance_method final : public method
+		{
+
+		public:
+
+			using method::method;
+
+			void accept(visitor& v) const override
+			{
+				v.visit(*this);
+			}
+
 		};
 
 		/**
@@ -1952,7 +1931,7 @@ namespace minijava
 			 *     fields inside the class
 			 *
 			 * @param methods
-			 *     class methods
+			 *     instance methods inside the class
 			 *
 			 * @param main_methods
 			 *     main methods inside the class
@@ -1960,17 +1939,8 @@ namespace minijava
 			 */
 			class_declaration(symbol name,
 			                  std::vector<std::unique_ptr<var_decl>> fields,
-			                  std::vector<std::unique_ptr<method>> methods,
-			                  std::vector<std::unique_ptr<main_method>> main_methods)
-					: _name{name}, _fields{std::move(fields)},
-					  _methods{std::move(methods)},
-					  _main_methods{std::move(main_methods)}
-			{
-				assert(!_name.empty());
-				assert(std::all_of(_fields.begin(), _fields.end(), [](auto&& el){ return !!el; }));
-				assert(std::all_of(_methods.begin(), _methods.end(), [](auto&& el){ return !!el; }));
-				assert(std::all_of(_main_methods.begin(), _main_methods.end(), [](auto&& el){ return !!el; }));
-			}
+			                  std::vector<std::unique_ptr<instance_method>> methods,
+			                  std::vector<std::unique_ptr<main_method>> main_methods);
 
 			/**
 			 * @brief
@@ -1989,8 +1959,11 @@ namespace minijava
 			 * @brief
 			 *     Returns the fields declared in this class.
 			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
+			 *
 			 * @return
-			 *     list of fields
+			 *     sorted list of fields
 			 *
 			 */
 			const std::vector<std::unique_ptr<var_decl>>& fields() const noexcept
@@ -2000,20 +1973,100 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     Returns the methods declared in this class.
+			 *     Finds all fields with the given name in this class.
+			 *
+			 * There may be more than one field with the given name or none.
+			 *
+			 * @param name
+			 *     name of the field
 			 *
 			 * @return
-			 *     list of methods
+			 *     range of matching fields
 			 *
 			 */
-			const std::vector<std::unique_ptr<method>>& methods() const noexcept
+			std::pair<const std::unique_ptr<var_decl>*, const std::unique_ptr<var_decl>*>
+			find_fields(symbol name) const noexcept;
+
+			/**
+			 * @brief
+			 *     Finds zero or one fields with the given name.
+			 *
+			 * If there is no match, `return`s `nullptr`.  If there is exactly
+			 * one match, `return`s a pointer to it.  Otherwise, if there is
+			 * more than one match, `throws` a `std::out_of_range` exception.
+			 *
+			 * @param name
+			 *     name to find
+			 *
+			 * @return
+			 *     pointer to unique match or `nullptr` if none
+			 *
+			 * @throws std::out_of_range
+			 *     if there are multiple matches
+			 *
+			 */
+			const var_decl*
+			get_field(symbol name) const;
+
+			/**
+			 * @brief
+			 *     Returns the instance methods declared in this class.
+			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
+			 *
+			 * @return
+			 *     list of instance methods
+			 *
+			 */
+			const std::vector<std::unique_ptr<instance_method>>& instance_methods() const noexcept
 			{
 				return _methods;
 			}
 
 			/**
 			 * @brief
+			 *     Finds all instance methods with the given name in this class.
+			 *
+			 * There may be more than one method with the given name or none.
+			 *
+			 * @param name
+			 *     name of the method
+			 *
+			 * @return
+			 *     range of matching instance methods
+			 *
+			 */
+			std::pair<const std::unique_ptr<instance_method>*, const std::unique_ptr<instance_method>*>
+			find_instance_methods(symbol name) const noexcept;
+
+			/**
+			 * @brief
+			 *     Finds zero or one instance methods with the given name.
+			 *
+			 * If there is no match, `return`s `nullptr`.  If there is exactly
+			 * one match, `return`s a pointer to it.  Otherwise, if there is
+			 * more than one match, `throws` a `std::out_of_range` exception.
+			 *
+			 * @param name
+			 *     name to find
+			 *
+			 * @return
+			 *     pointer to unique match or `nullptr` if none
+			 *
+			 * @throws std::out_of_range
+			 *     if there are multiple matches
+			 *
+			 */
+			const instance_method*
+			get_instance_method(symbol name) const;
+
+			/**
+			 * @brief
 			 *     Returns the main methods declared in this class.
+			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
 			 *
 			 * @return
 			 *     list of main methods
@@ -2023,6 +2076,43 @@ namespace minijava
 			{
 				return _main_methods;
 			}
+
+			/**
+			 * @brief
+			 *     Finds all main methods with the given name in this class.
+			 *
+			 * There may be more than one method with the given name or none.
+			 *
+			 * @param name
+			 *     name of the method
+			 *
+			 * @return
+			 *     range of matching main methods
+			 *
+			 */
+			std::pair<const std::unique_ptr<main_method>*, const std::unique_ptr<main_method>*>
+			find_main_methods(symbol name) const noexcept;
+
+			/**
+			 * @brief
+			 *     Finds zero or one main methods with the given name.
+			 *
+			 * If there is no match, `return`s `nullptr`.  If there is exactly
+			 * one match, `return`s a pointer to it.  Otherwise, if there is
+			 * more than one match, `throws` a `std::out_of_range` exception.
+			 *
+			 * @param name
+			 *     name to find
+			 *
+			 * @return
+			 *     pointer to unique match or `nullptr` if none
+			 *
+			 * @throws std::out_of_range
+			 *     if there are multiple matches
+			 *
+			 */
+			const main_method*
+			get_main_method(symbol name) const;
 
 			void accept(visitor& v) const override
 			{
@@ -2037,8 +2127,8 @@ namespace minijava
 			/** @brief declared fields */
 			std::vector<std::unique_ptr<var_decl>> _fields;
 
-			/** @brief declared methods */
-			std::vector<std::unique_ptr<method>> _methods;
+			/** @brief declared instance methods */
+			std::vector<std::unique_ptr<instance_method>> _methods;
 
 			/** @brief declared main methods */
 			std::vector<std::unique_ptr<main_method>> _main_methods;
@@ -2061,15 +2151,14 @@ namespace minijava
 			 *     classes in the program
 			 *
 			 */
-			program(std::vector<std::unique_ptr<class_declaration>> classes)
-					: _classes{std::move(classes)}
-			{
-				assert(std::all_of(_classes.begin(), _classes.end(), [](auto&& el){ return !!el; }));
-			}
+			program(std::vector<std::unique_ptr<class_declaration>> classes);
 
 			/**
 			 * @brief
 			 *     Returns the classes declared in this program.
+			 *
+			 * The list is sorted according to the order defined by
+			 * `minijava::symbol_comparator`.
 			 *
 			 * @return
 			 *     list of classes

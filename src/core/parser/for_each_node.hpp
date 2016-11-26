@@ -29,6 +29,7 @@ namespace minijava
 	 */
 	struct for_each_node : ast::visitor
 	{
+		using ast::visitor::visit;
 
 		void visit(const ast::var_decl& node) override
 		{
@@ -132,13 +133,13 @@ namespace minijava
 
 		void visit(const ast::main_method& node) override
 		{
-			visit_node(node);
+			visit_method(node);
 			node.body().accept(*this);
 		}
 
-		void visit(const ast::method& node) override
+		void visit(const ast::instance_method& node) override
 		{
-			visit_node(node);
+			visit_method(node);
 			node.return_type().accept(*this);
 			for (auto&& n : node.parameters()) {
 				n->accept(*this);
@@ -152,7 +153,7 @@ namespace minijava
 			for (auto&& n : node.fields()) {
 				n->accept(*this);
 			}
-			for (auto&& n : node.methods()) {
+			for (auto&& n : node.instance_methods()) {
 				n->accept(*this);
 			}
 			for (auto&& n : node.main_methods()) {

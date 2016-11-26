@@ -21,6 +21,7 @@
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
 #include "parser/pretty_printer.hpp"
+#include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
 
@@ -41,7 +42,8 @@ namespace minijava
 			input = 1,
 			lexer = 2,
 			parser = 3,
-			print_ast = 4
+			print_ast = 4,
+			semantic = 5,
 		};
 
 
@@ -128,6 +130,9 @@ namespace minijava
 			if (varmap.count("print-ast")) {
 				return compilation_stage::print_ast;
 			}
+			if (varmap.count("check")) {
+				return compilation_stage::semantic;
+			}
 			return compilation_stage{};
 		}
 
@@ -152,7 +157,8 @@ namespace minijava
 				("echo", "stop after reading input and output it verbatim")
 				("lextest", "stop after lexical analysis and output a token sequence")
 				("parsetest", "stop after parsing and reporting any syntax errors")
-				("print-ast", "stop after parsing and print the parsed ast");
+				("print-ast", "stop after parsing and print the parsed ast")
+				("check", "stop after semantic analysis and report semantic errors");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -222,7 +228,8 @@ namespace minijava
 				std::for_each(tokfirst, toklast, [&out](auto&& t){ print_token(out, t); });
 				return;
 			}
-			auto ast = parse_program(tokfirst, toklast);
+			auto factory = ast_factory{};
+			auto ast = parse_program(tokfirst, toklast, factory);
 			if (stage == compilation_stage::parser) {
 				return;
 			}
@@ -230,6 +237,11 @@ namespace minijava
 				print_ast(out, *ast);
 				return;
 			}
+			auto sem_info = check_program(*ast, pool, factory);
+			if (stage == compilation_stage::semantic) {
+				return;
+			}
+			(void) sem_info; // FIXME
 			// If we get until here, we have a problem...
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}

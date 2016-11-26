@@ -1,0 +1,15 @@
+class A {
+
+	public int field;
+
+	public void test(boolean a) {
+		a;
+		int b;
+		b;
+		field;
+	}
+
+	public static void main(String[] args) {
+	}
+
+}
