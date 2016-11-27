@@ -1,17 +1,61 @@
+/**
+ * @file position.hpp
+ *
+ * @brief
+ *     References to source code locations.
+ *
+ * Line and column numbers start at 1.  The value 0 is reserved to represent an
+ * unknown index.
+ *
+ * The relational operators are defined in their natural sense.  Their
+ * documentation uses the phrase &ldquo;A comes before B&rdquo; to mean that if
+ * the source code were linearized (as if by storing the text file in a
+ * character array), then location A would come before location B.  This
+ * obviously assumes that code is read in the order in which the bytes appear
+ * in memory, which is okay, because MiniJava only allows ASCII anyway.
+ *
+ */
+
 #pragma once
 
 #include <cstddef>
 #include <iosfwd>
 
+
 namespace minijava
 {
-	struct position {
 
+	/**
+	 * @brief
+	 *     Source code location.
+	 *
+	 */
+	class position
+	{
 	public:
-		position() = default;
 
-		position(const std::size_t line, const std::size_t column) : _line{line}, _column{column}
-		{ }
+		/**
+		 * @brief
+		 *     Creates an unknow `position`.
+		 *
+		 */
+		constexpr position() noexcept = default;
+
+		/**
+		 * @brief
+		 *     Creates a `position` from the given line and column number.
+		 *
+		 * @param line
+		 *     line number
+		 *
+		 * @param column
+		 *     column number
+		 *
+		 */
+		constexpr position(const std::size_t line, const std::size_t column) noexcept
+			: _line{line}, _column{column}
+		{
+		}
 
 		/**
 		 * @brief
@@ -50,11 +94,13 @@ namespace minijava
 
 		/** @brief Column number. */
 		std::size_t _column{};
-	};
+
+	};  // class position
+
 
 	/**
 	 * @brief
-	 *     Compares two `position`s for equality.
+	 *     Tests whether the position `lhs` is the same as `rhs`.
 	 *
 	 * @param lhs
 	 *     first `position` to compare
@@ -63,17 +109,17 @@ namespace minijava
 	 *     second `position` to compare
 	 *
 	 * @returns
-	 *     whether `lhs` and `rhs` are equal
+	 *     whether `lhs` and `rhs` are the same
 	 *
 	 */
-	constexpr bool operator==(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	constexpr bool operator==(const position lhs, const position rhs) noexcept
 	{
 		return lhs.line() == rhs.line() && lhs.column() == rhs.column();
 	}
 
 	/**
 	 * @brief
-	 *     Compares two `position`s for unequality.
+	 *     Tests whether the position `lhs` is different from `rhs`.
 	 *
 	 * @param lhs
 	 *     first `position` to compare
@@ -82,12 +128,89 @@ namespace minijava
 	 *     second `position` to compare
 	 *
 	 * @returns
-	 *     whether `lhs` and `rhs` are not equal
+	 *     whether `lhs` and `rhs` are different
 	 *
 	 */
-	constexpr bool operator!=(const minijava::position& lhs, const minijava::position& rhs) noexcept
+	constexpr bool operator!=(const position lhs, const position rhs) noexcept
 	{
 		return !(lhs == rhs);
+	}
+
+	/**
+	 * @brief
+	 *     Tests whether the position `lhs` comes before `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` comes before `rhs`
+	 *
+	 */
+	constexpr bool operator<(const position lhs, const position rhs) noexcept
+	{
+		return (lhs.line() < rhs.line())
+			|| (lhs.line() == rhs.line() && lhs.column() < rhs.column());
+	}
+
+	/**
+	 * @brief
+	 *     Tests whether the position `lhs` comes after `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` comes after `rhs`
+	 *
+	 */
+	constexpr bool operator>(const position lhs, const position rhs) noexcept
+	{
+		return !(lhs < rhs) && (lhs != rhs);
+	}
+
+	/**
+	 * @brief
+	 *     Tests whether the position `lhs` comes not after `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` doesn't come after `rhs`
+	 *
+	 */
+	constexpr bool operator<=(const position lhs, const position rhs) noexcept
+	{
+		return !(lhs > rhs);
+	}
+
+	/**
+	 * @brief
+	 *     Tests whether the position `lhs` comes not before `rhs`.
+	 *
+	 * @param lhs
+	 *     first `position` to compare
+	 *
+	 * @param rhs
+	 *     second `position` to compare
+	 *
+	 * @returns
+	 *     whether `lhs` doesn't come before `rhs`
+	 *
+	 */
+	constexpr bool operator>=(const position lhs, const position rhs) noexcept
+	{
+		return !(lhs < rhs);
 	}
 
 	/**
@@ -101,88 +224,13 @@ namespace minijava
 	 * @param os
 	 *     stream to write to
 	 *
-	 * @param tok
-	 *     token to insert
+	 * @param pos
+	 *     position to insert
 	 *
 	 * @returns
 	 *     reference to `os`
 	 *
 	 */
-	std::ostream& operator<<(std::ostream& os, const minijava::position& pos);
+	std::ostream& operator<<(std::ostream& os, const position pos);
 
-	/**
-	 * @brief
-	 *     Compares if `lhs` is lower `rhs`.
-	 *
-	 * @param lhs
-	 *     first `position` to compare
-	 *
-	 * @param rhs
-	 *     second `position` to compare
-	 *
-	 * @returns
-	 *     whether `lhs` is lower than `rhs`
-	 *
-	 */
-	constexpr bool operator<(const minijava::position& lhs, const minijava::position& rhs) noexcept
-	{
-		return lhs.line() < rhs.line() || (lhs.line() == rhs.line() && lhs.column() < rhs.column());
-	}
-
-	/**
-	 * @brief
-	 *     Compares if `lhs` is lower or equal `rhs`.
-	 *
-	 * @param lhs
-	 *     first `position` to compare
-	 *
-	 * @param rhs
-	 *     second `position` to compare
-	 *
-	 * @returns
-	 *     whether `lhs` is lower or equal than `rhs`
-	 *
-	 */
-	constexpr bool operator<=(const minijava::position& lhs, const minijava::position& rhs) noexcept
-	{
-		return lhs == rhs || lhs < rhs;
-	}
-
-	/**
-	 * @brief
-	 *     Compares if `lhs` is greater `rhs`.
-	 *
-	 * @param lhs
-	 *     first `position` to compare
-	 *
-	 * @param rhs
-	 *     second `position` to compare
-	 *
-	 * @returns
-	 *     whether `lhs` is greater than `rhs`
-	 *
-	 */
-	constexpr bool operator>(const minijava::position& lhs, const minijava::position& rhs) noexcept
-	{
-		return lhs != rhs && !(lhs < rhs);
-	}
-
-	/**
-	 * @brief
-	 *     Compares if `lhs` is greater or equal `rhs`.
-	 *
-	 * @param lhs
-	 *     first `position` to compare
-	 *
-	 * @param rhs
-	 *     second `position` to compare
-	 *
-	 * @returns
-	 *     whether `lhs` is greater or equal than `rhs`
-	 *
-	 */
-	constexpr bool operator>=(const minijava::position& lhs, const minijava::position& rhs) noexcept
-	{
-		return !(lhs < rhs);
-	}
-}
+}  // namespace minijava

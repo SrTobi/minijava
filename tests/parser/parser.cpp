@@ -117,7 +117,7 @@ namespace /* anonymous */
 	// to construct a token sequence as parser input.  If the arguments contain
 	// the EOF token, its position is used as the position of the
 	// parser-defined error location and the token is removed afterwards.  The
-	// column number of each token will be set to an incrementing sequence and
+	// line number of each token will be set to an incrementing sequence and
 	// the location of the PDE is available via the `pde_idx` member function.
 	// The token sequence itself is exposed via the `begin` and `end` member
 	// functions.
@@ -141,9 +141,7 @@ namespace /* anonymous */
 			}
 			_tokens.push_back(eof);
 			for(std::size_t i = 0; i < _tokens.size(); ++i) {
-				_tokens[i].set_position(minijava::position(
-						_tokens[i].position().line(),
-						i + 1));
+				_tokens[i].set_position({1 + i, i + 1});
 			}
 		}
 
@@ -281,10 +279,9 @@ static const token_sequence success_data[] = {
 BOOST_DATA_TEST_CASE(parser_accepts_valid_programs, success_data)
 {
 	assert(sample.pde_idx() == 0);
-	try{
+	try {
 		minijava::parse_program(std::begin(sample), std::end(sample));
-	}catch(const minijava::syntax_error& e)
-	{
+	} catch(const minijava::syntax_error& e) {
 		BOOST_FAIL("Exception thrown: " << e.what());
 	}
 }
@@ -391,10 +388,10 @@ BOOST_DATA_TEST_CASE(parser_rejects_invalid_programs, failure_data)
 		minijava::parse_program(std::begin(sample), std::end(sample));
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::syntax_error& e) {
-		if (pde_idx != e.position().column()) {
+		if (pde_idx != e.position().line()) {
 			std::clog << "Caught exception: " << e.what() << std::endl;
 		}
-		BOOST_REQUIRE_EQUAL(pde_idx, e.position().column());
+		BOOST_REQUIRE_EQUAL(pde_idx, e.position().line());
 	}
 }
 

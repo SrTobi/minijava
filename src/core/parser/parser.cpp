@@ -18,14 +18,8 @@ namespace minijava
 	{
 	}
 
-	syntax_error::syntax_error(const std::string msg)
-		: std::runtime_error{msg}
-	{
-	}
-
-	syntax_error::syntax_error(const token& tok, const std::string& msg)
-		: std::runtime_error{msg}
-		, _position{tok.position()}
+	syntax_error::syntax_error(const std::string& msg, const minijava::position pos)
+		: std::runtime_error{msg}, _position{pos}
 	{
 	}
 
@@ -67,12 +61,6 @@ namespace minijava
 			}
 		}
 
-		void insert_line(std::ostream& oss, const token& pde)
-		{
-			oss << " at line " << pde.position().line()
-			    << ", column " << pde.position().column();
-		}
-
 	}  // namespace /* anonymous */
 
 
@@ -104,8 +92,7 @@ namespace minijava
 			}
 			oss << " but found ";
 			insert_pretty(oss, pde);
-			insert_line(oss, pde);
-			throw syntax_error{pde, oss.str()};
+			throw syntax_error{oss.str(), pde.position()};
 		}
 
 		[[noreturn]]
@@ -115,11 +102,7 @@ namespace minijava
 			auto oss = std::ostringstream{};
 			oss << "The 'main' method must be declared as";
 			oss << " 'public static void main(String[] args)'";
-			insert_line(oss, pde);
-			throw syntax_error{
-				pde,
-				oss.str()
-			};
+			throw syntax_error{oss.str(), pde.position()};
 		}
 
 		[[noreturn]]
@@ -131,8 +114,7 @@ namespace minijava
 			auto oss = std::ostringstream{};
 			oss << "Primitive type '" << name(tt) << "' ";
 			oss << "cannot be used in new object expression";
-			insert_line(oss, type_token);
-			throw syntax_error{type_token, oss.str()};
+			throw syntax_error{oss.str(), pde.position()};
 		}
 
 	}  // namespace detail

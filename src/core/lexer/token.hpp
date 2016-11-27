@@ -150,12 +150,11 @@ namespace minijava
 		 * @brief
 		 *     Associates a position with the token.
 		 *
-		 * @param position
+		 * @param pos
 		 *     position
 		 *
 		 */
 		void set_position(minijava::position pos) noexcept;
-
 
 		/**
 		 * @brief

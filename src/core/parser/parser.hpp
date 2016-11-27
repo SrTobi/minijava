@@ -38,27 +38,16 @@ namespace minijava
 		/**
 		 * @brief
 		 *     Creates a new exception object with a custom error message and
-		 *     no source location information.
+		 *     optional source location information.
 		 *
 		 * @param msg
 		 *     custom error message
 		 *
-		 */
-		syntax_error(const std::string msg);
-
-		/**
-		 * @brief
-		 *     Creates a new exception object with a custom error message and
-		 *     source location information.
-		 *
-		 * @param tok
-		 *     token at the parser-defined error location
-		 *
-		 * @param msg
-		 *     custom error message
+		 * @param pos
+		 *     parser-defined error location
 		 *
 		 */
-		syntax_error(const token& tok, const std::string& msg);
+		syntax_error(const std::string& msg, minijava::position pos = {});
 
 		/**
 		 * @brief
