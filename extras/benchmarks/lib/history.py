@@ -54,6 +54,9 @@ class HistoricResult(object):
     @member stdev : float
         standard deviation of execution time in seconds
 
+    @property relative_stdev : float
+        relative standard deviation or `None` if undefined
+
     @member n : int
         sample size
 
@@ -67,6 +70,13 @@ class HistoricResult(object):
         self.stdev = stdev
         self.n = n
         self.timestamp = timestamp
+
+    @property
+    def relative_stdev(self):
+        try:
+            return self.stdev / self.mean
+        except ArithmeticError:
+            return None
 
 
 class History(object):
