@@ -68,11 +68,8 @@ namespace minijava
 		 * set before or to set the line number to zero will result in undefined
 		 * behavior.
 		 *
-		 * @param line
-		 *     line number to associate with the `node`
-		 *
-		 * @param column
-		 *     column number to associate with the `node`
+		 * @param position
+		 *     position number to associate with the `node`
 		 *
 		 * @returns
 		 *     reference to `*this`
