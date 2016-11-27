@@ -18,15 +18,8 @@ namespace minijava
 	{
 	}
 
-	syntax_error::syntax_error(const std::string msg)
-		: std::runtime_error{msg}
-	{
-	}
-
-	syntax_error::syntax_error(const token& tok, const std::string& msg)
-		: std::runtime_error{msg}
-		, _line{tok.line()}
-		, _column{tok.column()}
+	syntax_error::syntax_error(const std::string& msg, const minijava::position pos)
+		: std::runtime_error{msg}, _position{pos}
 	{
 	}
 
@@ -99,29 +92,29 @@ namespace minijava
 			}
 			oss << " but found ";
 			insert_pretty(oss, pde);
-			throw syntax_error{pde, oss.str()};
+			throw syntax_error{oss.str(), pde.position()};
 		}
 
 		[[noreturn]]
 		void throw_syntax_error_main_signature(const token& pde)
 		{
 			assert(pde.type() == token_type::identifier);
-			throw syntax_error{
-				pde,
-				"The 'main' method must be declared as"
-				" 'public static void main(String[] args)'"
-			};
+			auto oss = std::ostringstream{};
+			oss << "The 'main' method must be declared as";
+			oss << " 'public static void main(String[] args)'";
+			throw syntax_error{oss.str(), pde.position()};
 		}
 
 		[[noreturn]]
-		void throw_syntax_error_new_primitive(const token& pde, const token_type tt)
+		void throw_syntax_error_new_primitive(const token& pde, const token& type_token)
 		{
 			using namespace std::string_literals;
 			assert(pde.type() == token_type::left_paren);
-			const auto msg = "Primitive type"s
-				+ " '" + name(tt) + "' "
-				+ "cannot be used in new object expression";
-			throw syntax_error{pde, msg};
+			auto tt = type_token.type();
+			auto oss = std::ostringstream{};
+			oss << "Primitive type '" << name(tt) << "' ";
+			oss << "cannot be used in new object expression";
+			throw syntax_error{oss.str(), pde.position()};
 		}
 
 	}  // namespace detail

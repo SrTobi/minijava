@@ -65,24 +65,14 @@ namespace minijava
 		return detail::has_lexval(type());
 	}
 
-	inline std::size_t token::line() const noexcept
+	inline minijava::position token::position() const noexcept
 	{
-		return _line;
+		return _position;
 	}
 
-	inline std::size_t token::column() const noexcept
+	inline void token::set_position(minijava::position position) noexcept
 	{
-		return _column;
-	}
-
-	inline void token::set_line(const std::size_t line) noexcept
-	{
-		_line = line;
-	}
-
-	inline void token::set_column(const std::size_t column) noexcept
-	{
-		_column = column;
+		_position = position;
 	}
 
 	inline bool token::equal(const token& lhs, const token& rhs) noexcept

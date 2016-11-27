@@ -14,6 +14,7 @@
 
 #include "lexer/token.hpp"
 #include "lexer/token_type.hpp"
+#include "position.hpp"
 #include "parser/ast.hpp"
 #include "parser/ast_factory.hpp"
 #include "parser/pretty_printer.hpp"
@@ -118,7 +119,7 @@ namespace /* anonymous */
 	// to construct a token sequence as parser input.  If the arguments contain
 	// the EOF token, its position is used as the position of the
 	// parser-defined error location and the token is removed afterwards.  The
-	// column number of each token will be set to an incrementing sequence and
+	// line number of each token will be set to an incrementing sequence and
 	// the location of the PDE is available via the `pde_idx` member function.
 	// The token sequence itself is exposed via the `begin` and `end` member
 	// functions.
@@ -141,8 +142,8 @@ namespace /* anonymous */
 				_tokens.erase(pos);
 			}
 			_tokens.push_back(eof);
-			for (std::size_t i = 0; i < _tokens.size(); ++i) {
-				_tokens[i].set_column(i + 1);
+			for (auto i = std::size_t{}; i < _tokens.size(); ++i) {
+				_tokens[i].set_position({1 + i, 0});
 			}
 		}
 
@@ -280,10 +281,9 @@ static const token_sequence success_data[] = {
 BOOST_DATA_TEST_CASE(parser_accepts_valid_programs, success_data)
 {
 	assert(sample.pde_idx() == 0);
-	try{
+	try {
 		minijava::parse_program(std::begin(sample), std::end(sample));
-	}catch(const minijava::syntax_error& e)
-	{
+	} catch(const minijava::syntax_error& e) {
 		BOOST_FAIL("Exception thrown: " << e.what());
 	}
 }
@@ -390,10 +390,10 @@ BOOST_DATA_TEST_CASE(parser_rejects_invalid_programs, failure_data)
 		minijava::parse_program(std::begin(sample), std::end(sample));
 		TESTAUX_FAIL_NO_EXCEPTION();
 	} catch (const minijava::syntax_error& e) {
-		if (pde_idx != e.column()) {
+		if (pde_idx != e.position().line()) {
 			std::clog << "Caught exception: " << e.what() << std::endl;
 		}
-		BOOST_REQUIRE_EQUAL(pde_idx, e.column());
+		BOOST_REQUIRE_EQUAL(pde_idx, e.position().line());
 	}
 }
 
@@ -418,11 +418,9 @@ namespace /* anonymous */
 BOOST_AUTO_TEST_CASE(throw_syntax_error_correct_source_location)
 {
 	auto tok = minijava::token::create(tt::semicolon);
-	tok.set_line(1234);
-	tok.set_column(56);
+	tok.set_position(minijava::position(1234, 56));
 	const auto e = get_thrown_syntax_error<tt::eof>(tok);
-	BOOST_REQUIRE_EQUAL(tok.line(), e.line());
-	BOOST_REQUIRE_EQUAL(tok.column(), e.column());
+	BOOST_REQUIRE_EQUAL(tok.position(), e.position());
 }
 
 

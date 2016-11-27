@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <boost/variant.hpp>
+#include <position.hpp>
 
 #include "symbol/symbol.hpp"
 
@@ -409,11 +410,8 @@ namespace minijava
 				/** @brief Desired value for the `node`'s `id` attribute. */
 				std::size_t id{};
 
-				/** @brief Desired value for the `node`'s `line` attribute. */
-				std::size_t line{};
-
-				/** @brief Desired value for the `node`'s `column` attribute. */
-				std::size_t column{};
+				/** @brief Desired value for the `node`'s `position` attribute. */
+				minijava::position position{};
 
 				/**
 				 * @brief
@@ -427,8 +425,7 @@ namespace minijava
 				void operator()(node& n) const noexcept
 				{
 					n._id = id;
-					n._line = line;
-					n._column = column;
+					n._position = position;
 				}
 
 			};  // struct mutator
@@ -493,30 +490,16 @@ namespace minijava
 
 			/**
 			 * @brief
-			 *     `return`s the line number where the node was found.
+			 *     `return`s the position where the node was found.
 			 *
-			 * If the value is 0, the line number is unknown.
-			 *
-			 * @returns
-			 *     line number
-			 *
-			 */
-			std::size_t line() const noexcept {
-				return _line;
-			}
-
-			/**
-			 * @brief
-			 *     `return`s the column number where the node was found.
-			 *
-			 * If the value is 0, the column number is unknown.
+			 * If the value is (0,0), the position is unknown.
 			 *
 			 * @returns
-			 *     column number
+			 *     position
 			 *
 			 */
-			std::size_t column() const noexcept {
-				return _column;
+			minijava::position position() const noexcept {
+				return _position;
 			}
 
 			/**
@@ -533,11 +516,8 @@ namespace minijava
             /** @brief Optional ID of this node in the AST. */
 			std::size_t _id {};
 
-			/** @brief Line number where the operation was found. */
-			std::size_t _line {};
-
-			/** @brief Column number where the operation was found. */
-			std::size_t _column {};
+			/** @brief position number where the operation was found. */
+			minijava::position _position {};
 		};
 
 

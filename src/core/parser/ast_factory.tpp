@@ -4,7 +4,6 @@
 
 #include <cassert>
 
-
 namespace minijava
 {
 
@@ -15,18 +14,10 @@ namespace minijava
 	}
 
 	template <typename NodeT>
-	ast_builder<NodeT>& ast_builder<NodeT>::at_line(const std::size_t line)
+	ast_builder<NodeT>& ast_builder<NodeT>::at(const minijava::position position)
 	{
-		assert((line != 0) && (_mutator.line == 0));
-		_mutator.line = line;
-		return *this;
-	}
-
-	template <typename NodeT>
-	ast_builder<NodeT>& ast_builder<NodeT>::at_column(const std::size_t column)
-	{
-		assert((column != 0) && (_mutator.column == 0));
-		_mutator.column = column;
+		assert((position != minijava::position()) && (_mutator.position == minijava::position()));
+		_mutator.position = position;
 		return *this;
 	}
 

@@ -90,7 +90,7 @@ namespace minijava
 			template <typename T>
 			void sort_declarations(T& d1, T& d2) noexcept
 			{
-				if (d1->line() > d2->line() || (d1->line() == d2->line() && d1->column() > d2->column())) {
+				if (d1->position() > d2->position()) {
 					std::swap(d1, d2);
 				}
 			}
@@ -102,9 +102,9 @@ namespace minijava
 				sort_declarations(f1, f2);
 				auto oss = std::ostringstream{};
 				oss << "Declaration of field '" << f2->name() << "'"
-					<< " on line " << f2->line()
+					<< " on line " << f2->position().line()
 					<< " conflicts with previous declaration on line "
-					<< f1->line() << ".";
+					<< f1->position().line() << ".";
 				throw semantic_error{oss.str()};
 			}
 
@@ -115,9 +115,9 @@ namespace minijava
 				sort_declarations(m1, m2);
 				auto oss = std::ostringstream{};
 				oss << "Declaration of method '" << m2->name() << "'"
-					<< " on line " << m2->line()
+					<< " on line " << m2->position().line()
 					<< " conflicts with previous declaration on line "
-					<< m1->line() << ".";
+					<< m1->position().line() << ".";
 				throw semantic_error{oss.str()};
 			}
 

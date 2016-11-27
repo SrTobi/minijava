@@ -89,6 +89,7 @@ namespace testaux
 			{
 				_tokens.clear();
 				_gen_program();
+				_set_positions();
 				return std::move(_tokens);
 			}
 
@@ -602,6 +603,13 @@ namespace testaux
 			restore_finally<std::size_t> _enter_nested()
 			{
 				return {_nest_depth, _nest_depth + 1};
+			}
+
+			void _set_positions()
+			{
+				for (auto i = std::size_t{}; i < _tokens.size(); ++i) {
+					_tokens[i].set_position({1 + i, 0});
+				}
 			}
 
 			RndEngT& _engine;

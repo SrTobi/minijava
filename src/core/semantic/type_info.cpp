@@ -15,23 +15,22 @@ namespace minijava
 
 		namespace /* anonymous */
 		{
+
 			[[noreturn]] void
 			throw_class_name_clash(const ast::class_declaration* c1,
 								   const ast::class_declaration* c2)
 			{
-				const ast::class_declaration* first = c1;
-				const ast::class_declaration* second = c2;
-				if (c1->line() > c2->line() || (c1->line() == c2->line()
-						&& c1->column() > c2->column())) {
+				if (c1->position() > c2->position()) {
 					std::swap(c1, c2);
 				}
 				auto oss = std::ostringstream{};
-				oss << "Declaration of class '" << first->name() << "'"
-					<< " on line " << first->line()
+				oss << "Declaration of class '" << c2->name() << "'"
+					<< " on line " << c2->position().line()
 					<< " conflicts with previous declaration on line "
-					<< second->line() << ".";
+					<< c1->position().line();
 				throw semantic_error{oss.str()};
 			}
+
 		}  // namespace /* anonymous */
 
 

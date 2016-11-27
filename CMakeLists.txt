@@ -49,6 +49,7 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
+	position
 	semantic/attribute
 	semantic/constant
 	semantic/name_type_analysis
