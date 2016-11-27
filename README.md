@@ -1,7 +1,63 @@
-# Compiler-Engineering WS&nbsp;2016/17 &ndash; Team&nbsp;2
+# Compiler Engineering Winter Term &nbsp;2016/17 &ndash; Team&nbsp;2
+
+This is the repository for the MiniJava compiler developed by team 2.
 
 
-## Requirements
+## Compliance with the Specification
+
+This compiler aims to fully adhere to the [MiniJava specification](https://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/sprachbericht.pdf),
+which is not completely unambiguous and therefore leaves room for
+implementation-defined behavior.  Our interpretation of the specification
+differs slightly from the official interpretation.  We believe that these
+deviations are both within the boundaries set by the specification and
+consistent as a whole.
+
+This section describes the differences between our compiler and the behavior
+expected by the official test suite.
+
+
+### Treatment of `main`
+
+Since static fields and methods do not exist in MiniJava, `main` is not treated
+like a static method in our compiler.  Instead, it is merely regarded as a
+syntactic construct for the program's main entry point.
+
+As a result, our compiler will accept every program that is unquestionably valid
+MiniJava according to the specification.  Furthermore, it gives
+implementation-defined meaning to a few programs that other compliant MiniJava
+compilers might reject.
+
+In particular, the following two programs are regarded as valid:
+
+```java
+class Main {
+    public int System;
+    public static void main(String[] args) {
+        System.out.println(0);
+    }
+}
+```
+
+Within `main`, all fields inside the enclosing class are completely ignored
+during name lookup.
+
+```java
+class String {}
+class Main {
+    public void main(String[] args) {}
+    public static void main(String[] args) {}
+}
+```
+
+Since it is impossible to call `main` and since the actual type of the only
+argument of `main` cannot be used or expressed in MiniJava, `main` will never
+conflict with an instance method inside the same class, even if the argument
+lists look the same.
+
+
+## Developer Documentation
+
+### Requirements
 
 In order to build the compiler, you will need the following.
 
@@ -32,7 +88,7 @@ We have tested the setup on POSIX and Windows with MinGW or Cygwin and wish you
 Good Luck if you're trying anything else.
 
 
-## Building for Humans
+### Building for Humans
 
     $ git clone https://git@slixe.de:7999/comprak/compiler.git
     $ cd compiler/
@@ -54,7 +110,7 @@ If you choose a name for `${builddir}` that matches `stage`, `stage-*` or
 `bld`, it will be `.gitignore`d.
 
 
-## Building for Robots
+### Building for Robots
 
     $ git clone https://git@slixe.de:7999/comprak/compiler.git
 
@@ -69,7 +125,7 @@ This will only work on POSIX systems.  Since the scripts don't check who
 invokes them, they actually work for humans, too.
 
 
-## Physical Project Layout
+### Physical Project Layout
 
 This section gives a quick overview how the files are organized in the source
 tree and how the compiler is built from them.
@@ -142,7 +198,7 @@ tests can be found in `/src/suport/testaux/`.  If you add new compiled source
 files to it, don't forget to mention them in `/src/support/CMakeLists.txt`.
 
 
-## Contributing
+### Contributing
 
 Please develop your feature on a separate branch named
 `${yourname}/${yourfeature}`.  You can push to that branch whenever you like
@@ -169,7 +225,7 @@ Make sure that `git status` shows no false positives.  If necessary, update
 other crap into the repository.
 
 
-## Coding Standards
+### Coding Standards
 
 Use standards-compliant modern idiomatic C++14.  Never invoke undefined
 behavior and don't rely on non-standard features unless we have agreed upon
@@ -207,7 +263,7 @@ Do not depend on platform-specific features such as `<unistd.h>` or
 instead.
 
 
-## Style Guide
+### Style Guide
 
 We use the naming convention from the C++ standard library.  (All C++
 identifiers are in lower-case and all macros are in upper-case.  Words are
