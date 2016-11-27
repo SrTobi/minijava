@@ -5,10 +5,12 @@ This is the repository for the MiniJava compiler developed by team 2.
 
 ## Compliance with the Specification
 
-This compiler aims to fully adhere to the MiniJava specification.  However, our
-interpretation of the specification differs slightly from the official
-interpretation.  We believe that these deviations are both within the boundaries
-set by the specification and consistent as a whole.
+This compiler aims to fully adhere to the [MiniJava specification](https://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/sprachbericht.pdf),
+which is not completely unambiguous and therefore leaves room for
+implementation-defined behavior.  Our interpretation of the specification
+differs slightly from the official interpretation.  We believe that these
+deviations are both within the boundaries set by the specification and
+consistent as a whole.
 
 This section describes the differences between our compiler and the behavior
 expected by the official test suite.
@@ -18,12 +20,14 @@ expected by the official test suite.
 
 Since static fields and methods do not exist in MiniJava, `main` is not treated
 like a static method in our compiler.  Instead, it is merely regarded as a
-syntactic construct for the program's main entry point &ndash; an interpretation
-which is supported by the official grammar.
+syntactic construct for the program's main entry point.
 
-As a result, our compiler fully compatible with the other compilers, but will
-accept programs that other compilers might reject.  In particular, the following
-two programs are regarded as valid:
+As a result, our compiler will accept every program that is unquestionably valid
+MiniJava according to the specification.  Furthermore, it gives
+implementation-defined meaning to a few programs that other compliant MiniJava
+compilers might reject.
+
+In particular, the following two programs are regarded as valid:
 
 ```java
 class Main {
@@ -51,7 +55,7 @@ conflict with an instance method inside the same class, even if the argument
 lists look the same.
 
 
-## Developer documentation
+## Developer Documentation
 
 ### Requirements
 
