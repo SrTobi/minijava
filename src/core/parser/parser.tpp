@@ -451,7 +451,7 @@ namespace minijava
 					advance();
 				}
 				expect(primary_expr_first);
-				auto rhs = parse_primary();
+				auto rhs = parse_primary(preop_stack);
 				while (current_is(postfix_ops_first)) {
 					rhs = parse_postfix_op(std::move(rhs));
 				}
@@ -560,7 +560,7 @@ namespace minijava
 				token_type::kw_new
 			>{};
 
-			ast_ptr<ast::expression> parse_primary()
+			ast_ptr<ast::expression> parse_primary(std::stack<token>& preop_stack)
 			{
 				assert(current_is(primary_expr_first));
 				const auto pos = current().position();
@@ -575,42 +575,61 @@ namespace minijava
 					advance();
 					return make<ast::boolean_constant>().at(pos)(true);
 				case token_type::integer_literal:
-					{
-						const auto lit_tok = current();
-						advance();
-						return make<ast::integer_constant>().at(pos)(lit_tok.lexval());
-					}
+					return parse_integer_literal(preop_stack);
 				case token_type::kw_this:
 					advance();
 					return make<ast::this_ref>().at(pos)();
 				case token_type::identifier:
-					{
-						// variable or function call
-						const auto id_tok = current();
-						advance();
-						if (current_is(token_type::left_paren)) {
-							advance();
-							auto args = parse_arguments();
-							consume(token_type::right_paren);
-							return make<ast::method_invocation>().at(pos)
-								(nullptr, id_tok.lexval(), std::move(args));
-						} else {
-							return make<ast::variable_access>().at(pos)
-								(nullptr, id_tok.lexval());
-						}
-					}
+					return parse_variable_or_function_call();
 				case token_type::left_paren:
-					{
-						advance();
-						auto inner = parse_expression();
-						consume(token_type::right_paren);
-						return inner;
-					}
+					return parse_parenthesized_expression();
 				case token_type::kw_new:
 					return parse_new_expression();
 				default:
 					MINIJAVA_NOT_REACHED();
 				}
+			}
+
+			ast_ptr<ast::integer_constant> parse_integer_literal(std::stack<token>& preop_stack)
+			{
+				assert(current_is(token_type::integer_literal));
+				auto result = ast_ptr<ast::integer_constant>{};
+				const auto lit_tok = current();
+				if (!preop_stack.empty() && (preop_stack.top().type() == token_type::minus)) {
+					result = make<ast::integer_constant>().at(preop_stack.top().position())
+						(lit_tok.lexval(), true);
+					preop_stack.pop();
+				} else {
+					result = make<ast::integer_constant>().at(lit_tok.position())
+						(lit_tok.lexval(), false);
+				}
+				advance();
+				return result;
+			}
+
+			ast_ptr<ast::expression> parse_variable_or_function_call()
+			{
+				const auto id_tok = current();
+				advance();
+				if (current_is(token_type::left_paren)) {
+					advance();
+					auto args = parse_arguments();
+					consume(token_type::right_paren);
+					return make<ast::method_invocation>().at(id_tok.position())
+						(nullptr, id_tok.lexval(), std::move(args));
+				} else {
+					return make<ast::variable_access>().at(id_tok.position())
+						(nullptr, id_tok.lexval());
+				}
+			}
+
+			ast_ptr<ast::expression> parse_parenthesized_expression()
+			{
+				assert(current_is(token_type::left_paren));
+				advance();
+				auto inner = parse_expression();
+				consume(token_type::right_paren);
+				return inner;
 			}
 
 			std::vector<ast_ptr<ast::expression>> parse_arguments()

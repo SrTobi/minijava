@@ -21,23 +21,8 @@ namespace minijava
 	namespace sem
 	{
 
-		/**
-		 * @brief
-		 *     Signed integer type used for storing constants in the AST.
-		 *
-		 * The type has the following properties:
-		 *
-		 *  - It can represent any value of an expression in a valid program.
-		 *  - It can represent the value 2<sup>31</sup> which can only occur as
-		 *    the literal operand of a unary minus in a valid program.
-		 *  - It has (in C++) a rank no less than `int`.
-		 *  - It is at least 64 bits wide.
-		 *
-		 */
-		using ast_int_type = decltype(std::int_least64_t{} + 0);
-
 		/** @brief Type mapping expression nodes to their constant value. */
-		using const_attributes = ast_attributes<ast_int_type, ast_node_filter<ast::expression>>;
+		using const_attributes = ast_attributes<std::int32_t, ast_node_filter<ast::expression>>;
 
 		/**
 		 * @brief
@@ -58,12 +43,8 @@ namespace minijava
 		 *
 		 * The boolean constants `false` and `true` are represented as the
 		 * integers 0 and 1.  The extracted map will contain all constants
-		 * folded up to the highest possible node within expressions.  The
-		 * `return`ed map can contain the value 2<sup>31</sup> which is a valid
-		 * literal if it is the operand of a unary minus.  But since constants
-		 * are folded up, if you always take the most-folded constant in the
-		 * tree, you'll never see this value and can safely cast the constants
-		 * to a 32 bit signed integer in two's compement representation.
+		 * folded up to the highest possible node within expressions.  Constant
+		 * propagation beyond expression boundaries is not performed.
 		 *
 		 * If during constant folding, an operation is encountered that has an
 		 * undefined result (such as overflow or division by zero), the
@@ -71,9 +52,6 @@ namespace minijava
 		 * triggered the problem as argument and the result of the operation is
 		 * treated as unknown.  If the handler `return`s normally, constant
 		 * extraction will proceed.
-		 *
-		 * No constant propagation across expression boundaries will be
-		 * performed.
 		 *
 		 * If the AST is not a correctly typed program, the behavior is
 		 * undefined.  Therefore, this function shall only be called after type

@@ -1257,11 +1257,18 @@ namespace minijava
 			 * @brief
 			 *     Constructs an integer constant AST node.
 			 *
+			 * The `negative` flag allows to distinguish `-1` and `-(1)` in the
+			 * AST.
+			 *
 			 * @param literal
 			 *     integer literal specifying the value of the constant
 			 *
+			 * @param negative
+			 *     whether the literal is negated
+			 *
 			 */
-			integer_constant(symbol literal) : _literal{literal}
+			integer_constant(symbol literal, bool negative = false)
+				: _literal{literal}, _negative{negative}
 			{
 				assert(!literal.empty());
 			}
@@ -1280,6 +1287,19 @@ namespace minijava
 				return _literal;
 			}
 
+			/**
+			 * @brief
+			 *     Returns whether the literal is negated.
+			 *
+			 * @return
+			 *     whether the literal is negated
+			 *
+			 */
+			bool negative() const noexcept
+			{
+				return _negative;
+			}
+
 			void accept(visitor& v) const override
 			{
 				v.visit(*this);
@@ -1289,6 +1309,10 @@ namespace minijava
 
 			/** @brief integer literal specifying the value of the constant */
 			symbol _literal;
+
+			/** @brief flag whether the literal is negated */
+			bool _negative;
+
 		};
 
 		/**

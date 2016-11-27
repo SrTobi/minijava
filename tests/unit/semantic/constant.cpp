@@ -26,8 +26,8 @@ namespace sem = minijava::sem;
 namespace /* anonymous */
 {
 
-	constexpr auto max32 = sem::ast_int_type{INT32_MAX};
-	constexpr auto min32 = sem::ast_int_type{INT32_MIN};
+	constexpr auto max32 = INT32_C(INT32_MAX);
+	constexpr auto min32 = INT32_C(INT32_MIN);
 
 	std::string random_integer_literal(const std::size_t length)
 	{
@@ -38,7 +38,7 @@ namespace /* anonymous */
 }  // namespace /* anonymous */
 
 
-static const std::tuple<std::string, sem::ast_int_type> integer_literal_data[] = {
+static const std::tuple<std::string, std::int32_t> integer_literal_data[] = {
 	{"0", 0},
 	{"1", 1},
 	{"42", 42},
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(integer_literals)
 }
 
 
-static const std::tuple<bool, sem::ast_int_type> boolean_literal_data[] = {
+static const std::tuple<bool, std::int32_t> boolean_literal_data[] = {
 	{false, 0},
 	{true, 1},
 };
@@ -102,16 +102,16 @@ BOOST_DATA_TEST_CASE(positve_integer_literal_overflow, positve_integer_literal_o
 }
 
 
-static const std::tuple<std::string, sem::ast_int_type> negative_integer_literal_data[] = {
+static const std::tuple<std::string, std::int32_t> indirectly_negative_integer_literal_data[] = {
 	{"0", 0},
 	{"1", 1},
 	{"10", 10},
-	{"2147483648", INT64_C(2147483648)},
+	{"2147483647", max32},
 };
 
-BOOST_AUTO_TEST_CASE(negative_integer_literals)
+BOOST_AUTO_TEST_CASE(indirectly_negative_integer_literals)
 {
-	for (const auto& sample : negative_integer_literal_data) {
+	for (const auto& sample : indirectly_negative_integer_literal_data) {
 		auto pool = minijava::symbol_pool<>{};
 		const auto lexval = pool.normalize(std::get<0>(sample));
 		auto factory = minijava::ast_factory{};
@@ -126,12 +126,33 @@ BOOST_AUTO_TEST_CASE(negative_integer_literals)
 	}
 }
 
+static const std::tuple<std::string, std::int32_t> directly_negative_integer_literal_data[] = {
+	{"0", -0},
+	{"1", -1},
+	{"10", -10},
+	{"2147483648", min32},
+};
+
+
+BOOST_AUTO_TEST_CASE(directly_negative_integer_literals)
+{
+	for (const auto& sample : directly_negative_integer_literal_data) {
+		auto pool = minijava::symbol_pool<>{};
+		const auto lexval = pool.normalize(std::get<0>(sample));
+		auto factory = minijava::ast_factory{};
+		const auto ast = factory.make<ast::integer_constant>()(lexval, true);
+		const auto extracted = sem::extract_constants(*ast);
+		BOOST_REQUIRE_EQUAL(1, extracted.size());
+		BOOST_REQUIRE_EQUAL(std::get<1>(sample), extracted.at(*ast));
+	}
+}
+
 
 static const std::tuple<
 	ast::binary_operation_type,
-	sem::ast_int_type,
-	sem::ast_int_type,
-	sem::ast_int_type
+	std::int32_t,
+	std::int32_t,
+	std::int32_t
 > binop_data[] = {
 	// ||
 	{ast::binary_operation_type::logical_or, 0, 0, 0},
@@ -278,11 +299,23 @@ BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_3rd)
 }
 
 
-BOOST_AUTO_TEST_CASE(unary_integer_invalid)
+BOOST_AUTO_TEST_CASE(unary_integer_valid)  // (-2147483648)
 {
 	auto pool = minijava::symbol_pool<>{};
 	auto factory = minijava::ast_factory{};
-	const auto lexval = pool.normalize(std::to_string(-min32));
+	const auto lexval = pool.normalize("2147483648");
+	auto ast = factory.make<ast::integer_constant>()(lexval, true);
+	auto problems = std::vector<const ast::node*>{};
+	const auto constants = sem::extract_constants(*ast);
+	BOOST_REQUIRE_EQUAL(INT32_C(-2147483648), constants.at(*ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(unary_integer_invalid)  // -(2147483648)
+{
+	auto pool = minijava::symbol_pool<>{};
+	auto factory = minijava::ast_factory{};
+	const auto lexval = pool.normalize("2147483648");
 	auto ast = factory.make<ast::unary_expression>()(
 		ast::unary_operation_type::minus,
 		factory.make<ast::unary_expression>()(
@@ -291,20 +324,14 @@ BOOST_AUTO_TEST_CASE(unary_integer_invalid)
 		)
 	);
 	auto problems = std::vector<const ast::node*>{};
-	auto handler = [&problems](const ast::node& n){ problems.push_back(&n); };
-	const auto extracted = sem::extract_constants(*ast, handler);
-	BOOST_REQUIRE_EQUAL(2, extracted.size());
-	BOOST_REQUIRE_EQUAL(-min32, extracted.at(dynamic_cast<const ast::unary_expression&>(ast->target()).target()));
-	BOOST_REQUIRE_EQUAL(min32, extracted.at(ast->target()));
-	BOOST_REQUIRE_EQUAL(1, problems.size());
-	BOOST_REQUIRE_EQUAL(ast.get(), problems.front());
+	BOOST_REQUIRE_THROW(sem::extract_constants(*ast), minijava::semantic_error);
 }
 
 
 static const std::tuple<
 	ast::binary_operation_type,
-	sem::ast_int_type,
-	sem::ast_int_type
+	std::int32_t,
+	std::int32_t
 > binop_invalid_data[] = {
 	{ast::binary_operation_type::plus, max32, 1},
 	{ast::binary_operation_type::multiply, max32, max32},
