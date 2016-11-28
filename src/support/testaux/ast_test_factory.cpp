@@ -10,9 +10,9 @@ namespace testaux
 {
 
 	std::unique_ptr<ast::integer_constant>
-	ast_test_factory::make_literal(const std::string& lexval)
+	ast_test_factory::make_literal(const std::string& lexval, const bool negative)
 	{
-		return factory.make<ast::integer_constant>()(pool.normalize(lexval));
+		return factory.make<ast::integer_constant>()(pool.normalize(lexval), negative);
 	}
 
 	std::unique_ptr<ast::variable_access>
@@ -53,6 +53,20 @@ namespace testaux
 		return factory.make<ast::this_ref>()();
 	}
 
+	std::unique_ptr<ast::unary_expression>
+	ast_test_factory::logical_not(std::unique_ptr<ast::expression> expr)
+	{
+		return factory.make<ast::unary_expression>()
+			(ast::unary_operation_type::logical_not, std::move(expr));
+	}
+
+	std::unique_ptr<ast::unary_expression>
+	ast_test_factory::minus(std::unique_ptr<ast::expression> expr)
+	{
+		return factory.make<ast::unary_expression>()
+			(ast::unary_operation_type::minus, std::move(expr));
+	}
+
 	std::unique_ptr<ast::block>
 	ast_test_factory::make_empty_block()
 	{
@@ -69,8 +83,8 @@ namespace testaux
 		);
 	}
 
-	std::unique_ptr<minijava::ast::block>
-	ast_test_factory::as_block(std::unique_ptr<minijava::ast::expression> expr)
+	std::unique_ptr<ast::block>
+	ast_test_factory::as_block(std::unique_ptr<ast::expression> expr)
 	{
 		return as_block(factory.make<ast::expression_statement>()(std::move(expr)));
 	}

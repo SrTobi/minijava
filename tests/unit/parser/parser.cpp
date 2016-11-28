@@ -21,6 +21,7 @@
 #include "symbol/symbol_pool.hpp"
 
 #include "testaux/ast_id_checker.hpp"
+#include "testaux/ast_test_factory.hpp"
 #include "testaux/testaux.hpp"
 #include "testaux/token_string.hpp"
 #include "testaux/unique_ptr_vector.hpp"
@@ -76,7 +77,7 @@ using ast_vector = std::vector<std::unique_ptr<T>>;
 	tt::kw_public, RetType, id(Name), Args, Body
 
 #define PROGRAM(...)                                                          \
-	CLASS("Foo", BLOCK(METHOD(tt::kw_int, "bar", EMPTY_PARAMS, BLOCK(__VA_ARGS__))))
+	CLASS("Test", BLOCK(MAIN_METHOD("main", "args", BLOCK(__VA_ARGS__))))
 
 #define IF(Cond, Then)                                                        \
 	tt::kw_if, tt::left_paren, Cond, tt::right_paren, Then
@@ -855,4 +856,72 @@ BOOST_AUTO_TEST_CASE(external_ast_factory)
 	std::sort(std::begin(ids), std::end(ids));
 	const auto expected_ids = std::vector<std::size_t>{11, 12, 13};
 	BOOST_REQUIRE(expected_ids == ids);
+}
+
+
+BOOST_AUTO_TEST_CASE(positive_int_literal)
+{
+	const token_sequence test_data{PROGRAM(lit("1"), tt::semicolon)};
+	auto tf = testaux::ast_test_factory{};
+	const auto expected_ast = tf.as_program(tf.make_literal("1"));
+	const auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(negative_int_literal)
+{
+	const token_sequence test_data{PROGRAM(tt::minus, lit("1"), tt::semicolon)};
+	auto tf = testaux::ast_test_factory{};
+	const auto expected_ast = tf.as_program(tf.make_literal("1", true));
+	const auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(double_negative_int_literal)
+{
+	const token_sequence test_data{
+		PROGRAM(tt::minus, tt::minus, lit("1"), tt::semicolon)
+	};
+	auto tf = testaux::ast_test_factory{};
+	const auto expected_ast = tf.as_program(tf.minus(tf.make_literal("1", true)));
+	const auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(triple_negative_int_literal)
+{
+	const token_sequence test_data{
+		PROGRAM(tt::minus, tt::minus, tt::minus, lit("1"), tt::semicolon)
+	};
+	auto tf = testaux::ast_test_factory{};
+	const auto expected_ast = tf.as_program(tf.minus(tf.minus(tf.make_literal("1", true))));
+	const auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(negative_parenthesized_int_literal)
+{
+	const token_sequence test_data{
+		PROGRAM(tt::minus, tt::left_paren, lit("1"), tt::right_paren, tt::semicolon)
+	};
+	auto tf = testaux::ast_test_factory{};
+	const auto expected_ast = tf.as_program(tf.minus(tf.make_literal("1")));
+	const auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
+}
+
+
+BOOST_AUTO_TEST_CASE(negative_parenthesized_negative_int_literal)
+{
+	const token_sequence test_data{
+		PROGRAM(tt::minus, tt::left_paren, tt::minus, lit("1"), tt::right_paren, tt::semicolon)
+	};
+	auto tf = testaux::ast_test_factory{};
+	const auto expected_ast = tf.as_program(tf.minus(tf.make_literal("1", true)));
+	const auto actual_ast = minijava::parse_program(std::begin(test_data), std::end(test_data));
+	BOOST_REQUIRE_EQUAL(serialize(*expected_ast), serialize(*actual_ast));
 }

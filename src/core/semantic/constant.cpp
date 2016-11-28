@@ -1,6 +1,7 @@
 #include "semantic/constant.hpp"
 
 #include <cstdint>
+#include <sstream>
 #include <string>
 
 #include "exceptions.hpp"
@@ -17,6 +18,27 @@ namespace minijava
 
 		namespace /* anonymous */
 		{
+
+			[[noreturn, gnu::cold]] void
+			throw_literal_overflow(const ast::integer_constant& node)
+			{
+				std::ostringstream oss{};
+				static_assert((std::uint32_t{1} << 31) == UINT32_C(2147483648), "");
+				if (node.literal() == "2147483648") {
+					assert(!node.negative());
+					oss << "The integer literal " << node.literal()
+						<< " is only allowed as immediate operand of the"
+						<< " unary minus operator";
+				} else if (node.negative()) {
+					oss << "Value of integer literal too negative for 32 bit two's complement integer: "
+						<< node.literal();
+				} else {
+					oss << "Value of integer literal too large for 32 bit two's complement integer: "
+						<< node.literal();
+				}
+				throw semantic_error{oss.str()};
+			}
+
 
 			class extractor : public for_each_node
 			{
@@ -41,32 +63,46 @@ namespace minijava
 					_constants[node] = node.value();
 				}
 
+				// Our conversion logic only works with character sets that are
+				// reasonably close to ASCII.  Since this is not guaranteed by
+				// the standard, let's make sure we at least fail loudly on
+				// <del>such awkward platforms</del><ins>IBM mainframes</ins>.
+
+				static_assert('1' == '0' + 1, "");
+				static_assert('2' == '0' + 2, "");
+				static_assert('3' == '0' + 3, "");
+				static_assert('4' == '0' + 4, "");
+				static_assert('5' == '0' + 5, "");
+				static_assert('6' == '0' + 6, "");
+				static_assert('7' == '0' + 7, "");
+				static_assert('8' == '0' + 8, "");
+				static_assert('9' == '0' + 9, "");
+
 				void visit(const ast::integer_constant& node) override
 				{
-					using namespace std::string_literals;
-					const auto maximum = _is_operand_of_unary_minus(node)
-						? (ast_int_type{1} << 31)
-						: (ast_int_type{1} << 31) - 1;
-					const auto base = ast_int_type{10};
-					const auto oh = ast_int_type{'0'};
-					auto value = ast_int_type{};
+					using working_type = decltype(0 + std::int_fast64_t{});
+					const auto maximum = node.negative()
+						? (working_type{1} << 31)
+						: (working_type{1} << 31) - 1;
+					const auto base = working_type{10};
+					const auto oh = working_type{'0'};
+					auto value = working_type{};
 					for (const auto c : node.literal()) {
-						const auto digit = ast_int_type{c} - oh;
+						const auto digit = working_type{c} - oh;
 						value = base * value + digit;
 						if (value > maximum) {
-							throw semantic_error{
-								"Value of integer literal too large for 32 bit integer: "s
-									+ node.literal().c_str()
-							};
+							throw_literal_overflow(node);
 						}
 					}
-					_constants[node] = value;
+					if (node.negative()) {
+						value = -value;
+					}
+					_constants[node] = static_cast<std::int32_t>(value);
 				}
 
 				void visit(const ast::unary_expression& node) override
 				{
 					const auto target_ptr = &node.target();
-					_operand_of_last_unary_minus = target_ptr;
 					node.target().accept(*this);
 					const auto tit = _constants.find(target_ptr);
 					if (tit != _constants.end()) {
@@ -169,14 +205,7 @@ namespace minijava
 
 				const_attributes _constants{};
 
-				const ast::expression* _operand_of_last_unary_minus{};
-
 				const ast_problem_handler_type * _handlerptr{};
-
-				bool _is_operand_of_unary_minus(const ast::expression& node)
-				{
-					return (&node == _operand_of_last_unary_minus);
-				}
 
 				void _maybe_call_handler(const ast::node& node)
 				{

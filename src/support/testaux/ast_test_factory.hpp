@@ -63,12 +63,15 @@ namespace testaux
 		 * @param lexval
 		 *     lexical value of the integer literal
 		 *
+		 * @param negative
+		 *     whether to mark the literal as negated
+		 *
 		 * @returns
 		 *     integer literal AST
 		 *
 		 */
 		std::unique_ptr<minijava::ast::integer_constant>
-		make_literal(const std::string& lexval);
+		make_literal(const std::string& lexval, bool negative = false);
 
 		/**
 		 * @brief
@@ -137,6 +140,36 @@ namespace testaux
 		 */
 		std::unique_ptr<minijava::ast::this_ref>
 		make_this();
+
+		/**
+		 * @brief
+		 *     Creates an AST node that is the logical negation of an
+		 *     expression.
+		 *
+		 * @param expr
+		 *     expression to negate
+		 *
+		 * @returns
+		 *     negated expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::unary_expression>
+		logical_not(std::unique_ptr<minijava::ast::expression> expr);
+
+		/**
+		 * @brief
+		 *     Creates an AST node that is the arithmetic negation of an
+		 *     expression.
+		 *
+		 * @param expr
+		 *     expression to negate
+		 *
+		 * @returns
+		 *     negated expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::unary_expression>
+		minus(std::unique_ptr<minijava::ast::expression> expr);
 
 		/**
 		 * @brief
