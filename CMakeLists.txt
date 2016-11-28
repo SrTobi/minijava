@@ -52,6 +52,7 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
+	firm/builder
 	position
 	semantic/attribute
 	semantic/constant

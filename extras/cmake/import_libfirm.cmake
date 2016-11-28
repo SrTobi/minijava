@@ -19,4 +19,6 @@ function(import_libfirm target)
 	target_link_libraries(${target} INTERFACE "m")
 	target_include_directories(${target} INTERFACE "${install_dir}/include")
 
+	include_directories(SYSTEM "${install_dir}/include")
+
 endfunction(import_libfirm)
