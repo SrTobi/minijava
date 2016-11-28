@@ -331,7 +331,15 @@ namespace minijava
 
 		void pretty_printer::visit(const integer_constant& node)
 		{
-			_output << "(" << (node.negative() ? "-" : "") << node.literal() << ")";
+			if (node.negative()) {
+				if (_print_expression_parens) {
+					_output << "(-" << node.literal() << ")";
+				} else {
+					_output << "-" << node.literal();
+				}
+			} else {
+				_output << node.literal();
+			}
 		}
 
 		void pretty_printer::visit(const null_constant&)

@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_integer)
 	auto integer_literal = std::make_unique<ast::integer_constant>(pool.normalize("123"));
 
 	pp.visit(*integer_literal);
-	BOOST_REQUIRE_EQUAL("(123)"s, oss.str());
+	BOOST_REQUIRE_EQUAL("123"s, oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_false)
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_class_with_method)
 	);
 	auto pp = ast::pretty_printer{oss};
 	pp.visit(*test_ast);
-	BOOST_REQUIRE_EQUAL("class HelloWorld {\n\tpublic int foo() {\n\t\t(123);\n\t}\n}\n"s, oss.str());
+	BOOST_REQUIRE_EQUAL("class HelloWorld {\n\tpublic int foo() {\n\t\t123;\n\t}\n}\n"s, oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_conditional)
 	pp.visit(*test_conditional_block);
 	// we're ignoring the spec here to achieve idempotence
 	// see COMPRAKT-4
-	BOOST_REQUIRE_EQUAL("if (i == j)\n\ti = (0);\nelse\n\t;\n"s, oss.str());
+	BOOST_REQUIRE_EQUAL("if (i == j)\n\ti = 0;\nelse\n\t;\n"s, oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_elseif_and_empty_conditional)
 
 	pp.visit(*test_conditional_block);
 	BOOST_REQUIRE_EQUAL(
-			"if (true)\n\t;\nelse if (false) {\n\ti = (0);\n} else { }\n"s,
+			"if (true)\n\t;\nelse if (false) {\n\ti = 0;\n} else { }\n"s,
 			oss.str()
 	);
 }
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_simple_while)
 	);
 
 	pp.visit(*test_loop);
-	BOOST_REQUIRE_EQUAL("while (i == j)\n\ti = (0);\n"s, oss.str());
+	BOOST_REQUIRE_EQUAL("while (i == j)\n\ti = 0;\n"s, oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_regular_while)
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_regular_while)
 	);
 
 	pp.visit(*test_loop);
-	BOOST_REQUIRE_EQUAL("while (i == j) {\n\ti = (0);\n}\n"s, oss.str());
+	BOOST_REQUIRE_EQUAL("while (i == j) {\n\ti = 0;\n}\n"s, oss.str());
 }
 
 BOOST_AUTO_TEST_CASE(pretty_print_empty_while)
@@ -415,7 +415,7 @@ BOOST_AUTO_TEST_CASE(pretty_print_statements_and_expressions)
 	auto pp = ast::pretty_printer{oss};
 	pp.visit(*test_block);
 	BOOST_REQUIRE_EQUAL(
-			"{\n\tint i = ((3) * (5)) + (10);\n\tf(((new bar[(2)][])[(1)])[i]);\n}\n"s,
+			"{\n\tint i = (3 * 5) + 10;\n\tf(((new bar[2][])[1])[i]);\n}\n"s,
 	        oss.str()
 	);
 }
