@@ -46,6 +46,7 @@ set(COMPONENTS
 	meta/meta
 	parser/ast
 	parser/ast_factory
+	parser/ast_misc
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer

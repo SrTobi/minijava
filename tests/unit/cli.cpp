@@ -614,7 +614,7 @@ class HelloWorld
 )java";
 
 // official example: https://pp.info.uni-karlsruhe.de/lehre/WS201617/compprakt/intern/example.output
-static const auto official_pretty_printer_test_result = R"pretty(class HelloWorld {
+static const auto official_pretty_printer_test_result = R"java(class HelloWorld {
 	public int bar(int a, int b) {
 		return c = (a + b);
 	}
@@ -633,7 +633,7 @@ static const auto official_pretty_printer_test_result = R"pretty(class HelloWorl
 	public boolean[] array;
 	public int c;
 }
-)pretty";
+)java";
 
 BOOST_AUTO_TEST_CASE(print_ast_passes_example_test)
 {

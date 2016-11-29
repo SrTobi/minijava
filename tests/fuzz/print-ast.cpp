@@ -12,8 +12,8 @@
 #include "lexer/lexer.hpp"
 #include "lexer/serializer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "parser/ast_misc.hpp"
 #include "parser/parser.hpp"
-#include "parser/pretty_printer.hpp"
 #include "symbol/symbol_pool.hpp"
 
 #include "testaux/syntaxgen.hpp"
@@ -24,18 +24,10 @@ namespace po = boost::program_options;
 namespace /* anonymous */
 {
 
-	std::string serialize(minijava::ast::program& ast)
-	{
-		auto oss = std::ostringstream{};
-		auto pp = minijava::ast::pretty_printer{oss};
-		pp.visit(ast);
-		return oss.str();
-	}
-
 	auto parse_and_print(const std::vector<minijava::token>& tokens)
 	{
 		auto ast = minijava::parse_program(std::begin(tokens), std::end(tokens));
-		auto pretty = serialize(*ast);
+		auto pretty = to_string(*ast);
 		return std::make_pair(std::move(ast), std::move(pretty));
 	}
 
@@ -43,7 +35,7 @@ namespace /* anonymous */
 	{
 		auto lex = minijava::make_lexer(std::begin(text), std::end(text), pool, pool);
 		auto ast = minijava::parse_program(minijava::token_begin(lex), minijava::token_end(lex));
-		auto pretty = serialize(*ast);
+		auto pretty = to_string(*ast);
 		return std::make_pair(std::move(ast), std::move(pretty));
 	}
 

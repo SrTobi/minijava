@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(check_program_hello_world)
 				),
 				tf.pool.normalize("println"),
 				testaux::make_unique_ptr_vector<ast::expression>(
-					tf.x(p_42, tf.make_literal("42"))
+					tf.x(p_42, tf.make_integer("42"))
 				)
 			)
 		)

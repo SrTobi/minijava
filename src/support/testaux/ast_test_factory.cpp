@@ -10,9 +10,15 @@ namespace testaux
 {
 
 	std::unique_ptr<ast::integer_constant>
-	ast_test_factory::make_literal(const std::string& lexval, const bool negative)
+	ast_test_factory::make_integer(const std::string& lexval, const bool negative)
 	{
 		return factory.make<ast::integer_constant>()(pool.normalize(lexval), negative);
+	}
+
+	std::unique_ptr<ast::boolean_constant>
+	ast_test_factory::make_boolean(const bool value)
+	{
+		return factory.make<ast::boolean_constant>()(value);
 	}
 
 	std::unique_ptr<ast::variable_access>
@@ -53,6 +59,12 @@ namespace testaux
 		return factory.make<ast::this_ref>()();
 	}
 
+	std::unique_ptr<ast::null_constant>
+	ast_test_factory::make_null()
+	{
+		return factory.make<ast::null_constant>()();
+	}
+
 	std::unique_ptr<ast::unary_expression>
 	ast_test_factory::logical_not(std::unique_ptr<ast::expression> expr)
 	{
@@ -65,6 +77,80 @@ namespace testaux
 	{
 		return factory.make<ast::unary_expression>()
 			(ast::unary_operation_type::minus, std::move(expr));
+	}
+
+	std::unique_ptr<ast::binary_expression>
+	ast_test_factory::equal(std::unique_ptr<ast::expression> lhs,
+	                        std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::binary_expression>()(
+			ast::binary_operation_type::equal,
+			std::move(lhs),
+			std::move(rhs)
+		);
+	}
+
+	std::unique_ptr<ast::binary_expression>
+	ast_test_factory::plus(std::unique_ptr<ast::expression> lhs,
+	                        std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::binary_expression>()(
+			ast::binary_operation_type::plus,
+			std::move(lhs),
+			std::move(rhs)
+		);
+	}
+
+	std::unique_ptr<ast::binary_expression>
+	ast_test_factory::minus(std::unique_ptr<ast::expression> lhs,
+	                        std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::binary_expression>()(
+			ast::binary_operation_type::minus,
+			std::move(lhs),
+			std::move(rhs)
+		);
+	}
+
+	std::unique_ptr<ast::binary_expression>
+	ast_test_factory::multiply(std::unique_ptr<ast::expression> lhs,
+	                        std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::binary_expression>()(
+			ast::binary_operation_type::multiply,
+			std::move(lhs),
+			std::move(rhs)
+		);
+	}
+
+	std::unique_ptr<ast::binary_expression>
+	ast_test_factory::divide(std::unique_ptr<ast::expression> lhs,
+	                        std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::binary_expression>()(
+			ast::binary_operation_type::divide,
+			std::move(lhs),
+			std::move(rhs)
+		);
+	}
+
+	std::unique_ptr<ast::binary_expression>
+	ast_test_factory::assign(std::unique_ptr<ast::expression> lhs,
+	                         std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::binary_expression>()(
+			ast::binary_operation_type::assign,
+			std::move(lhs),
+			std::move(rhs)
+		);
+	}
+
+	std::unique_ptr<ast::expression_statement>
+	ast_test_factory::make_assignment(std::unique_ptr<ast::expression> lhs,
+	                                  std::unique_ptr<ast::expression> rhs)
+	{
+		return factory.make<ast::expression_statement>()
+			(assign(std::move(lhs), std::move(rhs)));
 	}
 
 	std::unique_ptr<ast::block>

@@ -545,7 +545,7 @@ BOOST_AUTO_TEST_CASE(analysis_extracts_types_1st)
 {
 	auto tf = testaux::ast_test_factory{};
 	const ast::integer_constant* nodeptr = nullptr;
-	const auto ast = tf.as_program(tf.x(nodeptr, tf.make_literal("0")));
+	const auto ast = tf.as_program(tf.x(nodeptr, tf.make_integer("0")));
 	auto analysis = analyzer{};
 	analysis(*ast);
 	{
@@ -570,7 +570,7 @@ BOOST_AUTO_TEST_CASE(analysis_extracts_types_2nd)
 		testaux::make_unique_ptr_vector<ast::block_statement>(
 			tf.factory.make<ast::local_variable_statement>()(
 				tf.x(decl_zero, tf.make_declaration("zero", ast::primitive_type::type_int)),
-				tf.x(lit_0, tf.make_literal("0"))
+				tf.x(lit_0, tf.make_integer("0"))
 			),
 			tf.factory.make<ast::local_variable_statement>()(
 				tf.x(decl_broken,
@@ -582,7 +582,7 @@ BOOST_AUTO_TEST_CASE(analysis_extracts_types_2nd)
 						tf.x(ref_zero, tf.factory.make<ast::variable_access>()(
 							tf.nox(), tf.pool.normalize("zero"))
 						),
-						tf.x(lit_1, tf.make_literal("1"))
+						tf.x(lit_1, tf.make_integer("1"))
 					)
 				)
 			)
@@ -781,7 +781,7 @@ BOOST_AUTO_TEST_CASE(analysis_accepts_args_that_is_not_args_in_main)
 					tf.as_block(
 						tf.factory.make<ast::local_variable_statement>()(
 							tf.make_declaration("args", ast::primitive_type::type_int),
-							tf.make_literal("0")
+							tf.make_integer("0")
 						)
 					)
 				)
@@ -849,7 +849,7 @@ BOOST_AUTO_TEST_CASE(analysis_extracts_locals_correctly)
 				);
 			}
 			blkstmts.push_back(
-				tf.factory.make<ast::return_statement>()(tf.make_literal("0"))
+				tf.factory.make<ast::return_statement>()(tf.make_integer("0"))
 			);
 			const auto ast = tf.as_program(
 				tf.factory.make<ast::class_declaration>()(
