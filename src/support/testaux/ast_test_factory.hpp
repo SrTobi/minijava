@@ -168,6 +168,20 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Creates an object instantiation node.
+		 *
+		 * @param name
+		 *     name of the instantiated class
+		 *
+		 * @returns
+		 *     object instantiation AST node
+		 *
+		 */
+		std::unique_ptr<minijava::ast::object_instantiation>
+		make_new(const std::string& name);
+
+		/**
+		 * @brief
 		 *     Creates an AST node that is the logical negation of an
 		 *     expression.
 		 *
@@ -198,6 +212,42 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Creates an AST node for `lhs || rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		logical_or(std::unique_ptr<minijava::ast::expression> lhs,
+				   std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an AST node for `lhs && rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		logical_and(std::unique_ptr<minijava::ast::expression> lhs,
+					std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
 		 *     Creates an AST node for `lhs == rhs`.
 		 *
 		 * @param lhs
@@ -213,6 +263,96 @@ namespace testaux
 		std::unique_ptr<minijava::ast::binary_expression>
 		equal(std::unique_ptr<minijava::ast::expression> lhs,
 		      std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an AST node for `lhs != rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		not_equal(std::unique_ptr<minijava::ast::expression> lhs,
+		      std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an AST node for `lhs < rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		less_than(std::unique_ptr<minijava::ast::expression> lhs,
+				  std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an AST node for `lhs <= rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		less_equal(std::unique_ptr<minijava::ast::expression> lhs,
+				   std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an AST node for `lhs > rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		greater_than(std::unique_ptr<minijava::ast::expression> lhs,
+					 std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an AST node for `lhs >= rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		greater_equal(std::unique_ptr<minijava::ast::expression> lhs,
+					  std::unique_ptr<minijava::ast::expression> rhs);
 
 		/**
 		 * @brief
@@ -288,6 +428,24 @@ namespace testaux
 
 		/**
 		 * @brief
+		 *     Creates an AST node for `lhs % rhs`.
+		 *
+		 * @param lhs
+		 *     left-hand side of the binary expression
+		 *
+		 * @param rhs
+		 *     right-hand side of the binary expression
+		 *
+		 * @returns
+		 *     AST for binary expression
+		 *
+		 */
+		std::unique_ptr<minijava::ast::binary_expression>
+		modulo(std::unique_ptr<minijava::ast::expression> lhs,
+			   std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
 		 *     Creates an AST node for `lhs = rhs`.
 		 *
 		 * @param lhs
@@ -321,6 +479,42 @@ namespace testaux
 		std::unique_ptr<minijava::ast::expression_statement>
 		make_assignment(std::unique_ptr<minijava::ast::expression> lhs,
 		                std::unique_ptr<minijava::ast::expression> rhs);
+
+		/**
+		 * @brief
+		 *     Creates an empty statement.
+		 *
+		 * @returns
+		 *     empty statement AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::empty_statement>
+		make_empty_stmt();
+
+		/**
+		 * @brief
+		 *     Creates an empty `return` statement.
+		 *
+		 * @returns
+		 *     empty `return` statement AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::return_statement>
+		make_return();
+
+		/**
+		 * @brief
+		 *     Creates a `return` statement.
+		 *
+		 * @param expr
+		 *     returned expression
+		 *
+		 * @returns
+		 *     `return` statement AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::return_statement>
+		make_return(std::unique_ptr<minijava::ast::expression> expr);
 
 		/**
 		 * @brief
@@ -368,12 +562,15 @@ namespace testaux
 		 * @param name
 		 *     name of the method
 		 *
+		 * @param argname
+		 *     name of the `args` parameter
+		 *
 		 * @returns
 		 *     main method AST
 		 *
 		 */
 		std::unique_ptr<minijava::ast::main_method>
-		make_empty_main(const std::string& name = "main");
+		make_empty_main(const std::string& name = "main", const std::string& argname = "args");
 
 		/**
 		 * @brief

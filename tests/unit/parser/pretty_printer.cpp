@@ -21,9 +21,8 @@ using namespace std::string_literals;
 namespace /* anonymous */
 {
 
-	// We're not using `to_string` from `ast_misc.hpp` here to avoid a cyclic
-	// dependency and because the latter isn't even guaranteed to use the
-	// pretty printer internally, even though it currently does.
+	// We're not using `to_text` from `ast_misc.hpp` here to avoid a cyclic
+	// dependency.
 
 	std::string pretty_print(const ast::node& ast)
 	{

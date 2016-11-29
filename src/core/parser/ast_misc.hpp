@@ -51,7 +51,7 @@ namespace minijava
 		 * This function has the same effect as the following code, although it
 		 * might be implemented differently.
 		 *
-		 *     std::string to_string(const node& ast)
+		 *     std::string to_text(const node& ast)
 		 *     {
 		 *         std::ostringstream oss{};
 		 *         oss << ast;
@@ -65,7 +65,23 @@ namespace minijava
 		 *     serialized AST
 		 *
 		 */
-		std::string to_string(const node& ast);
+		std::string to_text(const node& ast);
+
+		/**
+		 * @brief
+		 *     Serializes an AST in XML format.
+		 *
+		 * The output of this function is a fully deterministic bijection,
+		 * regardless of the ordering of unordered attributes in the AST.
+		 *
+		 * @param ast
+		 *     AST to serialize
+		 *
+		 * @returns
+		 *     serialized AST
+		 *
+		 */
+		std::string to_xml(const node& ast);
 
 		/**
 		 * @brief

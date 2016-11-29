@@ -27,7 +27,7 @@ namespace /* anonymous */
 	auto parse_and_print(const std::vector<minijava::token>& tokens)
 	{
 		auto ast = minijava::parse_program(std::begin(tokens), std::end(tokens));
-		auto pretty = to_string(*ast);
+		auto pretty = to_text(*ast);
 		return std::make_pair(std::move(ast), std::move(pretty));
 	}
 
@@ -35,7 +35,7 @@ namespace /* anonymous */
 	{
 		auto lex = minijava::make_lexer(std::begin(text), std::end(text), pool, pool);
 		auto ast = minijava::parse_program(minijava::token_begin(lex), minijava::token_end(lex));
-		auto pretty = to_string(*ast);
+		auto pretty = to_text(*ast);
 		return std::make_pair(std::move(ast), std::move(pretty));
 	}
 

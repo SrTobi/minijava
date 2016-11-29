@@ -1934,7 +1934,7 @@ namespace minijava
 			 * @param fields
 			 *     fields inside the class
 			 *
-			 * @param methods
+			 * @param instance_methods
 			 *     instance methods inside the class
 			 *
 			 * @param main_methods
@@ -1943,7 +1943,7 @@ namespace minijava
 			 */
 			class_declaration(symbol name,
 			                  std::vector<std::unique_ptr<var_decl>> fields,
-			                  std::vector<std::unique_ptr<instance_method>> methods,
+			                  std::vector<std::unique_ptr<instance_method>> instance_methods,
 			                  std::vector<std::unique_ptr<main_method>> main_methods);
 
 			/**

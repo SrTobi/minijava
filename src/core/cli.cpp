@@ -223,7 +223,7 @@ namespace minijava
 				return;
 			}
 			if (stage == compilation_stage::print_ast) {
-				out.write(to_string(*ast));
+				out.write(to_text(*ast));
 				return;
 			}
 			auto sem_info = check_program(*ast, pool, factory);
