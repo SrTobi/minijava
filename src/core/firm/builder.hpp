@@ -61,24 +61,15 @@ namespace minijava
 
 		struct pair_hash
 		{
-			std::size_t operator () (const std::pair<ast::type_name, size_t> &p) const {
+			std::size_t operator () (const sem::type &p) const {
 				size_t seed = 0;
-				size_t first_hash = 0;
-				auto primitive_type = boost::get<ast::primitive_type>(&p.first);
-				if (primitive_type) {
-					first_hash = (size_t)*primitive_type;
-				} else {
-					auto simple_name = boost::get<minijava::symbol>(&p.first);
-					first_hash = simple_name->hash();
-				}
-				boost::hash_combine(seed, first_hash);
-				boost::hash_combine(seed, p.second);
+				boost::hash_combine(seed, p.info.declaration());
+				boost::hash_combine(seed, p.rank);
 				return seed;
 			}
 		};
 
-		typedef std::pair<ast::type_name, size_t> type_rank_pair;
-		typedef std::unordered_map<type_rank_pair, ir_type*, pair_hash> type_mapping;
+		typedef std::unordered_map<sem::type, ir_type*, pair_hash> type_mapping;
 	}
 
 	class ir_types {
@@ -87,89 +78,93 @@ namespace minijava
 		ir_types(const semantic_info& info) : _semantic_info{info}
 		{
 			_type_mapping = firm::type_mapping();
-			// collect classes
-			for (auto& clazz : info.classes()) {
-				create_class_type(clazz);
-			}
-			// create class structure
-			for (auto& clazz : info.classes()) {
-				finalize_class_type(clazz);
-			}
+		}
+
+		void init()
+		{
+			// collect used ir_types
+			std::transform(
+					std::begin(_semantic_info.type_annotations()),
+					std::end(_semantic_info.type_annotations()),
+					std::inserter(_type_mapping, _type_mapping.end()),
+					[this](auto&& t) {
+						return std::make_pair(t.second, this->get_var_type(t.second));
+					}
+			);
 		}
 
 		// just collect the types for later use
-		void create_class_type(const std::pair<const symbol, sem::basic_type_info>& clazz)
+		ir_type* create_class_type(const sem::type& type)
 		{
-			auto class_type = new_type_class(new_id_from_str(clazz.first.data()));
-			auto key = std::make_pair(clazz.first, (size_t)0);
-			_type_mapping.insert(std::make_pair(key, class_type));
+			auto clazz = type.info.declaration();
+			auto class_type = new_type_class(new_id_from_str(clazz->name().data()));
+			_type_mapping.insert(std::make_pair(type, class_type));
+			return class_type;
 		}
 
 		// add fields and methods
-		void finalize_class_type(const std::pair<const symbol, sem::basic_type_info>& clazz)
+		void finalize_class_type(const sem::type& clazz)
 		{
-			assert(clazz.second.is_reference());
-			auto class_type = get_class_type(clazz.first);
+			assert(clazz.info.is_reference());
+			auto class_type = get_class_type(clazz);
 
 			// insert fields
-			for (auto& field : clazz.second.declaration()->fields()) {
-				auto field_var_type = &field->var_type();
-				auto ir_type = get_var_type(field_var_type->name(), field_var_type->rank());
-				auto field_entity = new_entity(
-						class_type,
-				        new_id_from_str(field->name().data()),
-				        ir_type
-				);
-				(void)field_entity; // for later use? set_entity_ld_name?
+			for (auto& field : clazz.info.declaration()->fields()) {
+				create_field_entity(class_type, field);
 			}
 
 			// insert methods
-			for (auto& method : clazz.second.declaration()->instance_methods()) {
-				(void)method;
+			for (auto& method : clazz.info.declaration()->instance_methods()) {
+				create_method_entity(class_type, method);
 			}
 		}
 
-		void create_field_entity()
+		void create_field_entity(ir_type *class_type, const std::unique_ptr<ast::var_decl> &field)
 		{
-
+			auto field_type = _semantic_info.type_annotations().at(*field);
+			auto ir_type = get_var_type(field_type);
+			auto field_entity = new_entity(
+					class_type,
+					new_id_from_str(field->name().data()),
+					ir_type
+			);
+			(void)field_entity; // for later use? set_entity_ld_name?
 		}
 
-		ir_type *get_var_type(ast::type_name type, size_t rank = 0) {
-			auto key = std::make_pair(type, rank);
-			if (_type_mapping.find(key) != _type_mapping.end()) {
-				return _type_mapping.at(key);
+		void create_method_entity(ir_type *class_type, const std::unique_ptr<ast::instance_method> &method);
+
+		ir_type *get_var_type(sem::type type)
+		{
+			std::cout << type << std::endl;
+			if (_type_mapping.find(type) != _type_mapping.end()) {
+				return _type_mapping.at(type);
 			}
 
 			// no array
-			if (rank == 0) {
+			if (type.rank == 0) {
 				ir_type* simple_type;
-				switch (boost::get<ast::primitive_type>(type)) {
-					case ast::primitive_type::type_int:
-						simple_type = _int_type;
-						break;
-					case ast::primitive_type::type_boolean:
-						simple_type = _boolean_type;
-						break;
-					case ast::primitive_type::type_void:
-						throw std::exception();
-					default:
-						// at this point, there should already be an type in _type_mapping array
-						auto simple_name = boost::get<minijava::symbol>(type);
-						simple_type = _type_mapping.at(std::make_pair(simple_name, (size_t)0));
-						break;
+				if (type.info.is_boolean()) {
+					simple_type = _boolean_type;
+				} else if (type.info.is_int()) {
+					simple_type = _int_type;
+				} else if (type.info.is_void()) {
+					simple_type = _void_type;
+				} else if (type.info.is_reference()) {
+					simple_type = create_class_type(type);
 				}
 
 				return simple_type;
 			}
 
 			// handle arrays...
+			auto recursive_type = new_type_array(
+					get_var_type(sem::type{type.info, type.rank - 1}), 0
+			);
 			_type_mapping.insert(std::make_pair(
-					key,
-					new_type_array(
-							get_var_type(type, rank - 1), 0
-					)));
+					type,
+					recursive_type));
 
-			return _type_mapping.at(key);
+			return recursive_type;
 		}
 
 		ir_type* type_boolean() const noexcept
@@ -197,10 +192,9 @@ namespace minijava
 
 	private:
 
-		ir_type* get_class_type(symbol name)
+		ir_type* get_class_type(const sem::type &type)
 		{
-			ast::type_name type_name = name;
-			return _type_mapping.at(std::make_pair(type_name, (size_t)0));
+			return _type_mapping.at(sem::type(type.info, 0));
 		}
 
 		firm::type_mapping _type_mapping;
@@ -209,9 +203,11 @@ namespace minijava
 
 		ir_mode* _int_mode;
 		ir_mode* _boolean_mode;
+		ir_mode* _void_mode; // just for convenience
 
 		ir_type* _int_type;
 		ir_type* _boolean_type;
+		ir_type* _void_type;
 	};
 
 	class builder
@@ -233,6 +229,11 @@ namespace minijava
 		}
 
 		void ast2firm()
+		{
+			_ir_types.init();
+		}
+
+		void emit()
 		{
 
 		}
