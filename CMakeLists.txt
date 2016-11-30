@@ -35,6 +35,8 @@ set(COMPONENTS
 	cli
 	exceptions
 	global
+	position
+	firm/builder
 	io/file_data
 	io/file_output
 	io/misc
@@ -52,8 +54,6 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
-	firm/builder
-	position
 	semantic/attribute
 	semantic/constant
 	semantic/name_type_analysis
