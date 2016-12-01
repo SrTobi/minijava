@@ -20,7 +20,7 @@ endif()
 # This list includes transitive dependencies, since older versions of CMake
 # include a version of FindBoost.cmake which does not know version 1.62. Those
 # versions will print warnings, which can safely be ignored.
-find_package(Boost 1.62 REQUIRED COMPONENTS
+find_package(Boost 1.61 REQUIRED COMPONENTS
 	filesystem
 	program_options
 	system
