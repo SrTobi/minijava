@@ -5,7 +5,7 @@ shopt -s nullglob
 default_dest='.'
 default_python='python3'
 
-helptext="usage: publish-benchmarks --micro=FILE --macro=FILE [--dest=DIR] [--python=CMD]
+helptext="usage: publish-benchmarks --micro=FILE --macro=FILE [--dest=DIR] [--out-tol=X] [--python=CMD]
 
 Plots some selected benchmark results.
 
@@ -14,6 +14,7 @@ Options:
   --micro=FILE    use FILE as history database for micro-benchmarks
   --macro=FILE    use FILE as history database for macro-benchmarks
   --dest=DIR      publish results in directory DIR (default: '${default_dest}')
+  --out-tol=X     eliminate outliers with relative stdev of more than X times the median
   --python=CMD    command to run a Pytohn 3 interpreter (default: '${default_python}')
   --help          show help text and exit
   --version       show version text and exit
@@ -23,6 +24,7 @@ This script must be run from the project's top-level directory.
 
 unset micro
 unset macro
+outtol=inf
 dest="${default_dest}"
 python="${default_python}"
 
@@ -55,6 +57,11 @@ do
 		--dest=*)
 			dest="${arg#--dest=}"
 			[ -n "${dest}" ] || die "Empty string is not a valid directory"
+			;;
+		--out-tol=*)
+			outtol="${arg#--out-tol=}"
+			printf '%f' "${outtol}" 1>/dev/null 2>/dev/null                   \
+				|| die "Outlier tolerance must be a positive real number"
 			;;
 		--python=*)
 			python="${arg#--python=}"
@@ -103,7 +110,7 @@ for name in character-space character-digit character-head character-tail
 do
 	"${python}" "extras/benchmarks/history.py"                                \
 	            -H "${micro}"                                                 \
-	            --export "${name}" > "${tempdir}/micro/${name}.dat"
+	            'export' "${name}" "${outtol}" > "${tempdir}/micro/${name}.dat"
 done
 unset name
 
@@ -140,7 +147,7 @@ EOF
 
 "${python}" "extras/benchmarks/history.py"                                    \
             -H "${micro}"                                                     \
-            --export "keyword" > "${tempdir}/micro/keyword.dat"
+            'export' "keyword" "${outtol}" > "${tempdir}/micro/keyword.dat"
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
 set terminal svg noenhanced size 800,600
@@ -169,7 +176,7 @@ for name in tts-modify tts-lookup tts-combine
 do
 	"${python}" "extras/benchmarks/history.py"                                \
 	            -H "${micro}"                                                 \
-	            --export "${name}" > "${tempdir}/micro/${name}.dat"
+	            'export' "${name}" "${outtol}" > "${tempdir}/micro/${name}.dat"
 done
 unset name
 
@@ -203,7 +210,7 @@ EOF
 
 "${python}" "extras/benchmarks/history.py"                                    \
             -H "${micro}"                                                     \
-            --export "lexer" > "${tempdir}/micro/lexer.dat"
+            'export' "lexer" "${outtol}" > "${tempdir}/micro/lexer.dat"
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
 set terminal svg noenhanced size 800,600
@@ -230,7 +237,7 @@ EOF
 
 "${python}" "extras/benchmarks/history.py"                                    \
             -H "${micro}"                                                     \
-            --export "parser" > "${tempdir}/micro/parser.dat"
+            'export' "parser" "${outtol}" > "${tempdir}/micro/parser.dat"
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
 set terminal svg noenhanced size 800,600
@@ -259,7 +266,7 @@ for name in echo-002-a echo-002-b echo-002-c echo-002-d echo-002-e echo-002-f
 do
 	"${python}" "extras/benchmarks/history.py"                                \
 	            -H "${macro}"                                                 \
-	            --export "${name}" > "${tempdir}/macro/${name}.dat"
+	            'export' "${name}" "${outtol}" > "${tempdir}/macro/${name}.dat"
 done
 unset name
 
@@ -304,7 +311,7 @@ for name in lexer-002 lexer-003 lexer-004-a lexer-004-b lexer-005
 do
 	"${python}" "extras/benchmarks/history.py"                                \
 	            -H "${macro}"                                                 \
-	            --export "${name}" > "${tempdir}/macro/${name}.dat"
+	            'export' "${name}" "${outtol}" > "${tempdir}/macro/${name}.dat"
 done
 unset name
 

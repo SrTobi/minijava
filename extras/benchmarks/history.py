@@ -3,6 +3,7 @@
 
 import argparse
 import os.path
+import statistics
 import sys
 import time
 
@@ -20,69 +21,89 @@ from lib.history import (
 def main(args):
     ap = argparse.ArgumentParser(
         prog='history',
-        usage="%(prog)s -H DATABASE ACTION",
+        usage="%(prog)s -H DATABASE ACTION ...",
         description="Manage the history database of benchmark results.",
+        epilog="Use 'ACTION --help' to get the help for ACTION.",
         allow_abbrev=False,
         add_help=False
     )
-    actions = ap.add_argument_group(
-        title="Action Parameters",
-        description=(
-              "These parameters select the action to perform on the database."
-            + " Exactly one of them must be used.  Since executing the wrong"
-            + " action by accident could potentially have bad consequences,"
-            + " these parameters have no short forms to avoid bad surprises."
-        )
-    )
+    actions = ap.add_subparsers(title="Actions", dest='action', metavar="")
     mandatory = ap.add_argument_group(title="Mandatory Parameters", description="")
     supplementary = ap.add_argument_group(title="Supplementary Parameters", description="")
     add_history_mandatory(mandatory)
     add_help(supplementary)
-    group = actions.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        '--list', action='store_true',
+    sub_list = actions.add_parser(
+        'list', usage='list', add_help=False,
         help=(
               "List all benchmarks in the database with their names and"
             + " optional descriptions."
-        )
-    )
-    group.add_argument(
-        '--export', metavar='NAME',
-        help=(
-              "Export history data for benchmark NAME in a text format that"
-            + " can, for example, be given to Gnuplot or some other"
-            + " data-processing software."
         ),
     )
-    group.add_argument(
-        '--drop', metavar='NAME',
+    add_help(sub_list)
+    sub_export = actions.add_parser(
+        'export', usage='export NAME [TOL]', add_help=False,
         help=(
-              "Remove all data for benchmark NAME irrecoverably from the"
+              "Export history data for a benchmark in a text format that can,"
+            + " for example, be given to Gnuplot or some other data-processing"
+            + " software."
+        ),
+    )
+    sub_export.add_argument(
+        'name', metavar='NAME', help="Name of the benchmark to export."
+    )
+    sub_export.add_argument(
+        'tol', metavar='TOL', type=float, nargs='?', default=None,
+        help=(
+            "Treat all results with relative standard deviation greater than"
+            + " TOL times the median as outliers."
+        )
+    )
+    add_help(sub_export)
+    sub_drop = actions.add_parser(
+        'drop', usage='drop NAME', add_help=False,
+        help=(
+              "Irrecoverably remove all data for a benchmark from the"
             + " database."
         )
     )
-    group.add_argument(
-        '--drop-since', metavar='TIME', type=int,
+    sub_drop.add_argument(
+        'name', metavar='NAME', help="Name of the benchmark to drop."
+    )
+    add_help(sub_drop)
+    sub_drop_since = actions.add_parser(
+        'drop-since', usage='drop-since TIME', add_help=False,
         help=(
-              "Irrecoverably remove all results since TIME from the database. "
-            + " TIME must be a POSIX time-stamp.  You can use the 'date'"
-            + " command-line utility to translate human-friendly notions of"
-            + " time-points into POSIX time-stamps."
+              "Irrecoverably remove all results since a time point from the"
+            + " database. "
         ),
     )
+    sub_drop_since.add_argument(
+        'time', metavar='TIME', type=int,
+        help=(
+            "POSIX time-stamp specifying the point after which results should"
+            + " be dropped.  You can use the 'date' command line utility to"
+            + " translate human friendly notions of time-points into POSIX"
+            + " time stamps."
+        ),
+    )
+    add_help(sub_drop_since)
     with TerminalSizeHack():
         ns = ap.parse_args(args)
-    with History(ns.history) as histo:
+    with History(ns.history, create=True) as histo:
         if not histo:
             raise RuntimeError("Database does not exist")
-        if ns.list:
+        if ns.action == 'list':
             _action_list(histo)
-        if ns.export is not None:
-            _action_export(histo, ns.export)
-        if ns.drop is not None:
-            histo.drop_benchmark(ns.drop)
-        if ns.drop_since is not None:
-            histo.drop_since(ns.drop_since)
+        elif ns.action == 'export':
+            _action_export(histo, ns.name, ns.tol)
+        elif ns.action == 'drop':
+            histo.drop_benchmark(ns.name)
+        elif ns.action == 'drop-since':
+            histo.drop_since(ns.time)
+        elif ns.action is None:
+            print("Database is OK, there is nothing to do", file=sys.stderr)
+        else:
+            raise AssertionError(ns.action)
 
 
 def _action_list(histo):
@@ -95,26 +116,50 @@ def _action_list(histo):
             print('{:20s}  {:s}'.format(name, desc))
 
 
-def _action_export(histo, name):
+def _action_export(histo, name, tol=None):
     bench = histo.get_benchmark_results(name)
-    printhdr = lambda k, v : print('# {:22s}{}'.format(k + ':', v))
+    medstdev = median_rel_stdev(bench.results)
+    notok = lambda hr : is_outlier(hr, medstdev, tol)
+    printhdr = lambda k, v : print('## {:30s}{}'.format(k + ':', v))
     printhdr("Benchmark Name", name)
     if bench.description is not None:
         printhdr("Description", bench.description)
-    printhdr("No. of Data-Points", len(bench.results))
+    printhdr("No. of Data Points", len(bench.results))
+    printhdr("Eliminated Outliers", count(filter(notok, bench.results)))
+    if medstdev is not None:
+        printhdr("Median of Rel. Std. Dev.", '{:.4g}'.format(medstdev))
     if bench.results:
         timefmt = '%a, %d %b %Y %H:%M:%S %z'  # RFC 2822
         first = time.localtime(min(hr.timestamp for hr in bench.results))
         last = time.localtime(max(hr.timestamp for hr in bench.results))
-        printhdr("First Data-Point", time.strftime(timefmt, first))
-        printhdr("Last Data-Point", time.strftime(timefmt, last))
+        printhdr("First Data Point", time.strftime(timefmt, first))
+        printhdr("Last Data Point", time.strftime(timefmt, last))
+    else:
+        raise RuntimeError("No data points")
     print()
-    print('# {:>14s}{:>16s}{:>16s}{:>16s}'.format("timestamp", "mean / s", "stdev / s", "N"))
+    print('#   {:>14s}{:>16s}{:>16s}{:>16s}'.format("timestamp", "mean / s", "stdev / s", "N"))
     print()
     for hr in sorted(bench.results, key=lambda r : r.timestamp):
-        print('{:16d}{:16.3e}{:16.3e}{:16d}'.format(
+        print('{:<2s}{:16d}{:16.3e}{:16.3e}{:16d}'.format(
+            '#' if notok(hr) else '',
             hr.timestamp, hr.mean, hr.stdev, hr.n
         ))
+
+
+def median_rel_stdev(results):
+    if not results:
+        return None
+    return statistics.median([hr.relative_stdev for hr in results])
+
+
+def is_outlier(hr, medstdev, tol):
+    if None in [hr.relative_stdev, medstdev, tol]:
+        return None
+    return hr.relative_stdev > tol * medstdev
+
+
+def count(seq):
+    return sum(1 for x in seq)
 
 
 if __name__ == '__main__':
