@@ -17,7 +17,10 @@ if(WIN32)
 	set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS
+# This list includes transitive dependencies, since older versions of CMake
+# include a version of FindBoost.cmake which does not know version 1.62. Those
+# versions will print warnings, which can safely be ignored.
+find_package(Boost 1.62 REQUIRED COMPONENTS
 	filesystem
 	program_options
 	system
