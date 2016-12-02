@@ -21,7 +21,7 @@ using namespace minijava;
 namespace /* anonymous */
 {
 
-	std::string replace_dots(const symbol name)
+	std::string replace_dots(const std::string& name)
 	{
 		auto better = std::string{};
 		std::transform(
@@ -32,20 +32,40 @@ namespace /* anonymous */
 		return better;
 	}
 
+	std::string mangle_class(const std::string& name)
+	{
+		return "Mj" + std::to_string(name.length()) + "_" + replace_dots(name);
+	}
+
 	std::string mangle_class(const symbol name)
 	{
-		return "Mj_class_" + replace_dots(name);
+		return mangle_class(std::string{name.c_str(), name.length()});
+	}
+
+	std::string mangle_method(const std::string& class_name, const std::string& method_name)
+	{
+		return mangle_class(class_name)
+			+ "_" + replace_dots(method_name)
+			+ "_" + std::to_string(method_name.length());
 	}
 
 	std::string mangle_method(const symbol class_name, const symbol method_name)
 	{
-		return mangle_class(class_name) + "_" + replace_dots(method_name);
+		return mangle_method(
+			std::string{class_name.c_str(), class_name.length()},
+			std::string{method_name.c_str(), method_name.length()}
+		);
+	}
+
+	std::string mangle_variable(const std::string& name)
+	{
+		using namespace std::string_literals;
+		return "mj" + std::to_string(name.length()) + "_" + replace_dots(name);
 	}
 
 	std::string mangle_variable(const symbol name)
 	{
-		using namespace std::string_literals;
-		return "mj_var_" + replace_dots(name);
+		return mangle_variable(std::string{name.c_str(), name.length()});
 	}
 
 	std::string get_formatted_type_name(const ast::type& type)
@@ -92,6 +112,7 @@ namespace /* anonymous */
 		}
 		out.write(")");
 	}
+
 
 	class trans_c_visitor final : public ast::visitor
 	{
@@ -291,17 +312,11 @@ namespace /* anonymous */
 			_out.write("THIS");
 		}
 
-		void visit(const ast::boolean_constant& node) override
-		{
-			// We could just let the constant annotations handle this but
-			// printing the 'false' and 'true' keywords looks nicer.
-			_out.write(node.value() ? "true" : "false");
-		}
-
 		void visit(const ast::null_constant& /* node */) override
 		{
-			// We could just write '0' but 'NULL' is supposedly more readable.
-			_out.write("NULL");
+			// We could use `NULL` but it would be kind of silly to
+			// `#include <stdlib.h>` only for that.
+			_out.write("0");
 		}
 
 		void visit(const ast::local_variable_statement& node) override
@@ -367,15 +382,20 @@ namespace /* anonymous */
 
 		void visit(const ast::main_method& node) override
 		{
+			const auto system_class_name = mangle_class("java.lang.System");
+			const auto system_name = mangle_variable("System");
+			const auto printstream_class_name = mangle_class("java.io.PrintStream");
+			const auto out_name = mangle_variable("out");
 			_out.write("int main()\n");
 			const auto g = _nest_braces();
 			_out.print(
-				"%smj_var_System = mj_runtime_allocate(sizeof(struct Mj_class_java_lang_System), 1);\n",
-				_indent.c_str()
+				"%s%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
+				_indent.c_str(), system_name.c_str(), system_class_name.c_str()
 			);
 			_out.print(
-				"%smj_var_System->mj_var_out = mj_runtime_allocate(sizeof(struct Mj_class_java_io_PrintStream), 1);\n",
-				_indent.c_str()
+				"%s%s->%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
+				_indent.c_str(), system_name.c_str(), out_name.c_str(),
+				printstream_class_name.c_str()
 			);
 			node.body().accept(*this);
 			_out.print("%sreturn 0;\n", _indent.c_str());
@@ -432,7 +452,6 @@ namespace /* anonymous */
 		out.write("#include <stdbool.h>\n");
 		out.write("#include <stddef.h>\n");
 		out.write("#include <stdint.h>\n");
-		out.write("#include <stdlib.h>\n");
 		out.write("\n");
 		out.write("extern void* mj_runtime_allocate(size_t, size_t);\n");
 		out.write("extern void mj_runtime_println(int32_t);\n");
@@ -456,10 +475,23 @@ namespace /* anonymous */
 				out.write(";\n\n");
 			}
 		}
-		out.print("static struct Mj_class_java_lang_System* mj_var_System;\n\n");
-		out.write("static void Mj_class_java_io_PrintStream_println(struct Mj_class_java_io_PrintStream* THIS, int32_t mj_var_n)");
+		const auto system_class_name = mangle_class("java.lang.System");
+		const auto system_name = mangle_variable("System");
+		const auto printstream_class_name = mangle_class("java.io.PrintStream");
+		const auto out_name = mangle_variable("out");
+		const auto println_name = mangle_method("java.io.PrintStream", "println");
+		const auto param_name = mangle_variable(".");
+		out.print(
+			"static struct %s* %s;\n\n",
+			system_class_name.c_str(), system_name.c_str()
+		);
+		out.print(
+			"static void %s(struct %s* THIS, int32_t %s)\n",
+			println_name.c_str(), printstream_class_name.c_str(),
+			param_name.c_str()
+		);
 		out.write("{\n");
-		out.write("\tmj_runtime_println(mj_var_n);\n");
+		out.print("\tmj_runtime_println(%s);\n", param_name.c_str());
 		out.write("}\n\n");
 		trans_c_visitor tcv{seminfo, out};
 		ast.accept(tcv);
