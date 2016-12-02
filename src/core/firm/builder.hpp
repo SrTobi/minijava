@@ -10,12 +10,14 @@
 
 #include <unordered_map>
 #include <iostream>
+#include <stdio.h>
 #include <exception>
 
 #include "libfirm/firm.h"
 
 #include <parser/ast.hpp>
 #include <semantic/semantic.hpp>
+#include <semantic/attribute.hpp>
 
 namespace minijava
 {
@@ -59,7 +61,7 @@ namespace minijava
 			ir_types _ir_types;
 		}*/
 
-		struct pair_hash
+		struct sem_type_hash
 		{
 			std::size_t operator () (const sem::type &p) const {
 				size_t seed = 0;
@@ -69,15 +71,21 @@ namespace minijava
 			}
 		};
 
-		typedef std::unordered_map<sem::type, ir_type*, pair_hash> type_mapping;
+		typedef std::unordered_map<sem::type, ir_type*, sem_type_hash> type_mapping;
+
+		typedef ast_attributes<ir_type*, ast_node_filter<ast::method> > method_mapping;
+		typedef ast_attributes<ir_type*, ast_node_filter<ast::class_declaration> > class_mapping;
 	}
 
 	class ir_types {
 	public:
 
-		ir_types(const semantic_info& info) : _semantic_info{info}
+		ir_types(const semantic_info& info) :
+				_semantic_info{info}
 		{
 			_type_mapping = firm::type_mapping();
+			_method_mapping = firm::method_mapping();
+			_class_mapping = firm::class_mapping();
 		}
 
 		void init()
@@ -93,14 +101,33 @@ namespace minijava
 			);
 		}
 
-		// just collect the types for later use
-		ir_type* create_class_type(const sem::type& type)
+		ir_type* get_class_type(const sem::type& type)
 		{
-			auto clazz = type.info.declaration();
+			return get_class_type(type.info.declaration());
+		}
+
+		ir_type* get_class_type(const ast::class_declaration* clazz)
+		{
+			if (_class_mapping.find(clazz) != _class_mapping.end()) {
+				return _class_mapping.at(*clazz);
+			}
+
+			return create_class_type(clazz);
+		}
+
+	private:
+
+		// just collect the types for later use
+		ir_type* create_class_type(const ast::class_declaration* clazz)
+		{
+			auto type = sem::type(_semantic_info.classes().at(clazz->name()), 0);
 			auto class_type = new_type_class(new_id_from_str(clazz->name().data()));
 			_type_mapping.insert(std::make_pair(type, class_type));
+			_class_mapping.insert(std::make_pair(clazz, class_type));
 			return class_type;
 		}
+
+	public:
 
 		// add fields and methods
 		void finalize_class_type(const sem::type& clazz)
@@ -135,7 +162,6 @@ namespace minijava
 
 		ir_type *get_var_type(sem::type type)
 		{
-			std::cout << type << std::endl;
 			if (_type_mapping.find(type) != _type_mapping.end()) {
 				return _type_mapping.at(type);
 			}
@@ -150,7 +176,7 @@ namespace minijava
 				} else if (type.info.is_void()) {
 					simple_type = _void_type;
 				} else if (type.info.is_reference()) {
-					simple_type = create_class_type(type);
+					simple_type = get_class_type(type);
 				}
 
 				return simple_type;
@@ -185,19 +211,17 @@ namespace minijava
 		void create_basic_types()
 		{
 			_int_mode = mode_Is;
+			_boolean_mode = new_int_mode("B", irma_twos_complement, 8, 0, 1);
+
 			_int_type = new_type_primitive(_int_mode);
-			_boolean_mode = mode_Bs; // maybe use some other type here?
 			_boolean_type = new_type_primitive(_boolean_mode);
 		}
 
 	private:
 
-		ir_type* get_class_type(const sem::type &type)
-		{
-			return _type_mapping.at(sem::type(type.info, 0));
-		}
-
 		firm::type_mapping _type_mapping;
+		firm::method_mapping _method_mapping;
+		firm::class_mapping _class_mapping;
 
 		const semantic_info& _semantic_info;
 
@@ -231,14 +255,41 @@ namespace minijava
 		void ast2firm()
 		{
 			_ir_types.init();
+
+			for (const auto& clazz : _ast.classes()) {
+				for (auto& method : clazz->instance_methods()) {
+					auto param_count = method->parameters().size() + 1; // don't miss implizit this argument
+					auto return_type = _semantic_info.type_annotations().at(*method);
+					auto ir_type = new_type_method(
+							param_count, // param count
+							return_type.info.is_void() ? 0 : 1, // number of return types
+							0, // is variadic?
+							cc_cdecl_set, // calling conventions
+							mtp_no_property);
+					(void)ir_type;
+				}
+
+
+			}
 		}
 
 		void emit()
 		{
+//          be_parse_arg("isa=amd64");
+//          auto f = std::fopen("temp.asm", "w+");
+//          if (f != NULL) {
+//              be_main(f, "main_class");
+//              std::fclose(f);
+//          }
+		}
 
+		void dump_graph(ir_graph* irg, std::string suffix)
+		{
+			dump_ir_graph(irg, suffix.c_str());
 		}
 
 	private:
+
 		ir_types _ir_types;
 		const semantic_info& _semantic_info;
 		const ast::program& _ast;
