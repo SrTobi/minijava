@@ -25,8 +25,7 @@ namespace minijava
 				const auto comparator = symbol_comparator{};
 				return comparator(lhs->name(), rhs->name());
 			};
-			// TODO: Use non-stable sort instead.
-			std::stable_sort(std::begin(container), std::end(container), name_cmp);
+			std::sort(std::begin(container), std::end(container), name_cmp);
 		}
 
 		symbol get_name(const symbol s)

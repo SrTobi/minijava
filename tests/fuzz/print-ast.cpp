@@ -64,6 +64,9 @@ namespace /* anonymous */
 		if (one.second != two.second) {
 			throw std::runtime_error{"Serialized texts differ"};
 		}
+		if (*one.first != *two.first) {
+			std::cerr << "warning: Parsed ASTs differ" << std::endl;
+		}
 	}
 
 	void real_main(int argc, char** argv)

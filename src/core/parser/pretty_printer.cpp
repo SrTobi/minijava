@@ -581,7 +581,7 @@ namespace minijava
 					std::begin(node.main_methods()), std::end(node.main_methods()),
 					std::back_inserter(members), ext
 			);
-			std::stable_sort(std::begin(members), std::end(members), cmp);
+			std::sort(std::begin(members), std::end(members), cmp);
 			std::for_each(std::begin(members), std::end(members), vst);
 			members.clear();  // recycle the storage
 			const auto in_the_fields_guard = make_guard(_in_fields, true);
@@ -589,7 +589,7 @@ namespace minijava
 					std::begin(node.fields()), std::end(node.fields()),
 					std::back_inserter(members), ext
 			);
-			std::stable_sort(std::begin(members), std::end(members), cmp);
+			std::sort(std::begin(members), std::end(members), cmp);
 			std::for_each(std::begin(members), std::end(members), vst);
 		}
 		_println("}");
