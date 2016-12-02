@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <exception>
+#include "exceptions.hpp"
 
 #include "libfirm/firm.h"
 
@@ -80,8 +81,9 @@ namespace minijava
 	class ir_types {
 	public:
 
-		ir_types(const semantic_info& info) :
-				_semantic_info{info}
+		ir_types(const semantic_info& info, const ast::program& ast) :
+				_semantic_info{info},
+		        _ast{ast}
 		{
 			_type_mapping = firm::type_mapping();
 			_method_mapping = firm::method_mapping();
@@ -99,6 +101,35 @@ namespace minijava
 						return std::make_pair(t.second, this->get_var_type(t.second));
 					}
 			);
+
+			// create all class and method ir_types
+			for (const auto& clazz : _ast.classes()) {
+				// get class type, and maybe create it
+				auto class_type = get_class_type(clazz.get());
+				(void)class_type;
+				// iterate over class methods and create prototypes
+				for (auto& method : clazz->instance_methods()) {
+					auto param_count = method->parameters().size() + 1; // don't miss implizit this argument
+					auto return_type = _semantic_info.type_annotations().at(*method);
+					auto ir_type = new_type_method(
+							param_count, // param count
+							return_type.info.is_void() ? 0 : 1, // number of return types
+							0, // is variadic?
+							cc_cdecl_set, // calling conventions
+							mtp_no_property);
+					// add mapping for method
+					_method_mapping.insert(std::make_pair(method.get(), ir_type));
+				}
+			}
+		}
+
+		ir_type* get_method_type(const ast::method* method)
+		{
+			if (_method_mapping.find(method) != _method_mapping.end()) {
+				return _method_mapping.at(*method);
+			}
+
+			MINIJAVA_THROW_ICE(minijava::internal_compiler_error);
 		}
 
 		ir_type* get_class_type(const sem::type& type)
@@ -224,6 +255,7 @@ namespace minijava
 		firm::class_mapping _class_mapping;
 
 		const semantic_info& _semantic_info;
+		const ast::program& _ast;
 
 		ir_mode* _int_mode;
 		ir_mode* _boolean_mode;
@@ -240,7 +272,7 @@ namespace minijava
 	public:
 
 		builder(const ast::program& ast, const semantic_info& semantic_info) :
-				_ir_types{ir_types(semantic_info)},
+				_ir_types{ir_types(semantic_info, ast)},
 				_semantic_info{semantic_info},
 		        _ast{ast}
 		{
@@ -255,22 +287,6 @@ namespace minijava
 		void ast2firm()
 		{
 			_ir_types.init();
-
-			for (const auto& clazz : _ast.classes()) {
-				for (auto& method : clazz->instance_methods()) {
-					auto param_count = method->parameters().size() + 1; // don't miss implizit this argument
-					auto return_type = _semantic_info.type_annotations().at(*method);
-					auto ir_type = new_type_method(
-							param_count, // param count
-							return_type.info.is_void() ? 0 : 1, // number of return types
-							0, // is variadic?
-							cc_cdecl_set, // calling conventions
-							mtp_no_property);
-					(void)ir_type;
-				}
-
-
-			}
 		}
 
 		void emit()
