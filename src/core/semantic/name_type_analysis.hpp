@@ -11,8 +11,8 @@
 #include <cstddef>
 #include <memory>
 #include <iosfwd>
+#include <set>
 #include <vector>
-#include <unordered_set>
 
 #include "parser/ast.hpp"
 #include "semantic/attribute.hpp"
@@ -124,7 +124,7 @@ namespace minijava
 
 		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
 		using locals_attributes = ast_attributes<
-			std::unordered_set<const ast::var_decl*>,
+			std::set<const ast::var_decl*>,
 			ast_node_filter<ast::method>
 		>;
 

@@ -40,6 +40,7 @@ set(COMPONENTS
 	global
 	position
 	firm/builder
+	firm/method_builder
 	io/file_data
 	io/file_output
 	io/misc
