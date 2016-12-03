@@ -1,12 +1,12 @@
 #include "firm/method_builder.hpp"
 
 #include <set>
+#include <unordered_map>
 
 #include "libfirm/firm.h"
 
 #include "exceptions.hpp"
 #include "firm/builder.hpp"
-#include "semantic/attribute.hpp"
 
 namespace minijava
 {
@@ -17,15 +17,18 @@ namespace minijava
 		namespace /* anonymous */
 		{
 
+			using var_id_map_type = std::unordered_map<const ast::var_decl*, int>;
+
 			class expression_generator final : public ast::visitor
 			{
 
 			public:
 
-				expression_generator(const semantic_info::const_attributes& consts,
+				expression_generator(const semantic_info& sem_info,
+				                     const var_id_map_type& var_ids,
 				                     ir_types& firm_types, const ir_type* class_type)
-						: _consts{consts}, _firm_types{firm_types},
-						  _class_type{class_type}
+						: _sem_info{sem_info}, _var_ids{var_ids},
+						  _firm_types{firm_types}, _class_type{class_type}
 				{}
 
 				using ast::visitor::visit;
@@ -39,7 +42,8 @@ namespace minijava
 					return _class_type != nullptr;
 				}
 
-				const sem::const_attributes& _consts;
+				const semantic_info& _sem_info;
+				const var_id_map_type& _var_ids;
 				ir_types& _firm_types;
 				const ir_type* _class_type;
 
@@ -50,11 +54,10 @@ namespace minijava
 
 			public:
 
-				method_generator(const std::set<const ast::var_decl*>& locals,
-				                 const semantic_info::const_attributes& consts,
+				method_generator(const semantic_info& sem_info,
 				                 ir_types& firm_types, const ir_type& class_type)
-						: _locals{locals}, _consts{consts},
-						  _firm_types{firm_types}, _class_type{class_type}
+						: _sem_info{sem_info}, _firm_types{firm_types},
+						  _class_type{class_type}
 				{}
 
 				using ast::visitor::visit;
@@ -67,7 +70,7 @@ namespace minijava
 
 				void visit(const ast::expression_statement& node) override
 				{
-					expression_generator generator{_consts, _firm_types, &_class_type};
+					expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
 					node.inner_expression().accept(generator);
 					// FIXME: do something with whatever expression_generator produces
 				}
@@ -104,7 +107,9 @@ namespace minijava
 
 				void visit(const ast::instance_method& node) override
 				{
-					auto num_locals_ = _locals.size();
+					auto locals = _sem_info.locals_annotations().at(node);
+					auto num_locals_ = locals.size();
+					_var_ids.reserve(num_locals_);
 					auto const max_locals = std::numeric_limits<int>::max();
 					// add 1 for "this" parameter
 					if (__builtin_add_overflow(num_locals_, 1, &num_locals_) ||
@@ -127,7 +132,7 @@ namespace minijava
 					ir_node* args = get_irg_args(graph);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{1};
-					for (const auto& local : _locals) {
+					for (const auto& local : locals) {
 						if (current_id <= num_params) {
 							set_value(current_id, new_Proj(
 									args,
@@ -135,7 +140,7 @@ namespace minijava
 									static_cast<unsigned int>(current_id - 1)
 							));
 						}
-						_var_ids.put(*local, current_id);
+						_var_ids.insert(std::make_pair(local, current_id));
 						++current_id;
 					}
 					set_r_cur_block(graph, cur_block);
@@ -144,23 +149,21 @@ namespace minijava
 
 			private:
 
-				const std::set<const ast::var_decl*>& _locals;
-				const sem::const_attributes& _consts;
+				const semantic_info& _sem_info;
 				ir_types& _firm_types;
 				const ir_type& _class_type;
 
-				ast_attributes<int, ast_node_filter<ast::var_decl>> _var_ids{};
+				var_id_map_type _var_ids{};
 
 			};
 		}
 
-		void create_firm_method(const semantic_info::locals_attributes& locals,
-		                        const semantic_info::const_attributes& consts,
+		void create_firm_method(const semantic_info& sem_info,
 		                        ir_types& firm_types,
 		                        const ir_type& class_type,
 		                        const ast::instance_method& method)
 		{
-			method_generator generator{locals.at(method), consts, firm_types, class_type};
+			method_generator generator{sem_info, firm_types, class_type};
 			method.accept(generator);
 		}
 
