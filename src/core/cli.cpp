@@ -14,6 +14,7 @@
 
 #include "exceptions.hpp"
 #include "global.hpp"
+#include "runtime.h"
 #include "firm/firm.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
@@ -248,22 +249,27 @@ namespace minijava
 				return;
 			}
 			if (stage == compilation_stage::compile_firm) {
-				const auto assembly_file_name = "program.s";
+				const auto assembly_file_name = "mj_program.s";
+				const auto runtime_file_name = "mj_runtime.c";
 				auto assembly_file = file_output{assembly_file_name};
 				emit_x64_assembly_firm(ir, assembly_file);
+				assembly_file.finalize();
+				auto runtime_file = file_output{runtime_file_name};
+				runtime_file.write(c_runtime_source);
+				runtime_file.finalize();
+				const auto compile_command = "gcc "s + assembly_file_name + " "
+				                             + runtime_file_name;
 				if (!std::system(nullptr)) {
 					MINIJAVA_THROW_ICE_MSG(
 							minijava::internal_compiler_error,
-					        "Unable to use command processor to call GCC"
+							"Unable to use command processor to call GCC"
 					);
 				}
 				// ignore return value, since it's not guaranteed to be the
 				// return value of the gcc command anyway
-				// FIXME: how to include runtime library here?
-				std::system("gcc "s + assembly_file_name + " ");
+				std::system(compile_command.c_str());
 				return;
 			}
-			(void) ir; // FIXME
 			// If we get until here, we have a problem...
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}

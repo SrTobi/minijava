@@ -19,9 +19,11 @@ namespace minijava
 	firm_ir create_firm_ir(const ast::program& ast,
 	                       const semantic_info& semantic_info)
 	{
+		auto ir = firm_ir{};
 		// FIXME: create types, create method graphs
 		(void) ast;
 		(void) semantic_info;
+		return ir;
 	}
 
 	// since libfirm keeps the implicit state, we don't actually need the first

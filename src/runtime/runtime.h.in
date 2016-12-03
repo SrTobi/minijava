@@ -1,0 +1,10 @@
+// This file is configured by CMake to contain the whole C runtime as one string
+
+namespace minijava
+{
+
+	static constexpr auto c_runtime_source = R"mj_c_rt_string(
+@MINIJAVA_C_RUNTIME@
+)mj_c_rt_string";
+
+}  // namespace minijava
