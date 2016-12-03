@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <initializer_list>
 #include <iterator>
-#include <sstream>  // Oh, dear!
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -19,8 +18,8 @@
 #include "io/file_output.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "parser/ast_misc.hpp"
 #include "parser/parser.hpp"
-#include "parser/pretty_printer.hpp"
 #include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
@@ -200,16 +199,6 @@ namespace minijava
 			}
 		}
 
-		// Prints the AST `ast` to `out` in the formet required for
-		// `--print-ast`.  This function should be optimized to avoid the
-		// string-stream.
-		void print_ast(file_output& out, const ast::node& ast)
-		{
-			auto oss = std::ostringstream{};
-			auto pp = ast::pretty_printer{oss};
-			ast.accept(pp);
-			out.write(oss.str());
-		}
 
 		// Runs the compiler reading input from `istr`, writing output to
 		// `ostr` and optionally intercepting compilation at `stage`.
@@ -234,7 +223,7 @@ namespace minijava
 				return;
 			}
 			if (stage == compilation_stage::print_ast) {
-				print_ast(out, *ast);
+				out.write(to_text(*ast));
 				return;
 			}
 			auto sem_info = check_program(*ast, pool, factory);

@@ -25,14 +25,7 @@ namespace minijava
 				const auto comparator = symbol_comparator{};
 				return comparator(lhs->name(), rhs->name());
 			};
-			// TODO: We're using stable sort here because otherwise, the
-			// pretty-printed AST will still be non-deterministic in the case
-			// of fields or methods with the same name.  A better solution
-			// would be to use the token position (which we currently don't
-			// have) as a tie breaker in this situation.  We might als use the
-			// node ID for this but again, it is not guaranteed to be
-			// available.
-			std::stable_sort(std::begin(container), std::end(container), name_cmp);
+			std::sort(std::begin(container), std::end(container), name_cmp);
 		}
 
 		symbol get_name(const symbol s)
