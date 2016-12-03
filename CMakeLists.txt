@@ -37,11 +37,10 @@ link_directories(${Boost_LIBRARY_DIRS})
 set(COMPONENTS
 	cli
 	exceptions
-	global
-	position
 	firm/builder
 	firm/firm
 	firm/method_builder
+	global
 	io/file_data
 	io/file_output
 	io/misc
@@ -59,6 +58,8 @@ set(COMPONENTS
 	parser/for_each_node
 	parser/parser
 	parser/pretty_printer
+	position
+	runtime/runtime
 	semantic/attribute
 	semantic/constant
 	semantic/name_type_analysis

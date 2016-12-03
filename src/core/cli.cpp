@@ -14,7 +14,7 @@
 
 #include "exceptions.hpp"
 #include "global.hpp"
-#include "runtime.h"
+#include "runtime/runtime.hpp"
 #include "firm/firm.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
@@ -255,7 +255,7 @@ namespace minijava
 				emit_x64_assembly_firm(ir, assembly_file);
 				assembly_file.finalize();
 				auto runtime_file = file_output{runtime_file_name};
-				runtime_file.write(c_runtime_source);
+				runtime_file.write(runtime_source());
 				runtime_file.finalize();
 				const auto compile_command = "gcc "s + assembly_file_name + " "
 				                             + runtime_file_name;

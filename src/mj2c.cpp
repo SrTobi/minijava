@@ -12,6 +12,7 @@
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
+#include "runtime/runtime.hpp"
 #include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
 
@@ -386,7 +387,7 @@ namespace /* anonymous */
 			const auto system_name = mangle_variable("System");
 			const auto printstream_class_name = mangle_class("java.io.PrintStream");
 			const auto out_name = mangle_variable("out");
-			_out.write("int main()\n");
+			_out.write("void minijava_main(void)\n");
 			const auto g = _nest_braces();
 			_out.print(
 				"%s%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
@@ -398,7 +399,6 @@ namespace /* anonymous */
 				printstream_class_name.c_str()
 			);
 			node.body().accept(*this);
-			_out.print("%sreturn 0;\n", _indent.c_str());
 		}
 
 		void visit(const ast::instance_method& node) override
@@ -449,12 +449,11 @@ namespace /* anonymous */
 
 	void to_c(const ast::program& ast, const semantic_info& seminfo, file_output& out)
 	{
+		out.write(runtime_source());
+		out.write("\n");
 		out.write("#include <stdbool.h>\n");
 		out.write("#include <stddef.h>\n");
 		out.write("#include <stdint.h>\n");
-		out.write("\n");
-		out.write("extern void* mj_runtime_allocate(size_t, size_t);\n");
-		out.write("extern void mj_runtime_println(int32_t);\n");
 		out.write("\n");
 		for (auto&& clazz : seminfo.classes()) {
 			out.print("struct %s;\n", mangle_class(clazz.first).c_str());
