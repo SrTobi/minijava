@@ -14,6 +14,7 @@
 
 #include "exceptions.hpp"
 #include "global.hpp"
+#include "firm/firm.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
 #include "lexer/lexer.hpp"
@@ -43,6 +44,8 @@ namespace minijava
 			parser = 3,
 			print_ast = 4,
 			semantic = 5,
+			dump_ir = 6,
+			compile_firm = 7,
 		};
 
 
@@ -132,6 +135,12 @@ namespace minijava
 			if (varmap.count("check")) {
 				return compilation_stage::semantic;
 			}
+			if (varmap.count("dump-ir")) {
+				return compilation_stage::dump_ir;
+			}
+			if (varmap.count("compile-firm")) {
+				return compilation_stage::compile_firm;
+			}
 			return compilation_stage{};
 		}
 
@@ -157,7 +166,9 @@ namespace minijava
 				("lextest", "stop after lexical analysis and output a token sequence")
 				("parsetest", "stop after parsing and reporting any syntax errors")
 				("print-ast", "stop after parsing and print the parsed ast")
-				("check", "stop after semantic analysis and report semantic errors");
+				("check", "stop after semantic analysis and report semantic errors")
+				("dump-ir", "stop after IR creation and dump the intermediate representation into the current directory")
+				("compile-firm", "stop after IR creation and compile the input using the firm backend");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
@@ -205,6 +216,7 @@ namespace minijava
 		void run_compiler(file_data& in, file_output& out,
 		                  const compilation_stage stage)
 		{
+			using namespace std::string_literals;
 			if (stage == compilation_stage::input) {
 				out.write(in.data(), in.size());
 				return;
@@ -230,7 +242,28 @@ namespace minijava
 			if (stage == compilation_stage::semantic) {
 				return;
 			}
-			(void) sem_info; // FIXME
+			auto ir = create_firm_ir(*ast, sem_info);
+			if (stage == compilation_stage::dump_ir) {
+				dump_firm_ir(ir); // TODO: allow setting directory
+				return;
+			}
+			if (stage == compilation_stage::compile_firm) {
+				const auto assembly_file_name = "program.s";
+				auto assembly_file = file_output{assembly_file_name};
+				emit_x64_assembly_firm(ir, assembly_file);
+				if (!std::system(nullptr)) {
+					MINIJAVA_THROW_ICE_MSG(
+							minijava::internal_compiler_error,
+					        "Unable to use command processor to call GCC"
+					);
+				}
+				// ignore return value, since it's not guaranteed to be the
+				// return value of the gcc command anyway
+				// FIXME: how to include runtime library here?
+				std::system("gcc "s + assembly_file_name + " ");
+				return;
+			}
+			(void) ir; // FIXME
 			// If we get until here, we have a problem...
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
