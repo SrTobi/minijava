@@ -74,7 +74,7 @@ namespace minijava
 
 		typedef std::unordered_map<sem::type, ir_type*, sem_type_hash> type_mapping;
 
-		typedef ast_attributes<ir_type*, ast_node_filter<ast::method> > method_mapping;
+		typedef ast_attributes<ir_entity*, ast_node_filter<ast::method> > method_mapping;
 		typedef ast_attributes<ir_type*, ast_node_filter<ast::class_declaration> > class_mapping;
 	}
 
@@ -92,7 +92,20 @@ namespace minijava
 
 		void init()
 		{
-			// collect used ir_types
+			init_types();
+			init_methods();
+
+			finalize_class_types();
+		}
+
+	private:
+
+		/**
+		 * @brief
+		 *  collect used ir_types
+		 */
+		void init_types()
+		{
 			std::transform(
 					std::begin(_semantic_info.type_annotations()),
 					std::end(_semantic_info.type_annotations()),
@@ -101,35 +114,70 @@ namespace minijava
 						return std::make_pair(t.second, this->get_var_type(t.second));
 					}
 			);
+		}
 
-			// create all class and method ir_types
+		/**
+		 * @brief
+		 *  create all class and method ir_types
+		 */
+		void init_methods()
+		{
 			for (const auto& clazz : _ast.classes()) {
 				// get class type, and maybe create it
 				auto class_type = get_class_type(clazz.get());
 				(void)class_type;
 				// iterate over class methods and create prototypes
 				for (auto& method : clazz->instance_methods()) {
-					auto param_count = method->parameters().size() + 1; // don't miss implizit this argument
+					auto param_count = method->parameters().size();
 					auto return_type = _semantic_info.type_annotations().at(*method);
-					auto ir_type = new_type_method(
-							param_count, // param count
-							return_type.info.is_void() ? 0 : 1, // number of return types
+					auto has_return_type = return_type.info.is_void() == false;
+					auto method_type = new_type_method(
+							param_count + 1, // param count: don't miss implicit this argument
+							has_return_type ? 1 : 0, // number of return types
 							0, // is variadic?
 							cc_cdecl_set, // calling conventions
 							mtp_no_property);
-					// add mapping for method
-					_method_mapping.insert(std::make_pair(method.get(), ir_type));
+
+					set_method_param_type(method_type, 0, class_type);
+					size_t param_num = 1;
+					for (auto& param : method->parameters()) {
+						auto param_type = get_var_type(_semantic_info.type_annotations().at(*param));
+						set_method_param_type(method_type, param_num++, param_type);
+					}
+
+					if (has_return_type) {
+						set_method_res_type(method_type, 0, get_var_type(return_type));
+					}
+
+					auto method_entity = new_entity(
+							class_type,
+							new_id_from_str(method->name().c_str()),
+							method_type);
+
+					_method_mapping.insert(std::make_pair(method.get(), method_entity));
+				}
+
+				// insert main method
+				for (auto& method : clazz->main_methods()) {
+					auto method_type = new_type_method(0, 0, 0, cc_cdecl_set, mtp_no_property);
+					auto method_entity = new_entity(
+							get_glob_type(),
+							new_id_from_str("minijava_main"),
+					        method_type);
+					_method_mapping.insert(std::make_pair(method.get(), method_entity));
 				}
 			}
 		}
 
-		ir_type* get_method_type(const ast::method* method)
+	public:
+
+		ir_entity* get_method_entity(const ast::method* method)
 		{
 			if (_method_mapping.find(method) != _method_mapping.end()) {
 				return _method_mapping.at(*method);
 			}
 
-			MINIJAVA_THROW_ICE(minijava::internal_compiler_error);
+			MINIJAVA_THROW_ICE(internal_compiler_error);
 		}
 
 		ir_type* get_class_type(const sem::type& type)
@@ -153,12 +201,19 @@ namespace minijava
 		{
 			auto type = sem::type(_semantic_info.classes().at(clazz->name()), 0);
 			auto class_type = new_type_class(new_id_from_str(clazz->name().data()));
+			set_type_alignment(class_type, 8);
 			_type_mapping.insert(std::make_pair(type, class_type));
 			_class_mapping.insert(std::make_pair(clazz, class_type));
 			return class_type;
 		}
 
-	public:
+		void finalize_class_types()
+		{
+			for (auto& clazz : _ast.classes()) {
+				auto type = sem::type(_semantic_info.classes().at(clazz->name()), 0);
+				finalize_class_type(type);
+			}
+		}
 
 		// add fields and methods
 		void finalize_class_type(const sem::type& clazz)
@@ -167,8 +222,13 @@ namespace minijava
 			auto class_type = get_class_type(clazz);
 
 			// insert fields
+			int offset = 0;
 			for (auto& field : clazz.info.declaration()->fields()) {
-				create_field_entity(class_type, field);
+				auto field_entity = create_field_entity(class_type, field, offset);
+				// todo - better offset calculation
+//              size_t type_size = get_type_size(get_entity_type(field_entity));
+				(void)field_entity;
+				offset += 4;
 			}
 
 			// insert methods
@@ -177,7 +237,7 @@ namespace minijava
 			}
 		}
 
-		void create_field_entity(ir_type *class_type, const std::unique_ptr<ast::var_decl> &field)
+		ir_entity* create_field_entity(ir_type *class_type, const std::unique_ptr<ast::var_decl> &field, int offset)
 		{
 			auto field_type = _semantic_info.type_annotations().at(*field);
 			auto ir_type = get_var_type(field_type);
@@ -186,10 +246,13 @@ namespace minijava
 					new_id_from_str(field->name().data()),
 					ir_type
 			);
-			(void)field_entity; // for later use? set_entity_ld_name?
+			set_entity_offset(field_entity, offset);
+			return field_entity;
 		}
 
 		void create_method_entity(ir_type *class_type, const std::unique_ptr<ast::instance_method> &method);
+
+	public:
 
 		ir_type *get_var_type(sem::type type)
 		{
@@ -232,6 +295,15 @@ namespace minijava
 		ir_type* type_int() const noexcept
 		{
 			return _int_type;
+		}
+
+		ir_mode* mode_boolean() const noexcept {
+			return _boolean_mode;
+		}
+
+		ir_mode* mode_int() const noexcept
+		{
+			return _int_mode;
 		}
 
 		void create_entities()
@@ -277,6 +349,11 @@ namespace minijava
 		        _ast{ast}
 		{
 			ir_init();
+			// turn off optimizations
+			set_optimize(0);
+			// set pointer mode
+			auto mode_p = new_reference_mode("P64", irma_twos_complement, 64, 64);
+			set_modeP(mode_p);
 		}
 
 		~builder()
@@ -291,12 +368,12 @@ namespace minijava
 
 		void emit()
 		{
-//          be_parse_arg("isa=amd64");
-//          auto f = std::fopen("temp.asm", "w+");
-//          if (f != NULL) {
-//              be_main(f, "main_class");
-//              std::fclose(f);
-//          }
+			be_parse_arg("isa=amd64");
+			auto f = std::fopen("./temp.asm", "w+");
+			if (f != NULL) {
+				be_main(f, "main_class");
+				std::fclose(f);
+			}
 		}
 
 		void dump_graph(ir_graph* irg, std::string suffix)

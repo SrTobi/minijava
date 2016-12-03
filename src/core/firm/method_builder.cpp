@@ -49,7 +49,7 @@ namespace minijava
 
 			};
 
-			class method_generator final : public ast::visitor
+			class method_generator final// : public ast::visitor
 			{
 
 			public:
@@ -60,52 +60,119 @@ namespace minijava
 						  _class_type{class_type}
 				{}
 
-				using ast::visitor::visit;
+				ir_node* visit(const ast::boolean_constant &node)
+				{
+					return new_Const_long(_firm_types.mode_boolean(), node.value());
+				}
 
-				void visit(const ast::local_variable_statement& node) override
+				ir_node* visit(const ast::integer_constant &node)
+				{
+					auto value = _sem_info.const_annotations().at(node);
+					return new_Const_long(_firm_types.mode_int(), value);
+				}
+
+				ir_node* visit(const ast::binary_expression &node)
+				{
+					ir_node *memory;
+					auto lhs = visit(node.lhs());
+					auto rhs = visit(node.rhs());
+
+					ir_node* result;
+					switch (node.type()) {
+					case ast::binary_operation_type::assign:
+						break;
+					case ast::binary_operation_type::divide:
+						memory  = get_store();
+						result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
+						set_store(new_Proj(result, mode_M, pn_Div_M));
+						result = new_Proj(result, _firm_types.mode_int(), pn_Div_res);
+						break;
+					case ast::binary_operation_type::multiply:
+						result = new_Mul(lhs, rhs);
+						break;
+					case ast::binary_operation_type::plus:
+						result = new_Add(lhs, rhs);
+						break;
+					case ast::binary_operation_type::minus:
+						result = new_Sub(lhs, rhs);
+						break;
+					case ast::binary_operation_type::modulo:
+						memory  = get_store();
+						result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
+						set_store(new_Proj(result, mode_M, pn_Mod_M));
+						result = new_Proj(result, _firm_types.mode_int(), pn_Mod_res);
+						break;
+					default:
+						// TODO
+						// boolean mode
+						break;
+					}
+
+					return (ir_node*) nullptr;
+				}
+
+				ir_node* visit(const ast::expression &node)
+				{
+					(void)node; // TODO
+					return (ir_node*)nullptr;
+				}
+
+				ir_node* visit(const ast::this_ref &node)
+				{
+					(void) node; // node not used
+					return get_value(0, mode_P);
+				}
+
+				ir_node* visit(const ast::null_constant &node)
+				{
+					(void) node; // node not used
+					return new_Const_long(mode_P, 0);
+				}
+
+				void visit(const ast::local_variable_statement& node)
 				{
 					assert(_var_ids.find(&node.declaration()) != _var_ids.end());
 					// FIXME
 				}
 
-				void visit(const ast::expression_statement& node) override
+				void visit(const ast::expression_statement& node)
 				{
 					expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
 					node.inner_expression().accept(generator);
 					// FIXME: do something with whatever expression_generator produces
 				}
 
-				void visit(const ast::block& node) override
+				void visit(const ast::block& node)
 				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::if_statement& node) override
+				void visit(const ast::if_statement& node)
 				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::while_statement& node) override
+				void visit(const ast::while_statement& node)
 				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::return_statement& node) override
+				void visit(const ast::return_statement& node)
 				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::empty_statement& node) override
+				void visit(const ast::empty_statement& node)
 				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::instance_method& node) override
+				void visit(const ast::instance_method& node)
 				{
 					auto locals = _sem_info.locals_annotations().at(node);
 					auto num_locals_ = locals.size();
@@ -120,6 +187,7 @@ namespace minijava
 										" local variables"
 						);
 					}
+
 					auto num_locals = static_cast<int>(num_locals_);
 					auto graph = new_ir_graph(
 							//_firm_types.get_method_entity(&node),
@@ -127,23 +195,23 @@ namespace minijava
 							num_locals
 					);
 					set_current_ir_graph(graph);
-					ir_node* cur_block = get_r_cur_block(graph);
-					set_r_cur_block(graph, get_irg_start_block(graph));
-					ir_node* args = get_irg_args(graph);
-					auto num_params = static_cast<int>(node.parameters().size());
-					auto current_id = int{1};
-					for (const auto& local : locals) {
-						if (current_id <= num_params) {
-							set_value(current_id, new_Proj(
-									args,
-									get_type_mode(_firm_types.get_method_type(&node)),
-									static_cast<unsigned int>(current_id - 1)
-							));
-						}
-						_var_ids.insert(std::make_pair(local, current_id));
-						++current_id;
-					}
-					set_r_cur_block(graph, cur_block);
+//                  ir_node* cur_block = get_r_cur_block(graph);
+//                  set_r_cur_block(graph, get_irg_start_block(graph));
+//                  ir_node* args = get_irg_args(graph);
+//                  auto num_params = static_cast<int>(node.parameters().size());
+//                  auto current_id = int{1};
+//                  for (const auto& local : locals) {
+//                      if (current_id <= num_params) {
+//                          set_value(current_id, new_Proj(
+//                                  args,
+//                                  get_type_mode(_firm_types.get_method_type(&node)),
+//                                  static_cast<unsigned int>(current_id - 1)
+//                          ));
+//                      }
+//                      _var_ids.insert(std::make_pair(local, current_id));
+//                      ++current_id;
+//                  }
+//                  set_r_cur_block(graph, cur_block);
 					visit(node.body());
 				}
 
@@ -164,7 +232,8 @@ namespace minijava
 		                        const ast::instance_method& method)
 		{
 			method_generator generator{sem_info, firm_types, class_type};
-			method.accept(generator);
+//          method.accept(generator);
+			(void)method;
 		}
 
 	}  // namespace sem
