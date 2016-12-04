@@ -88,6 +88,25 @@ We have tested the setup on POSIX and Windows with MinGW or Cygwin and wish you
 Good Luck if you're trying anything else.
 
 
+#### Firm
+
+The project also depends on the [Firm](http://pp.ipd.kit.edu/firm/) library.
+Unlike the other dependencies, it will be automatically downloaded and built
+locally by the build system.  This will make a HTTP connection to a Git server
+at the KIT.
+
+If you don't want to connect to the KIT server, you can provide an alternative
+URL to clone the repository from by setting the environment variable
+`LIBFIRM_GIT_URL` prior to running CMake.
+
+For example, the following commands will create a local mirror of the Firm
+repository and then instruct CMake to clone from it.  Of course, now it is your
+responsibility to keep the local mirror up to date.
+
+    $ git clone --mirror http://pp.ipd.kit.edu/git/libfirm.git
+    $ export LIBFIRM_GIT_URL="${PWD}/libfirm.git"
+
+
 ### Building for Humans
 
     $ git clone https://git@slixe.de:7999/comprak/compiler.git
