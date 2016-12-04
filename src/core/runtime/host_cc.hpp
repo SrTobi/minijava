@@ -38,6 +38,9 @@ namespace minijava
 	 * @param assembly_filename
 	 *     path to the assembly file containing the minijava program
 	 *
+	 * @throws std::runtime_error
+	 *     if the compiler did not execute successfully
+	 *
 	 */
 	void link_runtime(const std::string& compiler_executable,
 	                  const std::string& output_filename,

@@ -42,11 +42,14 @@ namespace testaux
 		 * @param text
 		 *     initial contents of the file
 		 *
+		 * @param suffix
+		 *     optional file name suffix
+		 *
 		 * @throws std::system_error
 		 *     upon failure to create the file
 		 *
 		 */
-		temporary_file(const std::string& text = "");
+		temporary_file(const std::string& text = "", const std::string& suffix = "");
 
 		/** @brief Deletes the temporary file. */
 		~temporary_file();

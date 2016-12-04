@@ -14,10 +14,11 @@
 namespace testaux
 {
 
-	temporary_file::temporary_file(const std::string& text)
+	temporary_file::temporary_file(const std::string& text, const std::string& suffix)
 	{
 		namespace fs = boost::filesystem;
-		const auto path = fs::unique_path(fs::temp_directory_path() / "%%%%%%%%");
+		const auto pattern = "%%%%%%%%" + suffix;
+		const auto path = fs::unique_path(fs::temp_directory_path() / pattern);
 		_filename = path.string();
 		std::ofstream stream{_filename, std::ios_base::binary | std::ios_base::out};
 		stream.exceptions(std::iostream::failbit);
