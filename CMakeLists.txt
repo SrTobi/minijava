@@ -72,6 +72,7 @@ set(COMPONENTS
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
+	system/host_cc
 	system/system
 	util/meta
 )
