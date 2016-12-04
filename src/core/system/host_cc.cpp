@@ -33,6 +33,7 @@ namespace minijava
 				if (fd[1] != -1) {
 					close(fd[1]);
 				}
+				delete[] fd;
 			};
 			std::unique_ptr<int[], decltype(close_fds)> fds{
 					new int[2], close_fds
