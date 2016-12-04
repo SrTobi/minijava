@@ -15,32 +15,32 @@ namespace minijava
 
 	/**
 	 * @brief
-	 *     Returns the default command for a GCC-compatible C compiler on the
+	 *     Returns the default executable for a GCC-compatible C compiler on the
 	 *     current system.
 	 *
 	 * @return
-	 *     C compiler command
+	 *     C compiler executable
 	 *
 	 */
-	std::string get_default_c_compiler_command();
+	std::string get_default_c_compiler();
 
 	/**
 	 * @brief
 	 *     Links the given assembly against the minijava runtime using the
 	 *     given C compiler.
 	 *
-	 * @param compiler_command
-	 *     command used for invoking the (GCC-compatible) C compiler
+	 * @param compiler_executable
+	 *     executable of the (GCC-compatible) C compiler
 	 *
-	 * @param output_file
+	 * @param output_filename
 	 *     path to the output file
 	 *
-	 * @param minijava_assembly
+	 * @param assembly_filename
 	 *     path to the assembly file containing the minijava program
 	 *
 	 */
-	void link_runtime(const std::string& compiler_command,
-	                  const std::string& output_file,
-	                  const std::string& minijava_assembly);
+	void link_runtime(const std::string& compiler_executable,
+	                  const std::string& output_filename,
+	                  const std::string& assembly_filename);
 
 }

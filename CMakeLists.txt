@@ -59,6 +59,7 @@ set(COMPONENTS
 	parser/parser
 	parser/pretty_printer
 	position
+	runtime/host_cc
 	runtime/runtime
 	semantic/attribute
 	semantic/constant
@@ -72,7 +73,7 @@ set(COMPONENTS
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
-	system/host_cc
+	system/subprocess
 	system/system
 	util/meta
 )

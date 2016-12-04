@@ -5,7 +5,7 @@
  *     Runtime support library access.
  *
  * The MiniJava runtime support library is provided as a single string of C
- * source code that should eb compiled and linked with each MiniJava program.
+ * source code that should be compiled and linked with each MiniJava program.
  *
  * It defines the following symbols:
  *

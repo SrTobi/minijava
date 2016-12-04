@@ -1,4 +1,4 @@
-#include "system/host_cc.hpp"
+#include "system/subprocess.hpp"
 
 #ifdef _WIN32
 #   include <process.h>
@@ -8,15 +8,10 @@
 #   include <unistd.h>
 #endif
 
-#include <cstdlib>
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <system_error>
-
-#include <boost/filesystem.hpp>
-
-#include "io/file_output.hpp"
-#include "runtime/runtime.hpp"
 
 namespace minijava
 {
@@ -53,63 +48,46 @@ namespace minijava
 #endif
 
 		[[noreturn]]
-		void throw_invoke_compiler_failed(int error,
-		                                  const std::string& compiler_command)
+		void throw_invoke_subprocess_failed(
+				int error, const std::vector<std::string>& command)
 		{
 			using namespace std::string_literals;
 			const auto ec = std::error_code{error, std::system_category()};
-			throw std::system_error{ec, "Could not start '"s + compiler_command + "'."};
+			throw std::system_error{
+					ec, "Could not start '"s + command.at(0) + "'."
+			};
 		}
 
 		[[noreturn]]
-		void throw_compiler_failed(const std::string& compiler_command)
+		void throw_subprocess_failed(const std::vector<std::string>& command)
 		{
 			using namespace std::string_literals;
 			throw std::runtime_error{
-					"Compilation failed. '"s + compiler_command
+					"Subprocess failed. '"s + command.at(0)
 					+ "' exited with a non-zero status."
 			};
 		}
 
 	}  //  namespace /* anonymous */
 
-	std::string get_default_c_compiler_command()
+	void run_subprocess(const std::vector<std::string>& command)
 	{
-		if (const char* compiler_binary = std::getenv("CC")) {
-			return std::string(compiler_binary);
+		if (command.size() < 1) {
+			throw std::invalid_argument{"`command` is empty"};
 		}
-
-#if __APPLE__
-		return "clang";
-#else
-		return "gcc";
-#endif
-	}
-
-	void link_runtime(const std::string& compiler_command,
-	                  const std::string& output_file,
-	                  const std::string& minijava_assembly)
-	{
-		namespace fs = boost::filesystem;
-		auto runtime_path = fs::temp_directory_path() / fs::unique_path();
-		auto minijava_runtime_path = runtime_path.string();
-		auto runtime_file = file_output{minijava_runtime_path};
-		runtime_file.write(runtime_source());
-		runtime_file.close();
-#ifdef _WIN32
-		auto ret = _spawnlp(
-				_P_WAIT,
-				compiler_command.c_str(),
-				"-o",
-				output_file.c_str(),
-				minijava_assembly.c_str(),
-				minijava_runtime_path.c_str(),
-				nullptr
+		auto argv = std::vector<const char*>{command.size() + 1};
+		std::transform(
+				command.begin(), command.end(), argv.begin(), [](auto&& s) {
+					return s.c_str();
+				}
 		);
+		argv[command.size()] = nullptr;
+#ifdef _WIN32
+		auto ret = _spawnvp(_P_WAIT, argv[0], argv.data());
 		if (ret == -1) {
-			throw_invoke_compiler_failed(errno, compiler_command);
+			throw_invoke_subprocess_failed(errno, compiler_command);
 		} else if (ret) {
-			throw_compiler_failed(compiler_command);
+			throw_subprocess_failed(compiler_command);
 		}
 #else
 		// create pipe to communicate error code of execlp()
@@ -117,18 +95,12 @@ namespace minijava
 		pid_t pid = fork();
 		if (pid == -1) {
 			const auto ec = std::error_code{errno, std::system_category()};
-			throw std::system_error{ec, "Could not fork compiler process."};
+			throw std::system_error{ec, "Could not fork subprocess."};
 		} else if (pid == 0) {
 			close(pipe_fds[0]);
 			pipe_fds[0] = -1;
-			execlp(
-					compiler_command.c_str(),
-					"-o",
-					output_file.c_str(),
-					minijava_assembly.c_str(),
-					minijava_runtime_path.c_str(),
-			        nullptr
-			);
+			// here be nasal demons
+			execvp(argv[0], const_cast<char**>(argv.data()));
 			write(pipe_fds[1], &errno, sizeof(errno));
 			_exit(EXIT_SUCCESS);
 		} else {
@@ -138,11 +110,14 @@ namespace minijava
 			int code;
 			while ((bytes_read = read(pipe_fds[0], &code, sizeof(errno))) == -1) {
 				if (errno != EAGAIN && errno != EINTR) {
-					throw std::runtime_error{"Unable to read from pipe."};
+					const auto ec = std::error_code{
+							errno, std::system_category()
+					};
+					throw std::system_error{ec, "Unable to read from pipe."};
 				}
 			}
 			if (bytes_read) {
-				throw_invoke_compiler_failed(code, compiler_command);
+				throw_invoke_subprocess_failed(code, command);
 			}
 			int status;
 			while (waitpid(pid, &status, 0) == -1) {
@@ -151,16 +126,16 @@ namespace minijava
 							errno, std::system_category()
 					};
 					throw std::system_error{
-							ec, "Could not wait for compiler process."
+							ec, "Could not wait for subprocess."
 					};
 				}
 			}
 			if (status) {
 				if (WIFEXITED(status)) {
-					throw_compiler_failed(compiler_command);
+					throw_subprocess_failed(command);
 				} else {
 					throw std::runtime_error{
-							"The compiler process terminated unexpectedly."
+							"The subprocess terminated unexpectedly."
 					};
 				}
 			}
