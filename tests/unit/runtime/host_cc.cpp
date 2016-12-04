@@ -17,6 +17,12 @@
 #  define ELF_EH 0
 #endif
 
+#ifdef _WIN32
+#	define WINDOWS 1
+#else
+#	define WINDOWS 0
+#endif
+
 
 BOOST_AUTO_TEST_CASE(default_c_compiler_is_not_empty)
 {
@@ -47,11 +53,18 @@ BOOST_AUTO_TEST_CASE(link_runtime_can_assemble)
 		outfile.filename(),
 		asmfile.filename()
 	);
-	minijava::file_data executable{outfile.filename()};
+	auto artifact_name = outfile.filename();
+	if (WINDOWS) {
+		artifact_name += ".exe";
+	}
+	minijava::file_data executable{artifact_name};
 	BOOST_REQUIRE(executable.size() > 4);
 	if (ELF_EH) {
 		const char magic[] = {0x7f, 'E', 'L', 'F'};
 		BOOST_CHECK(std::memcmp(magic, executable.data(), 4) == 0);
+	} else if (WINDOWS) {
+		const char magic[] = {'M', 'Z'};
+		BOOST_CHECK(std::memcmp(magic, executable.data(), 2) == 0);
 	}
 	BOOST_REQUIRE_NO_THROW(minijava::run_subprocess({outfile.filename()}));
 }

@@ -34,12 +34,14 @@ namespace /* anonymous */
 }  // namespace /* anonymous */
 
 
-// TODO: Check whether these work on Windows, too.  If not, and no portable
-//       commands can be found, use `#ifdef __unix__` to selectively add those
-//       that work.
 static const command successful_commands[] = {
+#ifdef __unix__
 	{"true"},
 	{"test", "42", "-eq", "42"},
+#endif
+#ifdef _WIN32
+	{"cmd.exe", "/C", "exit 0"},
+#endif
 };
 
 BOOST_DATA_TEST_CASE(subprocess_success, successful_commands)
@@ -49,8 +51,13 @@ BOOST_DATA_TEST_CASE(subprocess_success, successful_commands)
 
 
 static const command failing_commands[] = {
+#ifdef __unix__
 	{"false"},
 	{"test", "0", "-gt", "1"},
+#endif
+#ifdef _WIN32
+	{"cmd.exe", "/C", "exit 1"},
+#endif
 };
 
 BOOST_DATA_TEST_CASE(subprocess_faulure, failing_commands)
