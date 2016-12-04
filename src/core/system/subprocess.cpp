@@ -85,9 +85,9 @@ namespace minijava
 #ifdef _WIN32
 		auto ret = _spawnvp(_P_WAIT, argv[0], argv.data());
 		if (ret == -1) {
-			throw_invoke_subprocess_failed(errno, compiler_command);
+			throw_invoke_subprocess_failed(errno, command);
 		} else if (ret) {
-			throw_subprocess_failed(compiler_command);
+			throw_subprocess_failed(command);
 		}
 #else
 		// create pipe to communicate error code of execlp()
