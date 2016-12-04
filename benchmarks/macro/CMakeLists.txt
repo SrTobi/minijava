@@ -9,3 +9,17 @@ target_link_libraries(many_different_ids
 		LINK_PRIVATE support
 		LINK_PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARIES}
 )
+
+add_executable(syntaxgen syntaxgen.cpp)
+target_link_libraries(syntaxgen
+		LINK_PRIVATE core
+		LINK_PRIVATE support
+		LINK_PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+)
+
+add_executable(astgen astgen.cpp)
+target_link_libraries(astgen
+		LINK_PRIVATE core
+		LINK_PRIVATE support
+		LINK_PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+)

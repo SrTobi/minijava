@@ -183,6 +183,74 @@
 	    "IN" : ["adjacent_block_comments.py", "5000000"]
 	},
 	"cmdargs" : ["--lextest", "{IN}"]
+    },
+
+    // lexer fuzz
+
+    "lexer-fuzz-191" : {
+	"description" : "lexical analysis of a random 191 MiB program",
+	"setup" : {"IN" : ["syntaxgen", "-s", "0", "-r", "100"]},
+	"cmdargs" : ["--lextest", "{IN}"]
+    },
+
+    // parser fuzz
+
+    "parser-fuzz-1" : {
+	"description" : "syntactic analysis of a random 1 MiB program",
+	"setup" : {"IN" : ["syntaxgen", "-s", "3", "-r", "75"]},
+	"cmdargs" : ["--parsetest", "{IN}"]
+    },
+
+    "parser-fuzz-5" : {
+	"description" : "syntactic analysis of a random 5 MiB program",
+	"setup" : {"IN" : ["syntaxgen", "-s", "4", "-r", "75"]},
+	"cmdargs" : ["--parsetest", "{IN}"]
+    },
+
+    "parser-fuzz-20" : {
+	"description" : "syntactic analysis of a random 20 MiB program",
+	"setup" : {"IN" : ["syntaxgen", "-s", "1", "-r", "75"]},
+	"cmdargs" : ["--parsetest", "{IN}"]
+    },
+
+    "parser-fuzz-33" : {
+	"description" : "syntactic analysis of a random 33 MiB program",
+	"setup" : {"IN" : ["syntaxgen", "-s", "2", "-r", "75"]},
+	"cmdargs" : ["--parsetest", "{IN}"]
+    },
+
+    // pretty fuzz
+
+    "pretty-fuzz-20" : {
+	"description" : "pretty-printing a random 20 MiB program",
+	"setup" : {"IN" : ["syntaxgen", "-s", "0", "-r", "75"]},
+	"cmdargs" : ["--print-ast", "{IN}"]
+    },
+
+    // check fuzz
+
+    "check-fuzz-12" : {
+	"description" : "semantic analysis of a random 12 MiB program",
+	"setup" : {"IN" : ["astgen", "-s", "3", "-r", "80"]},
+	"cmdargs" : ["--check", "{IN}"]
+    },
+
+    "check-fuzz-48" : {
+	"description" : "semantic analysis of a random 48 MiB program",
+	"setup" : {"IN" : ["astgen", "-s", "7", "-r", "80"]},
+	"cmdargs" : ["--check", "{IN}"]
+    },
+
+    "check-fuzz-90" : {
+	"description" : "semantic analysis of a random 90 MiB program",
+	"setup" : {"IN" : ["astgen", "-s", "4", "-r", "80"]},
+	"cmdargs" : ["--check", "{IN}"]
+    },
+
+    "check-fuzz-119" : {
+	"description" : "semantic analysis of a random 119 MiB program",
+	"setup" : {"IN" : ["astgen", "-s", "5", "-r", "80"]},
+	"cmdargs" : ["--check", "{IN}"]
     }
 
 }

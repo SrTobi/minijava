@@ -7,9 +7,10 @@
 #include <string>
 #include <utility>
 
+#include "exceptions.hpp"
 #include "lexer/token_type.hpp"
 
-#include "random_tokens.hpp"
+#include "testaux/random_tokens.hpp"
 
 
 namespace testaux
