@@ -19,48 +19,13 @@
 #include <parser/ast.hpp>
 #include <semantic/semantic.hpp>
 #include <semantic/attribute.hpp>
+#include "firm/method_builder.hpp"
 
 namespace minijava
 {
 
 	namespace firm
 	{
-
-		/*
-		struct collect_methods_visitor final : ast::visitor
-		{
-
-			collect_methods_visitor(ir_types ir_types)
-			{
-				_ir_types = irtypes;
-			}
-
-			void visit(const ast::instance_method& mthd) override
-			{
-				auto num_of_local_vars = 9999; // TODO
-				auto method_type = new_type_method(mthd.parameters().size(), 1);
-				// set params for method
-				size_t pos = 0;
-				for (auto param : mthd.parameters()) {
-					auto param = mthd.parameters().at(i);
-					auto param_type = _ir_types.get_var_type(param->var_type());
-					set_method_param_type(method_type, pos++, param_type);
-				}
-				// set return type
-				set_method_res_type(method_type, 0, _ir_types.get_var_type(mthd.return_type()));
-				// create entity
-				auto method_entity = new_entity(get_glob_type(), new_id_from_str(mthd.name().data()), method_type);
-				// create graph
-				auto fun_graph = new_ir_graph(method_type, num_of_local_vars);
-				set_current_ir_graph(fun_graph);
-				// todo - create graph nodes...
-				irg_finalize_cons(fun_graph);
-			}
-
-		private:
-
-			ir_types _ir_types;
-		}*/
 
 		struct sem_type_hash
 		{
@@ -92,6 +57,8 @@ namespace minijava
 
 		void init()
 		{
+			create_basic_types();
+
 			init_types();
 			init_methods();
 
@@ -125,48 +92,67 @@ namespace minijava
 			for (const auto& clazz : _ast.classes()) {
 				// get class type, and maybe create it
 				auto class_type = get_class_type(clazz.get());
-				(void)class_type;
 				// iterate over class methods and create prototypes
 				for (auto& method : clazz->instance_methods()) {
-					auto param_count = method->parameters().size();
-					auto return_type = _semantic_info.type_annotations().at(*method);
-					auto has_return_type = return_type.info.is_void() == false;
-					auto method_type = new_type_method(
-							param_count + 1, // param count: don't miss implicit this argument
-							has_return_type ? 1 : 0, // number of return types
-							0, // is variadic?
-							cc_cdecl_set, // calling conventions
-							mtp_no_property);
-
-					set_method_param_type(method_type, 0, class_type);
-					size_t param_num = 1;
-					for (auto& param : method->parameters()) {
-						auto param_type = get_var_type(_semantic_info.type_annotations().at(*param));
-						set_method_param_type(method_type, param_num++, param_type);
-					}
-
-					if (has_return_type) {
-						set_method_res_type(method_type, 0, get_var_type(return_type));
-					}
-
-					auto method_entity = new_entity(
-							class_type,
-							new_id_from_str(method->name().c_str()),
-							method_type);
-
-					_method_mapping.insert(std::make_pair(method.get(), method_entity));
+					init_method(class_type, *method.get());
 				}
 
 				// insert main method
 				for (auto& method : clazz->main_methods()) {
-					auto method_type = new_type_method(0, 0, 0, cc_cdecl_set, mtp_no_property);
-					auto method_entity = new_entity(
-							get_glob_type(),
-							new_id_from_str("minijava_main"),
-					        method_type);
-					_method_mapping.insert(std::make_pair(method.get(), method_entity));
+					init_method(class_type, *method.get());
 				}
 			}
+		}
+
+		void init_method(ir_type* class_type, ast::instance_method& method)
+		{
+			auto param_count = method.parameters().size();
+			auto return_type = _semantic_info.type_annotations().at(method);
+			auto has_return_type = return_type.info.is_void() == false;
+			auto method_type = new_type_method(
+					param_count + 1, // param count: don't miss implicit this argument
+					has_return_type ? 1 : 0, // number of return types
+					0, // is variadic?
+					cc_cdecl_set, // calling conventions
+					mtp_no_property);
+
+			set_method_param_type(method_type, 0, new_type_pointer(class_type));
+			size_t param_num = 1;
+			for (auto& param : method.parameters()) {
+				auto param_type = get_var_type(_semantic_info.type_annotations().at(*param));
+				set_method_param_type(method_type, param_num++, param_type);
+			}
+
+			if (has_return_type) {
+				set_method_res_type(method_type, 0, get_var_type(return_type));
+			}
+
+			auto method_entity = new_entity(
+					class_type,
+					new_id_from_str(method.name().c_str()),
+					method_type);
+			set_entity_ld_ident(method_entity, new_id_from_str(method.name().c_str()));
+
+			_method_mapping.insert(std::make_pair(&method, method_entity));
+		}
+
+		void init_method(ir_type* class_type, ast::main_method& method)
+		{
+			auto param_count = method.parameters().size();
+			auto method_type = new_type_method(
+					param_count, // param count: don't miss implicit this argument
+					0, // number of return types
+					0, // is variadic?
+					cc_cdecl_set, // calling conventions
+					mtp_no_property);
+
+			auto method_entity = new_entity(
+					class_type,
+					new_id_from_str(method.name().c_str()),
+					method_type);
+			set_entity_ld_ident(method_entity, new_id_from_str("mjava_main"));
+
+			_method_mapping.insert(std::make_pair(&method, method_entity));
 		}
 
 	public:
@@ -231,10 +217,22 @@ namespace minijava
 				offset += 4;
 			}
 
+			// empty entity? insert dummy field to prevent empty entities
+			if (offset == 0) {
+				auto dummy_field = new_entity(class_type, new_id_from_str("__prevent_empty_class"), _int_type);
+				set_entity_offset(dummy_field, 0);
+				set_entity_ld_ident(dummy_field, new_id_from_str("__prevent_empty_class"));
+			}
+
 			// insert methods
 			for (auto& method : clazz.info.declaration()->instance_methods()) {
 				create_method_entity(class_type, method);
 			}
+
+			for (auto& method : clazz.info.declaration()->main_methods()) {
+				create_method_entity(class_type, method);
+			}
+
 		}
 
 		ir_entity* create_field_entity(ir_type *class_type, const std::unique_ptr<ast::var_decl> &field, int offset)
@@ -247,10 +245,33 @@ namespace minijava
 					ir_type
 			);
 			set_entity_offset(field_entity, offset);
+			set_entity_ld_ident(field_entity, new_id_from_str(field->name().data()));
 			return field_entity;
 		}
 
+		int get_local_var_count(ast::method& node)
+		{
+			auto locals = _semantic_info.locals_annotations().at(node);
+			auto num_locals_ = locals.size();
+			auto const max_locals = std::numeric_limits<int>::max();
+			// add 1 for "this" parameter
+			if (__builtin_add_overflow(num_locals_, 1, &num_locals_) ||
+			    num_locals_ > static_cast<std::size_t>(max_locals)) {
+				MINIJAVA_THROW_ICE_MSG(
+						minijava::internal_compiler_error,
+						"Cannot handle functions with more than MAX_INT"
+								" local variables"
+				);
+			}
+
+			auto num_locals = static_cast<int>(num_locals_);
+			return num_locals;
+		}
+
 		void create_method_entity(ir_type *class_type, const std::unique_ptr<ast::instance_method> &method);
+		void create_method_entity(ir_type *class_type, const std::unique_ptr<ast::main_method> &method);
+
+		void create_and_finalize_method_body(const minijava::ast::method &method, ir_graph* irg);
 
 	public:
 

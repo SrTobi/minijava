@@ -26,9 +26,9 @@ namespace minijava
 
 				expression_generator(const semantic_info& sem_info,
 				                     const var_id_map_type& var_ids,
-				                     ir_types& firm_types, const ir_type* class_type)
+				                     ir_types& firm_types)
 						: _sem_info{sem_info}, _var_ids{var_ids},
-						  _firm_types{firm_types}, _class_type{class_type}
+						  _firm_types{firm_types}
 				{}
 
 				using ast::visitor::visit;
@@ -37,15 +37,14 @@ namespace minijava
 
 			private:
 
-				bool _in_instance_method()
-				{
-					return _class_type != nullptr;
-				}
+//              bool _in_instance_method()
+//              {
+//                  return _class_type != nullptr;
+//              }
 
 				const semantic_info& _sem_info;
 				const var_id_map_type& _var_ids;
 				ir_types& _firm_types;
-				const ir_type* _class_type;
 
 			};
 
@@ -55,9 +54,8 @@ namespace minijava
 			public:
 
 				method_generator(const semantic_info& sem_info,
-				                 ir_types& firm_types, const ir_type& class_type)
-						: _sem_info{sem_info}, _firm_types{firm_types},
-						  _class_type{class_type}
+				                 ir_types& firm_types)
+						: _sem_info{sem_info}, _firm_types{firm_types}
 				{}
 
 				ir_node* visit(const ast::boolean_constant &node)
@@ -137,7 +135,7 @@ namespace minijava
 
 				void visit(const ast::expression_statement& node)
 				{
-					expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
+					expression_generator generator{_sem_info, _var_ids, _firm_types};
 					node.inner_expression().accept(generator);
 					// FIXME: do something with whatever expression_generator produces
 				}
@@ -219,7 +217,6 @@ namespace minijava
 
 				const semantic_info& _sem_info;
 				ir_types& _firm_types;
-				const ir_type& _class_type;
 
 				var_id_map_type _var_ids{};
 
@@ -228,10 +225,9 @@ namespace minijava
 
 		void create_firm_method(const semantic_info& sem_info,
 		                        ir_types& firm_types,
-		                        const ir_type& class_type,
-		                        const ast::instance_method& method)
+		                        const ast::method& method)
 		{
-			method_generator generator{sem_info, firm_types, class_type};
+			method_generator generator{sem_info, firm_types};
 //          method.accept(generator);
 			(void)method;
 		}
