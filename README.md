@@ -82,7 +82,7 @@ In order to build the compiler, you will need the following.
  - On Windows, you'll need to compile and install an
    [additional regex library](https://sourceforge.net/projects/mingw/files/Other/UserContributed/regex/mingw-regex-2.5.1/).
    Both the headers and the library itself must be installed into a folder where
-   your compiler will find them, for example the MinGW `include` and `lib`
+   your compiler will find them, for example the MinGW `include` and `bin`
    directories.
 
  - In order to check out the sources, you'll also need Git.
