@@ -26,6 +26,11 @@ namespace minijava
 		                        const ir_type& class_type,
 		                        const ast::instance_method& method);
 
+		void create_firm_method(const semantic_info& sem_info,
+		                        ir_types& firm_types,
+		                        const ir_type& class_type,
+		                        const ast::main_method& method);
+
 	}  // namespace firm
 
 }  // namespace minijava

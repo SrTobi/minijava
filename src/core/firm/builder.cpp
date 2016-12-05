@@ -1,6 +1,23 @@
 #include <firm/builder.hpp>
 
-void minijava::ir_types::create_and_finalize_method_body(const minijava::ast::method &/*method*/, ir_graph* irg)
+void minijava::ir_types::create_and_finalize_method_body(
+		const minijava::ast::main_method &method,
+		ir_graph* irg,
+		ir_type* class_type)
+{
+	set_current_ir_graph(irg);
+
+	// call method_builder
+	firm::create_firm_method(_semantic_info, *this, *class_type, method);
+
+	irg_finalize_cons(irg);
+	irg_verify(irg);
+}
+
+void minijava::ir_types::create_and_finalize_method_body(
+		const minijava::ast::instance_method &method,
+		ir_graph* irg,
+		ir_type* class_type)
 {
 	set_current_ir_graph(irg);
 
@@ -18,7 +35,7 @@ void minijava::ir_types::create_and_finalize_method_body(const minijava::ast::me
 	}
 
 	// call method_builder
-	// ...
+	firm::create_firm_method(_semantic_info, *this, *class_type, method);
 
 	irg_finalize_cons(irg);
 	irg_verify(irg);
@@ -32,7 +49,7 @@ void minijava::ir_types::create_method_entity(
 	auto method_entity = get_method_entity(method.get());
 	auto irg = new_ir_graph(method_entity, get_local_var_count(*method));
 
-	create_and_finalize_method_body(*method.get(), irg);
+	create_and_finalize_method_body(*method.get(), irg, class_type);
 
 //  default_layout_compound_type(class_type);
 //  set_type_state(class_type, layout_fixed);

@@ -234,8 +234,16 @@ namespace minijava
 		                        const ast::instance_method& method)
 		{
 			method_generator generator{sem_info, firm_types, class_type};
-			//          method.accept(generator);
-			(void)method;
+			method.body().accept(generator);
+		}
+
+		void create_firm_method(const semantic_info& sem_info,
+		                        ir_types& firm_types,
+		                        const ir_type& class_type,
+		                        const ast::main_method& method)
+		{
+			method_generator generator{sem_info, firm_types, class_type};
+			method.body().accept(generator);
 		}
 
 	}  // namespace sem

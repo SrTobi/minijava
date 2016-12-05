@@ -273,7 +273,8 @@ namespace minijava
 		void create_method_entity(ir_type *class_type, const std::unique_ptr<ast::instance_method> &method);
 		void create_method_entity(ir_type *class_type, const std::unique_ptr<ast::main_method> &method);
 
-		void create_and_finalize_method_body(const minijava::ast::method &method, ir_graph* irg);
+		void create_and_finalize_method_body(const minijava::ast::main_method &method, ir_graph* irg, ir_type* class_type);
+		void create_and_finalize_method_body(const minijava::ast::instance_method &method, ir_graph* irg, ir_type* class_type);
 
 	public:
 
