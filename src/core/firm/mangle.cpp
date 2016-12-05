@@ -1,5 +1,6 @@
 #include "firm/mangle.hpp"
 
+#include <cassert>
 #include <regex>
 
 
