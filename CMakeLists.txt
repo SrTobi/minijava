@@ -38,6 +38,7 @@ set(COMPONENTS
 	cli
 	exceptions
 	firm/firm
+	firm/mangle
 	firm/method_builder
 	firm/type_builder
 	global
