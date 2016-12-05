@@ -178,6 +178,8 @@ namespace minijava
 					(void) node;
 				}
 
+				ir_node* current_node() const noexcept {
+					return _current_node;
 				void visit(const ast::instance_method& node) override
 				{
 					auto locals = _sem_info.locals_annotations().at(node);
@@ -225,6 +227,8 @@ namespace minijava
 
 				var_id_map_type _var_ids{};
 
+				ir_node* _current_node;
+
 			};
 		}
 
@@ -242,8 +246,14 @@ namespace minijava
 		                        const ir_type& class_type,
 		                        const ast::main_method& method)
 		{
+			auto irg = get_current_ir_graph();
 			method_generator generator{sem_info, firm_types, class_type};
 			method.body().accept(generator);
+			// main has no return value - so we don't need method_generator.current_node()
+			auto store = get_store();
+			auto ret = new_Return(store, 0, 0);
+			add_immBlock_pred(get_irg_end_block(irg), ret);
+			mature_immBlock(get_r_cur_block(irg));
 		}
 
 	}  // namespace sem

@@ -63,15 +63,8 @@ void minijava::ir_types::create_method_entity(
 	(void)class_type;
 	auto method_entity = get_method_entity(method.get());
 	auto irg = new_ir_graph(method_entity, get_local_var_count(*method));
-	set_current_ir_graph(irg);
 
-	// should be created by method_builder
-	auto store = get_store();
-	auto ret = new_Return(store, 0, 0);
-	add_immBlock_pred(get_irg_end_block(irg), ret);
-	mature_immBlock(get_r_cur_block(irg));
-
-	irg_finalize_cons(irg);
+	create_and_finalize_method_body(*method, irg, class_type);
 
 //  dump_ir_graph(irg, "test_x_");
 //  dump_all_ir_graphs("");
