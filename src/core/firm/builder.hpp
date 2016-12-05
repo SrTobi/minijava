@@ -284,7 +284,7 @@ namespace minijava
 
 			// no array
 			if (type.rank == 0) {
-				ir_type* simple_type;
+				ir_type* simple_type = nullptr;
 				if (type.info.is_boolean()) {
 					simple_type = _boolean_type;
 				} else if (type.info.is_int()) {
@@ -293,6 +293,8 @@ namespace minijava
 					simple_type = _void_type;
 				} else if (type.info.is_reference()) {
 					simple_type = get_class_type(type); // TOOD
+				} else {
+					MINIJAVA_NOT_REACHED();
 				}
 
 				return simple_type;
