@@ -172,10 +172,20 @@ namespace minijava
 
 				void visit(const ast::local_variable_statement& node) override
 				{
-					(void)node;
 					assert(_var_ids.find(&node.declaration()) != _var_ids.end());
-					// FIXME
-				}
+					auto node_decl = &node.declaration();
+					auto pos =_var_ids.at(node_decl);
+
+					if (node.initial_value()) {
+						auto expr_node = get_expression_node(*node.initial_value());
+						set_value(pos, expr_node);
+					} else {
+						auto type = _sem_info.type_annotations().at(*node_decl);
+						auto ir_type = _firm_types.get_var_type(type);
+						auto null_value = new_Const_long(get_type_mode(ir_type), 0);
+						set_value(pos, null_value);
+					}
+			}
 
 				void visit(const ast::expression_statement& node) override
 				{
