@@ -94,9 +94,9 @@ namespace minijava
 				auto class_type = get_class_type(clazz.get());
 				(void)class_type;
 				// iterate over class methods and create prototypes
-//              for (auto& method : clazz->instance_methods()) {
-//                  init_method(class_type, *method.get());
-//              }
+				for (auto& method : clazz->instance_methods()) {
+					init_method(class_type, *method.get());
+				}
 
 				// insert main method
 				for (auto& method : clazz->main_methods()) {
@@ -227,9 +227,9 @@ namespace minijava
 			}
 
 			// insert methods
-//          for (auto& method : clazz.info.declaration()->instance_methods()) {
-//              create_method_entity(class_type, method);
-//          }
+			for (auto& method : clazz.info.declaration()->instance_methods()) {
+			    create_method_entity(class_type, method);
+			}
 
 			for (auto& method : clazz.info.declaration()->main_methods()) {
 				create_method_entity(class_type, method);

@@ -237,8 +237,21 @@ namespace minijava
 		                        const ir_type& class_type,
 		                        const ast::instance_method& method)
 		{
+			auto irg = get_current_ir_graph();
 			method_generator generator{sem_info, firm_types, class_type};
 			method.body().accept(generator);
+			// handle return value
+			auto has_return_type = sem_info.type_annotations().at(method).info.is_void() == false;
+			auto store = get_store();
+			ir_node* ret;
+			if (has_return_type) {
+				ir_node* results[1] = {generator.current_node()};
+				ret = new_Return(store, 0, results);
+			} else {
+				ret = new_Return(store, 0, 0);
+			}
+			add_immBlock_pred(get_irg_end_block(irg), ret);
+			mature_immBlock(get_r_cur_block(irg));
 		}
 
 		void create_firm_method(const semantic_info& sem_info,
