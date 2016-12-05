@@ -61,7 +61,7 @@ namespace minijava
 
 			init_types();
 			init_methods();
-
+//
 			finalize_class_types();
 		}
 
@@ -92,14 +92,16 @@ namespace minijava
 			for (const auto& clazz : _ast.classes()) {
 				// get class type, and maybe create it
 				auto class_type = get_class_type(clazz.get());
+				(void)class_type;
 				// iterate over class methods and create prototypes
-				for (auto& method : clazz->instance_methods()) {
-					init_method(class_type, *method.get());
-				}
+//              for (auto& method : clazz->instance_methods()) {
+//                  init_method(class_type, *method.get());
+//              }
 
 				// insert main method
 				for (auto& method : clazz->main_methods()) {
-					init_method(class_type, *method.get());
+					// add main method to global type instead of class type
+					init_method(get_glob_type(), *method.get());
 				}
 			}
 		}
@@ -225,9 +227,9 @@ namespace minijava
 			}
 
 			// insert methods
-			for (auto& method : clazz.info.declaration()->instance_methods()) {
-				create_method_entity(class_type, method);
-			}
+//          for (auto& method : clazz.info.declaration()->instance_methods()) {
+//              create_method_entity(class_type, method);
+//          }
 
 			for (auto& method : clazz.info.declaration()->main_methods()) {
 				create_method_entity(class_type, method);
@@ -379,7 +381,6 @@ namespace minijava
 
 		~builder()
 		{
-			ir_finish();
 		}
 
 		void ast2firm()
@@ -389,10 +390,12 @@ namespace minijava
 
 		void emit()
 		{
+
+			dump_all_ir_graphs("dump");
 			be_parse_arg("isa=amd64");
 			auto f = std::fopen("./temp.asm", "w+");
 			if (f != NULL) {
-				be_main(f, "main_class");
+				be_main(f, "test.mj");
 				std::fclose(f);
 			}
 		}
