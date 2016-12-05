@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "token_type.hpp"
+#include "lexer/token_type.hpp"
 
 
 namespace minijava
@@ -32,3 +32,9 @@ namespace minijava
 	token_type classify_word(const std::string& word);
 
 }  // namespace minijava
+
+
+#define MINIJAVA_INCLUDED_FROM_LEXER_KEYWORD_HPP
+#include "lexer/keyword_pearson.tpp"
+#include "lexer/keyword.tpp"
+#undef MINIJAVA_INCLUDED_FROM_LEXER_KEYWORD_HPP
