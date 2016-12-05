@@ -157,6 +157,7 @@ namespace minijava
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{1};
 					for (const auto& local : locals) {
+						// TODO - should be removed or removed in builder.cpp
 						if (current_id <= num_params) {
 							set_value(current_id, new_Proj(
 									args,
@@ -180,6 +181,7 @@ namespace minijava
 						auto expr_node = get_expression_node(*node.initial_value());
 						set_value(pos, expr_node);
 					} else {
+						// initialize with default zero value
 						auto type = _sem_info.type_annotations().at(*node_decl);
 						auto ir_type = _firm_types.get_var_type(type);
 						auto null_value = new_Const_long(get_type_mode(ir_type), 0);
@@ -221,8 +223,8 @@ namespace minijava
 					auto store = get_store();
 					if (expr) {
 						auto expression_node = get_expression_node(*node.value());
-						ir_node* results[1] = {expression_node};
-						ret = new_Return(store, 1, results);
+//						ir_node* results[1] = {expression_node};
+						ret = new_Return(store, 1, &expression_node);
 					} else {
 						ret = new_Return(store, 0, NULL);
 					}
@@ -276,15 +278,8 @@ namespace minijava
 			// handle return value
 			// no explicit return statement found?
 			if (get_cur_block()) {
-				auto has_return_type = sem_info.type_annotations().at(method).info.is_void() == false;
 				auto store = get_store();
-				ir_node *ret;
-				if (has_return_type) {
-					ir_node *results[1] = {generator.current_node()};
-					ret = new_Return(store, 1, results);
-				} else {
-					ret = new_Return(store, 0, NULL);
-				}
+				auto ret = new_Return(store, 0, NULL);
 				add_immBlock_pred(get_irg_end_block(irg), ret);
 				mature_immBlock(get_r_cur_block(irg));
 			}

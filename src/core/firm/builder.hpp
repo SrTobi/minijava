@@ -92,7 +92,6 @@ namespace minijava
 			for (const auto& clazz : _ast.classes()) {
 				// get class type, and maybe create it
 				auto class_type = get_class_type(clazz.get());
-				(void)class_type;
 				// iterate over class methods and create prototypes
 				for (auto& method : clazz->instance_methods()) {
 					init_method(class_type, *method.get());
@@ -140,9 +139,8 @@ namespace minijava
 
 		void init_method(ir_type* class_type, ast::main_method& method)
 		{
-			auto param_count = method.parameters().size();
 			auto method_type = new_type_method(
-					param_count, // param count: don't miss implicit this argument
+					0, // param count: don't miss implicit this argument
 					0, // number of return types
 					0, // is variadic?
 					cc_cdecl_set, // calling conventions
@@ -150,7 +148,7 @@ namespace minijava
 
 			auto method_entity = new_entity(
 					class_type,
-					new_id_from_str(method.name().c_str()),
+					new_id_from_str("minijava_main"),
 					method_type);
 			set_entity_ld_ident(method_entity, new_id_from_str("minijava_main"));
 
@@ -294,7 +292,7 @@ namespace minijava
 				} else if (type.info.is_void()) {
 					simple_type = _void_type;
 				} else if (type.info.is_reference()) {
-					simple_type = get_class_type(type);
+					simple_type = get_class_type(type); // TOOD
 				}
 
 				return simple_type;
