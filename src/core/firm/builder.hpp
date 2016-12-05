@@ -152,7 +152,7 @@ namespace minijava
 					class_type,
 					new_id_from_str(method.name().c_str()),
 					method_type);
-			set_entity_ld_ident(method_entity, new_id_from_str("mjava_main"));
+			set_entity_ld_ident(method_entity, new_id_from_str("minijava_main"));
 
 			_method_mapping.insert(std::make_pair(&method, method_entity));
 		}
