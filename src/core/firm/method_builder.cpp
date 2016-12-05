@@ -25,15 +25,13 @@ namespace minijava
 			public:
 
 				expression_generator(const semantic_info& sem_info,
-				                     /*const var_id_map_type& var_ids,*/
+				                     const var_id_map_type& var_ids,
 				                     ir_types& firm_types, const ir_type* class_type)
-						: _sem_info{sem_info}, /*_var_ids{var_ids},*/
+						: _sem_info{sem_info}, _var_ids{var_ids},
 						  _firm_types{firm_types}, _class_type{class_type}
 				{}
 
 				using ast::visitor::visit;
-
-				// FIXME
 
 				void visit(const ast::boolean_constant &node) override
 				{
@@ -46,17 +44,31 @@ namespace minijava
 					_current_node = new_Const_long(_firm_types.mode_int(), value);
 				}
 
+				void visit(const ast::variable_access &node) override {
+					auto var_decl = _sem_info.vardecl_annotations().at(node);
+					auto type = _sem_info.type_annotations().at(node);
+					auto ir_type = _firm_types.get_var_type(type);
+					_var_pos =_var_ids.at(var_decl);
+					_current_node = get_value(_var_pos, get_type_mode(ir_type));
+				}
+
 				void visit(const ast::binary_expression &node) override
 				{
+					auto old_pos = _var_pos;
+
 					ir_node *memory;
 					node.lhs().accept(*this);
 					auto lhs = _current_node;
+					auto lhs_pos = _var_pos;
 					node.rhs().accept(*this);
 					auto rhs = _current_node;
 
 					ir_node* result = (ir_node*) nullptr;
 					switch (node.type()) {
 						case ast::binary_operation_type::assign:
+							memory = get_store();
+							set_value(lhs_pos, rhs);
+							result = rhs;
 							break;
 						case ast::binary_operation_type::divide:
 							memory  = get_store();
@@ -86,12 +98,7 @@ namespace minijava
 					}
 
 					_current_node = result;
-				}
-
-				void visit_expression(const ast::expression &node) override
-				{
-					(void)node; // TODO
-					_current_node = (ir_node*)nullptr;
+					_var_pos = old_pos;
 				}
 
 				void visit(const ast::this_ref &node) override
@@ -117,8 +124,10 @@ namespace minijava
 					return _class_type != nullptr;
 				}
 
+				int _var_pos{-1};
+
 				const semantic_info& _sem_info;
-//              const var_id_map_type& _var_ids;
+				const var_id_map_type& _var_ids;
 				ir_types& _firm_types;
 				const ir_type* _class_type;
 
@@ -139,10 +148,32 @@ namespace minijava
 
 				using ast::visitor::visit;
 
+				void visit(const ast::instance_method& node) override
+				{
+					auto irg = get_current_ir_graph();
+					auto method_entity = _firm_types.get_method_entity(&node);
+					auto locals = _sem_info.locals_annotations().at(node);
+					auto args = get_irg_args(irg);
+					auto num_params = static_cast<int>(node.parameters().size());
+					auto current_id = int{1};
+					for (const auto& local : locals) {
+						if (current_id <= num_params) {
+							set_value(current_id, new_Proj(
+									args,
+									get_type_mode(get_entity_type(method_entity)),
+									static_cast<unsigned int>(current_id - 1)
+							));
+						}
+						_var_ids.insert(std::make_pair(local, current_id++));
+					}
+
+					node.body().accept(*this);
+				}
+
 				void visit(const ast::local_variable_statement& node) override
 				{
 					(void)node;
-//                  assert(_var_ids.find(&node.declaration()) != _var_ids.end());
+					assert(_var_ids.find(&node.declaration()) != _var_ids.end());
 					// FIXME
 				}
 
@@ -180,7 +211,6 @@ namespace minijava
 					auto store = get_store();
 					if (expr) {
 						auto expression_node = get_expression_node(*node.value());
-						std::cout << "return expr:" << expression_node << std::endl;
 						ir_node* results[1] = {expression_node};
 						ret = new_Return(store, 1, results);
 					} else {
@@ -207,7 +237,7 @@ namespace minijava
 
 				ir_node* get_expression_node(const ast::expression& node)
 				{
-					expression_generator generator(_sem_info, _firm_types, &_class_type);
+					expression_generator generator(_sem_info, _var_ids, _firm_types, &_class_type);
 					node.accept(generator);
 					return generator.current_node();
 				}
@@ -218,7 +248,7 @@ namespace minijava
 				ir_types& _firm_types;
 				const ir_type& _class_type;
 
-//              var_id_map_type _var_ids{};
+				var_id_map_type _var_ids{};
 
 				ir_node* _current_node;
 
@@ -232,7 +262,7 @@ namespace minijava
 		{
 			auto irg = get_current_ir_graph();
 			method_generator generator{sem_info, firm_types, class_type};
-			method.body().accept(generator);
+			method.accept(generator);
 			// handle return value
 			// no explicit return statement found?
 			if (get_cur_block()) {
@@ -257,7 +287,7 @@ namespace minijava
 		{
 			auto irg = get_current_ir_graph();
 			method_generator generator{sem_info, firm_types, class_type};
-			method.body().accept(generator);
+			method.accept(generator);
 			// main has no return value - so we don't need method_generator.current_node()
 			// no return statement at the end => implicit return
 			if (get_cur_block()) {
