@@ -255,8 +255,8 @@ namespace minijava
 			}
 			if (stage == compilation_stage::compile_firm) {
 				namespace fs = boost::filesystem;
-				const auto tmp_path = fs::temp_directory_path()
-				                      / fs::unique_path();
+				const auto pattern = fs::temp_directory_path() / "%%%%%%%%%%%%.s";
+				const auto tmp_path = fs::unique_path(pattern);
 				const auto assembly_filename = tmp_path.string();
 				auto assembly_file = file_output{assembly_filename};
 				emit_x64_assembly_firm(ir, assembly_file);

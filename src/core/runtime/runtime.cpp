@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 {
 	program_name = (argc > 0) ? argv[0] : "minijava";
 	if (argc > 1) {
-		fprintf(stderr, "%s: Too many arguments\n", program_name, strerror(errno));
+		fprintf(stderr, "%s: Too many arguments\n", program_name);
 		return EXIT_FAILURE;
 	}
 	minijava_main();
