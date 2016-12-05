@@ -1,6 +1,6 @@
 #include <firm/builder.hpp>
 
-void minijava::ir_types::create_and_finalize_method_body(const minijava::ast::method &method, ir_graph* irg)
+void minijava::ir_types::create_and_finalize_method_body(const minijava::ast::method &/*method*/, ir_graph* irg)
 {
 	set_current_ir_graph(irg);
 

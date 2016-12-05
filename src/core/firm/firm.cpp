@@ -2,6 +2,8 @@
 
 #include "libfirm/firm.h"
 
+#include "firm/builder.hpp"
+
 namespace minijava
 {
 
@@ -9,6 +11,8 @@ namespace minijava
 	{
 		ir_init();
 		set_optimize(0);
+		auto mode_p = new_reference_mode("P64", irma_twos_complement, 64, 64);
+		set_modeP(mode_p);
 	}
 
 	firm_ir::~firm_ir()
@@ -20,9 +24,9 @@ namespace minijava
 	                       const semantic_info& semantic_info)
 	{
 		auto ir = firm_ir{};
-		// FIXME: create types, create method graphs
-		(void) ast;
-		(void) semantic_info;
+		auto types = ir_types{semantic_info, ast};
+		types.init();
+		// FIXME: create method graphs
 		return ir;
 	}
 
@@ -43,7 +47,7 @@ namespace minijava
 		// FIXME: implement lowering properly (?), see https://github.com/MatzeB/jFirm/blob/master/src/example/Lower.java
 		// FIXME: do we need to call ir_lower_intrinsics here?
 		// FIXME: the below is just a placeholder, I have no idea what I'm doing
-		lower_highlevel();
+		// lower_highlevel();
 		be_parse_arg("isa=amd64");
 		be_main(output_file.handle(), output_file.filename().c_str());
 	}
