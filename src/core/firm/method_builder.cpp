@@ -54,7 +54,7 @@ namespace minijava
 					node.rhs().accept(*this);
 					auto rhs = _current_node;
 
-					ir_node* result;
+					ir_node* result = (ir_node*) nullptr;
 					switch (node.type()) {
 						case ast::binary_operation_type::assign:
 							break;
@@ -85,7 +85,7 @@ namespace minijava
 							break;
 					}
 
-					_current_node = (ir_node*) nullptr;
+					_current_node = result;
 				}
 
 				void visit_expression(const ast::expression &node) override
