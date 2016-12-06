@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <climits>
 #include <type_traits>
+#include <iostream>
 
 #include "libfirm/firm.h"
 
@@ -28,7 +29,7 @@ namespace minijava
 
 				expression_generator(const semantic_info& sem_info,
 				                     const var_id_map_type& var_ids,
-				                     ir_types& firm_types, const ir_type* class_type)
+				                     const ir_types& firm_types, const ir_type* class_type)
 						: _sem_info{sem_info}, _var_ids{var_ids},
 						  _firm_types{firm_types}, _class_type{class_type},
 				          _primitives{primitive_types::get_instance()}
@@ -244,7 +245,7 @@ namespace minijava
 
 				const semantic_info& _sem_info;
 				const var_id_map_type& _var_ids;
-				ir_types& _firm_types;
+				const ir_types& _firm_types;
 				const ir_type* _class_type;
 
 				ir_node* _current_node;
@@ -259,7 +260,7 @@ namespace minijava
 			public:
 
 				method_generator(const semantic_info& sem_info,
-				                 ir_types& firm_types, const ir_type& class_type)
+				                 const ir_types& firm_types, const ir_type& class_type)
 						: _sem_info{sem_info}, _firm_types{firm_types},
 						  _class_type{class_type}
 				{}
@@ -393,7 +394,7 @@ namespace minijava
 			private:
 
 				const semantic_info& _sem_info;
-				ir_types& _firm_types;
+				const ir_types& _firm_types;
 				const ir_type& _class_type;
 
 				var_id_map_type _var_ids{};
@@ -404,7 +405,7 @@ namespace minijava
 		}
 
 		void create_firm_method(const semantic_info& sem_info,
-		                        ir_types& firm_types,
+		                        const ir_types& firm_types,
 		                        const ir_type& class_type,
 		                        const ast::instance_method& method)
 		{
@@ -422,7 +423,7 @@ namespace minijava
 		}
 
 		void create_firm_method(const semantic_info& sem_info,
-		                        ir_types& firm_types,
+		                        const ir_types& firm_types,
 		                        const ir_type& class_type,
 		                        const ast::main_method& method)
 		{
@@ -454,31 +455,6 @@ namespace minijava
 			       : static_cast<int>(num_locals) + 1;
 		}
 
-		void _create_and_finalize_method_body(
-				const ast::main_method&  /* method */,
-				ir_graph*const              irg,
-				ir_type*const            /* class_type */
-		)
-		{
-			set_current_ir_graph(irg);
-			//create_firm_method(_seminfo, *this, *class_type, method);
-			mature_immBlock(get_irg_end_block(irg));
-			irg_finalize_cons(irg);
-			assert(irg_verify(irg));
-		}
-
-		void _create_and_finalize_method_body(
-				const ast::instance_method&  /* method */,
-				ir_graph*const                  irg,
-				ir_type*const                /* class_type */
-		)
-		{
-			set_current_ir_graph(irg);
-			//create_firm_method(_seminfo, *this, *class_type, method);
-			mature_immBlock(get_irg_end_block(irg));
-			irg_finalize_cons(irg);
-			assert(irg_verify(irg));
-		}
 
 		void _create_method_entity(
 				const semantic_info& info,
@@ -488,7 +464,12 @@ namespace minijava
 		{
 			const auto method_entity = types.methodmap.at(method);
 			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
-			_create_and_finalize_method_body(method, irg, class_type);
+			set_current_ir_graph(irg);
+			create_firm_method(info, types, *class_type, method);
+			mature_immBlock(get_irg_end_block(irg));
+			irg_finalize_cons(irg);
+			assert(irg_verify(irg));
+
 			// default_layout_compound_type(class_type);
 			// set_type_state(class_type, layout_fixed);
 		}
@@ -501,7 +482,12 @@ namespace minijava
 		{
 			const auto method_entity = types.methodmap.at(method);
 			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
-			_create_and_finalize_method_body(method, irg, class_type);
+
+			set_current_ir_graph(irg);
+			create_firm_method(info, types, *class_type, method);
+			mature_immBlock(get_irg_end_block(irg));
+			irg_finalize_cons(irg);
+			assert(irg_verify(irg));
 		}
 
 		void create_methods(const ast::program& ast,
