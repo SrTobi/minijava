@@ -48,7 +48,7 @@ namespace minijava
 				{
 					for (const auto& kv : _seminfo.type_annotations()) {
 						if (!kv.second.info.is_void()) {
-							_typemap[kv.second] = _get_var_type(kv.second);
+							_typemap.insert({kv.second, _get_var_type(kv.second)});
 						}
 					}
 				}
@@ -175,23 +175,18 @@ namespace minijava
 					assert(clazz.info.is_reference());
 					const auto class_type = _classmap.at(*clazz.info.declaration());
 					// insert fields
-					auto offset = 0;
 					for (const auto& field : clazz.info.declaration()->fields()) {
-						// TODO: Better layouting / offset calculation
-						const auto field_entity = _create_field_entity(class_type, *field, offset);
-						assert(8 <= get_type_size(get_entity_type(field_entity)));
-						offset += 8;
+						_create_field_entity(class_type, *field);
 					}
 					// TODO: Is there a better way to trick Firm into accepting empty types?
-					if (offset == 0) {
+					if (clazz.info.declaration()->fields().empty()) {
 						const auto dummy_name = new_id_from_str("__prevent_empty_class");
 						const auto dummy_field = new_entity(class_type, dummy_name, _primitives.int_type);
-						set_entity_offset(dummy_field, 0);
 						set_entity_ld_ident(dummy_field, dummy_name);
 					}
 				}
 
-				ir_entity* _create_field_entity(ir_type *class_type, const ast::var_decl& field, const int offset)
+				ir_entity* _create_field_entity(ir_type *class_type, const ast::var_decl& field)
 				{
 					const auto field_type = _seminfo.type_annotations().at(field);
 					const auto ir_type = _get_var_type(field_type);
@@ -200,7 +195,6 @@ namespace minijava
 						new_id_from_str(field.name().c_str()),
 						ir_type
 					);
-					set_entity_offset(field_entity, offset);
 					set_entity_ld_ident(field_entity, new_id_from_str(field.name().c_str()));  // TODO: mangle
 					_fieldmap[field] = field_entity;
 					return field_entity;
