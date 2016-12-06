@@ -103,27 +103,19 @@ namespace minijava
 				void visit_assignment(const ast::binary_expression& expression)
 				{
 					assert(expression.type() == ast::binary_operation_type::assign);
-					std::cout << "<assign" << std::endl;
 					auto rhs = get_expression_node(expression.rhs());
-					std::cout << "rhs:" << rhs << std::endl;
 					auto _old_do_store = _do_store;
 					_do_store = true;
 					auto lhs = get_expression_node(expression.lhs());
-					std::cout << "lhs:" << lhs << std::endl;
 					if (is_Member(lhs)) {
-						std::cout << "<member" << std::endl;
 						auto rhs_mode = get_irn_mode(rhs);
-						std::cout << "rhs mode:" << rhs_mode << std::endl;
 						auto value_type = get_type_for_mode(rhs_mode);
-						std::cout << "value_type:" << value_type << std::endl;
 						auto store = new_Store(get_store(), lhs, rhs, value_type, cons_none);
-						std::cout << "store:" << store << std::endl;
 						set_store(new_Proj(store, get_modeM(), pn_Store_M));
 						_current_node = store;
-						std::cout << _current_node << ":member>" << std::endl;
 
 					} else {
-						std::cout << "a local var...!?" << std::endl;
+						// todo..
 					}
 					_do_store = _old_do_store;
 
@@ -333,20 +325,20 @@ namespace minijava
 
 				void visit(const ast::if_statement& node) override
 				{
-//					auto then_node = new_immBlock();
-//					auto exit_node = new_immBlock();
-//					auto else_node = node.else_statement() ? new_immBlock() : exit_node;
-//
-//					auto cond_node = get_expression_node(node.condition());
-//					add_immBlock_pred(then_node, new_Proj(cond_node, get_modeX(), pn_Cond_true));
-//					add_immBlock_pred(else_node, new_Proj(cond_node, get_modeX(), pn_Cond_false));
-//
-//					mature_immBlock(then_node);
-//					set_cur_block(then_node);
-//					visit_statement(node.then_statement());
-//					if (get_cur_block()) {
-//						add_immBlock_pred(exit_node, new_Jmp());
-//					}
+					//auto then_node = new_immBlock();
+					//auto exit_node = new_immBlock();
+					//auto else_node = node.else_statement() ? new_immBlock() : exit_node;
+					//
+					//auto cond_node = get_expression_node(node.condition());
+					//add_immBlock_pred(then_node, new_Proj(cond_node, get_modeX(), pn_Cond_true));
+					//add_immBlock_pred(else_node, new_Proj(cond_node, get_modeX(), pn_Cond_false));
+					//
+					//mature_immBlock(then_node);
+					//set_cur_block(then_node);
+					//visit_statement(node.then_statement());
+					//if (get_cur_block()) {
+					//    add_immBlock_pred(exit_node, new_Jmp());
+					//}
 					(void) node;
 				}
 
@@ -361,12 +353,9 @@ namespace minijava
 					auto expr = node.value();
 					ir_node* ret;
 					if (expr) {
-						std::cout << "ret expr";
 						auto expression_node = get_expression_node(*node.value());
-						std::cout << ".";
 						//ir_node* results[1] = {expression_node};
 						ret = new_Return(get_store(), 1, &expression_node);
-						std::cout << "finish" << std::endl;
 					} else {
 						ret = new_Return(get_store(), 0, NULL);
 					}
@@ -375,7 +364,6 @@ namespace minijava
 					add_immBlock_pred(get_irg_end_block(irg), ret);
 					mature_immBlock(get_r_cur_block(irg));
 
-					std::cout << "added ret" << std::endl;
 					// mark as unreachable
 					set_cur_block(NULL);
 				}
@@ -416,16 +404,11 @@ namespace minijava
 		                        const ast::instance_method& method)
 		{
 			auto irg = get_current_ir_graph();
-			std::cout << "<method" << method.name() << std::endl;
 			method_generator generator{sem_info, firm_types, class_type};
 			method.accept(generator);
-			std::cout << "method>" << std::endl;
 			// handle return value
 			// no explicit return statement found?
-			std::cout << "verify:" << irg_verify(irg) << std::endl;
-			//dump_ir_graph(irg, "test");
 			if (get_cur_block()) {
-				std::cout << "get_cur_block" << std::endl;
 				auto store = get_store();
 				auto ret = new_Return(store, 0, NULL);
 				add_immBlock_pred(get_irg_end_block(irg), ret);
