@@ -27,7 +27,9 @@ first() {
 }
 
 dumpenv() {
-	CMAKE_BUILD_TYPE="${buildtype}" env
+	CMAKE_BUILD_TYPE="${buildtype}" env                                       \
+		| grep -v '^OLDPWD='                                                  \
+		| sort
 }
 
 need_reconfiguration() {
