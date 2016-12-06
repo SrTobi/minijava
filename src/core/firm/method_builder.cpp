@@ -272,6 +272,7 @@ namespace minijava
 					auto args = get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{1};
+					set_value(0, new_Proj(args, mode_P, 0));
 					for (const auto& local : locals) {
 						if (current_id <= num_params) {
 							set_value(current_id, new_Proj(
