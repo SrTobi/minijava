@@ -1,5 +1,8 @@
 #include "firm/firm.hpp"
 
+#include <atomic>
+#include <stdexcept>
+
 #include "libfirm/firm.h"
 
 #include "firm/builder.hpp"
@@ -9,15 +12,33 @@ namespace minijava
 
 	firm_ir::firm_ir()
 	{
+		static std::atomic_flag initialized = ATOMIC_FLAG_INIT;
+		if (initialized.test_and_set()) {
+			throw std::logic_error{
+					"libfirm was already initialized and is not re-entrant."
+			};
+		}
 		ir_init();
 		set_optimize(0);
 		auto mode_p = new_reference_mode("P64", irma_twos_complement, 64, 64);
 		set_modeP(mode_p);
 	}
 
+	firm_ir::firm_ir(firm_ir&& other)
+	{
+		if (!other._firm_owner) {
+			throw std::logic_error{
+					"Tried to move from an instance which was already moved."
+			};
+		}
+		other._firm_owner = false;
+	}
+
 	firm_ir::~firm_ir()
 	{
-		ir_finish();
+		if (_firm_owner) {
+			ir_finish();
+		}
 	}
 
 	firm_ir create_firm_ir(const ast::program& ast,

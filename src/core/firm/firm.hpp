@@ -22,16 +22,110 @@ namespace minijava
 	 *     RAII wrapper around the intermediate representation created by
 	 *     libfirm.
 	 *
-	 * Due to libfirm's internal state keeping, there must never be more than
-	 * one instance of this class at the same time. Creating a second instance
-	 * of this class before the previous instance's destructor has completed
-	 * results in undefined behavior.
+	 * Due to libfirm's internal state keeping, users must not create more than
+	 * one instance of this class during the entire lifetime of a program,
+	 * unless they use the move constructor to transfer ownership of libfirm
+	 * from the previous instance.
+	 *
+	 * (At the time of writing (2016), this is a known limitation of libfirm.)
 	 *
 	 */
-	struct firm_ir final
+	class firm_ir final
 	{
+
+	public:
+
+		/**
+		 * @brief
+		 *     Initializes libfirm.
+		 *
+		 * @throws std::logic_error
+		 *     if libfirm was already initialized
+		 *
+		 */
 		firm_ir();
+
+		/**
+		 * @brief
+		 *     `delete`d copy constructor.
+		 *
+		 * `firm_ir` objects are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		firm_ir(const firm_ir& other) = delete;
+
+		/**
+		 * @brief
+		 *     `delete`d copy assignment operator.
+		 *
+		 * `firm_ir` objects are not copyable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 * @returns
+		 *     *N/A*
+		 *
+		 */
+		firm_ir& operator=(const firm_ir& other) = delete;
+
+		/**
+		 * @brief
+		 *     Move constructor.
+		 *
+		 * Creates a `firm_ir` object which takes over the ownership of
+		 * `libfirm` from `other`, which must not be used after calling this
+		 * constructor.
+		 *
+		 * @param other
+		 *     `firm_ir` object to transfer libfirm ownership from
+		 *
+		 * @throws std::logic_error
+		 *     if `other` was previously moved and does not own libfirm anymore
+		 *
+		 */
+		firm_ir(firm_ir&& other);
+
+		/**
+		 * @brief
+		 *     `delete`d copy assignment operator.
+		 *
+		 * Since there cannot be more than one default-constructed `firm_ir`
+		 * instance in any given program, move assignment is not a useful
+		 * operation.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 * @returns
+		 *     *N/A*
+		 *
+		 */
+		firm_ir& operator=(firm_ir&& other) = delete;
+
+		/**
+		 * @brief
+		 *     Frees the dynamic memory allocated by libfirm.
+		 *
+		 * This does not fully reset libfirm's internal state due to a known
+		 * limitation of libfirm.
+		 *
+		 */
 		~firm_ir();
+
+	private:
+
+		/**
+		 * @brief
+		 *     whether this instance should deallocate libfirm's data structures
+		 *     upon destruction
+		 *
+		 */
+		bool _firm_owner{true};
+
 	};
 
 	/**
