@@ -2,11 +2,13 @@
 
 #include <set>
 #include <unordered_map>
+#include <climits>
+#include <type_traits>
 
 #include "libfirm/firm.h"
 
 #include "exceptions.hpp"
-#include "firm/builder.hpp"
+#include "firm/type_builder.hpp"
 
 namespace minijava
 {
@@ -28,30 +30,31 @@ namespace minijava
 				                     const var_id_map_type& var_ids,
 				                     ir_types& firm_types, const ir_type* class_type)
 						: _sem_info{sem_info}, _var_ids{var_ids},
-						  _firm_types{firm_types}, _class_type{class_type}
+						  _firm_types{firm_types}, _class_type{class_type},
+				          _primitives{primitive_types::get_instance()}
 				{}
 
 				using ast::visitor::visit;
 
 				void visit(const ast::boolean_constant &node) override
 				{
-					_current_node = new_Const_long(_firm_types.mode_boolean(), node.value());
+					_current_node = new_Const_long(_primitives.boolean_mode, node.value());
 				}
 
 				void visit(const ast::integer_constant &node) override
 				{
 					auto value = _sem_info.const_annotations().at(node);
-					_current_node = new_Const_long(_firm_types.mode_int(), value);
+					_current_node = new_Const_long(_primitives.int_mode, value);
 				}
 
 				void visit(const ast::variable_access &node) override {
 					auto var_decl = _sem_info.vardecl_annotations().at(node);
-					auto field = _firm_types.get_field_entity(*var_decl);
+					auto field = _firm_types.fieldmap.at(*var_decl);
 					if (field) {
 						visit_field(node, field);
 					} else {
 						auto type = _sem_info.type_annotations().at(node);
-						auto ir_type = _firm_types.get_var_type(type);
+						auto ir_type = _firm_types.typemap.at(type);
 						_var_pos =_var_ids.at(var_decl);
 						_current_node = get_value(_var_pos, get_type_mode(ir_type));
 					}
@@ -113,7 +116,6 @@ namespace minijava
 						auto store = new_Store(get_store(), lhs, rhs, value_type, cons_none);
 						set_store(new_Proj(store, get_modeM(), pn_Store_M));
 						_current_node = store;
-
 					} else {
 						// todo..
 					}
@@ -142,7 +144,7 @@ namespace minijava
 					case ast::binary_operation_type::divide: {
 						memory = get_store();
 						auto div_result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
-						_current_node = new_Proj(div_result, _firm_types.mode_int(), pn_Div_res);
+						_current_node = new_Proj(div_result, _primitives.int_mode, pn_Div_res);
 						set_store(new_Proj(div_result, mode_M, pn_Div_M));
 						break;
 					}
@@ -150,7 +152,7 @@ namespace minijava
 						memory = get_store();
 						auto mod_result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
 						set_store(new_Proj(mod_result, mode_M, pn_Mod_M));
-						_current_node = new_Proj(mod_result, _firm_types.mode_int(), pn_Mod_res);
+						_current_node = new_Proj(mod_result, _primitives.int_mode, pn_Mod_res);
 						break;
 					}
 					case ast::binary_operation_type::multiply:
@@ -247,6 +249,8 @@ namespace minijava
 
 				ir_node* _current_node;
 
+				const primitive_types _primitives;
+
 			};
 
 			class method_generator final : public ast::visitor
@@ -265,7 +269,7 @@ namespace minijava
 				void visit(const ast::instance_method& node) override
 				{
 					auto irg = get_current_ir_graph();
-					auto method_entity = _firm_types.get_method_entity(&node);
+					auto method_entity = _firm_types.methodmap.at(node);
 					//auto cur_block = get_r_cur_block(irg);
 					//set_r_cur_block(irg, get_irg_start_block(irg));
 					auto locals = _sem_info.locals_annotations().at(node);
@@ -299,7 +303,7 @@ namespace minijava
 					} else {
 						// initialize with default zero value
 						auto type = _sem_info.type_annotations().at(*node_decl);
-						auto ir_type = _firm_types.get_var_type(type);
+						auto ir_type = _firm_types.typemap.at(type);
 						auto null_value = new_Const_long(get_type_mode(ir_type), 0);
 						set_value(pos, null_value);
 					}
@@ -435,6 +439,88 @@ namespace minijava
 			}
 		}
 
-	}  // namespace sem
+		template <typename MethodT>
+		std::enable_if_t<std::is_base_of<ast::method, MethodT>{}, int>
+		_get_local_var_count(const semantic_info& info, const MethodT& node)
+		{
+			const auto num_locals = info.locals_annotations().at(node).size();
+			if (num_locals >= INT_MAX) {
+				throw internal_compiler_error{
+						"Cannot handle function with more than MAX_INT local variables"
+				};
+			}
+			return (std::is_same<ast::main_method, MethodT>{})
+			       ? static_cast<int>(num_locals)
+			       : static_cast<int>(num_locals) + 1;
+		}
+
+		void _create_and_finalize_method_body(
+				const ast::main_method&  /* method */,
+				ir_graph*const              irg,
+				ir_type*const            /* class_type */
+		)
+		{
+			set_current_ir_graph(irg);
+			//create_firm_method(_seminfo, *this, *class_type, method);
+			mature_immBlock(get_irg_end_block(irg));
+			irg_finalize_cons(irg);
+			assert(irg_verify(irg));
+		}
+
+		void _create_and_finalize_method_body(
+				const ast::instance_method&  /* method */,
+				ir_graph*const                  irg,
+				ir_type*const                /* class_type */
+		)
+		{
+			set_current_ir_graph(irg);
+			//create_firm_method(_seminfo, *this, *class_type, method);
+			mature_immBlock(get_irg_end_block(irg));
+			irg_finalize_cons(irg);
+			assert(irg_verify(irg));
+		}
+
+		void _create_method_entity(
+				const semantic_info& info,
+				const ir_types& types,
+				ir_type*const class_type,
+				const ast::instance_method&  method)
+		{
+			const auto method_entity = types.methodmap.at(method);
+			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
+			_create_and_finalize_method_body(method, irg, class_type);
+			// default_layout_compound_type(class_type);
+			// set_type_state(class_type, layout_fixed);
+		}
+
+		void _create_method_entity(
+				const semantic_info& info,
+				const ir_types& types,
+				ir_type*const class_type,
+		        const ast::main_method& method)
+		{
+			const auto method_entity = types.methodmap.at(method);
+			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
+			_create_and_finalize_method_body(method, irg, class_type);
+		}
+
+		void create_methods(const ast::program& ast,
+		                    const semantic_info& info,
+		                    const ir_types& types) {
+
+			for (const auto& clazz : ast.classes()) {
+				auto class_type = types.classmap.at(*clazz);
+				// insert methods
+				for (const auto& method : clazz->instance_methods()) {
+					_create_method_entity(info, types, class_type, *method);
+				}
+				for (const auto& method : clazz->main_methods()) {
+					_create_method_entity(info, types, class_type, *method);
+				}
+			}
+
+		}
+
+	}  // namespace firm
 
 }  // namespace minijava

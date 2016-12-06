@@ -26,7 +26,7 @@ namespace minijava
 	{
 		auto ir = firm_ir{};
 		auto types = firm::create_types(ast, semantic_info);
-		//firm::create_methods(ast, semantic_info, types);
+		firm::create_methods(ast, semantic_info, types);
 		return ir;
 	}
 

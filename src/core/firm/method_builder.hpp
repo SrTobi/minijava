@@ -16,21 +16,14 @@ struct ir_type;
 namespace minijava
 {
 
-	class ir_types; // FIXME: move to namespace
 
 	namespace firm
 	{
+		class ir_types;
 
-		void create_firm_method(const semantic_info& sem_info,
-		                        ir_types& firm_types,
-		                        const ir_type& class_type,
-		                        const ast::instance_method& method);
-
-		void create_firm_method(const semantic_info& sem_info,
-		                        ir_types& firm_types,
-		                        const ir_type& class_type,
-		                        const ast::main_method& method);
-
+		void create_methods(const ast::program& ast,
+		                    const semantic_info& semantic_info,
+		                    const ir_types& types);
 	}  // namespace firm
 
 }  // namespace minijava

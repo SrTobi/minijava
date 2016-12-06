@@ -1,9 +1,5 @@
 #include "firm/type_builder.hpp"
 
-#include <climits>
-#include <type_traits>
-
-
 namespace minijava
 {
 
@@ -50,14 +46,11 @@ namespace minijava
 
 				void _init_types()
 				{
-					std::transform(
-						std::begin(_seminfo.type_annotations()),
-						std::end(_seminfo.type_annotations()),
-						std::inserter(_typemap, _typemap.end()),
-						[self = this](auto&& t) {
-							return std::make_pair(t.second, self->_get_var_type(t.second));
+					for (const auto& kv : _seminfo.type_annotations()) {
+						if (!kv.second.info.is_void()) {
+							_typemap[kv.second] = _get_var_type(kv.second);
 						}
-					);
+					}
 				}
 
 				ir_type* _get_var_type(const sem::type type)
@@ -73,7 +66,7 @@ namespace minijava
 						} else if (type.info.is_int()) {
 							return _primitives.int_type;
 						} else if (type.info.is_reference()) {
-							return _create_class_type(*type.info.declaration());
+							return _create_class_type(*type.info.declaration()).second;
 						} else {
 							MINIJAVA_NOT_REACHED();
 						}
@@ -93,7 +86,7 @@ namespace minijava
 					if (pos != _classmap.end()) {
 						return pos->second;
 					}
-					return _create_class_type(clazz);
+					return _create_class_type(clazz).first;
 				}
 
 				void _init_methods()
@@ -121,7 +114,7 @@ namespace minijava
 						cc_cdecl_set,            // calling convention
 						mtp_no_property
 					);
-					set_method_param_type(method_type, 0, new_type_pointer(class_type));
+					set_method_param_type(method_type, 0, class_type);
 					auto param_num = std::size_t{1};
 					for (const auto& param : method.parameters()) {
 						const auto param_type = _get_var_type(_seminfo.type_annotations().at(*param));
@@ -157,7 +150,7 @@ namespace minijava
 					_methodmap[method] = method_entity;
 				}
 
-				ir_type* _create_class_type(const ast::class_declaration& clazz)
+				std::pair<ir_type*, ir_type*> _create_class_type(const ast::class_declaration& clazz)
 				{
 					const auto type = sem::type{_seminfo.classes().at(clazz.name()), 0};
 					const auto class_type = new_type_class(new_id_from_str(clazz.name().c_str()));
@@ -165,7 +158,7 @@ namespace minijava
 					set_type_alignment(class_type, 8);
 					_typemap[type] = pointer_type;
 					_classmap[clazz] = class_type;
-					return pointer_type;
+					return std::make_pair(class_type, pointer_type);
 				}
 
 				void _finalize_class_types()
@@ -180,7 +173,7 @@ namespace minijava
 				void _finalize_class_type(const sem::type clazz)
 				{
 					assert(clazz.info.is_reference());
-					const auto class_type = _get_var_type(clazz);
+					const auto class_type = _classmap.at(*clazz.info.declaration());
 					// insert fields
 					auto offset = 0;
 					for (const auto& field : clazz.info.declaration()->fields()) {
@@ -195,13 +188,6 @@ namespace minijava
 						const auto dummy_field = new_entity(class_type, dummy_name, _primitives.int_type);
 						set_entity_offset(dummy_field, 0);
 						set_entity_ld_ident(dummy_field, dummy_name);
-					}
-					// insert methods
-					for (const auto& method : clazz.info.declaration()->instance_methods()) {
-					    _create_method_entity(class_type, *method);
-					}
-					for (const auto& method : clazz.info.declaration()->main_methods()) {
-						_create_method_entity(class_type, *method);
 					}
 				}
 
@@ -220,64 +206,6 @@ namespace minijava
 					return field_entity;
 				}
 
-				template <typename MethodT>
-				std::enable_if_t<std::is_base_of<ast::method, MethodT>{}, int>
-				_get_local_var_count(const MethodT& node)
-				{
-					const auto num_locals = _seminfo.locals_annotations().at(node).size();
-					if (num_locals >= INT_MAX) {
-						throw internal_compiler_error{
-							"Cannot handle function with more than MAX_INT local variables"
-						};
-					}
-					return (std::is_same<ast::main_method, MethodT>{})
-						? static_cast<int>(num_locals)
-						: static_cast<int>(num_locals) + 1;
-				}
-
-				void _create_and_finalize_method_body(
-					const ast::main_method&  /* method */,
-					ir_graph*const              irg,
-					ir_type*const            /* class_type */
-				)
-				{
-					set_current_ir_graph(irg);
-					//create_firm_method(_seminfo, *this, *class_type, method);
-					mature_immBlock(get_irg_end_block(irg));
-					irg_finalize_cons(irg);
-					assert(irg_verify(irg));
-				}
-
-				void _create_and_finalize_method_body(
-					const ast::instance_method&  /* method */,
-					ir_graph*const                  irg,
-					ir_type*const                /* class_type */
-				)
-				{
-					set_current_ir_graph(irg);
-					//create_firm_method(_seminfo, *this, *class_type, method);
-					mature_immBlock(get_irg_end_block(irg));
-					irg_finalize_cons(irg);
-					assert(irg_verify(irg));
-				}
-
-				void _create_method_entity(ir_type*const class_type,
-										   const ast::instance_method&  method)
-				{
-					const auto method_entity = _methodmap.at(method);
-					const auto irg = new_ir_graph(method_entity, _get_local_var_count(method));
-					_create_and_finalize_method_body(method, irg, class_type);
-					// default_layout_compound_type(class_type);
-					// set_type_state(class_type, layout_fixed);
-				}
-
-				void _create_method_entity(ir_type*const class_type,
-										   const ast::main_method& method)
-				{
-					const auto method_entity = _methodmap.at(method);
-					const auto irg = new_ir_graph(method_entity, _get_local_var_count(method));
-					_create_and_finalize_method_body(method, irg, class_type);
-				}
 
 			};  // class ir_types_impl
 
@@ -297,17 +225,6 @@ namespace minijava
 			return instance;
 		}
 
-		ir_types::ir_types(type_mapping    typemap,
-						   class_mapping   classmap,
-						   field_mapping   fieldmap,
-						   method_mapping  methodmap
-		)
-			: _typemap    { std::move(typemap)    }
-			, _classmap   { std::move(classmap)   }
-			, _fieldmap   { std::move(fieldmap)   }
-			, _methodmap  { std::move(methodmap)  }
-		{
-		}
 
 		ir_types create_types(const ast::program& ast, const semantic_info& seminfo)
 		{
