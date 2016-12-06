@@ -2,7 +2,7 @@
  * @file builder.hpp
  *
  * @brief
- *     Creates the IRG.
+ *     First Firm pass to create Firm IR types and entities.
  *
  */
 
@@ -25,10 +25,88 @@ namespace minijava
 	namespace firm
 	{
 
+		/** @brief Type mapping semantic types to Firm IR types. */
 		using type_mapping = std::unordered_map<sem::type, ir_type*>;
-		using class_mapping = ast_attributes<ir_type*, ast_node_filter<ast::class_declaration> >; // TODO: use entities as values
-		using field_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::var_decl> >;
-		using method_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::method> >;
+
+		/** @brief AST attribute type mapping class declarations to Firm IR types. */
+		// TODO: Use entities instead of types as values
+		using class_mapping = ast_attributes<ir_type*, ast_node_filter<ast::class_declaration>>;
+
+		/** @brief AST attribute type mapping variable declarations to Firm IR entities. */
+		using field_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::var_decl>>;
+
+		/** @brief AST attribute type mapping methods to Firm IR entities. */
+		using method_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::method>>;
+
+		/**
+		 * @brief
+		 *     Aggregate that holds the intermediate results of the first Firm
+		 *     pass.
+		 *
+		 */
+		struct ir_types
+		{
+
+			/**
+			 * @brief
+			 *     Mapping semantic types to their corresponding Firm IR types.
+			 *
+			 * Reference types are mapped to pointer types, not the record type
+			 * of the referenced class.
+			 *
+			 */
+			type_mapping typemap{};
+
+			/**
+			 * @brief
+			 *     AST annotation mapping class declarations to their Firm IR
+			 *     types.
+			 *
+			 * The mapped values are record and not pointer types.
+			 *
+			 */
+			class_mapping classmap{};
+
+			/**
+			 * @brief
+			 *     AST annotation mapping fields to their correspondiong Firm
+			 *     IR entities.
+			 *
+			 */
+			field_mapping fieldmap{};
+
+			/**
+			 * @brief
+			 *     AST annotation mapping methods to their correspondiong Firm
+			 *     IR entities.
+			 *
+			 */
+			method_mapping methodmap{};
+
+		};
+
+		/**
+		 * @brief
+		 *     Performs the first Firm pass to create IR types and entities.
+		 *
+		 * If the `libfirm` was not properly initialized before calling this
+		 * function, the behavior is undefined.
+		 *
+		 * The behavior is also undefined if `ast` is not a semantically
+		 * correct program or if `seminfo` is not the result of a proper
+		 * semantic analysis of `ast`.
+		 *
+		 * @param ast
+		 *     AST of the program
+		 *
+		 * @param seminfo
+		 *     semantic annotation for the given AST
+		 *
+		 * @returns
+		 *     created Firm IR types and entities
+		 *
+		 */
+		ir_types create_types(const ast::program& ast, const semantic_info& seminfo);
 
 		/**
 		 * @brief
@@ -80,18 +158,6 @@ namespace minijava
 			ir_type* boolean_type{};
 
 		};
-
-		struct ir_types
-		{
-
-			type_mapping typemap{};
-			class_mapping classmap{};
-			field_mapping fieldmap{};
-			method_mapping methodmap{};
-
-		};
-
-		ir_types create_types(const ast::program& ast, const semantic_info& seminfo);
 
 	}  // namespace firm
 
