@@ -8,9 +8,13 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <iosfwd>
 #include <unordered_map>
+
+#include <boost/functional/hash.hpp>
 
 #include "parser/ast.hpp"
 #include "symbol/symbol.hpp"
@@ -210,6 +214,20 @@ namespace minijava
 			constexpr const ast::class_declaration* declaration() const noexcept
 			{
 				return _declaration;
+			}
+
+			/**
+			 * @brief
+			 *     Updates a hash state with the internal state of this object.
+			 *
+			 * @param state
+			 *     hash state to update
+			 *
+			 */
+			void append_hash(std::size_t& state) const noexcept
+			{
+				boost::hash_combine(state, _cat);
+				boost::hash_combine(state, _declaration);
 			}
 
 		private:
@@ -415,3 +433,36 @@ namespace minijava
 	}  // namespace sem
 
 }  // namespace minijava
+
+
+namespace std
+{
+
+	/**
+	 * @brief
+	 *     `std::hash` specialization for `basic_type_info` objects.
+	 *
+	 */
+	template <>
+	struct hash<minijava::sem::basic_type_info>
+	{
+		/**
+		 * @brief
+		 *     Hashes the given `basic_type_info`.
+		 *
+		 * @param bti
+		 *     `basic_type_info` to hash
+		 *
+		 * @returns
+		 *     hash value
+		 *
+		 */
+		size_t operator()(const minijava::sem::basic_type_info& bti) const noexcept
+		{
+			auto seed = size_t{};
+			bti.append_hash(seed);
+			return seed;
+		}
+	};
+
+}  // namespace std

@@ -25,17 +25,7 @@ namespace minijava
 	namespace firm
 	{
 
-		struct sem_type_hash
-		{
-			std::size_t operator () (const sem::type &p) const {
-				size_t seed = 0;
-				boost::hash_combine(seed, p.info.declaration());
-				boost::hash_combine(seed, p.rank);
-				return seed;
-			}
-		};
-
-		using type_mapping = std::unordered_map<sem::type, ir_type*, sem_type_hash>;
+		using type_mapping = std::unordered_map<sem::type, ir_type*>;
 		using class_mapping = ast_attributes<ir_type*, ast_node_filter<ast::class_declaration> >; // TODO: use entities as values
 		using field_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::var_decl> >;
 		using method_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::method> >;
