@@ -91,22 +91,13 @@ namespace minijava
 
 		};
 
-		class ir_types
+		struct ir_types
 		{
-		public:
 
-			ir_types(type_mapping    typemap,
-					 class_mapping   classmap,
-					 field_mapping   fieldmap,
-					 method_mapping  methodmap
-			);
-
-		private:
-
-			type_mapping _typemap{};
-			class_mapping _classmap{};
-			field_mapping _fieldmap{};
-			method_mapping _methodmap{};
+			type_mapping typemap{};
+			class_mapping classmap{};
+			field_mapping fieldmap{};
+			method_mapping methodmap{};
 
 		};
 
