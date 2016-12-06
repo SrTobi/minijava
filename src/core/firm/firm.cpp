@@ -71,7 +71,7 @@ namespace minijava
 		// FIXME: do we need to call ir_lower_intrinsics here?
 		// FIXME: the below is just a placeholder, I have no idea what I'm doing
 		// lower_highlevel();
-		lower();
+		//lower();
 		be_parse_arg("isa=amd64");
 		be_main(output_file.handle(), output_file.filename().c_str());
 	}
