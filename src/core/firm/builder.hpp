@@ -41,6 +41,7 @@ namespace minijava
 
 		typedef ast_attributes<ir_entity*, ast_node_filter<ast::method> > method_mapping;
 		typedef ast_attributes<ir_type*, ast_node_filter<ast::class_declaration> > class_mapping;
+		typedef ast_attributes<ir_entity*, ast_node_filter<ast::var_decl> > var_decl_mapping;
 	}
 
 	class ir_types {
@@ -53,6 +54,7 @@ namespace minijava
 			_type_mapping = firm::type_mapping();
 			_method_mapping = firm::method_mapping();
 			_class_mapping = firm::class_mapping();
+			_field_mapping = firm::var_decl_mapping();
 		}
 
 		void init()
@@ -180,6 +182,23 @@ namespace minijava
 			return create_class_type(clazz);
 		}
 
+		/**
+		 * @brief
+		 *     Returns the field entity for the given `ast::var_decl`.
+		 *     If the var_decl isn't a field, a nullptr is returned.
+		 *
+		 * @param decl The ast::var_decl
+		 * @return ir_entity* for the field or nullptr, if the var_decl isn't a field
+		 */
+		ir_entity* get_field_entity(const ast::var_decl& decl)
+		{
+			if (_field_mapping.find(&decl) == _field_mapping.end()) {
+				return nullptr;
+			}
+
+			return _field_mapping.at(decl);
+		}
+
 	private:
 
 		// just collect the types for later use
@@ -232,7 +251,6 @@ namespace minijava
 			for (auto& method : clazz.info.declaration()->main_methods()) {
 				create_method_entity(class_type, method);
 			}
-
 		}
 
 		ir_entity* create_field_entity(ir_type *class_type, const std::unique_ptr<ast::var_decl> &field, int offset)
@@ -246,6 +264,7 @@ namespace minijava
 			);
 			set_entity_offset(field_entity, offset);
 			set_entity_ld_ident(field_entity, new_id_from_str(field->name().data()));
+			_field_mapping.insert(std::make_pair(field.get(), field_entity));
 			return field_entity;
 		}
 
@@ -349,6 +368,7 @@ namespace minijava
 		firm::type_mapping _type_mapping;
 		firm::method_mapping _method_mapping;
 		firm::class_mapping _class_mapping;
+		firm::var_decl_mapping _field_mapping;
 
 		const semantic_info& _semantic_info;
 		const ast::program& _ast;

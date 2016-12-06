@@ -46,59 +46,134 @@ namespace minijava
 
 				void visit(const ast::variable_access &node) override {
 					auto var_decl = _sem_info.vardecl_annotations().at(node);
-					auto type = _sem_info.type_annotations().at(node);
-					auto ir_type = _firm_types.get_var_type(type);
-					_var_pos =_var_ids.at(var_decl);
-					_current_node = get_value(_var_pos, get_type_mode(ir_type));
+					auto field = _firm_types.get_field_entity(*var_decl);
+					if (field) {
+						visit_field(node, field);
+					} else {
+						auto type = _sem_info.type_annotations().at(node);
+						auto ir_type = _firm_types.get_var_type(type);
+						_var_pos =_var_ids.at(var_decl);
+						_current_node = get_value(_var_pos, get_type_mode(ir_type));
+					}
+				}
+
+				void visit_field(const ast::variable_access& node, ir_entity* field)
+				{
+
+					auto field_type = get_entity_type(field);
+
+
+					//auto addr_mode = get_reference_offset_mode(mode_P);
+					//auto field_offset = new_Const_long(addr_mode, get_entity_offset(field));
+					auto ref_pointer = node.target()
+					               ? get_expression_node(*node.target())
+					               : get_value(0, mode_P);
+					auto member = new_Member(ref_pointer, field);
+					//auto addr = new_Conv(new_Add(new_Conv(ref_pointer, addr_mode), field_offset), addr_mode);
+
+					if (_do_store) {
+						//_current_node = addr;
+						//new_Store(get_store(), member, )
+						_current_node = member;
+					} else {
+						auto mem = get_store();
+						auto field_mode = get_type_mode(field_type);
+						auto load = new_Load(mem, member, field_mode, field_type, cons_none);
+						set_store(new_Proj(load, mode_M, pn_Load_M));
+						_current_node = new_Proj(load, field_mode, pn_Load_res);
+					}
+					//_current_node = new_Const_long(_firm_types.mode_int(), 0);
 				}
 
 				void visit(const ast::binary_expression &node) override
 				{
 					auto old_pos = _var_pos;
 
-					ir_node *memory;
-					node.lhs().accept(*this);
-					auto lhs = _current_node;
-					auto lhs_pos = _var_pos;
-					node.rhs().accept(*this);
-					auto rhs = _current_node;
-
-					ir_node* result = (ir_node*) nullptr;
-					switch (node.type()) {
-						case ast::binary_operation_type::assign:
-							memory = get_store();
-							set_value(lhs_pos, rhs);
-							result = rhs;
-							break;
-						case ast::binary_operation_type::divide:
-							memory  = get_store();
-							result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
-							set_store(new_Proj(result, mode_M, pn_Div_M));
-							result = new_Proj(result, _firm_types.mode_int(), pn_Div_res);
-							break;
-						case ast::binary_operation_type::multiply:
-							result = new_Mul(lhs, rhs);
-							break;
-						case ast::binary_operation_type::plus:
-							result = new_Add(lhs, rhs);
-							break;
-						case ast::binary_operation_type::minus:
-							result = new_Sub(lhs, rhs);
-							break;
-						case ast::binary_operation_type::modulo:
-							memory  = get_store();
-							result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
-							set_store(new_Proj(result, mode_M, pn_Mod_M));
-							result = new_Proj(result, _firm_types.mode_int(), pn_Mod_res);
-							break;
-						default:
-							// TODO
-							// boolean mode
-							break;
+					if (is_boolean_expression(node)) {
+						visit_boolean_expression(node);
+					} else if (is_arithmetic_expression(node)) {
+						visit_arithmetic_expression(node);
+					} else if (node.type() == ast::binary_operation_type::assign) {
+						visit_assignment(node);
 					}
 
-					_current_node = result;
 					_var_pos = old_pos;
+				}
+
+				void visit_assignment(const ast::binary_expression& expression)
+				{
+					assert(expression.type() == ast::binary_operation_type::assign);
+					std::cout << "<assign" << std::endl;
+					auto rhs = get_expression_node(expression.rhs());
+					std::cout << "rhs:" << rhs << std::endl;
+					auto _old_do_store = _do_store;
+					_do_store = true;
+					auto lhs = get_expression_node(expression.lhs());
+					std::cout << "lhs:" << lhs << std::endl;
+					if (is_Member(lhs)) {
+						std::cout << "<member" << std::endl;
+						auto rhs_mode = get_irn_mode(rhs);
+						std::cout << "rhs mode:" << rhs_mode << std::endl;
+						auto value_type = get_type_for_mode(rhs_mode);
+						std::cout << "value_type:" << value_type << std::endl;
+						auto store = new_Store(get_store(), lhs, rhs, value_type, cons_none);
+						std::cout << "store:" << store << std::endl;
+						set_store(new_Proj(store, get_modeM(), pn_Store_M));
+						_current_node = store;
+						std::cout << _current_node << ":member>" << std::endl;
+
+					} else {
+						std::cout << "a local var...!?" << std::endl;
+					}
+					_do_store = _old_do_store;
+
+					(void)lhs;
+					(void)rhs;
+				}
+
+				void visit_boolean_expression(const ast::binary_expression& expression)
+				{
+					assert(is_boolean_expression(expression));
+					auto lhs = get_expression_node(expression.lhs());
+					auto rhs = get_expression_node(expression.rhs());
+					_current_node = new_Cmp(lhs, rhs, relation_from_binary_operation_type(expression.type()));
+				}
+
+				void visit_arithmetic_expression(const ast::binary_expression& expression)
+				{
+					assert(is_arithmetic_expression(expression));
+					auto lhs = get_expression_node(expression.lhs());
+					auto rhs = get_expression_node(expression.rhs());
+					auto memory = get_store();
+
+					switch (expression.type()) {
+					case ast::binary_operation_type::divide: {
+						memory = get_store();
+						auto div_result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
+						_current_node = new_Proj(div_result, _firm_types.mode_int(), pn_Div_res);
+						set_store(new_Proj(div_result, mode_M, pn_Div_M));
+						break;
+					}
+					case ast::binary_operation_type::modulo: {
+						memory = get_store();
+						auto mod_result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
+						set_store(new_Proj(mod_result, mode_M, pn_Mod_M));
+						_current_node = new_Proj(mod_result, _firm_types.mode_int(), pn_Mod_res);
+						break;
+					}
+					case ast::binary_operation_type::multiply:
+						_current_node = new_Mul(lhs, rhs);
+						break;
+					case ast::binary_operation_type::plus:
+						_current_node = new_Add(lhs, rhs);
+						break;
+					case ast::binary_operation_type::minus:
+						_current_node = new_Sub(lhs, rhs);
+						break;
+					default:
+						MINIJAVA_NOT_REACHED();
+						break;
+					}
 				}
 
 				void visit(const ast::this_ref &node) override
@@ -119,12 +194,59 @@ namespace minijava
 
 			private:
 
+				bool is_boolean_expression(const ast::binary_expression& expression)
+				{
+					auto type = expression.type();
+					return type == ast::binary_operation_type::greater_equal ||
+					       type == ast::binary_operation_type::greater_than ||
+					       type == ast::binary_operation_type::less_equal ||
+					       type == ast::binary_operation_type::less_than ||
+					       type == ast::binary_operation_type::equal;
+				}
+
+				bool is_arithmetic_expression(const ast::binary_expression& expression)
+				{
+					auto type = expression.type();
+					return type == ast::binary_operation_type::plus ||
+					       type == ast::binary_operation_type::minus ||
+					       type == ast::binary_operation_type::divide ||
+					       type == ast::binary_operation_type::multiply ||
+					       type == ast::binary_operation_type::modulo;
+				}
+
+				ir_relation relation_from_binary_operation_type(ast::binary_operation_type type)
+				{
+					switch (type) {
+					case ast::binary_operation_type::greater_than:
+						return ir_relation_greater;
+					case ast::binary_operation_type::greater_equal:
+						return ir_relation_greater_equal;
+					case ast::binary_operation_type::less_than:
+						return ir_relation_less;
+					case ast::binary_operation_type::less_equal:
+						return ir_relation_less_equal;
+					case ast::binary_operation_type::equal:
+						return ir_relation_equal;
+					default:
+						// should not be reached
+						assert(false);
+						return ir_relation_false;
+					}
+				}
+
+				ir_node* get_expression_node(const ast::expression& node)
+				{
+					node.accept(*this);
+					return this->_current_node;
+				}
+
 				bool _in_instance_method()
 				{
 					return _class_type != nullptr;
 				}
 
 				int _var_pos{-1};
+				bool _do_store{false};
 
 				const semantic_info& _sem_info;
 				const var_id_map_type& _var_ids;
@@ -152,12 +274,13 @@ namespace minijava
 				{
 					auto irg = get_current_ir_graph();
 					auto method_entity = _firm_types.get_method_entity(&node);
+					//auto cur_block = get_r_cur_block(irg);
+					//set_r_cur_block(irg, get_irg_start_block(irg));
 					auto locals = _sem_info.locals_annotations().at(node);
 					auto args = get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{1};
 					for (const auto& local : locals) {
-						// TODO - should be removed or removed in builder.cpp
 						if (current_id <= num_params) {
 							set_value(current_id, new_Proj(
 									args,
@@ -167,7 +290,7 @@ namespace minijava
 						}
 						_var_ids.insert(std::make_pair(local, current_id++));
 					}
-
+					//set_r_cur_block(irg, cur_block);
 					node.body().accept(*this);
 				}
 
@@ -201,12 +324,29 @@ namespace minijava
 				{
 					for (const auto& stmt : node.body()) {
 						stmt->accept(*this);
+						// reach unreachable code after return..
+						if (!get_cur_block()) {
+							break;
+						}
 					}
 				}
 
 				void visit(const ast::if_statement& node) override
 				{
-					// FIXME
+//					auto then_node = new_immBlock();
+//					auto exit_node = new_immBlock();
+//					auto else_node = node.else_statement() ? new_immBlock() : exit_node;
+//
+//					auto cond_node = get_expression_node(node.condition());
+//					add_immBlock_pred(then_node, new_Proj(cond_node, get_modeX(), pn_Cond_true));
+//					add_immBlock_pred(else_node, new_Proj(cond_node, get_modeX(), pn_Cond_false));
+//
+//					mature_immBlock(then_node);
+//					set_cur_block(then_node);
+//					visit_statement(node.then_statement());
+//					if (get_cur_block()) {
+//						add_immBlock_pred(exit_node, new_Jmp());
+//					}
 					(void) node;
 				}
 
@@ -220,19 +360,22 @@ namespace minijava
 				{
 					auto expr = node.value();
 					ir_node* ret;
-					auto store = get_store();
 					if (expr) {
+						std::cout << "ret expr";
 						auto expression_node = get_expression_node(*node.value());
-//						ir_node* results[1] = {expression_node};
-						ret = new_Return(store, 1, &expression_node);
+						std::cout << ".";
+						//ir_node* results[1] = {expression_node};
+						ret = new_Return(get_store(), 1, &expression_node);
+						std::cout << "finish" << std::endl;
 					} else {
-						ret = new_Return(store, 0, NULL);
+						ret = new_Return(get_store(), 0, NULL);
 					}
 
 					auto irg = get_current_ir_graph();
 					add_immBlock_pred(get_irg_end_block(irg), ret);
 					mature_immBlock(get_r_cur_block(irg));
 
+					std::cout << "added ret" << std::endl;
 					// mark as unreachable
 					set_cur_block(NULL);
 				}
@@ -273,11 +416,16 @@ namespace minijava
 		                        const ast::instance_method& method)
 		{
 			auto irg = get_current_ir_graph();
+			std::cout << "<method" << method.name() << std::endl;
 			method_generator generator{sem_info, firm_types, class_type};
 			method.accept(generator);
+			std::cout << "method>" << std::endl;
 			// handle return value
 			// no explicit return statement found?
+			std::cout << "verify:" << irg_verify(irg) << std::endl;
+			//dump_ir_graph(irg, "test");
 			if (get_cur_block()) {
+				std::cout << "get_cur_block" << std::endl;
 				auto store = get_store();
 				auto ret = new_Return(store, 0, NULL);
 				add_immBlock_pred(get_irg_end_block(irg), ret);
