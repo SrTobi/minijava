@@ -67,3 +67,11 @@ add_test(
 			--
 			"${minijava_exec}" --check
 )
+
+add_test(
+		NAME comptest-dump-ir
+		COMMAND ${PYTHON_EXECUTABLE} ${comptest_exec}
+		"--input=${CMAKE_CURRENT_SOURCE_DIR}/dump-ir/*.mj"
+		--
+		"${minijava_exec}" --dump-ir
+)
