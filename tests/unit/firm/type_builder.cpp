@@ -3,10 +3,10 @@
 #define BOOST_TEST_MODULE  firm_type_builder
 #include <boost/test/unit_test.hpp>
 
-#include "firm/firm.hpp"
+#include "firm/singleton.hpp"
 
 
-static const auto g_firm = minijava::firm_ir{};
+static const auto global_state_is_evil = minijava::firm_global_state{};
 
 
 BOOST_AUTO_TEST_CASE(default_constructed_primitive_types_are_null)

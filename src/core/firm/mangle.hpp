@@ -39,7 +39,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(firm_ir& firm, const ast::class_declaration& clazz);
+		ident* mangle(firm_global_state& firm, const ast::class_declaration& clazz);
 
 		/**
 		 * @brief
@@ -64,7 +64,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(firm_ir& firm, const ast::class_declaration& clazz, const ast::var_decl& field);
+		ident* mangle(firm_global_state& firm, const ast::class_declaration& clazz, const ast::var_decl& field);
 
 		/**
 		 * @brief
@@ -89,7 +89,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(firm_ir& firm, const ast::class_declaration& clazz, const ast::instance_method& method);
+		ident* mangle(firm_global_state& firm, const ast::class_declaration& clazz, const ast::instance_method& method);
 
 	}  // namespace firm
 

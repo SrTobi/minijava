@@ -22,7 +22,7 @@ namespace minijava
 	namespace firm
 	{
 
-		ident* mangle(firm_ir& /* firm */,
+		ident* mangle(firm_global_state& /* firm */,
 					  const ast::class_declaration& clazz)
 		{
 			assert(is_valid_asm_id(clazz.name()));
@@ -32,7 +32,7 @@ namespace minijava
 			);
 		}
 
-		ident* mangle(firm_ir& /* firm */,
+		ident* mangle(firm_global_state& /* firm */,
 					  const ast::class_declaration& clazz,
 					  const ast::var_decl& field)
 		{
@@ -46,7 +46,7 @@ namespace minijava
 			);
 		}
 
-		ident* mangle(firm_ir& /* firm */,
+		ident* mangle(firm_global_state& /* firm */,
 					  const ast::class_declaration& clazz,
 					  const ast::instance_method& method)
 		{

@@ -40,6 +40,7 @@ set(COMPONENTS
 	firm/firm
 	firm/mangle
 	firm/method_builder
+	firm/singleton
 	firm/type_builder
 	global
 	io/file_data

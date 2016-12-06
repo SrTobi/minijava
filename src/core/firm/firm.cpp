@@ -1,60 +1,27 @@
 #include "firm/firm.hpp"
 
-#include <atomic>
-#include <stdexcept>
-
 #include "libfirm/firm.h"
 
 #include "firm/type_builder.hpp"
 #include "firm/method_builder.hpp"
 
+
 namespace minijava
 {
 
-	firm_ir::firm_ir()
+	firm_global_state create_firm_ir(const ast::program& ast, const semantic_info& semantic_info)
 	{
-		static std::atomic_flag initialized = ATOMIC_FLAG_INIT;
-		if (initialized.test_and_set()) {
-			throw std::logic_error{
-					"libfirm was already initialized and is not re-entrant."
-			};
-		}
-		ir_init();
-		set_optimize(0);
-		auto mode_p = new_reference_mode("P64", irma_twos_complement, 64, 64);
-		set_modeP(mode_p);
-	}
-
-	firm_ir::firm_ir(firm_ir&& other)
-	{
-		if (!other._firm_owner) {
-			throw std::logic_error{
-					"Tried to move from an instance which was already moved."
-			};
-		}
-		other._firm_owner = false;
-	}
-
-	firm_ir::~firm_ir()
-	{
-		if (_firm_owner) {
-			ir_finish();
-		}
-	}
-
-	firm_ir create_firm_ir(const ast::program& ast,
-	                       const semantic_info& semantic_info)
-	{
-		auto ir = firm_ir{};
+		auto ir = firm_global_state{};
 		auto types = firm::create_types(ast, semantic_info);
 		firm::create_methods(ast, semantic_info, types);
 		return ir;
 	}
 
 	// since libfirm keeps the implicit state, we don't actually need the first
-	// parameter; it's just to make sure that the user keeps the firm_ir object
-	void dump_firm_ir(const firm_ir&, const std::string& directory)
+	// parameter; it's just to make sure that the user keeps the firm_global_state object
+	void dump_firm_ir(firm_global_state& firm, const std::string& directory)
 	{
+		assert(firm);
 		if (!directory.empty()) {
 			ir_set_dump_path(directory.c_str());
 		}
@@ -65,8 +32,9 @@ namespace minijava
 
 	// since libfirm keeps the implicit state, we don't actually need the first
 	// parameter; it's just to make sure that the user keeps the firm_ir object
-	void emit_x64_assembly_firm(const firm_ir&, file_output& output_file)
+	void emit_x64_assembly_firm(firm_global_state& firm, file_output& output_file)
 	{
+		assert(firm);
 		// FIXME: implement lowering properly (?), see https://github.com/MatzeB/jFirm/blob/master/src/example/Lower.java
 		// FIXME: do we need to call ir_lower_intrinsics here?
 		// FIXME: the below is just a placeholder, I have no idea what I'm doing
