@@ -452,7 +452,7 @@ namespace minijava
 					auto locals = locals_attributes::mapped_type{};
 					for (const auto& param : node.parameters()) {
 						_symbols.add_def(param.get());
-						locals.insert(param.get());
+						locals.push_back(param.get());
 					}
 					_locals_annotations[node].swap(locals);
 					assert(locals.empty());  // First time we see this method
@@ -472,7 +472,7 @@ namespace minijava
 					const auto type = get_type(node.var_type(), _classes, false);
 					_symbols.add_def(&node);
 					if (_cur_method) {
-						_locals_annotations[*_cur_method].insert(&node);
+						_locals_annotations[*_cur_method].push_back(&node);
 					}
 					_type_annotations.put(node, type);
 				}

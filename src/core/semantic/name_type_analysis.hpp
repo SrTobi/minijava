@@ -11,7 +11,6 @@
 #include <cstddef>
 #include <memory>
 #include <iosfwd>
-#include <set>
 #include <vector>
 
 #include "parser/ast.hpp"
@@ -122,9 +121,9 @@ namespace minijava
 			ast_node_filter<ast::expression, ast::var_decl, ast::method>
 		>;
 
-		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
+		/** @brief Type mapping `method` nodes to a vector of `var_decl` nodes. */
 		using locals_attributes = ast_attributes<
-			std::set<const ast::var_decl*>,
+			std::vector<const ast::var_decl*>,
 			ast_node_filter<ast::method>
 		>;
 

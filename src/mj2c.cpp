@@ -273,7 +273,9 @@ namespace /* anonymous */
 				visit_expression(*p);
 				_out.write("->");
 			} else if ((_current_method != nullptr) && !_seminfo.is_global(decl)) {
-				const auto it = _seminfo.locals_annotations().at(*_current_method).find(decl);
+				const auto it = [decl](const auto& locals) {
+					return std::find(std::begin(locals), std::end(locals), decl);
+				}(_seminfo.locals_annotations().at(*_current_method));
 				if (it == decltype(it){}) {
 					_out.write("THIS->");
 				}
