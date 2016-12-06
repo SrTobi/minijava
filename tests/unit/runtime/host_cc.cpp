@@ -18,9 +18,9 @@
 #endif
 
 #ifdef _WIN32
-#	define WINDOWS 1
+#   define WINDOWS 1
 #else
-#	define WINDOWS 0
+#   define WINDOWS 0
 #endif
 
 

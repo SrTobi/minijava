@@ -37,9 +37,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 set(COMPONENTS
 	cli
 	exceptions
-	firm/builder
 	firm/firm
-	firm/method_builder
+	firm/type_builder
 	global
 	io/file_data
 	io/file_output

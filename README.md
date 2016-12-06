@@ -78,7 +78,7 @@ In order to build the compiler, you will need the following.
    We recommend that you use the latest and greatest Boost version 1.62 as of
    October 2016.  Somewhat older versions might work, too &ndash; or they might
    not.
-   
+
  - On Windows, you'll need to compile and install an
    [additional regex library](https://sourceforge.net/projects/mingw/files/Other/UserContributed/regex/mingw-regex-2.5.1/).
    Both the headers and the library itself must be installed into a folder where

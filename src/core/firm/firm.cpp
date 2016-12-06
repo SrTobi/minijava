@@ -5,7 +5,8 @@
 
 #include "libfirm/firm.h"
 
-#include "firm/builder.hpp"
+#include "firm/type_builder.hpp"
+#include "firm/method_builder.hpp"
 
 namespace minijava
 {
@@ -45,9 +46,8 @@ namespace minijava
 	                       const semantic_info& semantic_info)
 	{
 		auto ir = firm_ir{};
-		auto types = ir_types{semantic_info, ast};
-		types.init();
-		// FIXME: create method graphs
+		auto types = firm::create_types(ast, semantic_info);
+		//firm::create_methods(ast, semantic_info, types);
 		return ir;
 	}
 
