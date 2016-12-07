@@ -37,18 +37,39 @@ namespace minijava
 
 				using ast::visitor::visit;
 
-				void visit(const ast::boolean_constant &node) override
+				void visit(const ast::binary_expression& node) override
 				{
-					_current_node = new_Const_long(_primitives.boolean_mode, node.value());
+					if (is_boolean_expression(node)) {
+						visit_boolean_expression(node);
+					} else if (is_arithmetic_expression(node)) {
+						visit_arithmetic_expression(node);
+					} else if (node.type() == ast::binary_operation_type::assign) {
+						visit_assignment(node);
+					}
 				}
 
-				void visit(const ast::integer_constant &node) override
-				{
-					auto value = _sem_info.const_annotations().at(node);
-					_current_node = new_Const_long(_primitives.int_mode, value);
+				void visit(const ast::unary_expression& node) override {
+					// FIXME
+					(void) node;
 				}
 
-				void visit(const ast::variable_access &node) override {
+				void visit(const ast::object_instantiation& node) override {
+					// FIXME
+					(void) node;
+				}
+
+				void visit(const ast::array_instantiation& node) override {
+					// FIXME
+					(void) node;
+				}
+
+				void visit(const ast::array_access& node) override {
+					// FIXME
+					(void) node;
+				}
+
+				void visit(const ast::variable_access& node) override
+				{
 					auto var_decl = _sem_info.vardecl_annotations().at(node);
 					auto field = _firm_types.fieldmap.find(var_decl);
 					if (field != _firm_types.fieldmap.end()) {
@@ -65,24 +86,29 @@ namespace minijava
 					}
 				}
 
-				void visit(const ast::binary_expression &node) override
-				{
-					if (is_boolean_expression(node)) {
-						visit_boolean_expression(node);
-					} else if (is_arithmetic_expression(node)) {
-						visit_arithmetic_expression(node);
-					} else if (node.type() == ast::binary_operation_type::assign) {
-						visit_assignment(node);
-					}
+				void visit(const ast::method_invocation& node) override {
+					// FIXME
+					(void) node;
 				}
 
-				void visit(const ast::this_ref &node) override
+				void visit(const ast::this_ref& node) override
 				{
 					(void) node; // node not used
 					_current_node = get_value(0, mode_P);
 				}
 
-				void visit(const ast::null_constant &node) override
+				void visit(const ast::boolean_constant& node) override
+				{
+					_current_node = new_Const_long(_primitives.boolean_mode, node.value());
+				}
+
+				void visit(const ast::integer_constant& node) override
+				{
+					auto value = _sem_info.const_annotations().at(node);
+					_current_node = new_Const_long(_primitives.int_mode, value);
+				}
+
+				void visit(const ast::null_constant& node) override
 				{
 					(void) node; // node not used
 					_current_node = new_Const_long(mode_P, 0);
@@ -288,7 +314,7 @@ namespace minijava
 				void visit(const ast::local_variable_statement& node) override
 				{
 					assert(_var_ids.find(&node.declaration()) != _var_ids.end());
-					auto node_decl = &node.declaration();
+					auto node_decl =& node.declaration();
 					auto pos =_var_ids.at(node_decl);
 
 					if (node.initial_value()) {
@@ -377,14 +403,14 @@ namespace minijava
 					return _current_node;
 				}
 
+			private:
+
 				ir_node* get_expression_node(const ast::expression& node)
 				{
 					expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
 					node.accept(generator);
 					return generator.current_node();
 				}
-
-			private:
 
 				const semantic_info& _sem_info;
 				const ir_types& _firm_types;
@@ -461,7 +487,6 @@ namespace minijava
 			create_firm_method(info, types, *class_type, method);
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
-			dump_ir_graph(irg, "before-verify");
 			assert(irg_verify(irg));
 		}
 
@@ -478,7 +503,6 @@ namespace minijava
 			create_firm_method(info, types, *class_type, method);
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
-			dump_ir_graph(irg, "before-verify");
 			assert(irg_verify(irg));
 		}
 
