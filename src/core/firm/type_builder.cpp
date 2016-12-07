@@ -114,7 +114,7 @@ namespace minijava
 						cc_cdecl_set,            // calling convention
 						mtp_no_property
 					);
-					set_method_param_type(method_type, 0, class_type);
+					set_method_param_type(method_type, 0, new_type_pointer(class_type));
 					auto param_num = std::size_t{1};
 					for (const auto& param : method.parameters()) {
 						const auto param_type = _get_var_type(_seminfo.type_annotations().at(*param));
