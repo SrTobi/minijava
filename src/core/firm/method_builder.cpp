@@ -49,11 +49,8 @@ namespace minijava
 				}
 
 				void visit(const ast::variable_access &node) override {
-					std::cout << "before vardecl" << std::endl;
 					auto var_decl = _sem_info.vardecl_annotations().at(node);
-					std::cout << "after vardecl" << std::endl;
 					auto field = _firm_types.fieldmap.find(var_decl);
-					std::cout << "after fieldmap" << std::endl;
 					if (field != _firm_types.fieldmap.end()) {
 						visit_field(node, field->second);
 					} else {
