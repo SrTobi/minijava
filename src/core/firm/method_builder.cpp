@@ -29,7 +29,8 @@ namespace minijava
 
 				expression_generator(const semantic_info& sem_info,
 				                     const var_id_map_type& var_ids,
-				                     const ir_types& firm_types, const ir_type* class_type)
+				                     const ir_types& firm_types,
+				                     const ir_type* class_type)
 						: _sem_info{sem_info}, _var_ids{var_ids},
 						  _firm_types{firm_types}, _class_type{class_type},
 				          _primitives{primitive_types::get_instance()}
@@ -48,22 +49,44 @@ namespace minijava
 					}
 				}
 
-				void visit(const ast::unary_expression& node) override {
+				void visit(const ast::unary_expression& node) override
+				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::object_instantiation& node) override {
+				void visit(const ast::object_instantiation& node) override
+				{
+					static_assert(sizeof(unsigned long) == sizeof(size_t), "");
+					auto type = _sem_info.type_annotations().at(node);
+					auto ir_type = _firm_types.classmap.at(
+							*type.info.declaration()
+					);
+					ir_node* arguments[2] = {
+							// TODO: remove static assert above and use other mode for size_t?
+							new_Const_long(get_modeLu(), get_type_size(ir_type)),
+							new_Const_long(get_modeLu(), 1)
+					};
+					auto call_node = new_Call(
+							get_store(),
+					        new_Address(nullptr), // FIXME: we need an entity for the built-in methods
+							2,
+					        arguments,
+					        nullptr // FIXME: we need types for the built-in methods
+					);
+					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
+					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
+					_current_node = new_Proj(tuple, get_modeP(), 0);
+				}
+
+				void visit(const ast::array_instantiation& node) override
+				{
 					// FIXME
 					(void) node;
 				}
 
-				void visit(const ast::array_instantiation& node) override {
-					// FIXME
-					(void) node;
-				}
-
-				void visit(const ast::array_access& node) override {
+				void visit(const ast::array_access& node) override
+				{
 					// FIXME
 					(void) node;
 				}
@@ -86,7 +109,8 @@ namespace minijava
 					}
 				}
 
-				void visit(const ast::method_invocation& node) override {
+				void visit(const ast::method_invocation& node) override
+				{
 					// FIXME
 					(void) node;
 				}
@@ -114,7 +138,8 @@ namespace minijava
 					_current_node = new_Const_long(mode_P, 0);
 				}
 
-				ir_node* current_node() const noexcept {
+				ir_node* current_node() const noexcept
+				{
 					return _current_node;
 				}
 
@@ -267,7 +292,7 @@ namespace minijava
 				const ir_types& _firm_types;
 				const ir_type* _class_type;
 
-				ir_node* _current_node;
+				ir_node* _current_node{};
 
 				const primitive_types _primitives;
 
@@ -279,7 +304,8 @@ namespace minijava
 			public:
 
 				method_generator(const semantic_info& sem_info,
-				                 const ir_types& firm_types, const ir_type& class_type)
+				                 const ir_types& firm_types,
+				                 const ir_type& class_type)
 						: _sem_info{sem_info}, _firm_types{firm_types},
 						  _class_type{class_type}
 				{}
@@ -314,7 +340,7 @@ namespace minijava
 				void visit(const ast::local_variable_statement& node) override
 				{
 					assert(_var_ids.find(&node.declaration()) != _var_ids.end());
-					auto node_decl =& node.declaration();
+					auto node_decl = &node.declaration();
 					auto pos =_var_ids.at(node_decl);
 
 					if (node.initial_value()) {
@@ -327,7 +353,7 @@ namespace minijava
 						auto null_value = new_Const_long(get_type_mode(ir_type), 0);
 						set_value(pos, null_value);
 					}
-			}
+				}
 
 				void visit(const ast::expression_statement& node) override
 				{
@@ -418,7 +444,7 @@ namespace minijava
 
 				var_id_map_type _var_ids{};
 
-				ir_node* _current_node;
+				ir_node* _current_node{};
 
 			};
 		}
