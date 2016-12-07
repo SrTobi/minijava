@@ -184,6 +184,8 @@ namespace minijava
 						const auto dummy_field = new_entity(class_type, dummy_name, _primitives.int_type);
 						set_entity_ld_ident(dummy_field, dummy_name);
 					}
+
+					default_layout_compound_type(class_type);
 				}
 
 				ir_entity* _create_field_entity(ir_type *class_type, const ast::var_decl& field)

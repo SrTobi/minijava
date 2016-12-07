@@ -65,7 +65,7 @@ namespace minijava
 				{
 
 					auto field_type = get_entity_type(field);
-
+					auto field_mode = get_type_mode(field_type);
 
 					//auto addr_mode = get_reference_offset_mode(mode_P);
 					//auto field_offset = new_Const_long(addr_mode, get_entity_offset(field));
@@ -81,7 +81,6 @@ namespace minijava
 						_current_node = member;
 					} else {
 						auto mem = get_store();
-						auto field_mode = get_type_mode(field_type);
 						auto load = new_Load(mem, member, field_mode, field_type, cons_none);
 						set_store(new_Proj(load, mode_M, pn_Load_M));
 						_current_node = new_Proj(load, field_mode, pn_Load_res);
@@ -469,9 +468,6 @@ namespace minijava
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
 			assert(irg_verify(irg));
-
-			// default_layout_compound_type(class_type);
-			// set_type_state(class_type, layout_fixed);
 		}
 
 		void _create_method_entity(
