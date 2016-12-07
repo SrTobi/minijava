@@ -65,6 +65,35 @@ namespace minijava
 					}
 				}
 
+				void visit(const ast::binary_expression &node) override
+				{
+					if (is_boolean_expression(node)) {
+						visit_boolean_expression(node);
+					} else if (is_arithmetic_expression(node)) {
+						visit_arithmetic_expression(node);
+					} else if (node.type() == ast::binary_operation_type::assign) {
+						visit_assignment(node);
+					}
+				}
+
+				void visit(const ast::this_ref &node) override
+				{
+					(void) node; // node not used
+					_current_node = get_value(0, mode_P);
+				}
+
+				void visit(const ast::null_constant &node) override
+				{
+					(void) node; // node not used
+					_current_node = new_Const_long(mode_P, 0);
+				}
+
+				ir_node* current_node() const noexcept {
+					return _current_node;
+				}
+
+			private:
+
 				void visit_field(const ast::variable_access& node, ir_entity* field)
 				{
 
@@ -72,8 +101,8 @@ namespace minijava
 					auto field_mode = get_type_mode(field_type);
 
 					auto ref_pointer = node.target()
-					               ? get_expression_node(*node.target())
-					               : get_value(0, mode_P);
+					                   ? get_expression_node(*node.target())
+					                   : get_value(0, mode_P);
 					auto member = new_Member(ref_pointer, field);
 
 					if (_do_store) {
@@ -83,17 +112,6 @@ namespace minijava
 						auto load = new_Load(mem, member, field_mode, field_type, cons_none);
 						set_store(new_Proj(load, mode_M, pn_Load_M));
 						_current_node = new_Proj(load, field_mode, pn_Load_res);
-					}
-				}
-
-				void visit(const ast::binary_expression &node) override
-				{
-					if (is_boolean_expression(node)) {
-						visit_boolean_expression(node);
-					} else if (is_arithmetic_expression(node)) {
-						visit_arithmetic_expression(node);
-					} else if (node.type() == ast::binary_operation_type::assign) {
-						visit_assignment(node);
 					}
 				}
 
@@ -134,52 +152,32 @@ namespace minijava
 					auto memory = get_store();
 
 					switch (expression.type()) {
-					case ast::binary_operation_type::divide: {
-						memory = get_store();
-						auto div_result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
-						_current_node = new_Proj(div_result, _primitives.int_mode, pn_Div_res);
-						set_store(new_Proj(div_result, mode_M, pn_Div_M));
-						break;
-					}
-					case ast::binary_operation_type::modulo: {
-						memory = get_store();
-						auto mod_result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
-						set_store(new_Proj(mod_result, mode_M, pn_Mod_M));
-						_current_node = new_Proj(mod_result, _primitives.int_mode, pn_Mod_res);
-						break;
-					}
-					case ast::binary_operation_type::multiply:
-						_current_node = new_Mul(lhs, rhs);
-						break;
-					case ast::binary_operation_type::plus:
-						_current_node = new_Add(lhs, rhs);
-						break;
-					case ast::binary_operation_type::minus:
-						_current_node = new_Sub(lhs, rhs);
-						break;
-					default:
-						MINIJAVA_NOT_REACHED();
-						break;
+						case ast::binary_operation_type::divide: {
+							auto div_result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
+							_current_node = new_Proj(div_result, _primitives.int_mode, pn_Div_res);
+							set_store(new_Proj(div_result, mode_M, pn_Div_M));
+							break;
+						}
+						case ast::binary_operation_type::modulo: {
+							auto mod_result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
+							set_store(new_Proj(mod_result, mode_M, pn_Mod_M));
+							_current_node = new_Proj(mod_result, _primitives.int_mode, pn_Mod_res);
+							break;
+						}
+						case ast::binary_operation_type::multiply:
+							_current_node = new_Mul(lhs, rhs);
+							break;
+						case ast::binary_operation_type::plus:
+							_current_node = new_Add(lhs, rhs);
+							break;
+						case ast::binary_operation_type::minus:
+							_current_node = new_Sub(lhs, rhs);
+							break;
+						default:
+							MINIJAVA_NOT_REACHED();
+							break;
 					}
 				}
-
-				void visit(const ast::this_ref &node) override
-				{
-					(void) node; // node not used
-					_current_node = get_value(0, mode_P);
-				}
-
-				void visit(const ast::null_constant &node) override
-				{
-					(void) node; // node not used
-					_current_node = new_Const_long(mode_P, 0);
-				}
-
-				ir_node* current_node() const noexcept {
-					return _current_node;
-				}
-
-			private:
 
 				bool is_boolean_expression(const ast::binary_expression& expression)
 				{
