@@ -10,7 +10,7 @@ namespace minijava
 	namespace
 	{
 
-		void layoutMethod(ir_type* /*clazz*/, ir_entity* method)
+		void layout_method(ir_type * /*clazz*/, ir_entity *method)
 		{
 			assert(is_method_entity(method));
 			// move method to global type
@@ -18,20 +18,20 @@ namespace minijava
 		}
 
 		// move all class methods to global type
-		void layoutClass(ir_type* type)
+		void layout_class(ir_type *type)
 		{
 			assert(is_Class_type(type));
 			auto member_size = get_class_n_members(type);
 			for (size_t j = member_size; j > 0; j--) {
 				auto member = get_class_member(type, j - 1);
 				if (is_method_entity(member)) {
-					layoutMethod(type, member);
+					layout_method(type, member);
 				}
 			}
 			set_type_state(type, layout_fixed);
 		}
 
-		void layoutTypes()
+		void layout_types()
 		{
 			auto num_types = get_irp_n_types();
 			auto glob = get_glob_type();
@@ -42,7 +42,7 @@ namespace minijava
 				}
 
 				if (is_Class_type(type) && !is_frame_type(type)) {
-					layoutClass(type);
+					layout_class(type);
 				}
 			}
 		}
@@ -50,7 +50,7 @@ namespace minijava
 
 	void firm::lower() {
 		// layout all types for later use
-		layoutTypes();
+		layout_types();
 		// replaces Offsets, TypeConsts by real constants(if possible)
 		// replaces Members and Sel nodes by address computation
 		lower_highlevel();

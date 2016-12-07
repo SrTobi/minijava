@@ -16,11 +16,34 @@ struct ir_type;
 namespace minijava
 {
 
-
 	namespace firm
 	{
 		class ir_types;
 
+		/**
+		 * @brief
+		 *     Performs the second Firm pass which creates IR methods.
+		 *
+		 * If the `libfirm` was not properly initialized before calling this
+		 * function, the behavior is undefined.
+		 *
+		 * The behavior is also undefined if `ast` is not a semantically
+		 * correct program or if `seminfo` is not the result of a proper
+		 * semantic analysis of `ast`.
+		 *
+		 * Furthermore, the result is undefined if `types` is not the result of
+		 * a successful first Firm pass of the given program.
+		 *
+		 * @param ast
+		 *     AST of the program
+		 *
+		 * @param semantic_info
+		 *     semantic annotation for the given AST
+		 *
+		 * @param types
+		 *     Firm IR types and entities
+		 *
+		 */
 		void create_methods(const ast::program& ast,
 		                    const semantic_info& semantic_info,
 		                    const ir_types& types);

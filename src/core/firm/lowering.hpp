@@ -3,10 +3,16 @@
 namespace minijava
 {
 
-	namespace firm {
+	namespace firm
+	{
 
+		/**
+		 * @brief
+		 *     Prepares the firm graph for conversion to assembly code.
+		 *
+		 */
 		void lower();
 
-	}
+	}  // namespace firm
 
-}
+}  // namespace minijava

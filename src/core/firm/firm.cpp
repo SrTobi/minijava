@@ -34,10 +34,6 @@ namespace minijava
 	void emit_x64_assembly_firm(firm_global_state& firm, file_output& output_file)
 	{
 		assert(firm);
-		// FIXME: implement lowering properly (?), see https://github.com/MatzeB/jFirm/blob/master/src/example/Lower.java
-		// FIXME: do we need to call ir_lower_intrinsics here?
-		// FIXME: the below is just a placeholder, I have no idea what I'm doing
-		// lower_highlevel();
 		firm::lower();
 		be_parse_arg("isa=amd64");
 		be_main(output_file.handle(), output_file.filename().c_str());

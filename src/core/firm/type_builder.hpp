@@ -1,5 +1,5 @@
 /**
- * @file builder.hpp
+ * @file type_builder.hpp
  *
  * @brief
  *     First Firm pass to create Firm IR types and entities.
