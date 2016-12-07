@@ -49,15 +49,22 @@ namespace minijava
 				}
 
 				void visit(const ast::variable_access &node) override {
+					std::cout << "before vardecl" << std::endl;
 					auto var_decl = _sem_info.vardecl_annotations().at(node);
-					auto field = _firm_types.fieldmap.at(*var_decl);
-					if (field) {
-						visit_field(node, field);
+					std::cout << "after vardecl" << std::endl;
+					auto field = _firm_types.fieldmap.find(var_decl);
+					std::cout << "after fieldmap" << std::endl;
+					if (field != _firm_types.fieldmap.end()) {
+						visit_field(node, field->second);
 					} else {
 						auto type = _sem_info.type_annotations().at(node);
 						auto ir_type = _firm_types.typemap.at(type);
 						_var_pos =_var_ids.at(var_decl);
-						_current_node = get_value(_var_pos, get_type_mode(ir_type));
+						if (_do_store) {
+							// set_value(_var_pos, ...) in calling method
+						} else {
+							_current_node = get_value(_var_pos, get_type_mode(ir_type));
+						}
 					}
 				}
 
@@ -67,17 +74,12 @@ namespace minijava
 					auto field_type = get_entity_type(field);
 					auto field_mode = get_type_mode(field_type);
 
-					//auto addr_mode = get_reference_offset_mode(mode_P);
-					//auto field_offset = new_Const_long(addr_mode, get_entity_offset(field));
 					auto ref_pointer = node.target()
 					               ? get_expression_node(*node.target())
 					               : get_value(0, mode_P);
 					auto member = new_Member(ref_pointer, field);
-					//auto addr = new_Conv(new_Add(new_Conv(ref_pointer, addr_mode), field_offset), addr_mode);
 
 					if (_do_store) {
-						//_current_node = addr;
-						//new_Store(get_store(), member, )
 						_current_node = member;
 					} else {
 						auto mem = get_store();
@@ -85,13 +87,10 @@ namespace minijava
 						set_store(new_Proj(load, mode_M, pn_Load_M));
 						_current_node = new_Proj(load, field_mode, pn_Load_res);
 					}
-					//_current_node = new_Const_long(_firm_types.mode_int(), 0);
 				}
 
 				void visit(const ast::binary_expression &node) override
 				{
-					auto old_pos = _var_pos;
-
 					if (is_boolean_expression(node)) {
 						visit_boolean_expression(node);
 					} else if (is_arithmetic_expression(node)) {
@@ -99,8 +98,6 @@ namespace minijava
 					} else if (node.type() == ast::binary_operation_type::assign) {
 						visit_assignment(node);
 					}
-
-					_var_pos = old_pos;
 				}
 
 				void visit_assignment(const ast::binary_expression& expression)
@@ -110,6 +107,9 @@ namespace minijava
 					auto _old_do_store = _do_store;
 					_do_store = true;
 					auto lhs = get_expression_node(expression.lhs());
+					auto pos = _var_pos;
+					_do_store = _old_do_store;
+
 					if (is_Member(lhs)) {
 						auto rhs_mode = get_irn_mode(rhs);
 						auto value_type = get_type_for_mode(rhs_mode);
@@ -117,12 +117,8 @@ namespace minijava
 						set_store(new_Proj(store, get_modeM(), pn_Store_M));
 						_current_node = store;
 					} else {
-						// todo..
+						set_value(pos, rhs);
 					}
-					_do_store = _old_do_store;
-
-					(void)lhs;
-					(void)rhs;
 				}
 
 				void visit_boolean_expression(const ast::binary_expression& expression)
@@ -230,8 +226,11 @@ namespace minijava
 
 				ir_node* get_expression_node(const ast::expression& node)
 				{
+					ir_node* current_node = _current_node;
 					node.accept(*this);
-					return this->_current_node;
+					ir_node* ret_node = _current_node;
+					_current_node = current_node;
+					return ret_node;
 				}
 
 				bool _in_instance_method()
@@ -385,7 +384,7 @@ namespace minijava
 
 				ir_node* get_expression_node(const ast::expression& node)
 				{
-					expression_generator generator(_sem_info, _var_ids, _firm_types, &_class_type);
+					expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
 					node.accept(generator);
 					return generator.current_node();
 				}
@@ -467,6 +466,7 @@ namespace minijava
 			create_firm_method(info, types, *class_type, method);
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
+			dump_ir_graph(irg, "before-verify");
 			assert(irg_verify(irg));
 		}
 
@@ -483,6 +483,7 @@ namespace minijava
 			create_firm_method(info, types, *class_type, method);
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
+			dump_ir_graph(irg, "before-verify");
 			assert(irg_verify(irg));
 		}
 
