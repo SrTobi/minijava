@@ -25,7 +25,7 @@ namespace minijava
 		if (!directory.empty()) {
 			ir_set_dump_path(directory.c_str());
 		}
-		dump_all_ir_graphs(".vcg");
+		dump_all_ir_graphs("");
 	}
 
 
@@ -39,7 +39,6 @@ namespace minijava
 		// FIXME: the below is just a placeholder, I have no idea what I'm doing
 		// lower_highlevel();
 		firm::lower();
-		dump_all_ir_graphs("after-lowering");
 		be_parse_arg("isa=amd64");
 		be_main(output_file.handle(), output_file.filename().c_str());
 	}
