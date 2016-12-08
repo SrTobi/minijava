@@ -44,15 +44,10 @@ namespace minijava
 		 * @param types
 		 *     Firm IR types and entities
 		 *
-		 * @param arguments
-		 *     Argument list map, in which the argument arrays for each
-		 *     IR Call node are retained.
-		 *
 		 */
 		void create_methods(const ast::program& ast,
 		                    const semantic_info& semantic_info,
-		                    const ir_types& types,
-		                    firm_global_state::argument_list_map& arguments);
+		                    const ir_types& types);
 	}  // namespace firm
 
 }  // namespace minijava

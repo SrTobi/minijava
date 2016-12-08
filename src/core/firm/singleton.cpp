@@ -29,8 +29,7 @@ namespace minijava
 	}
 
 	firm_global_state::firm_global_state(firm_global_state&& other)
-		: _arguments_map{std::move(other._arguments_map)},
-		  _firm_owner{std::exchange(other._firm_owner, false)}
+		: _firm_owner{std::exchange(other._firm_owner, false)}
 	{
 	}
 

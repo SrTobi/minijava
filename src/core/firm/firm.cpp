@@ -9,11 +9,12 @@
 namespace minijava
 {
 
-	firm_global_state create_firm_ir(const ast::program& ast, const semantic_info& semantic_info)
+	firm_global_state create_firm_ir(const ast::program& ast,
+	                                 const semantic_info& semantic_info)
 	{
 		auto ir = firm_global_state{};
 		auto types = firm::create_types(ast, semantic_info);
-		firm::create_methods(ast, semantic_info, types, ir.arguments_map());
+		firm::create_methods(ast, semantic_info, types);
 		return ir;
 	}
 
