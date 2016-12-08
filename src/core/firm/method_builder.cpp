@@ -473,7 +473,7 @@ namespace minijava
 							set_value(current_id, new_Proj(
 									args,
 									get_type_mode(get_entity_type(method_entity)),
-									static_cast<unsigned int>(current_id - 1)
+									static_cast<unsigned int>(current_id)
 							));
 						}
 						_var_ids.insert(std::make_pair(local, current_id++));

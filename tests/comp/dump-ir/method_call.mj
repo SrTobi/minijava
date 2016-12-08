@@ -1,13 +1,15 @@
 class A {
 
 	public void test(A a) {
-		A b;
+		A b = new A();
 		b.test(a);
 	}
 
 	public static void main(String[] args) {
-		A a;
-		a.test(a);
+		A a = new A();
+		A b = new A();
+		a.test(b);
+		(new A()).test(new A());
 	}
 
 }
