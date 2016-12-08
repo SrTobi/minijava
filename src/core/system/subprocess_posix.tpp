@@ -2,6 +2,7 @@
 #error "Never `#include` the source file `<system/subprocess_posix.tpp>`"
 #endif
 
+#include <cstdlib>
 #include <memory>
 
 #include <fcntl.h>

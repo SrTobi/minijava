@@ -10,7 +10,8 @@ namespace minijava
 	namespace /* anonymous */
 	{
 
-		bool is_valid_asm_id(const symbol id)
+		// Declared `inline` to avoid `-Wunused-function` in release mode.
+		inline bool is_valid_asm_id(const symbol id)
 		{
 			static const auto pattern = std::regex{"[A-Za-z_.][0-9A-Za-z_.]*"};
 			return std::regex_match(id.c_str(), pattern);
