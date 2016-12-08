@@ -112,23 +112,11 @@ namespace minijava
 					}
 				}
 
-				ir_entity* get_method_entity(const ast::method_invocation& node)
-				{
-					auto method = _sem_info.method_annotations().at(node);
-					auto method_pos = _firm_types.methodmap.find(method);
-					auto method_entity = method_pos != _firm_types.methodmap.end()
-					                     ? method_pos->second
-					                     : _runtime_library.println;
-
-					return method_entity;
-				}
-
-				// FIXME: how do we deal with println and where?
 				void visit(const ast::method_invocation& node) override
 				{
-					auto method_entity = get_method_entity(node);
+					auto method = _sem_info.method_annotations().at(node);
+					auto method_entity = _firm_types.methodmap.at(*method);
 					auto method_type = get_entity_type(method_entity);
-					std::cout << "method found:" << method_entity << std::endl;
 					auto argc = get_method_n_params(method_type);
 					auto arguments = std::make_unique<ir_node*[]>(argc);
 					if (auto target = node.target()) {
