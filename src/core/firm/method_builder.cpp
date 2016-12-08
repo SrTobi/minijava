@@ -30,10 +30,11 @@ namespace minijava
 				expression_generator(const semantic_info& sem_info,
 				                     const var_id_map_type& var_ids,
 				                     const ir_types& firm_types,
-				                     const ir_type* class_type)
+				                     firm_global_state::argument_list_map& args)
 						: _sem_info{sem_info}, _var_ids{var_ids},
-						  _firm_types{firm_types}, _class_type{class_type},
-				          _primitives{primitive_types::get_instance()}
+						  _firm_types{firm_types},
+				          _primitives{primitive_types::get_instance()},
+				          _arguments{args}
 				{}
 
 				using ast::visitor::visit;
@@ -57,23 +58,26 @@ namespace minijava
 
 				void visit(const ast::object_instantiation& node) override
 				{
+					// TODO: remove assert and define mode for size_t?
 					static_assert(sizeof(unsigned long) == sizeof(size_t), "");
 					auto type = _sem_info.type_annotations().at(node);
 					auto ir_type = _firm_types.classmap.at(
 							*type.info.declaration()
 					);
-					ir_node* arguments[2] = {
-							// TODO: remove static assert above and use other mode for size_t?
-							new_Const_long(get_modeLu(), get_type_size(ir_type)),
-							new_Const_long(get_modeLu(), 1)
-					};
+					auto arguments = std::make_unique<ir_node*[]>(2);
+					arguments[0] = new_Const_long(
+							get_modeLu(), get_type_size(ir_type)
+					);
+					arguments[1] = new_Const_long(get_modeLu(), 1);
+					// FIXME: use new_Builtin instead?
 					auto call_node = new_Call(
 							get_store(),
 					        new_Address(nullptr), // FIXME: we need an entity for the built-in methods
 							2,
-					        arguments,
+					        arguments.get(),
 					        nullptr // FIXME: we need types for the built-in methods
 					);
+					_arguments.put(node, std::move(arguments));
 					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
 					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
 					_current_node = new_Proj(tuple, get_modeP(), 0);
@@ -111,13 +115,39 @@ namespace minijava
 
 				void visit(const ast::method_invocation& node) override
 				{
-					// FIXME
-					(void) node;
+					auto method = _sem_info.method_annotations().at(node);
+					auto method_entity = _firm_types.methodmap.at(*method);
+					auto argc = method->parameters().size() + 1;
+					auto arguments = std::make_unique<ir_node*[]>(argc);
+					auto method_type = get_entity_type(method_entity);
+					if (auto target = node.target()) {
+						target->accept(*this);
+						arguments[0] = _current_node;
+					} else {
+						// use this argument of current method
+						arguments[0] = get_value(0, mode_P);
+					}
+					std::size_t i = 1;
+					for (const auto& arg : node.arguments()) {
+						arg->accept(*this);
+						arguments[i] = _current_node;
+						++i;
+					}
+					auto call_node = new_Call(
+							get_store(),
+							new_Address(method_entity),
+							static_cast<int>(argc),
+							arguments.get(),
+							method_type
+					);
+					_arguments.put(node, std::move(arguments));
+					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
+					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
+					_current_node = new_Proj(tuple, get_modeP(), 0);
 				}
 
-				void visit(const ast::this_ref& node) override
+				void visit(const ast::this_ref&/* node */) override
 				{
-					(void) node; // node not used
 					_current_node = get_value(0, mode_P);
 				}
 
@@ -132,9 +162,8 @@ namespace minijava
 					_current_node = new_Const_long(_primitives.int_mode, value);
 				}
 
-				void visit(const ast::null_constant& node) override
+				void visit(const ast::null_constant&/* node */) override
 				{
-					(void) node; // node not used
 					_current_node = new_Const_long(mode_P, 0);
 				}
 
@@ -279,22 +308,15 @@ namespace minijava
 					return ret_node;
 				}
 
-				bool _in_instance_method()
-				{
-					return _class_type != nullptr;
-				}
-
-				int _var_pos{-1};
-				bool _do_store{false};
-
 				const semantic_info& _sem_info;
 				const var_id_map_type& _var_ids;
 				const ir_types& _firm_types;
-				const ir_type* _class_type;
-
-				ir_node* _current_node{};
-
 				const primitive_types _primitives;
+				firm_global_state::argument_list_map& _arguments;
+
+				int _var_pos{-1};
+				bool _do_store{false};
+				ir_node* _current_node{};
 
 			};
 
@@ -305,37 +327,12 @@ namespace minijava
 
 				method_generator(const semantic_info& sem_info,
 				                 const ir_types& firm_types,
-				                 const ir_type& class_type)
+				                 firm_global_state::argument_list_map& args)
 						: _sem_info{sem_info}, _firm_types{firm_types},
-						  _class_type{class_type}
+						  _arguments{args}
 				{}
 
 				using ast::visitor::visit;
-
-				void visit(const ast::instance_method& node) override
-				{
-					auto irg = get_current_ir_graph();
-					auto method_entity = _firm_types.methodmap.at(node);
-					//auto cur_block = get_r_cur_block(irg);
-					//set_r_cur_block(irg, get_irg_start_block(irg));
-					auto locals = _sem_info.locals_annotations().at(node);
-					auto args = get_irg_args(irg);
-					auto num_params = static_cast<int>(node.parameters().size());
-					auto current_id = int{1};
-					set_value(0, new_Proj(args, mode_P, 0));
-					for (const auto& local : locals) {
-						if (current_id <= num_params) {
-							set_value(current_id, new_Proj(
-									args,
-									get_type_mode(get_entity_type(method_entity)),
-									static_cast<unsigned int>(current_id - 1)
-							));
-						}
-						_var_ids.insert(std::make_pair(local, current_id++));
-					}
-					//set_r_cur_block(irg, cur_block);
-					node.body().accept(*this);
-				}
 
 				void visit(const ast::local_variable_statement& node) override
 				{
@@ -425,6 +422,37 @@ namespace minijava
 					(void) node;
 				}
 
+				void visit(const ast::main_method& node) override
+				{
+					// FIXME: merge with instance_method and implement visit_method()? Or do we need special handling?
+					(void) node;
+				}
+
+				void visit(const ast::instance_method& node) override
+				{
+					auto irg = get_current_ir_graph();
+					auto method_entity = _firm_types.methodmap.at(node);
+					//auto cur_block = get_r_cur_block(irg);
+					//set_r_cur_block(irg, get_irg_start_block(irg));
+					auto locals = _sem_info.locals_annotations().at(node);
+					auto args = get_irg_args(irg);
+					auto num_params = static_cast<int>(node.parameters().size());
+					auto current_id = int{1};
+					set_value(0, new_Proj(args, mode_P, 0));
+					for (const auto& local : locals) {
+						if (current_id <= num_params) {
+							set_value(current_id, new_Proj(
+									args,
+									get_type_mode(get_entity_type(method_entity)),
+									static_cast<unsigned int>(current_id - 1)
+							));
+						}
+						_var_ids.insert(std::make_pair(local, current_id++));
+					}
+					//set_r_cur_block(irg, cur_block);
+					node.body().accept(*this);
+				}
+
 				ir_node* current_node() const noexcept {
 					return _current_node;
 				}
@@ -433,14 +461,16 @@ namespace minijava
 
 				ir_node* get_expression_node(const ast::expression& node)
 				{
-					expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
+					expression_generator generator{
+							_sem_info, _var_ids, _firm_types, _arguments
+					};
 					node.accept(generator);
 					return generator.current_node();
 				}
 
 				const semantic_info& _sem_info;
 				const ir_types& _firm_types;
-				const ir_type& _class_type;
+				firm_global_state::argument_list_map& _arguments;
 
 				var_id_map_type _var_ids{};
 
@@ -451,11 +481,11 @@ namespace minijava
 
 		void create_firm_method(const semantic_info& sem_info,
 		                        const ir_types& firm_types,
-		                        const ir_type& class_type,
-		                        const ast::instance_method& method)
+		                        const ast::instance_method& method,
+		                        firm_global_state::argument_list_map& arguments)
 		{
 			auto irg = get_current_ir_graph();
-			method_generator generator{sem_info, firm_types, class_type};
+			method_generator generator{sem_info, firm_types, arguments};
 			method.accept(generator);
 			// handle return value
 			// no explicit return statement found?
@@ -469,11 +499,11 @@ namespace minijava
 
 		void create_firm_method(const semantic_info& sem_info,
 		                        const ir_types& firm_types,
-		                        const ir_type& class_type,
-		                        const ast::main_method& method)
+		                        const ast::main_method& method,
+		                        firm_global_state::argument_list_map& arguments)
 		{
 			auto irg = get_current_ir_graph();
-			method_generator generator{sem_info, firm_types, class_type};
+			method_generator generator{sem_info, firm_types, arguments};
 			method.accept(generator);
 			// main has no return value - so we don't need method_generator.current_node()
 			// no return statement at the end => implicit return
@@ -504,13 +534,13 @@ namespace minijava
 		void _create_method_entity(
 				const semantic_info& info,
 				const ir_types& types,
-				ir_type*const class_type,
-				const ast::instance_method&  method)
+				const ast::instance_method& method,
+				firm_global_state::argument_list_map& arguments)
 		{
 			const auto method_entity = types.methodmap.at(method);
 			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
 			set_current_ir_graph(irg);
-			create_firm_method(info, types, *class_type, method);
+			create_firm_method(info, types, method, arguments);
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
 			assert(irg_verify(irg));
@@ -519,14 +549,14 @@ namespace minijava
 		void _create_method_entity(
 				const semantic_info& info,
 				const ir_types& types,
-				ir_type*const class_type,
-		        const ast::main_method& method)
+		        const ast::main_method& method,
+				firm_global_state::argument_list_map& arguments)
 		{
 			const auto method_entity = types.methodmap.at(method);
 			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
 
 			set_current_ir_graph(irg);
-			create_firm_method(info, types, *class_type, method);
+			create_firm_method(info, types, method, arguments);
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
 			assert(irg_verify(irg));
@@ -534,16 +564,20 @@ namespace minijava
 
 		void create_methods(const ast::program& ast,
 		                    const semantic_info& info,
-		                    const ir_types& types) {
+		                    const ir_types& types,
+		                    firm_global_state::argument_list_map& arguments) {
 
 			for (const auto& clazz : ast.classes()) {
-				auto class_type = types.classmap.at(*clazz);
 				// insert methods
 				for (const auto& method : clazz->instance_methods()) {
-					_create_method_entity(info, types, class_type, *method);
+					_create_method_entity(
+							info, types, *method, arguments
+					);
 				}
 				for (const auto& method : clazz->main_methods()) {
-					_create_method_entity(info, types, class_type, *method);
+					_create_method_entity(
+							info, types, *method, arguments
+					);
 				}
 			}
 

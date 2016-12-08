@@ -71,7 +71,7 @@ namespace minijava
 							MINIJAVA_NOT_REACHED();
 						}
 					}
-					// TODO: Use iteratation instead of recursion
+					// TODO: Use iteration instead of recursion
 					auto recursive_type = new_type_array(
 						_get_var_type(sem::type{type.info, type.rank - 1}),
 						0

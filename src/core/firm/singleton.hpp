@@ -9,6 +9,15 @@
 #pragma once
 
 
+#include <memory>
+
+#include "parser/ast.hpp"
+#include "semantic/attribute.hpp"
+
+
+struct ir_node;
+
+
 namespace minijava
 {
 
@@ -29,6 +38,22 @@ namespace minijava
 	{
 
 	public:
+
+		/**
+		 * @brief
+		 *     Type of the argument list map, which retains the array of
+		 *     pointers to IR nodes representing its arguments for each
+		 *     `method_invocation` and memory allocation.
+		 *
+		 */
+		using argument_list_map = ast_attributes<
+				std::unique_ptr<ir_node*[]>,
+				ast_node_filter<
+						ast::method_invocation,
+						ast::object_instantiation,
+						ast::array_instantiation
+				>
+		>;
 
 		/**
 		 * @brief
@@ -115,6 +140,21 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Returns the argument list map, which retains the array of
+		 *     pointers to IR nodes representing its arguments for each
+		 *     `method_invocation` and memory allocation.
+		 *
+		 * @return
+		 *     arguments map
+		 *
+		 */
+		argument_list_map& arguments_map()
+		{
+			return _arguments_map;
+		}
+
+		/**
+		 * @brief
 		 *     Tests whether this object actively owns the global `libfirm`
 		 *     state.
 		 *
@@ -125,6 +165,19 @@ namespace minijava
 		operator bool() const noexcept;
 
 	private:
+
+		/**
+		 * @brief
+		 *     Argument list map, which retains the array of pointers to IR
+		 *     nodes representing its arguments for each `method_invocation`
+		 *     and memory allocation.
+		 *
+		 * libfirm requires the user to allocate an array for each method
+		 * invocation. Those arrays are saved in this data structure to prevent
+		 * memory leaks.
+		 *
+		 */
+		argument_list_map _arguments_map{};
 
 		/**
 		 * @brief

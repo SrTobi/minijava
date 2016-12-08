@@ -13,7 +13,7 @@ namespace minijava
 	{
 		auto ir = firm_global_state{};
 		auto types = firm::create_types(ast, semantic_info);
-		firm::create_methods(ast, semantic_info, types);
+		firm::create_methods(ast, semantic_info, types, ir.arguments_map());
 		return ir;
 	}
 
