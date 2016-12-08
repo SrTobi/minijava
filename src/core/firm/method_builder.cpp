@@ -32,7 +32,8 @@ namespace minijava
 				                     const ir_types& firm_types)
 						: _sem_info{sem_info}, _var_ids{var_ids},
 						  _firm_types{firm_types},
-				          _primitives{primitive_types::get_instance()}
+				          _primitives{primitive_types::get_instance()},
+				          _runtime_library{runtime_library::get_instance()}
 				{}
 
 				using ast::visitor::visit;
@@ -111,14 +112,25 @@ namespace minijava
 					}
 				}
 
+				ir_entity* get_method_entity(const ast::method_invocation& node)
+				{
+					auto method = _sem_info.method_annotations().at(node);
+					auto method_pos = _firm_types.methodmap.find(method);
+					auto method_entity = method_pos != _firm_types.methodmap.end()
+					                     ? method_pos->second
+					                     : _runtime_library.println;
+
+					return method_entity;
+				}
+
 				// FIXME: how do we deal with println and where?
 				void visit(const ast::method_invocation& node) override
 				{
-					auto method = _sem_info.method_annotations().at(node);
-					auto method_entity = _firm_types.methodmap.at(*method);
-					auto argc = method->parameters().size() + 1;
-					auto arguments = std::make_unique<ir_node*[]>(argc);
+					auto method_entity = get_method_entity(node);
 					auto method_type = get_entity_type(method_entity);
+					std::cout << "method found:" << method_entity << std::endl;
+					auto argc = get_method_n_params(method_type);
+					auto arguments = std::make_unique<ir_node*[]>(argc);
 					if (auto target = node.target()) {
 						target->accept(*this);
 						arguments[0] = _current_node;
@@ -321,6 +333,7 @@ namespace minijava
 				const var_id_map_type& _var_ids;
 				const ir_types& _firm_types;
 				const primitive_types _primitives;
+				const runtime_library _runtime_library;
 
 				int _var_pos{-1};
 				bool _do_store{false};

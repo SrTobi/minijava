@@ -216,7 +216,30 @@ namespace minijava
 				pt.boolean_mode = new_int_mode("B", irma_twos_complement, 8, 0, 1);
 				pt.int_type = new_type_primitive(pt.int_mode);
 				pt.boolean_type = new_type_primitive(pt.boolean_mode);
+				pt.pointer_mode = mode_P;
+				pt.pointer_type = new_type_primitive(mode_P);
 				return pt;
+			}();
+			return instance;
+		}
+
+
+		const runtime_library& runtime_library::get_instance()
+		{
+			static const auto instance = [](){
+				auto primitives = primitive_types::get_instance();
+				auto rt = runtime_library{};
+				// create allocate method
+				rt.alloc_type = new_type_method(2, 1, 0, cc_cdecl_set, mtp_no_property);
+				set_method_param_type(rt.alloc_type, 0, primitives.int_type);
+				set_method_param_type(rt.alloc_type, 1, primitives.int_type);
+				set_method_res_type(rt.alloc_type, 0, primitives.pointer_type);
+				rt.alloc = new_entity(get_glob_type(), new_id_from_str("mj_runtime_allocate"), rt.alloc_type);
+				// create println method
+				rt.println_type = new_type_method(1, 0, 0, cc_cdecl_set, mtp_no_property);
+				set_method_param_type(rt.println_type, 0, primitives.int_type);
+				rt.println = new_entity(get_glob_type(), new_id_from_str("mj_runtime_println"), rt.println_type);
+				return rt;
 			}();
 			return instance;
 		}

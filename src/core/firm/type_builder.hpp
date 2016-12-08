@@ -157,6 +157,52 @@ namespace minijava
 			/** @brief Unique pointer to Firm type for MiniJava's `boolean` type.  */
 			ir_type* boolean_type{};
 
+			/** @brief Unique pointer to Firm mode for MiniJava's `pointer` type. */
+			ir_mode* pointer_mode{};
+
+			/** @brief Unique pointer to Firm type for MiniJava's `pointer` type. */
+			ir_type* pointer_type{};
+		};
+
+		/**
+		 * @brief
+		 *     `struct` holding Firm types for MiniJava's runtime library calls
+		 *
+		 * A default-constructed struct will hold only `nullptr`s. In order to
+		 * get an initialized object, use the `get_instance` function.
+		 *
+		 * As this `struct` merely stores only pointers, it can be freely
+		 * copied. It's the pointer members that won't change value.
+		 */
+		struct runtime_library
+		{
+
+			/**
+			 * @brief
+			 *     Creates an empty record with all members `nullptr`s.
+			 *
+			 */
+			runtime_library() noexcept = default;
+
+			/**
+			 * @brief
+			 *     Obtains a reference to the singleton instance, lazily
+			 *     initializing it in a race-free manner if necessary.
+			 *
+			 * If `libfirm` is not initialized prior to calling this function,
+			 * the behavior is undefined.
+			 *
+			 * @returns
+			 *     reference to initialized singleton
+			 *
+			 */
+			static const runtime_library& get_instance();
+
+			ir_entity* alloc{};
+			ir_type* alloc_type{};
+
+			ir_entity* println{};
+			ir_type* println_type{};
 		};
 
 	}  // namespace firm
