@@ -61,6 +61,7 @@ namespace minijava
 						return pos->second;
 					}
 					if (type.rank == 0) {
+						// FIXME: special case for null
 						if (type.info.is_boolean()) {
 							return _primitives.boolean_type;
 						} else if (type.info.is_int()) {
@@ -91,12 +92,16 @@ namespace minijava
 
 				void _init_methods()
 				{
-					for (const auto& clazz : _ast.classes()) {
-						const auto class_type = _get_class_type(*clazz.get());
-						for (const auto& method : clazz->instance_methods()) {
-							_init_method(class_type, *method);
+					for (const auto& clazz : _seminfo.classes()) {
+						const auto class_decl = clazz.second.declaration();
+						const auto class_type = _classmap.find(class_decl);
+						if (class_type != _classmap.end()) {
+							// class is actually used in the program
+							for (const auto& method : class_decl->instance_methods()) {
+								_init_method(class_type->second, *method);
+							}
 						}
-						for (const auto& method : clazz->main_methods()) {
+						for (const auto& method : class_decl->main_methods()) {
 							_init_method(get_glob_type(), *method);
 						}
 					}
@@ -164,22 +169,23 @@ namespace minijava
 				void _finalize_class_types()
 				{
 					for (const auto& clazz : _ast.classes()) {
-						const auto type = sem::type{_seminfo.classes().at(clazz->name()), 0};
-						_finalize_class_type(type);
+						if (_classmap.find(clazz.get()) != _classmap.end()) {
+							// class is actually used in the program
+							_finalize_class_type(*clazz);
+						}
 					}
 				}
 
 				// add fields and methods
-				void _finalize_class_type(const sem::type clazz)
+				void _finalize_class_type(const ast::class_declaration& clazz)
 				{
-					assert(clazz.info.is_reference());
-					const auto class_type = _classmap.at(*clazz.info.declaration());
+					const auto class_type = _classmap.at(clazz);
 					// insert fields
-					for (const auto& field : clazz.info.declaration()->fields()) {
+					for (const auto& field : clazz.fields()) {
 						_create_field_entity(class_type, *field);
 					}
 					// TODO: Is there a better way to trick Firm into accepting empty types?
-					if (clazz.info.declaration()->fields().empty()) {
+					if (clazz.fields().empty()) {
 						const auto dummy_name = new_id_from_str("__prevent_empty_class");
 						const auto dummy_field = new_entity(class_type, dummy_name, _primitives.int_type);
 						set_entity_ld_ident(dummy_field, dummy_name);

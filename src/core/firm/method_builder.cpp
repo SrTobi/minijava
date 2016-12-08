@@ -590,9 +590,11 @@ namespace minijava
 		                    const ir_types& types) {
 
 			for (const auto& clazz : ast.classes()) {
-				// insert methods
-				for (const auto& method : clazz->instance_methods()) {
-					_create_method_entity(info, types, *method);
+				if (types.classmap.find(clazz.get()) != types.classmap.end()) {
+					// build method bodies
+					for (const auto& method : clazz->instance_methods()) {
+						_create_method_entity(info, types, *method);
+					}
 				}
 				for (const auto& method : clazz->main_methods()) {
 					_create_method_entity(info, types, *method);

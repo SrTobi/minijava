@@ -54,6 +54,9 @@ namespace minijava
 			 * Reference types are mapped to pointer types, not the record type
 			 * of the referenced class.
 			 *
+			 * This map only contains types which are actually used in the
+			 * program.
+			 *
 			 */
 			type_mapping typemap{};
 
@@ -64,21 +67,30 @@ namespace minijava
 			 *
 			 * The mapped values are record and not pointer types.
 			 *
+			 * This map only contains classes which are actually used in the
+			 * program.
+			 *
 			 */
 			class_mapping classmap{};
 
 			/**
 			 * @brief
-			 *     AST annotation mapping fields to their correspondiong Firm
+			 *     AST annotation mapping fields to their corresponding Firm
 			 *     IR entities.
+			 *
+			 * This map only contains fields of classes which are actually used
+			 * in the program.
 			 *
 			 */
 			field_mapping fieldmap{};
 
 			/**
 			 * @brief
-			 *     AST annotation mapping methods to their correspondiong Firm
+			 *     AST annotation mapping methods to their corresponding Firm
 			 *     IR entities.
+			 *
+			 * This map only contains methods of classes which are actually used
+			 * in the program.
 			 *
 			 */
 			method_mapping methodmap{};
