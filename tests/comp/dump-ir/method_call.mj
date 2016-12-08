@@ -10,6 +10,7 @@ class A {
 		A b = new A();
 		a.test(b);
 		(new A()).test(new A());
+		System.out.println(5);
 	}
 
 }

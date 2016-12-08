@@ -173,10 +173,11 @@ namespace minijava
 
 				void _finalize_class_types()
 				{
-					for (const auto& clazz : _ast.classes()) {
-						if (_classmap.find(clazz.get()) != _classmap.end()) {
+					for (const auto& clazz : _seminfo.classes()) {
+						const auto class_decl = clazz.second.declaration();
+						if (_classmap.find(class_decl) != _classmap.end()) {
 							// class is actually used in the program
-							_finalize_class_type(*clazz);
+							_finalize_class_type(*class_decl);
 						}
 					}
 				}
