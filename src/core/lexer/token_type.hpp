@@ -208,6 +208,26 @@ namespace minijava
 
 	/**
 	 * @brief
+	 *     `return`s the `token_type` at the specified index if it exists.
+	 *
+	 * For `idx` in the range `[0, total_token_type_count)`,
+	 * `token_type_at_index(idx)` is equivalent to `all_token_types()[idx]` but
+	 * can be used in constant expressions.  Additionally, if `idx` is out of
+	 * range, this function is still well-behaved and reliably `return`s
+	 * `token_type(0)`, which is not a declared enumerator.
+	 *
+	 * @param idx
+	 *     index of the `token_type` to get
+	 *
+	 * @returns
+	 *     `token_type` at the given index
+	 *
+	 */
+	constexpr token_type token_type_at_index(const std::size_t idx) noexcept;
+
+
+	/**
+	 * @brief
 	 *     `return`s a textual representation of a token type.
 	 *
 	 * The representation will be

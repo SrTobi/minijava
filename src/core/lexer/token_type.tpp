@@ -148,6 +148,14 @@ namespace minijava
 		return total_token_type_count;
 	}
 
+	constexpr token_type token_type_at_index(const std::size_t idx) noexcept
+	{
+		if (idx < total_token_type_count) {
+			return detail::token_type_info_table[idx].first;
+		}
+		return token_type{};
+	}
+
 	constexpr const char * name(const token_type tt) noexcept
 	{
 		const auto idx = index(tt);

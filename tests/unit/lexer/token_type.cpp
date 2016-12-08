@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <limits>
 #include <numeric>
 #include <set>
 #include <sstream>
@@ -299,15 +300,46 @@ BOOST_AUTO_TEST_CASE(index_function_returns_tttc_for_undeclared_enumerator)
 }
 
 
-BOOST_AUTO_TEST_CASE(index_function_is_constexpr)
+BOOST_AUTO_TEST_CASE(token_type_at_index_same_as_array_lookup)
 {
-	constexpr auto tt = minijava::token_type::unsigned_right_shift;
-	constexpr auto expected = std::size_t{83};
-	constexpr auto actual = index(tt);
+	for (std::size_t i = 0; i < minijava::total_token_type_count; ++i) {
+		const auto expected = minijava::all_token_types().at(i);
+		const auto actual = minijava::token_type_at_index(i);
+		BOOST_REQUIRE_EQUAL(expected, actual);
+	}
+}
+
+
+static const std::size_t invalid_indices[] = {
+	minijava::total_token_type_count,
+	minijava::total_token_type_count + 1,
+	minijava::total_token_type_count + 2,
+	minijava::total_token_type_count + 3,
+	minijava::total_token_type_count + 100,
+	minijava::total_token_type_count + 1000000,
+	std::numeric_limits<std::size_t>::max() - 1,
+	std::numeric_limits<std::size_t>::max(),
+};
+
+BOOST_DATA_TEST_CASE(token_type_at_index_returns_zero_for_out_of_range, invalid_indices)
+{
+	const auto expected = minijava::token_type{};
+	const auto actual = minijava::token_type_at_index(sample);
+	BOOST_REQUIRE_EQUAL(expected, actual);
+}
+
+
+BOOST_AUTO_TEST_CASE(index_functions_are_constexpr_1st)
+{
+	constexpr auto expected = minijava::token_type::unsigned_right_shift;
+	constexpr auto actual = minijava::token_type_at_index(index(expected));
 	static_assert(actual == expected, "");
-	// Hard-coding the expected index is not super pretty but I don't know of
-	// any other way to obtain it as a constant expression here.  At least, we
-	// can double-check at run-time that our assumption was correct, which
-	// we'll do on the next line.
-	BOOST_REQUIRE_EQUAL(tt, minijava::all_token_types().at(expected));
+}
+
+
+BOOST_AUTO_TEST_CASE(index_functions_are_constexpr_2nd)
+{
+	constexpr auto expected = std::size_t{42};
+	constexpr auto actual = index(minijava::token_type_at_index(expected));
+	static_assert(actual == expected, "");
 }
