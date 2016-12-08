@@ -1,6 +1,7 @@
 set(FUZZERS
 	parsetest
 	print-ast
+	sem-check
 )
 
 foreach(fuzz ${FUZZERS})

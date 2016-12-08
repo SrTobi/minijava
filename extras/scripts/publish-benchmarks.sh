@@ -102,17 +102,33 @@ mkdir -p "${tempdir}/micro/"
 mkdir -p "${tempdir}/macro/"
 
 
+function export-micro {
+	local name
+	for name in "$@"
+	do
+		"${python}" "extras/benchmarks/history.py"                            \
+			-H "${micro}"                                                     \
+			'export' "${name}" "${outtol}" > "${tempdir}/micro/${name}.dat"
+	done
+}
+
+
+function export-macro {
+	local name
+	for name in "$@"
+	do
+		"${python}" "extras/benchmarks/history.py"                            \
+			-H "${macro}"                                                     \
+			'export' "${name}" "${outtol}" > "${tempdir}/macro/${name}.dat"
+	done
+}
+
+
 # -------------------------------------- #
-#   Character Classification Functions
+#   Character Classification Functions   #
 # -------------------------------------- #
 
-for name in character-space character-digit character-head character-tail
-do
-	"${python}" "extras/benchmarks/history.py"                                \
-	            -H "${micro}"                                                 \
-	            'export' "${name}" "${outtol}" > "${tempdir}/micro/${name}.dat"
-done
-unset name
+export-micro character-space character-digit character-head character-tail
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
 set terminal svg noenhanced size 800,600
@@ -142,15 +158,13 @@ EOF
 
 
 # -------------------------- #
-#   Keyword Classification
+#   Keyword Classification   #
 # -------------------------- #
 
-"${python}" "extras/benchmarks/history.py"                                    \
-            -H "${micro}"                                                     \
-            'export' "keyword" "${outtol}" > "${tempdir}/micro/keyword.dat"
+export-micro keyword
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
-set terminal svg noenhanced size 800,600
+set terminal svg size 800,600
 set output 'keyword.svg'
 set xdata time
 set timefmt '%s'
@@ -169,19 +183,13 @@ EOF
 
 
 # ---------------------------- #
-#   Toke-Type-Set Operations
+#   Toke-Type-Set Operations   #
 # ---------------------------- #
 
-for name in tts-modify tts-lookup tts-combine
-do
-	"${python}" "extras/benchmarks/history.py"                                \
-	            -H "${micro}"                                                 \
-	            'export' "${name}" "${outtol}" > "${tempdir}/micro/${name}.dat"
-done
-unset name
+export-micro tts-modify tts-lookup tts-combine
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
-set terminal svg noenhanced size 800,600
+set terminal svg size 800,600
 set output 'token-type-set.svg'
 set xdata time
 set timefmt '%s'
@@ -205,15 +213,13 @@ EOF
 
 
 # --------------------------- #
-#   Lexer (Micro-Benchmark)
+#   Lexer (Micro-Benchmark)   #
 # --------------------------- #
 
-"${python}" "extras/benchmarks/history.py"                                    \
-            -H "${micro}"                                                     \
-            'export' "lexer" "${outtol}" > "${tempdir}/micro/lexer.dat"
+export-micro lexer
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
-set terminal svg noenhanced size 800,600
+set terminal svg size 800,600
 set output 'lexer.svg'
 set xdata time
 set timefmt '%s'
@@ -232,20 +238,18 @@ EOF
 
 
 # ---------------------------- #
-#   Parser (Micro-Benchmark)
+#   Parser (Micro-Benchmark)   #
 # ---------------------------- #
 
-"${python}" "extras/benchmarks/history.py"                                    \
-            -H "${micro}"                                                     \
-            'export' "parser" "${outtol}" > "${tempdir}/micro/parser.dat"
+export-micro parser
 
 (cd "${tempdir}/micro/" && gnuplot) <<'EOF'
-set terminal svg noenhanced size 800,600
+set terminal svg enhanced size 800,600
 set output 'parser.svg'
 set xdata time
 set timefmt '%s'
 set xlabel "point in history"
-set ylabel "average time per token / us"
+set ylabel "average time per token / µs"
 set xrange [* : *]
 set yrange [0 : *]
 set format y '%.2f'
@@ -258,20 +262,14 @@ plot                                                                          \
 EOF
 
 
-# -------- #
-#   Echo
-# -------- #
+# -------------------------- #
+#   Echo (Macro-Benchmark)   #
+# -------------------------- #
 
-for name in echo-002-a echo-002-b echo-002-c echo-002-d echo-002-e echo-002-f
-do
-	"${python}" "extras/benchmarks/history.py"                                \
-	            -H "${macro}"                                                 \
-	            'export' "${name}" "${outtol}" > "${tempdir}/macro/${name}.dat"
-done
-unset name
+export-macro echo-002-a echo-002-b echo-002-c echo-002-d echo-002-e echo-002-f
 
 (cd "${tempdir}/macro/" && gnuplot) <<'EOF'
-set terminal svg noenhanced size 800,600
+set terminal svg size 800,600
 set output 'echo.svg'
 set xdata time
 set timefmt '%s'
@@ -304,19 +302,13 @@ EOF
 
 
 # --------------------------- #
-#   Lexer (Macro-Benchmark)
+#   Lexer (Macro-Benchmark)   #
 # --------------------------- #
 
-for name in lexer-002 lexer-003 lexer-004-a lexer-004-b lexer-005
-do
-	"${python}" "extras/benchmarks/history.py"                                \
-	            -H "${macro}"                                                 \
-	            'export' "${name}" "${outtol}" > "${tempdir}/macro/${name}.dat"
-done
-unset name
+export-macro lexer-002 lexer-003 lexer-004-a lexer-004-b lexer-005
 
 (cd "${tempdir}/macro/" && gnuplot) <<'EOF'
-set terminal svg noenhanced size 800,600
+set terminal svg enhanced size 800,600
 set output 'lexer.svg'
 set xdata time
 set timefmt '%s'
@@ -345,8 +337,122 @@ plot                                                                          \
 EOF
 
 
+# -------------------------------- #
+#   Lexer Fuzz (Macro-Benchmark)   #
+# -------------------------------- #
+
+export-macro lexer-fuzz-191
+
+(cd "${tempdir}/macro/" && gnuplot) <<'EOF'
+set terminal svg enhanced size 800,600
+set output 'lexer-fuzz.svg'
+set xdata time
+set timefmt '%s'
+set xlabel "point in history"
+set ylabel "execution time / ms MiB^{-1}"
+set xrange [* : *]
+set yrange [0 : *]
+set format y '%.0f'
+set title "Lexical Analysis and Printing Tokens (--lextest)"
+plot                                                                          \
+	'lexer-fuzz-191.dat'                                                      \
+		using 1:($2 / 190.9e-3):($3 / 190.9e-3) with yerror                   \
+		title "191 MiB"
+EOF
+
+
+# --------------------------------- #
+#   Parser Fuzz (Macro-Benchmark)   #
+# --------------------------------- #
+
+export-macro parser-fuzz-1 parser-fuzz-5 parser-fuzz-20 parser-fuzz-33
+
+(cd "${tempdir}/macro/" && gnuplot) <<'EOF'
+set terminal svg enhanced size 800,600
+set output 'parser-fuzz.svg'
+set xdata time
+set timefmt '%s'
+set xlabel "point in history"
+set ylabel "execution time / ms MiB^{-1}"
+set xrange [* : *]
+set yrange [0 : *]
+set format y '%.0f'
+set title "Syntactic Analysys (--parsetest)"
+plot                                                                          \
+	'parser-fuzz-1.dat'                                                       \
+		using 1:($2 / 1.059e-3):($3 / 1.059e-3) with yerror                   \
+		title "1 MiB",                                                        \
+	'parser-fuzz-5.dat'                                                       \
+		using 1:($2 / 5.173e-3):($3 / 5.173e-3) with yerror                   \
+		title "5 MiB",                                                        \
+	'parser-fuzz-20.dat'                                                      \
+		using 1:($2 / 19.31e-3):($3 / 19.31e-3) with yerror                   \
+		title "20 MiB",                                                       \
+	'parser-fuzz-33.dat'                                                      \
+		using 1:($2 / 32.34e-3):($3 / 32.34e-3) with yerror                   \
+		title "33 MiB"
+EOF
+
+
+# ----------------------------------------- #
+#   Pretty-Printer Fuzz (Macro-Benchmark)   #
+# ----------------------------------------- #
+
+export-macro pretty-fuzz-20
+
+(cd "${tempdir}/macro/" && gnuplot) <<'EOF'
+set terminal svg enhanced size 800,600
+set output 'pretty-fuzz.svg'
+set xdata time
+set timefmt '%s'
+set xlabel "point in history"
+set ylabel "execution time / ms MiB^{-1}"
+set xrange [* : *]
+set yrange [0 : *]
+set format y '%.0f'
+set title "Syntactic Analysis and Printing of AST (--lextest)"
+plot                                                                          \
+	'pretty-fuzz-20.dat'                                                      \
+		using 1:($2 / 19.31e-3):($3 / 19.31e-3) with yerror                   \
+		title "20 MiB"
+EOF
+
+
+# -------------------------------- #
+#   Check Fuzz (Macro-Benchmark)   #
+# -------------------------------- #
+
+export-macro check-fuzz-12 check-fuzz-48 check-fuzz-90 check-fuzz-119
+
+(cd "${tempdir}/macro/" && gnuplot) <<'EOF'
+set terminal svg enhanced size 800,600
+set output 'parser-fuzz.svg'
+set xdata time
+set timefmt '%s'
+set xlabel "point in history"
+set ylabel "execution time / ms MiB^{-1}"
+set xrange [* : *]
+set yrange [0 : *]
+set format y '%.0f'
+set title "Semantic Analysys (--check)"
+plot                                                                          \
+	'check-fuzz-12.dat'                                                       \
+		using 1:($2 / 11.46e-3):($3 / 11.46e-3) with yerror                   \
+		title "12 MiB",                                                       \
+	'check-fuzz-48.dat'                                                       \
+		using 1:($2 / 47.36e-3):($3 / 47.36e-3) with yerror                   \
+		title "48 MiB",                                                       \
+	'check-fuzz-90.dat'                                                       \
+		using 1:($2 / 89.10e-3):($3 / 89.10e-3) with yerror                   \
+		title "90 MiB",                                                       \
+	'check-fuzz-119.dat'                                                      \
+		using 1:($2 / 118.5e-3):($3 / 118.5e-3) with yerror                   \
+		title "119 MiB"
+EOF
+
+
 # ----------------------- #
-#   Publish the Results
+#   Publish the Results   #
 # ----------------------- #
 
 install -m 0755 -d "${dest}/micro/"
