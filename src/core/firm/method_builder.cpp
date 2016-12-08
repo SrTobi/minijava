@@ -102,7 +102,7 @@ namespace minijava
 					auto var_decl = _sem_info.vardecl_annotations().at(node);
 					auto field = _firm_types.fieldmap.find(var_decl);
 					if (field != _firm_types.fieldmap.end()) {
-						visit_field(node, field->second);
+						visit_field(node, *var_decl, field->second);
 					} else {
 						auto type = _sem_info.type_annotations().at(node);
 						auto ir_type = _firm_types.typemap.at(type);
@@ -175,20 +175,32 @@ namespace minijava
 
 			private:
 
-				void visit_field(const ast::variable_access& node, ir_entity* field)
+				void visit_field(const ast::variable_access& node,
+								 const ast::var_decl& declaration,
+								 ir_entity* field)
 				{
-
-					auto field_type = get_entity_type(field);
-					auto field_mode = get_type_mode(field_type);
-
-					auto ref_pointer = node.target()
-					                   ? get_expression_node(*node.target())
-					                   : get_value(0, _primitives.pointer_mode);
-					auto member = new_Member(ref_pointer, field);
+					ir_node* member;
+					if (_sem_info.is_global(&declaration)) {
+						// TODO: implement mangle_global in mangle.h/cpp
+						const auto ident = new_id_from_str(
+								declaration.name().c_str()
+						);
+						member = new_Address(ir_get_global(ident));
+					} else {
+						ir_node* ref_pointer;
+						if (auto target = node.target()) {
+							ref_pointer = get_expression_node(*target);
+						} else {
+							ref_pointer = get_value(0, _primitives.pointer_mode);
+						}
+						member = new_Member(ref_pointer, field);
+					}
 
 					if (_do_store) {
 						_current_node = member;
 					} else {
+						auto field_type = get_entity_type(field);
+						auto field_mode = get_type_mode(field_type);
 						auto mem = get_store();
 						auto load = new_Load(mem, member, field_mode, field_type, cons_none);
 						set_store(new_Proj(load, mode_M, pn_Load_M));

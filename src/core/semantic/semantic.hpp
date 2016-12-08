@@ -58,6 +58,9 @@ namespace minijava
 		/** @brief Type mapping `expression` nodes to integers. */
 		using const_attributes = sem::const_attributes;
 
+		/** @brief Type of the vector containing all global variable declarations. */
+		using globals_vector = sem::globals_vector;
+
 		/**
 		 * @brief
 		 *     Constructs an immutable semantic information aggregate.
@@ -105,7 +108,7 @@ namespace minijava
 		              method_attributes method_annotations,
 		              const_attributes const_annotations,
 		              std::unique_ptr<ast::program> builtin_ast,
-		              sem::globals_vector globals);
+		              globals_vector globals);
 
 		/**
 		 * @brief
@@ -277,6 +280,24 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     `return`s a vector containing all global variable declarations.
+		 *
+		 * The returned vector contains the `ast::var_decl`s in an undefined
+		 * order. Do not use this vector to check whether a variable declaration
+		 * declares a global variable; for this purpose, use `is_global`
+		 * instead.
+		 *
+		 * @return
+		 *     global variable declarations
+		 *
+		 */
+		const globals_vector& globals() const noexcept
+		{
+			return _globals;
+		}
+
+		/**
+		 * @brief
 		 *     Checks whether the given declaration declares global variable.
 		 *
 		 * If `declaration` does not point to an existing declaration (in
@@ -316,7 +337,7 @@ namespace minijava
 		std::unique_ptr<ast::program> _builtin_ast;
 
 		/** @brief global variables, sorted by memory address of the AST node */
-		sem::globals_vector _globals;
+		globals_vector _globals;
 
 	};
 

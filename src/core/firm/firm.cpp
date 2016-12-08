@@ -2,9 +2,10 @@
 
 #include "libfirm/firm.h"
 
-#include "firm/type_builder.hpp"
-#include "firm/method_builder.hpp"
+#include "firm/builtins.hpp"
 #include "firm/lowering.hpp"
+#include "firm/method_builder.hpp"
+#include "firm/type_builder.hpp"
 
 namespace minijava
 {
@@ -14,6 +15,7 @@ namespace minijava
 	{
 		auto ir = firm_global_state{};
 		auto types = firm::create_types(ast, semantic_info);
+		firm::create_globals(semantic_info, types);
 		firm::create_methods(ast, semantic_info, types);
 		return ir;
 	}
