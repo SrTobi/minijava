@@ -1,5 +1,8 @@
 #include "firm/type_builder.hpp"
 
+#include "firm/mangle.hpp"
+
+
 namespace minijava
 {
 
@@ -98,7 +101,7 @@ namespace minijava
 						if (class_type != _classmap.end()) {
 							// class is actually used in the program
 							for (const auto& method : class_decl->instance_methods()) {
-								_init_method(class_type->second, *method);
+								_init_method(class_type->second, *class_decl, *method);
 							}
 						}
 						for (const auto& method : class_decl->main_methods()) {
@@ -107,7 +110,9 @@ namespace minijava
 					}
 				}
 
-				void _init_method(ir_type* class_type, const ast::instance_method& method)
+				void _init_method(ir_type* class_type,
+								  const ast::class_declaration& clazz,
+								  const ast::instance_method& method)
 				{
 					const auto param_count = method.parameters().size();
 					const auto return_type = _seminfo.type_annotations().at(method);
@@ -132,7 +137,7 @@ namespace minijava
 						class_type,
 						new_id_from_str(method.name().c_str()),
 						method_type);
-					set_entity_ld_ident(method_entity, new_id_from_str(method.name().c_str()));  // TODO: mangle
+					set_entity_ld_ident(method_entity, mangle(clazz, method));
 					_methodmap.insert({&method, method_entity});
 				}
 
@@ -182,7 +187,7 @@ namespace minijava
 					const auto class_type = _classmap.at(clazz);
 					// insert fields
 					for (const auto& field : clazz.fields()) {
-						_create_field_entity(class_type, *field);
+						_create_field_entity(class_type, clazz, *field);
 					}
 					// TODO: Is there a better way to trick Firm into accepting empty types?
 					if (clazz.fields().empty()) {
@@ -194,7 +199,9 @@ namespace minijava
 					default_layout_compound_type(class_type);
 				}
 
-				ir_entity* _create_field_entity(ir_type *class_type, const ast::var_decl& field)
+				ir_entity* _create_field_entity(ir_type *class_type,
+												const ast::class_declaration& clazz,
+												const ast::var_decl& field)
 				{
 					const auto field_type = _seminfo.type_annotations().at(field);
 					const auto ir_type = _get_var_type(field_type);
@@ -203,7 +210,7 @@ namespace minijava
 						new_id_from_str(field.name().c_str()),
 						ir_type
 					);
-					set_entity_ld_ident(field_entity, new_id_from_str(field.name().c_str()));  // TODO: mangle
+					set_entity_ld_ident(field_entity, mangle(clazz, field));
 					_fieldmap[field] = field_entity;
 					return field_entity;
 				}
