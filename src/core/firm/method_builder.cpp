@@ -9,6 +9,7 @@
 #include "libfirm/firm.h"
 
 #include "exceptions.hpp"
+#include "firm/mangle.hpp"
 #include "firm/type_builder.hpp"
 
 namespace minijava
@@ -181,10 +182,7 @@ namespace minijava
 				{
 					ir_node* member;
 					if (_sem_info.is_global(&declaration)) {
-						// TODO: implement mangle_global in mangle.h/cpp
-						const auto ident = new_id_from_str(
-								declaration.name().c_str()
-						);
+						const auto ident = mangle(declaration);
 						member = new_Address(ir_get_global(ident));
 					} else {
 						ir_node* ref_pointer;

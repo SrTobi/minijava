@@ -1,5 +1,7 @@
 #include "firm/builtins.hpp"
 
+#include "firm/mangle.hpp"
+
 namespace minijava
 {
 
@@ -21,10 +23,7 @@ namespace minijava
 						new_tarval_from_long(0, get_type_mode(ir_type))
 				);
 				set_entity_initializer(entity, initializer);
-				// TODO: implement mangle_global in mangle.h/cpp
-				set_entity_ld_ident(
-						entity, new_id_from_str(global->name().c_str())
-				);
+				set_entity_ld_ident(entity, mangle(*global));
 				types.fieldmap.put(*global, entity);
 			}
 		}
