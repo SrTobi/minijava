@@ -29,9 +29,6 @@ namespace minijava
 		 * If `class.name()` is not a valid assembly identifier, the behavior
 		 * is undefined.
 		 *
-		 * @param firm
-		 *     handle for current Firm session
-		 *
 		 * @param clazz
 		 *     class
 		 *
@@ -39,7 +36,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(firm_global_state& firm, const ast::class_declaration& clazz);
+		ident* mangle(const ast::class_declaration& clazz);
 
 		/**
 		 * @brief
@@ -51,9 +48,6 @@ namespace minijava
 		 * If `field` is not actually a field of `clazz`, the behavior is
 		 * undefined.
 		 *
-		 * @param firm
-		 *     handle for current Firm session
-		 *
 		 * @param clazz
 		 *     class containing the field
 		 *
@@ -64,7 +58,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(firm_global_state& firm, const ast::class_declaration& clazz, const ast::var_decl& field);
+		ident* mangle(const ast::class_declaration& clazz, const ast::var_decl& field);
 
 		/**
 		 * @brief
@@ -76,9 +70,6 @@ namespace minijava
 		 * If `method` is not actually a methos of `clazz`, the behavior is
 		 * undefined.
 		 *
-		 * @param firm
-		 *     handle for current Firm session
-		 *
 		 * @param clazz
 		 *     class containing the method
 		 *
@@ -89,7 +80,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(firm_global_state& firm, const ast::class_declaration& clazz, const ast::instance_method& method);
+		ident* mangle(const ast::class_declaration& clazz, const ast::instance_method& method);
 
 	}  // namespace firm
 
