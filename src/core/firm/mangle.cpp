@@ -36,6 +36,19 @@ namespace minijava
 			);
 		}
 
+		ident* mangle(const ast::var_decl& vardecl)
+		{
+			assert(is_valid_asm_id(vardecl.name()));
+			return new_id_fmt(
+#ifdef _WIN32
+				"mj_%s_v%Iu",
+#else
+				"mj_%s_v%zu",
+#endif
+				vardecl.name().c_str(), vardecl.name().length()
+			);
+		}
+
 		ident* mangle(const ast::class_declaration& clazz,
 					  const ast::var_decl& field)
 		{

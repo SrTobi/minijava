@@ -40,6 +40,23 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Constructs a mangled Firm identifier for a (global) variable
+		 *     name.
+		 *
+		 * If `vardecl.name()` is not a valid assembly identifier, the behavior
+		 * is undefined.
+		 *
+		 * @param vardecl
+		 *     variable declaration
+		 *
+		 * @returns
+		 *     handle to Firm `ident` of mangled name
+		 *
+		 */
+		ident* mangle(const ast::var_decl& vardecl);
+
+		/**
+		 * @brief
 		 *     Constructs a mangled Firm identifier for a field.
 		 *
 		 * If `class.name()` or `field.name()` is not a valid assembly

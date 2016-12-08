@@ -16,6 +16,7 @@
 static auto global_state_is_evil = minijava::firm_global_state{};
 
 
+// TOTHINK: What good is class name mangling?
 BOOST_AUTO_TEST_CASE(mangled_class)
 {
 	using namespace std::string_literals;
@@ -23,6 +24,18 @@ BOOST_AUTO_TEST_CASE(mangled_class)
 	const auto ast = tf.make_empty_class("Test");
 	const auto mangled = minijava::firm::mangle(*ast);
 	const auto expected = "Mj_Test_c4"s;
+	const auto actual = std::string{get_id_str(mangled)};
+	BOOST_REQUIRE_EQUAL(expected, actual);
+}
+
+
+BOOST_AUTO_TEST_CASE(mangled_variable)
+{
+	using namespace std::string_literals;
+	auto tf = testaux::ast_test_factory{};
+	const auto ast = tf.make_declaration("foo", minijava::ast::primitive_type::type_int);
+	const auto mangled = minijava::firm::mangle(*ast);
+	const auto expected = "mj_foo_v3"s;
 	const auto actual = std::string{get_id_str(mangled)};
 	BOOST_REQUIRE_EQUAL(expected, actual);
 }
