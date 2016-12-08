@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <string>
+
 
 namespace minijava
 {
@@ -81,6 +83,44 @@ namespace minijava
 	 *
 	 */
 	bool is_word_tail(int c) noexcept;
+
+	/**
+	 * @brief
+	 *     Tests whether the bytes of the string `s` (interpreted as
+	 *     `unsigned char`) form a decimal number without leading zeros.
+	 *
+	 * This function `return`s `true` if and only if `s` is non-empty, all of
+	 * its characters satisfy `is_digit` and unless the length of the string is
+	 * 1, its first character is not `'0'`.
+	 *
+	 * @param s
+	 *     string to test
+	 *
+	 * @returns
+	 *     whether the given string is a decimal number
+	 *
+	 */
+	bool is_number(const std::string& s) noexcept;
+
+	/**
+	 * @brief
+	 *     Tests whether the bytes of the string `s` (interpreted as
+	 *     `unsigned char`) form a word.
+	 *
+	 * This function `return`s `true` if and only if `s` is non-empty, its
+	 * first character satisfies `is_word_head` and any remaining characters
+	 * satisfy `is_word_tail`.
+	 *
+	 * Note that this function `return`s `true` for all keywords.
+	 *
+	 * @param s
+	 *     string to test
+	 *
+	 * @returns
+	 *     whether the given string is a word
+	 *
+	 */
+	bool is_word(const std::string& s) noexcept;
 
 }  // namespace minijava
 
