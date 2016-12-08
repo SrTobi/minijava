@@ -2,6 +2,7 @@
 
 static const char source_code[] = R"C(
 #include <errno.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,14 +12,19 @@ extern void minijava_main(void);
 
 static const char* program_name;
 
-void* mj_runtime_allocate(const size_t sz, const size_t n)
+void* mj_runtime_allocate(const int32_t nmemb, const int32_t size)
 {
-	size_t nbytes;
-	if (__builtin_mul_overflow(n, sz, &nbytes)) {
-		fprintf(stderr, "%s: allocate: Memory request for %zu * %zu bytes too large\n", program_name, n, sz);
+	if (nmemb < 0) {
+		fprintf(stderr, "%s: allocate: Request for negative array size %ld\n", program_name, (long) nmemb);
 		abort();
 	}
-	void* memory = malloc(nbytes);
+	if (size <= 0) {
+		fprintf(stderr, "%s: allocate: Request for non-positive object size %ld\n", program_name, (long) size);
+		abort();
+	}
+	const size_t nbytes = ((size_t) nmemb) * ((size_t) size);
+    /* Always allocate at least one byte to make sure arrays have unique addresses. */
+	void* memory = malloc(nbytes > 0 ? nbytes : 1);
 	if (memory == NULL) {
 		fprintf(stderr, "%s: allocate: %s\n", program_name, strerror(errno));
 		abort();

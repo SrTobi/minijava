@@ -242,7 +242,10 @@ namespace /* anonymous */
 
 		void visit(const ast::object_instantiation& node) override
 		{
-			_out.print("mj_runtime_allocate(sizeof(struct %s), 1)", mangle_class(node.class_name()).c_str());
+			_out.print(
+				"mj_runtime_allocate(1, (int32_t) sizeof(struct %s))",
+				mangle_class(node.class_name()).c_str()
+			);
 		}
 
 		void visit(const ast::array_instantiation& node) override
@@ -250,8 +253,10 @@ namespace /* anonymous */
 			auto member_type = get_formatted_type_name(node.array_type());
 			assert(member_type.back() == '*');
 			member_type.pop_back();
-			_out.print("mj_runtime_allocate(sizeof(%s), ", member_type.c_str());
+			_out.write("mj_runtime_allocate(");
 			visit_expression(node.extent());
+			_out.write(", ");
+			_out.print("(int32_t) sizeof(%s)", member_type.c_str());
 			_out.write(")");
 		}
 
@@ -392,11 +397,11 @@ namespace /* anonymous */
 			_out.write("void minijava_main(void)\n");
 			const auto g = _nest_braces();
 			_out.print(
-				"%s%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
+				"%s%s = mj_runtime_allocate(1, (int32_t) sizeof(struct %s));\n",
 				_indent.c_str(), system_name.c_str(), system_class_name.c_str()
 			);
 			_out.print(
-				"%s%s->%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
+				"%s%s->%s = mj_runtime_allocate(1, (int32_t) sizeof(struct %s));\n",
 				_indent.c_str(), system_name.c_str(), out_name.c_str(),
 				printstream_class_name.c_str()
 			);
