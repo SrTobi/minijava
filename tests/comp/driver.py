@@ -7,6 +7,7 @@ import os.path
 import re
 import subprocess
 import sys
+import tempfile
 
 
 def main(args):
@@ -99,13 +100,17 @@ def run_single_unescaped(cmd, program):
 
 
 def run_single(cmd, program, status=None, message=None):
-    proc = subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE
-    )
-    (out, err) = proc.communicate(input=program)
+    abscmd = cmd[:]
+    abscmd[0] = os.path.abspath(cmd[0])
+    with tempfile.TemporaryDirectory() as tempdir:
+        proc = subprocess.Popen(
+            abscmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            cwd=tempdir
+        )
+        (out, err) = proc.communicate(input=program)
     if proc.returncode != status:
         raise Failure("Compiler exited with status {:d} instead of {:d}".format(proc.returncode, status))
     if message is not None:
