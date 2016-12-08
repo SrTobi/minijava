@@ -424,8 +424,26 @@ namespace minijava
 
 				void visit(const ast::main_method& node) override
 				{
-					// FIXME: merge with instance_method and implement visit_method()? Or do we need special handling?
-					(void) node;
+					auto irg = get_current_ir_graph();
+					auto method_entity = _firm_types.methodmap.at(node);
+					//auto cur_block = get_r_cur_block(irg);
+					//set_r_cur_block(irg, get_irg_start_block(irg));
+					auto locals = _sem_info.locals_annotations().at(node);
+					auto args = get_irg_args(irg);
+					auto num_params = static_cast<int>(node.parameters().size());
+					auto current_id = int{0};
+					for (const auto& local : locals) {
+						if (current_id < num_params) {
+							set_value(current_id, new_Proj(
+									args,
+									get_type_mode(get_entity_type(method_entity)),
+									static_cast<unsigned int>(current_id - 1)
+							));
+						}
+						_var_ids.insert(std::make_pair(local, current_id++));
+					}
+					//set_r_cur_block(irg, cur_block);
+					node.body().accept(*this);
 				}
 
 				void visit(const ast::instance_method& node) override
