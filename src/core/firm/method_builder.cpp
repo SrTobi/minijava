@@ -193,6 +193,17 @@ namespace minijava
 					}
 				}
 
+				void visit(const ast::unary_expression &node) override {
+					auto rhs = get_expression_node(node.target());
+					switch (node.type()) {
+					case ast::unary_operation_type::minus:
+						_current_node = new_Minus(rhs);
+						break;
+					case ast::unary_operation_type::logical_not:
+						// @TODO: handle boolean expression
+						break;
+					}
+				}
 				void visit_assignment(const ast::binary_expression& expression)
 				{
 					assert(expression.type() == ast::binary_operation_type::assign);
