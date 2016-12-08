@@ -214,9 +214,9 @@ namespace minijava
 				auto pt = primitive_types{};
 				pt.int_mode = mode_Is;
 				pt.boolean_mode = new_int_mode("B", irma_twos_complement, 8, 0, 1);
+				pt.pointer_mode = mode_P;
 				pt.int_type = new_type_primitive(pt.int_mode);
 				pt.boolean_type = new_type_primitive(pt.boolean_mode);
-				pt.pointer_mode = mode_P;
 				pt.pointer_type = new_type_primitive(mode_P);
 				return pt;
 			}();

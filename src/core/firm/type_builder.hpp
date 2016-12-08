@@ -151,28 +151,29 @@ namespace minijava
 			/** @brief Unique pointer to Firm mode for MiniJava's `boolean` type.  */
 			ir_mode* boolean_mode{};
 
+			/** @brief Unique pointer to Firm mode for MiniJava's pointer type.  */
+			ir_mode* pointer_mode{};
+
 			/** @brief Unique pointer to Firm type for MiniJava's `int` type.  */
 			ir_type* int_type{};
 
 			/** @brief Unique pointer to Firm type for MiniJava's `boolean` type.  */
 			ir_type* boolean_type{};
 
-			/** @brief Unique pointer to Firm mode for MiniJava's `pointer` type. */
-			ir_mode* pointer_mode{};
-
-			/** @brief Unique pointer to Firm type for MiniJava's `pointer` type. */
+			/** @brief Unique pointer to Firm type for MiniJava's pointer type.  */
 			ir_type* pointer_type{};
 		};
 
 		/**
 		 * @brief
-		 *     `struct` holding Firm types for MiniJava's runtime library calls
+		 *     `struct` holding Firm types for MiniJava's runtime library calls.
 		 *
 		 * A default-constructed struct will hold only `nullptr`s. In order to
 		 * get an initialized object, use the `get_instance` function.
 		 *
-		 * As this `struct` merely stores only pointers, it can be freely
-		 * copied. It's the pointer members that won't change value.
+		 * As this `struct` merely stores two pointers, it can be freely copied.
+		 * It's the pointer members that won't change value.
+		 *
 		 */
 		struct runtime_library
 		{
@@ -198,10 +199,16 @@ namespace minijava
 			 */
 			static const runtime_library& get_instance();
 
+			/** @brief Unique pointer to Firm entity for %mj_runtime_allocate */
 			ir_entity* alloc{};
+
+			/** @brief Unique pointer to Firm type for %mj_runtime_allocate */
 			ir_type* alloc_type{};
 
+			/** @brief Unique pointer to Firm entity for %mj_runtime_println */
 			ir_entity* println{};
+
+			/** @brief Unique pointer to Firm type for %mj_runtime_println */
 			ir_type* println_type{};
 		};
 

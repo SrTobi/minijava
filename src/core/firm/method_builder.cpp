@@ -57,25 +57,28 @@ namespace minijava
 
 				void visit(const ast::object_instantiation& node) override
 				{
-					// TODO: remove assert and define mode for size_t?
-					static_assert(sizeof(unsigned long) == sizeof(size_t), "");
 					auto type = _sem_info.type_annotations().at(node);
 					auto ir_type = _firm_types.classmap.at(
 							*type.info.declaration()
 					);
+					auto type_size = get_type_size(ir_type);
+					if (type_size > INT_MAX) {
+						throw internal_compiler_error{
+								"Cannot handle types with sizes greater than MAX_INT"
+						};
+					}
 					ir_node* arguments[2] = {
 							new_Const_long(
-									get_modeLu(), get_type_size(ir_type)
+									get_modeIs(), static_cast<long>(type_size)
 							),
-							new_Const_long(get_modeLu(), 1)
+							new_Const_long(get_modeIs(), 1)
 					};
-					// FIXME: use new_Builtin instead?
 					auto call_node = new_Call(
 							get_store(),
-					        new_Address(nullptr), // FIXME: we need an entity for the built-in methods
+					        new_Address(_runtime_library.alloc),
 							2,
 					        arguments,
-					        nullptr // FIXME: we need types for the built-in methods
+					        _runtime_library.alloc_type
 					);
 					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
 					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
@@ -124,7 +127,7 @@ namespace minijava
 						arguments[0] = _current_node;
 					} else {
 						// use this argument of current method
-						arguments[0] = get_value(0, mode_P);
+						arguments[0] = get_value(0, _primitives.pointer_mode);
 					}
 					std::size_t i = 1;
 					for (const auto& arg : node.arguments()) {
@@ -146,7 +149,7 @@ namespace minijava
 
 				void visit(const ast::this_ref&/* node */) override
 				{
-					_current_node = get_value(0, mode_P);
+					_current_node = get_value(0, _primitives.pointer_mode);
 				}
 
 				void visit(const ast::boolean_constant& node) override
@@ -162,7 +165,7 @@ namespace minijava
 
 				void visit(const ast::null_constant&/* node */) override
 				{
-					_current_node = new_Const_long(mode_P, 0);
+					_current_node = new_Const_long(_primitives.pointer_mode, 0);
 				}
 
 				ir_node* current_node() const noexcept
@@ -180,7 +183,7 @@ namespace minijava
 
 					auto ref_pointer = node.target()
 					                   ? get_expression_node(*node.target())
-					                   : get_value(0, mode_P);
+					                   : get_value(0, _primitives.pointer_mode);
 					auto member = new_Member(ref_pointer, field);
 
 					if (_do_store) {
@@ -336,7 +339,8 @@ namespace minijava
 
 				method_generator(const semantic_info& sem_info,
 				                 const ir_types& firm_types)
-						: _sem_info{sem_info}, _firm_types{firm_types}
+						: _sem_info{sem_info}, _firm_types{firm_types},
+						  _primitives{primitive_types::get_instance()}
 				{}
 
 				using ast::visitor::visit;
@@ -463,7 +467,7 @@ namespace minijava
 					auto args = get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{1};
-					set_value(0, new_Proj(args, mode_P, 0));
+					set_value(0, new_Proj(args, _primitives.pointer_mode, 0));
 					for (const auto& local : locals) {
 						if (current_id <= num_params) {
 							set_value(current_id, new_Proj(
@@ -495,9 +499,8 @@ namespace minijava
 
 				const semantic_info& _sem_info;
 				const ir_types& _firm_types;
-
+				const primitive_types _primitives;
 				var_id_map_type _var_ids{};
-
 				ir_node* _current_node{};
 
 			};
