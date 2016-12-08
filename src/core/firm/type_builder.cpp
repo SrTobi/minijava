@@ -157,7 +157,7 @@ namespace minijava
 						method_type
 					);
 					set_entity_ld_ident(method_entity, minijava_main);
-					_methodmap[method] = method_entity;
+					_methodmap.put(method, method_entity);
 				}
 
 				std::pair<ir_type*, ir_type*> _create_class_type(const ast::class_declaration& clazz)
@@ -167,7 +167,7 @@ namespace minijava
 					const auto pointer_type = new_type_pointer(class_type);
 					set_type_alignment(class_type, 8);
 					_typemap[type] = pointer_type;
-					_classmap[clazz] = class_type;
+					_classmap.put(clazz, class_type);
 					return std::make_pair(class_type, pointer_type);
 				}
 
@@ -211,7 +211,7 @@ namespace minijava
 						ir_type
 					);
 					set_entity_ld_ident(field_entity, mangle(clazz, field));
-					_fieldmap[field] = field_entity;
+					_fieldmap.put(field, field_entity);
 					return field_entity;
 				}
 
