@@ -1,0 +1,13 @@
+class A {
+
+	public void test(A a) {
+		A b;
+		b.test(a);
+	}
+
+	public static void main(String[] args) {
+		A a;
+		a.test(a);
+	}
+
+}

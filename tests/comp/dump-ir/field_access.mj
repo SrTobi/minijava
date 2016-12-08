@@ -7,6 +7,6 @@ class A {
 	}
 
 	public int foo() {
-		return 0 /* + this.x */;
+		return 0 + this.x;
 	}
 }
