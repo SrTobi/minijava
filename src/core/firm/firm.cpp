@@ -23,6 +23,7 @@ namespace minijava
 	void dump_firm_ir(firm_global_state& firm, const std::string& directory)
 	{
 		assert(firm);
+		(void) firm; // suppress warning in release mode
 		if (!directory.empty()) {
 			ir_set_dump_path(directory.c_str());
 		}
@@ -35,6 +36,7 @@ namespace minijava
 	void emit_x64_assembly_firm(firm_global_state& firm, file_output& output_file)
 	{
 		assert(firm);
+		(void) firm; // suppress warning in release mode
 		firm::lower();
 		be_parse_arg("isa=amd64");
 		be_main(output_file.handle(), output_file.filename().c_str());

@@ -19,7 +19,7 @@ namespace minijava
 
 	namespace firm
 	{
-		class ir_types;
+		struct ir_types;
 
 		/**
 		 * @brief
