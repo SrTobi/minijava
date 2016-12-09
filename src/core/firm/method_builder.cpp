@@ -88,8 +88,35 @@ namespace minijava
 
 				void visit(const ast::array_instantiation& node) override
 				{
-					// FIXME
-					(void) node;
+					auto type = _sem_info.type_annotations().at(node);
+					auto inner_type = sem::type{type.info, type.rank - 1};
+					auto inner_ir_type = _firm_types.classmap.at(
+							*inner_type.info.declaration()
+					);
+					auto inner_type_size = get_type_size(inner_ir_type);
+					if (inner_type_size > INT_MAX) {
+						throw internal_compiler_error{
+								"Cannot handle types with sizes greater than MAX_INT"
+						};
+					}
+					auto extent = get_expression_node(node.extent());
+					ir_node* arguments[2] = {
+							new_Const_long(
+									get_modeIs(),
+									static_cast<long>(inner_type_size)
+							),
+							extent
+					};
+					auto call_node = new_Call(
+							get_store(),
+							new_Address(_runtime_library.alloc),
+							2,
+							arguments,
+							_runtime_library.alloc_type
+					);
+					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
+					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
+					_current_node = new_Proj(tuple, get_modeP(), 0);
 				}
 
 				void visit(const ast::array_access& node) override
