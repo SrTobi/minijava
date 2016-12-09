@@ -75,3 +75,12 @@ add_test(
 		--
 		"${minijava_exec}" --dump-ir
 )
+
+add_test(
+		NAME comptest-compile-firm
+		COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
+		"--input=${CMAKE_CURRENT_SOURCE_DIR}/asm/*.mj"
+		--execute
+		--
+		"${minijava_exec}" --compile-firm
+)
