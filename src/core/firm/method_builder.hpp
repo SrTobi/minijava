@@ -28,25 +28,20 @@ namespace minijava
 		 * If the `libfirm` was not properly initialized before calling this
 		 * function, the behavior is undefined.
 		 *
-		 * The behavior is also undefined if `ast` is not a semantically
-		 * correct program or if `seminfo` is not the result of a proper
-		 * semantic analysis of `ast`.
+		 * The behavior is also undefined if `seminfo` is not the result of a
+		 * proper semantic analysis of the current program.
 		 *
 		 * Furthermore, the result is undefined if `types` is not the result of
-		 * a successful first Firm pass of the given program.
-		 *
-		 * @param ast
-		 *     AST of the program
+		 * a successful first Firm pass of the current program.
 		 *
 		 * @param semantic_info
-		 *     semantic annotation for the given AST
+		 *     semantic annotation for the current program
 		 *
 		 * @param types
 		 *     Firm IR types and entities
 		 *
 		 */
-		void create_methods(const ast::program& ast,
-		                    const semantic_info& semantic_info,
+		void create_methods(const semantic_info& semantic_info,
 		                    const ir_types& types);
 	}  // namespace firm
 

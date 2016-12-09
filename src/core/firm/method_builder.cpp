@@ -616,13 +616,13 @@ namespace minijava
 			assert(irg_verify(irg));
 		}
 
-		void create_methods(const ast::program& ast,
-		                    const semantic_info& info,
+		void create_methods(const semantic_info& info,
 		                    const ir_types& types) {
 
-			for (const auto& clazz : ast.classes()) {
-				if (types.classmap.find(clazz.get()) != types.classmap.end()) {
-					// build method bodies
+			for (const auto& kv : info.classes()) {
+				const auto clazz = kv.second.declaration();
+				if (types.classmap.find(clazz) != types.classmap.end()) {
+					// type was actually used in program
 					for (const auto& method : clazz->instance_methods()) {
 						_create_method_entity(info, types, *method);
 					}
