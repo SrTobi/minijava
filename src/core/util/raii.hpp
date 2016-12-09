@@ -97,6 +97,7 @@ namespace minijava
 				std::true_type
 			>{}
 		)
+		-> std::unique_ptr<T, const_setter<T>>
 	{
 		auto del = const_setter<T>{target};
 		auto guard = std::unique_ptr<T, const_setter<T>>{&target, del};
@@ -125,6 +126,7 @@ namespace minijava
 	template <typename T>
 	auto increment_temporarily(T& target, const T amount = T{1})
 		noexcept(std::enable_if_t<std::is_arithmetic<T>{}, std::true_type>{})
+		-> std::unique_ptr<T, const_setter<T>>
 	{
 		auto del = const_setter<T>{target};
 		auto guard = std::unique_ptr<T, const_setter<T>>{&target, del};
