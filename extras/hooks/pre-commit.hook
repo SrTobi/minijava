@@ -13,7 +13,7 @@ do
 	if ! ./extras/checks/whitespace.py $file; then
 		failed=true;
 	fi
-done < <(git diff --cached --name-status)
+done < <(git diff --cached --name-status --no-renames)
 
 if [ "$failed" = true ] ; then
 	echo "Pre commit hook failed!"
