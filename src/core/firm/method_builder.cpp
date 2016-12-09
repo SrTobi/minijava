@@ -171,8 +171,15 @@ namespace minijava
 							method_type
 					);
 					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
-					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
-					_current_node = new_Proj(tuple, get_modeP(), 0);
+					if (get_method_n_ress(method_type) > 0) {
+						auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
+						auto res_type = get_method_res_type(method_type, 0);
+						_current_node = new_Proj(tuple, get_type_mode(res_type), 0);
+					} else {
+						// if the method does not return a value, _current_node
+						// should never be used anyway
+						_current_node = nullptr;
+					}
 				}
 
 				void visit(const ast::this_ref&/* node */) override
