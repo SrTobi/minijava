@@ -323,11 +323,8 @@ namespace minijava
 
 				ir_node* get_expression_node(const ast::expression& node)
 				{
-					ir_node* current_node = _current_node;
 					node.accept(*this);
-					ir_node* ret_node = _current_node;
-					_current_node = current_node;
-					return ret_node;
+					return _current_node;
 				}
 
 				const semantic_info& _sem_info;
@@ -376,9 +373,6 @@ namespace minijava
 				void visit(const ast::expression_statement& node) override
 				{
 					_current_node = get_expression_node(node.inner_expression());
-//                  expression_generator generator{_sem_info, _var_ids, _firm_types, &_class_type};
-//                  node.inner_expression().accept(generator);
-					// FIXME: do something with whatever expression_generator produces
 				}
 
 				void visit(const ast::block& node) override
