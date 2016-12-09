@@ -50,12 +50,6 @@ namespace minijava
 					}
 				}
 
-				void visit(const ast::unary_expression& node) override
-				{
-					// FIXME
-					(void) node;
-				}
-
 				void visit(const ast::object_instantiation& node) override
 				{
 					auto type = _sem_info.type_annotations().at(node);
