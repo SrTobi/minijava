@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "firm/firm.hpp"
+#include "irg/irg.hpp"
 #include "parser/ast.hpp"
 
 #include "libfirm/ident.h"
@@ -19,7 +19,7 @@
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		/**
@@ -99,6 +99,6 @@ namespace minijava
 		 */
 		ident* mangle(const ast::class_declaration& clazz, const ast::instance_method& method);
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

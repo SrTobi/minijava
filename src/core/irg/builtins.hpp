@@ -8,13 +8,13 @@
 
 #pragma once
 
-#include "firm/type_builder.hpp"
+#include "irg/type_builder.hpp"
 
 
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		/**
@@ -40,6 +40,6 @@ namespace minijava
 		void create_globals(const semantic_info& semantic_info,
 							ir_types& types);
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

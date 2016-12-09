@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "firm/singleton.hpp"
+#include "irg/singleton.hpp"
 #include "parser/ast.hpp"
 #include "semantic/semantic.hpp"
 
@@ -17,7 +17,7 @@ struct ir_type;
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 		struct ir_types;
 
@@ -43,6 +43,6 @@ namespace minijava
 		 */
 		void create_methods(const semantic_info& semantic_info,
 		                    const ir_types& types);
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

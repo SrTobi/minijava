@@ -1,4 +1,4 @@
-#include "firm/firm.hpp"
+#include "irg/irg.hpp"
 
 #define BOOST_TEST_MODULE  firm_firm
 #include <boost/test/unit_test.hpp>

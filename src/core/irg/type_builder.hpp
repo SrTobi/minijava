@@ -22,7 +22,7 @@
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		/** @brief Type mapping semantic types to Firm IR types. */
@@ -224,6 +224,6 @@ namespace minijava
 			ir_type* println_type{};
 		};
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

@@ -1,4 +1,4 @@
-#include "firm/mangle.hpp"
+#include "irg/mangle.hpp"
 
 #include <cassert>
 #include <regex>
@@ -20,7 +20,7 @@ namespace minijava
 	}  // namespace /* anonymous */
 
 
-	namespace firm
+	namespace irg
 	{
 
 		ident* mangle(const ast::class_declaration& clazz)
@@ -83,6 +83,6 @@ namespace minijava
 			);
 		}
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

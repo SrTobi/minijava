@@ -1,4 +1,4 @@
-#include "firm/singleton.hpp"
+#include "irg/singleton.hpp"
 
 #include <type_traits>
 

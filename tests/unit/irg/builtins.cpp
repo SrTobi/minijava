@@ -1,4 +1,4 @@
-#include "firm/builtins.hpp"
+#include "irg/builtins.hpp"
 
 #define BOOST_TEST_MODULE  firm_builtins
 #include <boost/test/unit_test.hpp>

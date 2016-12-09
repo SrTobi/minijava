@@ -1,5 +1,5 @@
 /**
- * @file firm.hpp
+ * @file irg.hpp
  *
  * @brief
  *     Public interface for the IR graph generation.
@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "firm/singleton.hpp"
+#include "irg/singleton.hpp"
 #include "io/file_output.hpp"
 #include "parser/ast.hpp"
 #include "semantic/semantic.hpp"

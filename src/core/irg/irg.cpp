@@ -1,11 +1,11 @@
-#include "firm/firm.hpp"
+#include "irg/irg.hpp"
 
 #include "libfirm/firm.h"
 
-#include "firm/builtins.hpp"
-#include "firm/lowering.hpp"
-#include "firm/method_builder.hpp"
-#include "firm/type_builder.hpp"
+#include "irg/builtins.hpp"
+#include "irg/lowering.hpp"
+#include "irg/method_builder.hpp"
+#include "irg/type_builder.hpp"
 
 namespace minijava
 {
@@ -14,9 +14,9 @@ namespace minijava
 	                                 const semantic_info& semantic_info)
 	{
 		auto ir = firm_global_state{};
-		auto types = firm::create_types(ast, semantic_info);
-		firm::create_globals(semantic_info, types);
-		firm::create_methods(semantic_info, types);
+		auto types = irg::create_types(ast, semantic_info);
+		irg::create_globals(semantic_info, types);
+		irg::create_methods(semantic_info, types);
 		return ir;
 	}
 
@@ -39,7 +39,7 @@ namespace minijava
 	{
 		assert(firm);
 		(void) firm; // suppress warning in release mode
-		firm::lower();
+		irg::lower();
 		be_parse_arg("isa=amd64");
 		be_main(output_file.handle(), output_file.filename().c_str());
 	}

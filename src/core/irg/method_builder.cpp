@@ -1,4 +1,4 @@
-#include "firm/method_builder.hpp"
+#include "irg/method_builder.hpp"
 
 #include <set>
 #include <unordered_map>
@@ -9,13 +9,13 @@
 #include "libfirm/firm.h"
 
 #include "exceptions.hpp"
-#include "firm/mangle.hpp"
-#include "firm/type_builder.hpp"
+#include "irg/mangle.hpp"
+#include "irg/type_builder.hpp"
 
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		namespace /* anonymous */
@@ -650,6 +650,6 @@ namespace minijava
 
 		}
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

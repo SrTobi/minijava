@@ -1,14 +1,14 @@
-#include "firm/builtins.hpp"
+#include "irg/builtins.hpp"
 
 #include <cassert>
 #include <string>
 
-#include "firm/mangle.hpp"
+#include "irg/mangle.hpp"
 
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		void create_globals(const semantic_info& semantic_info,
@@ -63,6 +63,6 @@ namespace minijava
 			set_current_ir_graph(nullptr);
 		}
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

@@ -15,7 +15,7 @@
 
 #include "exceptions.hpp"
 #include "global.hpp"
-#include "firm/firm.hpp"
+#include "irg/irg.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
 #include "lexer/lexer.hpp"

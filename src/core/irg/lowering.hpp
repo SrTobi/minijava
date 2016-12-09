@@ -3,7 +3,7 @@
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		/**
@@ -13,6 +13,6 @@ namespace minijava
 		 */
 		void lower();
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

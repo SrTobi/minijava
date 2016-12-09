@@ -1,12 +1,12 @@
-#include "firm/type_builder.hpp"
+#include "irg/type_builder.hpp"
 
-#include "firm/mangle.hpp"
+#include "irg/mangle.hpp"
 
 
 namespace minijava
 {
 
-	namespace firm
+	namespace irg
 	{
 
 		namespace /* anonymous */
@@ -265,6 +265,6 @@ namespace minijava
 			return std::move(result).get();
 		}
 
-	}  // namespace firm
+	}  // namespace irg
 
 }  // namespace minijava

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include "firm/lowering.hpp"
+#include "irg/lowering.hpp"
 #include "libfirm/firm.h"
 
 namespace minijava
@@ -48,7 +48,7 @@ namespace minijava
 		}
 	}
 
-	void firm::lower() {
+	void irg::lower() {
 		// layout all types for later use
 		layout_types();
 		// replaces Offsets, TypeConsts by real constants(if possible)

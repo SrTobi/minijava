@@ -1,4 +1,4 @@
-#include "firm/lowering.hpp"
+#include "irg/lowering.hpp"
 
 #define BOOST_TEST_MODULE  firm_lowering
 #include <boost/test/unit_test.hpp>

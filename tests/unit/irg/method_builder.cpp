@@ -1,4 +1,4 @@
-#include "firm/method_builder.hpp"
+#include "irg/method_builder.hpp"
 
 #define BOOST_TEST_MODULE  firm_method_builder
 #include <boost/test/unit_test.hpp>

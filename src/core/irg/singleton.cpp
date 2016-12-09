@@ -1,4 +1,4 @@
-#include "firm/singleton.hpp"
+#include "irg/singleton.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -7,8 +7,8 @@
 
 #include "libfirm/firm.h"
 
-#include "firm/type_builder.hpp"
-#include "firm/method_builder.hpp"
+#include "irg/type_builder.hpp"
+#include "irg/method_builder.hpp"
 
 
 namespace minijava
