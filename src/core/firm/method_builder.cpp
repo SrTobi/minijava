@@ -134,11 +134,13 @@ namespace minijava
 					} else {
 						auto type = _sem_info.type_annotations().at(node);
 						auto ir_type = _firm_types.typemap.at(type);
-						_var_pos =_var_ids.at(var_decl);
+						auto id =_var_ids.at(var_decl);
 						if (_do_store) {
-							// set_value(_var_pos, ...) in calling method
+							// set_value(_var_id, ...) in calling method
+							_var_id = id;
+							_current_node = nullptr;
 						} else {
-							_current_node = get_value(_var_pos, get_type_mode(ir_type));
+							_current_node = get_value(id, get_type_mode(ir_type));
 						}
 					}
 				}
@@ -221,18 +223,22 @@ namespace minijava
 					} else {
 						ir_node* ref_pointer;
 						if (auto target = node.target()) {
+							auto old_do_store = _do_store;
+							_do_store = false;
 							ref_pointer = get_expression_node(*target);
+							_do_store = old_do_store;
 						} else {
 							ref_pointer = get_value(0, _primitives.pointer_mode);
 						}
 						member = new_Member(ref_pointer, field);
 					}
 
+					auto field_type = get_entity_type(field);
+					auto field_mode = get_type_mode(field_type);
 					if (_do_store) {
+						_current_mode = field_mode;
 						_current_node = member;
 					} else {
-						auto field_type = get_entity_type(field);
-						auto field_mode = get_type_mode(field_type);
 						auto mem = get_store();
 						auto load = new_Load(mem, member, field_mode, field_type, cons_none);
 						set_store(new_Proj(load, mode_M, pn_Load_M));
@@ -255,20 +261,28 @@ namespace minijava
 				{
 					assert(expression.type() == ast::binary_operation_type::assign);
 					auto rhs = get_expression_node(expression.rhs());
-					auto _old_do_store = _do_store;
+					auto old_do_store = _do_store;
 					_do_store = true;
 					auto lhs = get_expression_node(expression.lhs());
-					auto pos = _var_pos;
-					_do_store = _old_do_store;
+					auto id = _var_id;
+					auto mode = _current_mode;
+					// reset visitor state
+					_current_mode = nullptr;
+					_do_store = old_do_store;
+					_var_id = -1;
 
-					if (is_Member(lhs)) {
-						auto rhs_mode = get_irn_mode(rhs);
-						auto value_type = get_type_for_mode(rhs_mode);
-						auto store = new_Store(get_store(), lhs, rhs, value_type, cons_none);
+					if (id != -1) {
+						// local
+						assert(!lhs);
+						assert(!mode);
+						set_value(id, rhs);
+					} else {
+						// member
+						assert(lhs);
+						assert(mode);
+						auto store = new_Store(get_store(), lhs, rhs, get_type_for_mode(mode), cons_none);
 						set_store(new_Proj(store, get_modeM(), pn_Store_M));
 						_current_node = store;
-					} else {
-						set_value(pos, rhs);
 					}
 				}
 
@@ -367,8 +381,9 @@ namespace minijava
 				const primitive_types _primitives;
 				const runtime_library _runtime_library;
 
-				int _var_pos{-1};
+				int _var_id{-1};
 				bool _do_store{false};
+				ir_mode* _current_mode{};
 				ir_node* _current_node{};
 
 			};
