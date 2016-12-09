@@ -42,10 +42,11 @@ namespace minijava
 		try {
 			run_subprocess({
 					compiler_executable,
-			        "-o",
+					"-o",
 					output_filename,
 					assembly_filename,
-			        runtime_filename
+					runtime_filename,
+					"-g"
 			});
 		} catch (const std::exception& e) {
 			throw std::runtime_error{

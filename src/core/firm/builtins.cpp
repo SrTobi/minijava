@@ -50,6 +50,8 @@ namespace minijava
 			types.fieldmap.put(*system, system_ptr_entity);
 			// initialize globals
 			set_current_ir_graph(get_const_code_irg());
+			const auto out_initializer = create_initializer_compound(0);
+			set_entity_initializer(out_entity, out_initializer);
 			const auto system_initializer = create_initializer_compound(1);
 			set_initializer_compound_value(system_initializer, 0,
 					create_initializer_const(new_Address(out_entity)));
