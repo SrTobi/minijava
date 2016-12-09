@@ -7,7 +7,7 @@
 #define BOOST_TEST_MODULE  parser_ast
 #include <boost/test/unit_test.hpp>
 
-#include "meta/meta.hpp"
+#include "util/meta.hpp"
 #include "symbol/symbol.hpp"
 #include "symbol/symbol_pool.hpp"
 

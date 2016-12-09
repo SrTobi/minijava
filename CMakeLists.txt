@@ -43,7 +43,6 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
-	meta/meta
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc
@@ -64,6 +63,7 @@ set(COMPONENTS
 	symbol/symbol_entry
 	symbol/symbol_pool
 	system/system
+	util/meta
 )
 
 add_subdirectory("src")

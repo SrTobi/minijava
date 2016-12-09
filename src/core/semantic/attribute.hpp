@@ -22,8 +22,8 @@
 #include <utility>
 
 #include "exceptions.hpp"
-#include "meta/meta.hpp"
 #include "parser/ast.hpp"
+#include "util/meta.hpp"
 
 
 namespace minijava

@@ -1,5 +1,5 @@
-#ifndef MINIJAVA_INCLUDED_FROM_META_META_HPP
-#error "Never `#include <meta/meta_postamble.tpp>` directly; `#include <meta/meta.hpp>` instead."
+#ifndef MINIJAVA_INCLUDED_FROM_UTIL_META_HPP
+#error "Never `#include <util/meta_postamble.tpp>` directly; `#include <util/meta.hpp>` instead."
 #endif
 
 

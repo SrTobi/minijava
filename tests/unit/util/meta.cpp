@@ -1,9 +1,9 @@
-#include "meta/meta.hpp"
+#include "util/meta.hpp"
 
 #include <tuple>
 #include <type_traits>
 
-#define BOOST_TEST_MODULE  meta_meta
+#define BOOST_TEST_MODULE  util_meta
 #include <boost/test/unit_test.hpp>
 
 

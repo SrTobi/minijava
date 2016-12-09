@@ -10,9 +10,9 @@
 
 #include <type_traits>
 
-#define MINIJAVA_INCLUDED_FROM_META_META_HPP
-#include "meta/meta_preamble.tpp"
-#undef MINIJAVA_INCLUDED_FROM_META_META_HPP
+#define MINIJAVA_INCLUDED_FROM_UTIL_META_HPP
+#include "util/meta_preamble.tpp"
+#undef MINIJAVA_INCLUDED_FROM_UTIL_META_HPP
 
 
 namespace minijava
@@ -225,6 +225,6 @@ namespace minijava
 }  // namespace minijava
 
 
-#define MINIJAVA_INCLUDED_FROM_META_META_HPP
-#include "meta/meta_postamble.tpp"
-#undef MINIJAVA_INCLUDED_FROM_META_META_HPP
+#define MINIJAVA_INCLUDED_FROM_UTIL_META_HPP
+#include "util/meta_postamble.tpp"
+#undef MINIJAVA_INCLUDED_FROM_UTIL_META_HPP
