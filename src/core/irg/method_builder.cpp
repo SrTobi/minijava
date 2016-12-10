@@ -45,8 +45,13 @@ namespace minijava
 						visit_boolean_expression(node);
 					} else if (is_arithmetic_expression(node)) {
 						visit_arithmetic_expression(node);
+					} else if (is_logical_expression(node)) {
+						visit_logical_expression(node);
 					} else if (node.type() == ast::binary_operation_type::assign) {
 						visit_assignment(node);
+					} else {
+						// should no be reached
+						assert(false);
 					}
 				}
 
@@ -321,6 +326,19 @@ namespace minijava
 							MINIJAVA_NOT_REACHED();
 							break;
 					}
+				}
+
+				void visit_logical_expression(const ast::binary_expression& expression)
+				{
+					// TODO
+					(void)expression;
+				}
+
+				bool is_logical_expression(const ast::binary_expression& expression)
+				{
+					auto type = expression.type();
+					return type == ast::binary_operation_type::logical_or ||
+							type == ast::binary_operation_type::logical_and;
 				}
 
 				bool is_boolean_expression(const ast::binary_expression& expression)
