@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#define BOOST_TEST_MODULE  firm_singleton
+#define BOOST_TEST_MODULE  firm_global_firm_state
 #include <boost/test/unit_test.hpp>
 
 
@@ -15,10 +15,11 @@ BOOST_AUTO_TEST_CASE(firm_state_move_only)
 }
 
 
-BOOST_AUTO_TEST_CASE(attepting_to_create_another_firm_state_throws)
+BOOST_AUTO_TEST_CASE(attempting_to_create_another_firm_state_throws)
 {
 	minijava::global_firm_state state1st = minijava::initialize_firm();
 	BOOST_REQUIRE_THROW(minijava::initialize_firm(), std::logic_error);
 	minijava::global_firm_state state3rd{std::move(state1st)};
 	BOOST_REQUIRE_THROW(minijava::initialize_firm(), std::logic_error);
+	minijava::global_firm_state state5th{std::move(state3rd)};
 }

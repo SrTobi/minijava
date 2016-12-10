@@ -20,7 +20,7 @@ namespace minijava
 {
 	/**
 	 * @brief
-	 *    References a ir of a program
+	 *    References an IR of a program
 	 *
 	 */
 	using firm_ir = std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>;
@@ -43,6 +43,9 @@ namespace minijava
 	 *
 	 * @param semantic_info
 	 *     semantic information about the given program
+	 *
+	 * @param name
+	 *     name of the IR graph to create
 	 *
 	 * @return
 	 *     intermediate representation
