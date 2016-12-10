@@ -248,7 +248,8 @@ namespace minijava
 			if (stage == compilation_stage::semantic) {
 				return;
 			}
-			auto ir = create_firm_ir(*ast, sem_info);
+			auto firm = initialize_firm();
+			auto ir = create_firm_ir(firm, *ast, sem_info, "TODO: Name");
 			if (stage == compilation_stage::dump_ir) {
 				dump_firm_ir(ir); // TODO: allow setting directory
 				return;

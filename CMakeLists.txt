@@ -38,11 +38,11 @@ set(COMPONENTS
 	cli
 	exceptions
 	irg/builtins
+	irg/global_firm_state
 	irg/irg
 	irg/lowering
 	irg/mangle
 	irg/method_builder
-	irg/singleton
 	irg/type_builder
 	global
 	io/file_data

@@ -10,14 +10,21 @@
 
 #include <string>
 
-#include "irg/singleton.hpp"
+#include "irg/global_firm_state.hpp"
 #include "io/file_output.hpp"
 #include "parser/ast.hpp"
 #include "semantic/semantic.hpp"
-
+#include "firm.hpp"
 
 namespace minijava
 {
+	/**
+	 * @brief
+	 *    References a ir of a program
+	 *
+	 */
+	using firm_ir = std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>;
+
 
 	/**
 	 * @brief
@@ -27,6 +34,9 @@ namespace minijava
 	 * program has completed successfully. If `semantic_info` does not contain
 	 * all information produced during the semantic analysis of `ast`, the
 	 * behavior is undefined.
+	 *
+	 * @param state
+	 *     the global state of libfirm
 	 *
 	 * @param ast
 	 *     program
@@ -38,7 +48,7 @@ namespace minijava
 	 *     intermediate representation
 	 *
 	 */
-	firm_global_state create_firm_ir(const ast::program& ast, const semantic_info& semantic_info);
+	firm_ir create_firm_ir(global_firm_state& state, const ast::program& ast, const semantic_info& semantic_info, const std::string& name);
 
 	/**
 	 * @brief
@@ -52,7 +62,7 @@ namespace minijava
 	 *     target directory (default: current working directory)
 	 *
 	 */
-	void dump_firm_ir(firm_global_state& ir, const std::string& directory = "");
+	void dump_firm_ir(firm_ir& ir, const std::string& directory = "");
 
 	/**
 	 * @brief
@@ -66,6 +76,6 @@ namespace minijava
 	 *     assembly file
 	 *
 	 */
-	void emit_x64_assembly_firm(firm_global_state& ir, file_output& output_file);
+	void emit_x64_assembly_firm(firm_ir& ir, file_output& output_file);
 
 }  // namespace minijava

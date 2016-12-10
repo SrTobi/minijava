@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "irg/singleton.hpp"
+#include "irg/global_firm_state.hpp"
 #include "parser/ast.hpp"
 #include "semantic/semantic.hpp"
 
