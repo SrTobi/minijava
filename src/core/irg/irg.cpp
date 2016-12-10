@@ -1,6 +1,6 @@
 #include "irg/irg.hpp"
 
-#include "libfirm/firm.h"
+#include "firm.hpp"
 
 #include "irg/builtins.hpp"
 #include "irg/lowering.hpp"
@@ -27,9 +27,9 @@ namespace minijava
 		assert(firm);
 		(void) firm; // suppress warning in release mode
 		if (!directory.empty()) {
-			ir_set_dump_path(directory.c_str());
+			firm::ir_set_dump_path(directory.c_str());
 		}
-		dump_all_ir_graphs("");
+		firm::dump_all_ir_graphs("");
 	}
 
 
@@ -40,8 +40,8 @@ namespace minijava
 		assert(firm);
 		(void) firm; // suppress warning in release mode
 		irg::lower();
-		be_parse_arg("isa=amd64");
-		be_main(output_file.handle(), output_file.filename().c_str());
+		firm::be_parse_arg("isa=amd64");
+		firm::be_main(output_file.handle(), output_file.filename().c_str());
 	}
 
 }  // namespace minijava

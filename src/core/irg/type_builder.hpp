@@ -11,7 +11,7 @@
 #include <cstddef>
 #include <unordered_map>
 
-#include "libfirm/firm.h"
+#include "firm.hpp"
 
 #include "parser/ast.hpp"
 #include "semantic/attribute.hpp"
@@ -26,17 +26,17 @@ namespace minijava
 	{
 
 		/** @brief Type mapping semantic types to Firm IR types. */
-		using type_mapping = std::unordered_map<sem::type, ir_type*>;
+		using type_mapping = std::unordered_map<sem::type, firm::ir_type*>;
 
 		/** @brief AST attribute type mapping class declarations to Firm IR types. */
 		// TODO: Use entities instead of types as values
-		using class_mapping = ast_attributes<ir_type*, ast_node_filter<ast::class_declaration>>;
+		using class_mapping = ast_attributes<firm::ir_type*, ast_node_filter<ast::class_declaration>>;
 
 		/** @brief AST attribute type mapping variable declarations to Firm IR entities. */
-		using field_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::var_decl>>;
+		using field_mapping = ast_attributes<firm::ir_entity*, ast_node_filter<ast::var_decl>>;
 
 		/** @brief AST attribute type mapping methods to Firm IR entities. */
-		using method_mapping = ast_attributes<ir_entity*, ast_node_filter<ast::method>>;
+		using method_mapping = ast_attributes<firm::ir_entity*, ast_node_filter<ast::method>>;
 
 		/**
 		 * @brief
@@ -158,22 +158,22 @@ namespace minijava
 			static const primitive_types& get_instance();
 
 			/** @brief Unique pointer to Firm mode for MiniJava's `int` type.  */
-			ir_mode* int_mode{};
+			firm::ir_mode* int_mode{};
 
 			/** @brief Unique pointer to Firm mode for MiniJava's `boolean` type.  */
-			ir_mode* boolean_mode{};
+			firm::ir_mode* boolean_mode{};
 
 			/** @brief Unique pointer to Firm mode for MiniJava's pointer type.  */
-			ir_mode* pointer_mode{};
+			firm::ir_mode* pointer_mode{};
 
 			/** @brief Unique pointer to Firm type for MiniJava's `int` type.  */
-			ir_type* int_type{};
+			firm::ir_type* int_type{};
 
 			/** @brief Unique pointer to Firm type for MiniJava's `boolean` type.  */
-			ir_type* boolean_type{};
+			firm::ir_type* boolean_type{};
 
 			/** @brief Unique pointer to Firm type for MiniJava's pointer type.  */
-			ir_type* pointer_type{};
+			firm::ir_type* pointer_type{};
 		};
 
 		/**
@@ -212,16 +212,16 @@ namespace minijava
 			static const runtime_library& get_instance();
 
 			/** @brief Unique pointer to Firm entity for %mj_runtime_allocate */
-			ir_entity* alloc{};
+			firm::ir_entity* alloc{};
 
 			/** @brief Unique pointer to Firm type for %mj_runtime_allocate */
-			ir_type* alloc_type{};
+			firm::ir_type* alloc_type{};
 
 			/** @brief Unique pointer to Firm entity for %mj_runtime_println */
-			ir_entity* println{};
+			firm::ir_entity* println{};
 
 			/** @brief Unique pointer to Firm type for %mj_runtime_println */
-			ir_type* println_type{};
+			firm::ir_type* println_type{};
 		};
 
 	}  // namespace irg

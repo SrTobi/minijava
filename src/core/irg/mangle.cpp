@@ -23,10 +23,10 @@ namespace minijava
 	namespace irg
 	{
 
-		ident* mangle(const ast::class_declaration& clazz)
+		firm::ident* mangle(const ast::class_declaration& clazz)
 		{
 			assert(is_valid_asm_id(clazz.name()));
-			return new_id_fmt(
+			return firm::new_id_fmt(
 #ifdef _WIN32
 				"Mj_%s_c%Iu",
 #else
@@ -36,10 +36,10 @@ namespace minijava
 			);
 		}
 
-		ident* mangle(const ast::var_decl& vardecl)
+		firm::ident* mangle(const ast::var_decl& vardecl)
 		{
 			assert(is_valid_asm_id(vardecl.name()));
-			return new_id_fmt(
+			return firm::new_id_fmt(
 #ifdef _WIN32
 				"mj_%s_v%Iu",
 #else
@@ -49,13 +49,13 @@ namespace minijava
 			);
 		}
 
-		ident* mangle(const ast::class_declaration& clazz,
+		firm::ident* mangle(const ast::class_declaration& clazz,
 					  const ast::var_decl& field)
 		{
 			assert(is_valid_asm_id(clazz.name()));
 			assert(is_valid_asm_id(field.name()));
 			assert(clazz.get_field(field.name()) == &field);
-			return new_id_fmt(
+			return firm::new_id_fmt(
 #ifdef _WIN32
 				"Mj_%s_c%Iu_%s_f%Iu",
 #else
@@ -66,13 +66,13 @@ namespace minijava
 			);
 		}
 
-		ident* mangle(const ast::class_declaration& clazz,
+		firm::ident* mangle(const ast::class_declaration& clazz,
 					  const ast::instance_method& method)
 		{
 			assert(is_valid_asm_id(clazz.name()));
 			assert(is_valid_asm_id(method.name()));
 			assert(clazz.get_instance_method(method.name()) == &method);
-			return new_id_fmt(
+			return firm::new_id_fmt(
 #ifdef _WIN32
 				"Mj_%s_c%Iu_%s_m%Iu",
 #else

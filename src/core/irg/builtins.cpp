@@ -31,36 +31,36 @@ namespace minijava
 			assert("java.io.PrintStream" == out_type_decl->name());
 			const auto out_ir_record_type = types.classmap.at(*out_type_decl);
 			// create global entities
-			const auto out_entity = new_entity(
-					get_glob_type(),
-					new_id_from_str("mj_System_out"),
+			const auto out_entity = firm::new_entity(
+					firm::get_glob_type(),
+					firm::new_id_from_str("mj_System_out"),
 					out_ir_record_type
 			);
-			const auto system_entity = new_entity(
-					get_glob_type(),
-					new_id_from_str("mj_System"),
+			const auto system_entity = firm::new_entity(
+					firm::get_glob_type(),
+					firm::new_id_from_str("mj_System"),
 					ir_record_type
 			);
-			const auto system_ptr_entity = new_entity(
-					get_glob_type(),
-					new_id_from_str(system->name().c_str()),
+			const auto system_ptr_entity = firm::new_entity(
+					firm::get_glob_type(),
+					firm::new_id_from_str(system->name().c_str()),
 					ir_ptr_type
 			);
 			set_entity_ld_ident(system_ptr_entity, mangle(*system));
 			types.fieldmap.put(*system, system_ptr_entity);
 			// initialize globals
-			set_current_ir_graph(get_const_code_irg());
-			const auto out_initializer = create_initializer_compound(0);
-			set_entity_initializer(out_entity, out_initializer);
-			const auto system_initializer = create_initializer_compound(1);
-			set_initializer_compound_value(system_initializer, 0,
-					create_initializer_const(new_Address(out_entity)));
-			set_entity_initializer(system_entity, system_initializer);
-			const auto system_ptr_initializer = create_initializer_const(
+			firm::set_current_ir_graph(firm::get_const_code_irg());
+			const auto out_initializer = firm::create_initializer_compound(0);
+			firm::set_entity_initializer(out_entity, out_initializer);
+			const auto system_initializer = firm::create_initializer_compound(1);
+			firm::set_initializer_compound_value(system_initializer, 0,
+					firm::create_initializer_const(firm::new_Address(out_entity)));
+			firm::set_entity_initializer(system_entity, system_initializer);
+			const auto system_ptr_initializer = firm::create_initializer_const(
 					new_Address(system_entity)
 			);
-			set_entity_initializer(system_ptr_entity, system_ptr_initializer);
-			set_current_ir_graph(nullptr);
+			firm::set_entity_initializer(system_ptr_entity, system_ptr_initializer);
+			firm::set_current_ir_graph(nullptr);
 		}
 
 	}  // namespace irg

@@ -15,7 +15,9 @@
 #include "semantic/attribute.hpp"
 
 
-struct ir_node;
+namespace firm {
+	struct ir_node;
+}
 
 
 namespace minijava

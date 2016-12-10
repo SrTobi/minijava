@@ -13,7 +13,7 @@
 #include "irg/irg.hpp"
 #include "parser/ast.hpp"
 
-#include "libfirm/ident.h"
+#include "firm.hpp"
 
 
 namespace minijava
@@ -36,7 +36,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(const ast::class_declaration& clazz);
+		firm::ident* mangle(const ast::class_declaration& clazz);
 
 		/**
 		 * @brief
@@ -53,7 +53,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(const ast::var_decl& vardecl);
+		firm::ident* mangle(const ast::var_decl& vardecl);
 
 		/**
 		 * @brief
@@ -75,7 +75,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(const ast::class_declaration& clazz, const ast::var_decl& field);
+		firm::ident* mangle(const ast::class_declaration& clazz, const ast::var_decl& field);
 
 		/**
 		 * @brief
@@ -97,7 +97,7 @@ namespace minijava
 		 *     handle to Firm `ident` of mangled name
 		 *
 		 */
-		ident* mangle(const ast::class_declaration& clazz, const ast::instance_method& method);
+		firm::ident* mangle(const ast::class_declaration& clazz, const ast::instance_method& method);
 
 	}  // namespace irg
 

@@ -56,7 +56,7 @@ namespace minijava
 					}
 				}
 
-				ir_type* _get_var_type(const sem::type type)
+				firm::ir_type* _get_var_type(const sem::type type)
 				{
 					assert(!type.info.is_void());
 					const auto pos = _typemap.find(type);
@@ -84,7 +84,7 @@ namespace minijava
 					return recursive_type;
 				}
 
-				ir_type* _get_class_type(const ast::class_declaration& clazz)
+				firm::ir_type* _get_class_type(const ast::class_declaration& clazz)
 				{
 					const auto pos = _classmap.find(&clazz);
 					if (pos != _classmap.end()) {
@@ -105,12 +105,12 @@ namespace minijava
 							}
 						}
 						for (const auto& method : class_decl->main_methods()) {
-							_init_method(get_glob_type(), *method);
+							_init_method(firm::get_glob_type(), *method);
 						}
 					}
 				}
 
-				void _init_method(ir_type* class_type,
+				void _init_method(firm::ir_type* class_type,
 								  const ast::class_declaration& clazz,
 								  const ast::instance_method& method)
 				{
@@ -122,50 +122,50 @@ namespace minijava
 						has_return_type ? 1 : 0, // number of return types
 						0,                       // variadic?
 						cc_cdecl_set,            // calling convention
-						mtp_no_property
+						firm::mtp_no_property
 					);
-					set_method_param_type(method_type, 0, new_type_pointer(class_type));
+					firm::set_method_param_type(method_type, 0, firm::new_type_pointer(class_type));
 					auto param_num = std::size_t{1};
 					for (const auto& param : method.parameters()) {
 						const auto param_type = _get_var_type(_seminfo.type_annotations().at(*param));
-						set_method_param_type(method_type, param_num++, param_type);
+						firm::set_method_param_type(method_type, param_num++, param_type);
 					}
 					if (has_return_type) {
-						set_method_res_type(method_type, 0, _get_var_type(return_type));
+						firm::set_method_res_type(method_type, 0, _get_var_type(return_type));
 					}
 					const auto method_entity = new_entity(
 						class_type,
-						new_id_from_str(method.name().c_str()),
+						firm::new_id_from_str(method.name().c_str()),
 						method_type);
-					set_entity_ld_ident(method_entity, mangle(clazz, method));
+					firm::set_entity_ld_ident(method_entity, mangle(clazz, method));
 					_methodmap.insert({&method, method_entity});
 				}
 
-				void _init_method(ir_type* class_type, const ast::main_method& method)
+				void _init_method(firm::ir_type* class_type, const ast::main_method& method)
 				{
-					const auto method_type = new_type_method(
+					const auto method_type = firm::new_type_method(
 						0,               // param count
 						0,               // number of return types
 						0,               // variadic?
 						cc_cdecl_set,    // calling convention
-						mtp_no_property
+						firm::mtp_no_property
 					);
-					const auto minijava_main = new_id_from_str("minijava_main");
-					const auto method_entity = new_entity(
+					const auto minijava_main = firm::new_id_from_str("minijava_main");
+					const auto method_entity = firm::new_entity(
 						class_type,
 						minijava_main,
 						method_type
 					);
-					set_entity_ld_ident(method_entity, minijava_main);
+					firm::set_entity_ld_ident(method_entity, minijava_main);
 					_methodmap.put(method, method_entity);
 				}
 
-				std::pair<ir_type*, ir_type*> _create_class_type(const ast::class_declaration& clazz)
+				std::pair<firm::ir_type*, firm::ir_type*> _create_class_type(const ast::class_declaration& clazz)
 				{
 					const auto type = sem::type{_seminfo.classes().at(clazz.name()), 0};
-					const auto class_type = new_type_class(new_id_from_str(clazz.name().c_str()));
-					const auto pointer_type = new_type_pointer(class_type);
-					set_type_alignment(class_type, 8);
+					const auto class_type = firm::new_type_class(firm::new_id_from_str(clazz.name().c_str()));
+					const auto pointer_type = firm::new_type_pointer(class_type);
+					firm::set_type_alignment(class_type, 8);
 					_typemap[type] = pointer_type;
 					_classmap.put(clazz, class_type);
 					return std::make_pair(class_type, pointer_type);
@@ -192,26 +192,26 @@ namespace minijava
 					}
 					// TODO: Is there a better way to trick Firm into accepting empty types?
 					if (clazz.fields().empty()) {
-						const auto dummy_name = new_id_from_str("__prevent_empty_class");
-						const auto dummy_field = new_entity(class_type, dummy_name, _primitives.int_type);
-						set_entity_ld_ident(dummy_field, dummy_name);
+						const auto dummy_name = firm::new_id_from_str("__prevent_empty_class");
+						const auto dummy_field = firm::new_entity(class_type, dummy_name, _primitives.int_type);
+						firm::set_entity_ld_ident(dummy_field, dummy_name);
 					}
 
-					default_layout_compound_type(class_type);
+					firm::default_layout_compound_type(class_type);
 				}
 
-				ir_entity* _create_field_entity(ir_type *class_type,
+				firm::ir_entity* _create_field_entity(firm::ir_type *class_type,
 												const ast::class_declaration& clazz,
 												const ast::var_decl& field)
 				{
 					const auto field_type = _seminfo.type_annotations().at(field);
 					const auto ir_type = _get_var_type(field_type);
-					const auto field_entity = new_entity(
+					const auto field_entity = firm::new_entity(
 						class_type,
-						new_id_from_str(field.name().c_str()),
+						firm::new_id_from_str(field.name().c_str()),
 						ir_type
 					);
-					set_entity_ld_ident(field_entity, mangle(clazz, field));
+					firm::set_entity_ld_ident(field_entity, mangle(clazz, field));
 					_fieldmap.put(field, field_entity);
 					return field_entity;
 				}
@@ -226,12 +226,12 @@ namespace minijava
 		{
 			static const auto instance = [](){
 				auto pt = primitive_types{};
-				pt.int_mode = mode_Is;
-				pt.boolean_mode = new_int_mode("B", irma_twos_complement, 8, 0, 1);
-				pt.pointer_mode = mode_P;
-				pt.int_type = new_type_primitive(pt.int_mode);
-				pt.boolean_type = new_type_primitive(pt.boolean_mode);
-				pt.pointer_type = new_type_primitive(mode_P);
+				pt.int_mode = firm::mode_Is;
+				pt.boolean_mode = firm::new_int_mode("B", firm::irma_twos_complement, 8, 0, 1);
+				pt.pointer_mode = firm::mode_P;
+				pt.int_type = firm::new_type_primitive(pt.int_mode);
+				pt.boolean_type = firm::new_type_primitive(pt.boolean_mode);
+				pt.pointer_type = firm::new_type_primitive(firm::mode_P);
 				return pt;
 			}();
 			return instance;
@@ -244,15 +244,15 @@ namespace minijava
 				auto primitives = primitive_types::get_instance();
 				auto rt = runtime_library{};
 				// create allocate method
-				rt.alloc_type = new_type_method(2, 1, 0, cc_cdecl_set, mtp_no_property);
-				set_method_param_type(rt.alloc_type, 0, primitives.int_type);
-				set_method_param_type(rt.alloc_type, 1, primitives.int_type);
-				set_method_res_type(rt.alloc_type, 0, primitives.pointer_type);
-				rt.alloc = new_entity(get_glob_type(), new_id_from_str("mj_runtime_allocate"), rt.alloc_type);
+				rt.alloc_type = firm::new_type_method(2, 1, 0, cc_cdecl_set, firm::mtp_no_property);
+				firm::set_method_param_type(rt.alloc_type, 0, primitives.int_type);
+				firm::set_method_param_type(rt.alloc_type, 1, primitives.int_type);
+				firm::set_method_res_type(rt.alloc_type, 0, primitives.pointer_type);
+				rt.alloc = firm::new_entity(firm::get_glob_type(), firm::new_id_from_str("mj_runtime_allocate"), rt.alloc_type);
 				// create println method
-				rt.println_type = new_type_method(1, 0, 0, cc_cdecl_set, mtp_no_property);
-				set_method_param_type(rt.println_type, 0, primitives.int_type);
-				rt.println = new_entity(get_glob_type(), new_id_from_str("mj_runtime_println"), rt.println_type);
+				rt.println_type = firm::new_type_method(1, 0, 0, cc_cdecl_set, firm::mtp_no_property);
+				firm::set_method_param_type(rt.println_type, 0, primitives.int_type);
+				rt.println = firm::new_entity(firm::get_glob_type(), firm::new_id_from_str("mj_runtime_println"), rt.println_type);
 				return rt;
 			}();
 			return instance;

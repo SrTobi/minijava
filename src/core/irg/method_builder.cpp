@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <iostream>
 
-#include "libfirm/firm.h"
+#include "firm.hpp"
 
 #include "exceptions.hpp"
 #include "irg/mangle.hpp"
@@ -56,28 +56,28 @@ namespace minijava
 					auto ir_type = _firm_types.classmap.at(
 							*type.info.declaration()
 					);
-					auto type_size = get_type_size(ir_type);
+					auto type_size = firm::get_type_size(ir_type);
 					if (type_size > INT_MAX) {
 						throw internal_compiler_error{
 								"Cannot handle types with sizes greater than MAX_INT"
 						};
 					}
-					ir_node* arguments[2] = {
-							new_Const_long(
-									get_modeIs(), static_cast<long>(type_size)
+					firm::ir_node* arguments[2] = {
+							firm::new_Const_long(
+									firm::get_modeIs(), static_cast<long>(type_size)
 							),
-							new_Const_long(get_modeIs(), 1)
+							firm::new_Const_long(firm::get_modeIs(), 1)
 					};
-					auto call_node = new_Call(
-							get_store(),
-					        new_Address(_runtime_library.alloc),
+					auto call_node = firm::new_Call(
+							firm::get_store(),
+					        firm::new_Address(_runtime_library.alloc),
 							2,
 					        arguments,
 					        _runtime_library.alloc_type
 					);
-					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
-					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
-					_current_node = new_Proj(tuple, get_modeP(), 0);
+					firm::set_store(new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
+					auto tuple = firm::new_Proj(call_node, firm::get_modeT(), firm::pn_Call_T_result);
+					_current_node = firm::new_Proj(tuple, firm::get_modeP(), 0);
 				}
 
 				void visit(const ast::array_instantiation& node) override
@@ -87,30 +87,30 @@ namespace minijava
 					auto inner_ir_type = _firm_types.classmap.at(
 							*inner_type.info.declaration()
 					);
-					auto inner_type_size = get_type_size(inner_ir_type);
+					auto inner_type_size = firm::get_type_size(inner_ir_type);
 					if (inner_type_size > INT_MAX) {
 						throw internal_compiler_error{
 								"Cannot handle types with sizes greater than MAX_INT"
 						};
 					}
 					auto extent = get_expression_node(node.extent());
-					ir_node* arguments[2] = {
-							new_Const_long(
-									get_modeIs(),
+					firm::ir_node* arguments[2] = {
+							firm::new_Const_long(
+									firm::get_modeIs(),
 									static_cast<long>(inner_type_size)
 							),
 							extent
 					};
-					auto call_node = new_Call(
-							get_store(),
-							new_Address(_runtime_library.alloc),
+					auto call_node = firm::new_Call(
+							firm::get_store(),
+							firm::new_Address(_runtime_library.alloc),
 							2,
 							arguments,
 							_runtime_library.alloc_type
 					);
-					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
-					auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
-					_current_node = new_Proj(tuple, get_modeP(), 0);
+					firm::set_store(new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
+					auto tuple = firm::new_Proj(call_node, firm::get_modeT(), firm::pn_Call_T_result);
+					_current_node = firm::new_Proj(tuple, firm::get_modeP(), 0);
 				}
 
 				void visit(const ast::array_access& node) override
@@ -134,7 +134,7 @@ namespace minijava
 							_var_id = id;
 							_current_node = nullptr;
 						} else {
-							_current_node = get_value(id, get_type_mode(ir_type));
+							_current_node = firm::get_value(id, firm::get_type_mode(ir_type));
 						}
 					}
 				}
@@ -143,9 +143,9 @@ namespace minijava
 				{
 					auto method = _sem_info.method_annotations().at(node);
 					auto method_entity = _firm_types.methodmap.at(*method);
-					auto method_type = get_entity_type(method_entity);
-					auto argc = get_method_n_params(method_type);
-					auto arguments = std::make_unique<ir_node*[]>(argc);
+					auto method_type = firm::get_entity_type(method_entity);
+					auto argc = firm::get_method_n_params(method_type);
+					auto arguments = std::make_unique<firm::ir_node*[]>(argc);
 					if (auto target = node.target()) {
 						target->accept(*this);
 						arguments[0] = _current_node;
@@ -159,18 +159,18 @@ namespace minijava
 						arguments[i] = _current_node;
 						++i;
 					}
-					auto call_node = new_Call(
-							get_store(),
-							new_Address(method_entity),
+					auto call_node = firm::new_Call(
+							firm::get_store(),
+							firm::new_Address(method_entity),
 							static_cast<int>(argc),
 							arguments.get(),
 							method_type
 					);
-					set_store(new_Proj(call_node, get_modeM(), pn_Call_M));
-					if (get_method_n_ress(method_type) > 0) {
-						auto tuple = new_Proj(call_node, get_modeT(), pn_Call_T_result);
-						auto res_type = get_method_res_type(method_type, 0);
-						_current_node = new_Proj(tuple, get_type_mode(res_type), 0);
+					firm::set_store(new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
+					if (firm::get_method_n_ress(method_type) > 0) {
+						auto tuple = firm::new_Proj(call_node, firm::get_modeT(), firm::pn_Call_T_result);
+						auto res_type = firm::get_method_res_type(method_type, 0);
+						_current_node = firm::new_Proj(tuple, firm::get_type_mode(res_type), 0);
 					} else {
 						// if the method does not return a value, _current_node
 						// should never be used anyway
@@ -199,7 +199,7 @@ namespace minijava
 					_current_node = new_Const_long(_primitives.pointer_mode, 0);
 				}
 
-				ir_node* current_node() const noexcept
+				firm::ir_node* current_node() const noexcept
 				{
 					return _current_node;
 				}
@@ -208,14 +208,14 @@ namespace minijava
 
 				void visit_field(const ast::variable_access& node,
 								 const ast::var_decl& declaration,
-								 ir_entity* field)
+								 firm::ir_entity* field)
 				{
-					ir_node* member;
+					firm::ir_node* member;
 					if (_sem_info.is_global(&declaration)) {
 						const auto ident = mangle(declaration);
-						member = new_Address(ir_get_global(ident));
+						member = firm::new_Address(firm::ir_get_global(ident));
 					} else {
-						ir_node* ref_pointer;
+						firm::ir_node* ref_pointer;
 						if (auto target = node.target()) {
 							auto old_do_store = _do_store;
 							_do_store = false;
@@ -224,19 +224,19 @@ namespace minijava
 						} else {
 							ref_pointer = get_value(0, _primitives.pointer_mode);
 						}
-						member = new_Member(ref_pointer, field);
+						member = firm::new_Member(ref_pointer, field);
 					}
 
-					auto field_type = get_entity_type(field);
-					auto field_mode = get_type_mode(field_type);
+					auto field_type = firm::get_entity_type(field);
+					auto field_mode = firm::get_type_mode(field_type);
 					if (_do_store) {
 						_current_mode = field_mode;
 						_current_node = member;
 					} else {
-						auto mem = get_store();
-						auto load = new_Load(mem, member, field_mode, field_type, cons_none);
-						set_store(new_Proj(load, mode_M, pn_Load_M));
-						_current_node = new_Proj(load, field_mode, pn_Load_res);
+						auto mem = firm::get_store();
+						auto load = new_Load(mem, member, field_mode, field_type, firm::cons_none);
+						set_store(new_Proj(load, firm::mode_M, firm::pn_Load_M));
+						_current_node = new_Proj(load, field_mode, firm::pn_Load_res);
 					}
 				}
 
@@ -274,8 +274,8 @@ namespace minijava
 						// member
 						assert(lhs);
 						assert(mode);
-						auto store = new_Store(get_store(), lhs, rhs, get_type_for_mode(mode), cons_none);
-						set_store(new_Proj(store, get_modeM(), pn_Store_M));
+						auto store = firm::new_Store(firm::get_store(), lhs, rhs, firm::get_type_for_mode(mode), firm::cons_none);
+						set_store(new_Proj(store, firm::get_modeM(), firm::pn_Store_M));
 						_current_node = store;
 					}
 				}
@@ -293,19 +293,19 @@ namespace minijava
 					assert(is_arithmetic_expression(expression));
 					auto lhs = get_expression_node(expression.lhs());
 					auto rhs = get_expression_node(expression.rhs());
-					auto memory = get_store();
+					auto memory = firm::get_store();
 
 					switch (expression.type()) {
 						case ast::binary_operation_type::divide: {
-							auto div_result = new_DivRL(memory, lhs, rhs, op_pin_state_pinned);
-							_current_node = new_Proj(div_result, _primitives.int_mode, pn_Div_res);
-							set_store(new_Proj(div_result, mode_M, pn_Div_M));
+							auto div_result = firm::new_DivRL(memory, lhs, rhs, firm::op_pin_state_pinned);
+							_current_node = firm::new_Proj(div_result, _primitives.int_mode, firm::pn_Div_res);
+							firm::set_store(new_Proj(div_result, firm::mode_M, firm::pn_Div_M));
 							break;
 						}
 						case ast::binary_operation_type::modulo: {
-							auto mod_result = new_Mod(memory, lhs, rhs, op_pin_state_pinned);
-							set_store(new_Proj(mod_result, mode_M, pn_Mod_M));
-							_current_node = new_Proj(mod_result, _primitives.int_mode, pn_Mod_res);
+							auto mod_result = firm::new_Mod(memory, lhs, rhs,firm::op_pin_state_pinned);
+							firm::set_store(new_Proj(mod_result, firm::mode_M, firm::pn_Mod_M));
+							_current_node = firm::new_Proj(mod_result, _primitives.int_mode, firm::pn_Mod_res);
 							break;
 						}
 						case ast::binary_operation_type::multiply:
@@ -343,27 +343,27 @@ namespace minijava
 					       type == ast::binary_operation_type::modulo;
 				}
 
-				ir_relation relation_from_binary_operation_type(ast::binary_operation_type type)
+				firm::ir_relation relation_from_binary_operation_type(ast::binary_operation_type type)
 				{
 					switch (type) {
 					case ast::binary_operation_type::greater_than:
-						return ir_relation_greater;
+						return firm::ir_relation_greater;
 					case ast::binary_operation_type::greater_equal:
-						return ir_relation_greater_equal;
+						return firm::ir_relation_greater_equal;
 					case ast::binary_operation_type::less_than:
-						return ir_relation_less;
+						return firm::ir_relation_less;
 					case ast::binary_operation_type::less_equal:
-						return ir_relation_less_equal;
+						return firm::ir_relation_less_equal;
 					case ast::binary_operation_type::equal:
-						return ir_relation_equal;
+						return firm::ir_relation_equal;
 					default:
 						// should not be reached
 						assert(false);
-						return ir_relation_false;
+						return firm::ir_relation_false;
 					}
 				}
 
-				ir_node* get_expression_node(const ast::expression& node)
+				firm::ir_node* get_expression_node(const ast::expression& node)
 				{
 					node.accept(*this);
 					return _current_node;
@@ -377,8 +377,8 @@ namespace minijava
 
 				int _var_id{-1};
 				bool _do_store{false};
-				ir_mode* _current_mode{};
-				ir_node* _current_node{};
+				firm::ir_mode* _current_mode{};
+				firm::ir_node* _current_node{};
 
 			};
 
@@ -403,13 +403,13 @@ namespace minijava
 
 					if (node.initial_value()) {
 						auto expr_node = get_expression_node(*node.initial_value());
-						set_value(pos, expr_node);
+						firm::set_value(pos, expr_node);
 					} else {
 						// initialize with default zero value
 						auto type = _sem_info.type_annotations().at(*node_decl);
 						auto ir_type = _firm_types.typemap.at(type);
-						auto null_value = new_Const_long(get_type_mode(ir_type), 0);
-						set_value(pos, null_value);
+						auto null_value = firm::new_Const_long(firm::get_type_mode(ir_type), 0);
+						firm::set_value(pos, null_value);
 					}
 				}
 
@@ -423,7 +423,7 @@ namespace minijava
 					for (const auto& stmt : node.body()) {
 						stmt->accept(*this);
 						// reach unreachable code after return..
-						if (!get_cur_block()) {
+						if (!firm::get_cur_block()) {
 							break;
 						}
 					}
@@ -457,21 +457,21 @@ namespace minijava
 				void visit(const ast::return_statement& node) override
 				{
 					auto expr = node.value();
-					ir_node* ret;
+					firm::ir_node* ret;
 					if (expr) {
 						auto expression_node = get_expression_node(*node.value());
-						//ir_node* results[1] = {expression_node};
-						ret = new_Return(get_store(), 1, &expression_node);
+						//firm::ir_node* results[1] = {expression_node};
+						ret = firm::new_Return(firm::get_store(), 1, &expression_node);
 					} else {
-						ret = new_Return(get_store(), 0, NULL);
+						ret = firm::new_Return(firm::get_store(), 0, NULL);
 					}
 
-					auto irg = get_current_ir_graph();
-					add_immBlock_pred(get_irg_end_block(irg), ret);
-					mature_immBlock(get_r_cur_block(irg));
+					auto irg = firm::get_current_ir_graph();
+					firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
+					firm::mature_immBlock(firm::get_r_cur_block(irg));
 
 					// mark as unreachable
-					set_cur_block(NULL);
+					firm::set_cur_block(NULL);
 				}
 
 				void visit(const ast::empty_statement& node) override
@@ -482,19 +482,19 @@ namespace minijava
 
 				void visit(const ast::main_method& node) override
 				{
-					auto irg = get_current_ir_graph();
+					auto irg = firm::get_current_ir_graph();
 					auto method_entity = _firm_types.methodmap.at(node);
 					//auto cur_block = get_r_cur_block(irg);
 					//set_r_cur_block(irg, get_irg_start_block(irg));
 					auto locals = _sem_info.locals_annotations().at(node);
-					auto args = get_irg_args(irg);
+					auto args = firm::get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{0};
 					for (const auto& local : locals) {
 						if (current_id < num_params) {
-							set_value(current_id, new_Proj(
+							firm::set_value(current_id, firm::new_Proj(
 									args,
-									get_type_mode(get_entity_type(method_entity)),
+									firm::get_type_mode(firm::get_entity_type(method_entity)),
 									static_cast<unsigned int>(current_id - 1)
 							));
 						}
@@ -506,20 +506,20 @@ namespace minijava
 
 				void visit(const ast::instance_method& node) override
 				{
-					auto irg = get_current_ir_graph();
+					auto irg = firm::get_current_ir_graph();
 					auto method_entity = _firm_types.methodmap.at(node);
 					//auto cur_block = get_r_cur_block(irg);
 					//set_r_cur_block(irg, get_irg_start_block(irg));
 					auto locals = _sem_info.locals_annotations().at(node);
-					auto args = get_irg_args(irg);
+					auto args = firm::get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{1};
-					set_value(0, new_Proj(args, _primitives.pointer_mode, 0));
+					firm::set_value(0, firm::new_Proj(args, _primitives.pointer_mode, 0));
 					for (const auto& local : locals) {
 						if (current_id <= num_params) {
-							set_value(current_id, new_Proj(
+							firm::set_value(current_id, firm::new_Proj(
 									args,
-									get_type_mode(get_entity_type(method_entity)),
+									firm::get_type_mode(firm::get_entity_type(method_entity)),
 									static_cast<unsigned int>(current_id)
 							));
 						}
@@ -529,13 +529,13 @@ namespace minijava
 					node.body().accept(*this);
 				}
 
-				ir_node* current_node() const noexcept {
+				firm::ir_node* current_node() const noexcept {
 					return _current_node;
 				}
 
 			private:
 
-				ir_node* get_expression_node(const ast::expression& node)
+				firm::ir_node* get_expression_node(const ast::expression& node)
 				{
 					expression_generator generator{
 							_sem_info, _var_ids, _firm_types
@@ -548,7 +548,7 @@ namespace minijava
 				const ir_types& _firm_types;
 				const primitive_types _primitives;
 				var_id_map_type _var_ids{};
-				ir_node* _current_node{};
+				firm::ir_node* _current_node{};
 
 			};
 		}
@@ -557,16 +557,16 @@ namespace minijava
 		                        const ir_types& firm_types,
 		                        const ast::instance_method& method)
 		{
-			auto irg = get_current_ir_graph();
+			auto irg = firm::get_current_ir_graph();
 			method_generator generator{sem_info, firm_types};
 			method.accept(generator);
 			// handle return value
 			// no explicit return statement found?
-			if (get_cur_block()) {
-				auto store = get_store();
-				auto ret = new_Return(store, 0, NULL);
-				add_immBlock_pred(get_irg_end_block(irg), ret);
-				mature_immBlock(get_r_cur_block(irg));
+			if (firm::get_cur_block()) {
+				auto store = firm::get_store();
+				auto ret = firm::new_Return(store, 0, NULL);
+				firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
+				firm::mature_immBlock(firm::get_r_cur_block(irg));
 			}
 		}
 
@@ -574,16 +574,16 @@ namespace minijava
 		                        const ir_types& firm_types,
 		                        const ast::main_method& method)
 		{
-			auto irg = get_current_ir_graph();
+			auto irg = firm::get_current_ir_graph();
 			method_generator generator{sem_info, firm_types};
 			method.accept(generator);
 			// main has no return value - so we don't need method_generator.current_node()
 			// no return statement at the end => implicit return
-			if (get_cur_block()) {
-				auto store = get_store();
-				auto ret = new_Return(store, 0, NULL);
-				add_immBlock_pred(get_irg_end_block(irg), ret);
-				mature_immBlock(get_r_cur_block(irg));
+			if (firm::get_cur_block()) {
+				auto store = firm::get_store();
+				auto ret = firm::new_Return(store, 0, NULL);
+				firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
+				firm::mature_immBlock(firm::get_r_cur_block(irg));
 			}
 		}
 

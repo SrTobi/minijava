@@ -1,4 +1,4 @@
-#include "libfirm/firm.h"
+#pragma once
 
 namespace minijava
 {

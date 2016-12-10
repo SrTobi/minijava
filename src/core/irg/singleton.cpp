@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "libfirm/firm.h"
+#include "firm.hpp"
 
 #include "irg/type_builder.hpp"
 #include "irg/method_builder.hpp"
@@ -22,10 +22,10 @@ namespace minijava
 					"libfirm was already initialized and is not re-entrant"
 			};
 		}
-		ir_init();
-		set_optimize(0);
-		const auto mode_p = new_reference_mode("P64", irma_twos_complement, 64, 64);
-		set_modeP(mode_p);
+		firm::ir_init();
+		firm::set_optimize(0);
+		const auto mode_p = firm::new_reference_mode("P64", firm::irma_twos_complement, 64, 64);
+		firm::set_modeP(mode_p);
 	}
 
 	firm_global_state::firm_global_state(firm_global_state&& other)
@@ -36,7 +36,7 @@ namespace minijava
 	firm_global_state::~firm_global_state()
 	{
 		if (_firm_owner) {
-			ir_finish();
+			firm::ir_finish();
 		}
 	}
 
