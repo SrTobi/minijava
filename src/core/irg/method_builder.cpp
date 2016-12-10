@@ -509,8 +509,30 @@ namespace minijava
 
 				void visit(const ast::while_statement& node) override
 				{
-					// FIXME
-					(void) node;
+					auto condition_block = firm::new_immBlock();
+					auto while_block = _then_block = firm::new_immBlock();
+					auto exit_block = _else_block = firm::new_immBlock();
+					// infinite loops need this..
+					firm::keep_alive(condition_block);
+
+					// condition
+					firm::add_immBlock_pred(condition_block, firm::new_Jmp());
+					firm::set_cur_block(condition_block);
+					auto cond_node = get_compare_node(node.condition());
+					add_immBlock_pred(_then_block, new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_true));
+					add_immBlock_pred(_else_block, new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_false));
+
+					// block
+					firm::mature_immBlock(while_block);
+					firm::set_cur_block(while_block);
+					node.body().accept(*this);
+					if (firm::get_cur_block()) {
+						firm::add_immBlock_pred(condition_block, firm::new_Jmp());
+					}
+
+					firm::mature_immBlock(condition_block);
+					firm::set_cur_block(exit_block);
+					firm::mature_immBlock(exit_block);
 				}
 
 				void visit(const ast::return_statement& node) override
