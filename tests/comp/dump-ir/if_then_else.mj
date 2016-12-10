@@ -1,6 +1,7 @@
 class a {
 
 	public static void main(String[]ar) {
+	    a a = new a();
 		a.print(0);
 		a.print(1);
 		a.print(2);
