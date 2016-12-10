@@ -502,23 +502,23 @@ namespace minijava
 				{
 					auto irg = firm::get_current_ir_graph();
 					auto method_entity = _firm_types.methodmap.at(node);
-					//auto cur_block = get_r_cur_block(irg);
-					//set_r_cur_block(irg, get_irg_start_block(irg));
+					auto method_type = firm::get_entity_type(method_entity);
 					auto locals = _sem_info.locals_annotations().at(node);
 					auto args = firm::get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
 					auto current_id = int{0};
 					for (const auto& local : locals) {
 						if (current_id < num_params) {
+							auto param_type = firm::get_method_param_type(method_type, static_cast<size_t>(current_id));
+							auto param_mode = firm::get_type_mode(param_type);
 							firm::set_value(current_id, firm::new_Proj(
 									args,
-									firm::get_type_mode(firm::get_entity_type(method_entity)),
+									param_mode,
 									static_cast<unsigned int>(current_id - 1)
 							));
 						}
 						_var_ids.insert(std::make_pair(local, current_id++));
 					}
-					//set_r_cur_block(irg, cur_block);
 					node.body().accept(*this);
 				}
 
@@ -526,8 +526,7 @@ namespace minijava
 				{
 					auto irg = firm::get_current_ir_graph();
 					auto method_entity = _firm_types.methodmap.at(node);
-					//auto cur_block = get_r_cur_block(irg);
-					//set_r_cur_block(irg, get_irg_start_block(irg));
+					auto method_type = firm::get_entity_type(method_entity);
 					auto locals = _sem_info.locals_annotations().at(node);
 					auto args = firm::get_irg_args(irg);
 					auto num_params = static_cast<int>(node.parameters().size());
@@ -535,15 +534,16 @@ namespace minijava
 					firm::set_value(0, firm::new_Proj(args, _primitives.pointer_mode, 0));
 					for (const auto& local : locals) {
 						if (current_id <= num_params) {
+							auto param_type = firm::get_method_param_type(method_type, static_cast<size_t>(current_id));
+							auto param_mode = firm::get_type_mode(param_type);
 							firm::set_value(current_id, firm::new_Proj(
 									args,
-									firm::get_type_mode(firm::get_entity_type(method_entity)),
+									param_mode,
 									static_cast<unsigned int>(current_id)
 							));
 						}
 						_var_ids.insert(std::make_pair(local, current_id++));
 					}
-					//set_r_cur_block(irg, cur_block);
 					node.body().accept(*this);
 				}
 
