@@ -447,23 +447,64 @@ namespace minijava
 					}
 				}
 
+				firm::ir_node* get_compare_node(const ast::expression& condition)
+				{
+					auto cmp_node = get_expression_node(condition);
+					if (firm::get_irn_mode(cmp_node) == _primitives.boolean_mode) {
+						cmp_node = firm::new_Cmp(
+								cmp_node,
+								firm::new_Const_long(_primitives.boolean_mode, 1),
+								firm::ir_relation_equal
+						);
+					}
+					return firm::new_Cond(cmp_node);
+				}
+
 				void visit(const ast::if_statement& node) override
 				{
-					//auto then_node = new_immBlock();
-					//auto exit_node = new_immBlock();
-					//auto else_node = node.else_statement() ? new_immBlock() : exit_node;
-					//
-					//auto cond_node = get_expression_node(node.condition());
-					//add_immBlock_pred(then_node, new_Proj(cond_node, get_modeX(), pn_Cond_true));
-					//add_immBlock_pred(else_node, new_Proj(cond_node, get_modeX(), pn_Cond_false));
-					//
-					//mature_immBlock(then_node);
-					//set_cur_block(then_node);
-					//visit_statement(node.then_statement());
-					//if (get_cur_block()) {
-					//    add_immBlock_pred(exit_node, new_Jmp());
-					//}
-					(void) node;
+					_then_block = firm::new_immBlock();
+					_else_block = firm::new_immBlock();
+					auto exit_node = firm::new_immBlock();
+					size_t returns = 0;
+
+					auto cond_node = get_compare_node(node.condition());
+					add_immBlock_pred(_then_block, new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_true));
+					add_immBlock_pred(_else_block, new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_false));
+
+
+					// then block
+					mature_immBlock(_then_block);
+					set_cur_block(_then_block);
+					node.then_statement().accept(*this);
+					if (firm::get_cur_block()) {
+						// no return statement
+					    firm::add_immBlock_pred(exit_node, firm::new_Jmp());
+					} else {
+						returns++;
+					}
+
+					// else block
+					if (node.else_statement()) {
+						firm::mature_immBlock(_else_block);
+						firm::set_cur_block(_else_block);
+						node.else_statement()->accept(*this);
+
+						if (firm::get_cur_block()) {
+							// no return statement
+							firm::add_immBlock_pred(exit_node, firm::new_Jmp());
+						} else {
+							returns++;
+						}
+					} else {
+						firm::mature_immBlock(_else_block);
+						firm::add_immBlock_pred(exit_node, firm::new_r_Jmp(_else_block));
+					}
+
+					// missing return statements => mature block
+					if (returns < 2) {
+						firm::mature_immBlock(exit_node);
+						firm::set_cur_block(exit_node);
+					}
 				}
 
 				void visit(const ast::while_statement& node) override
@@ -569,6 +610,10 @@ namespace minijava
 				const ir_types& _firm_types;
 				const primitive_types _primitives;
 				var_id_map_type _var_ids{};
+
+				// temp blocks for conditionals / short circuit
+				firm::ir_node* _then_block;
+				firm::ir_node* _else_block;
 
 			};
 		}
