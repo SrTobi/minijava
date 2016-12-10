@@ -20,7 +20,6 @@ BOOST_AUTO_TEST_CASE(attempting_to_create_another_firm_state_throws)
 	minijava::global_firm_state state1st = minijava::initialize_firm();
 	BOOST_REQUIRE_THROW(minijava::initialize_firm(), std::logic_error);
 	minijava::global_firm_state state3rd{std::move(state1st)};
-	BOOST_REQUIRE_THROW(minijava::global_firm_state state4th{std::move(state1st)}, std::logic_error);
 	BOOST_REQUIRE_THROW(minijava::initialize_firm(), std::logic_error);
 	minijava::global_firm_state state5th{std::move(state3rd)};
 }
