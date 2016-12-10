@@ -433,7 +433,7 @@ namespace minijava
 
 				void visit(const ast::expression_statement& node) override
 				{
-					_current_node = get_expression_node(node.inner_expression());
+					visit_expression_node(node.inner_expression());
 				}
 
 				void visit(const ast::block& node) override
@@ -547,12 +547,15 @@ namespace minijava
 					node.body().accept(*this);
 				}
 
-				firm::ir_node* current_node() const noexcept {
-					return _current_node;
-				}
-
 			private:
 
+				void visit_expression_node(const ast::expression& node)
+				{
+					expression_generator generator{
+							_sem_info, _var_ids, _firm_types
+					};
+					node.accept(generator);
+				}
 				firm::ir_node* get_expression_node(const ast::expression& node)
 				{
 					expression_generator generator{
@@ -566,7 +569,6 @@ namespace minijava
 				const ir_types& _firm_types;
 				const primitive_types _primitives;
 				var_id_map_type _var_ids{};
-				firm::ir_node* _current_node{};
 
 			};
 		}
