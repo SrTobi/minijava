@@ -588,9 +588,9 @@ namespace minijava
 			}
 		}
 
-		void create_buildin_method(const semantic_info& /*sem_info*/,
-		                        const ir_types& /*firm_types*/,
-		                        const ast::instance_method& method)
+		void create_builtin_method(const semantic_info & /*sem_info*/,
+		                           const ir_types & /*firm_types*/,
+		                           const ast::instance_method &method)
 		{
 			auto irg = firm::get_current_ir_graph();
 
@@ -608,6 +608,8 @@ namespace minijava
 						rt.println_type
 				);
 				firm::set_store(new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
+			} else {
+				assert(false);
 			}
 			auto store = firm::get_store();
 			auto ret = firm::new_Return(store, 0, NULL);
@@ -658,7 +660,7 @@ namespace minijava
 			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
 			set_current_ir_graph(irg);
 			if (is_builtin) {
-				create_buildin_method(info, types, method);
+				create_builtin_method(info, types, method);
 			} else {
 				create_firm_method(info, types, method);
 			}
