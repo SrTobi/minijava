@@ -44,6 +44,9 @@ namespace minijava
 	 * @param semantic_info
 	 *     semantic information about the given program
 	 *
+	 * @param name
+	 *     name of the IR graph to create
+	 *
 	 * @return
 	 *     intermediate representation
 	 *

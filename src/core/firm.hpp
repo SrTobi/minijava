@@ -7,8 +7,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-namespace firm {
+#ifndef MINIJAVA_PARSED_BY_DOXYGEN
+
+namespace firm
+{
+
 	extern "C" {
 		#include "libfirm/firm.h"
 	}
+
 }
+
+#endif

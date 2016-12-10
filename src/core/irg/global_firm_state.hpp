@@ -13,7 +13,9 @@
 
 namespace minijava
 {
-	namespace detail {
+
+	namespace detail
+	{
 		struct global_firm_state_instance;
 	}
 
@@ -27,6 +29,9 @@ namespace minijava
 	/**
 	 * @brief
 	 *     Initializes libfirm.
+	 *
+	 * @returns
+	 *     global firm state
 	 *
 	 * @throws std::logic_error
 	 *     if libfirm was already initialized
