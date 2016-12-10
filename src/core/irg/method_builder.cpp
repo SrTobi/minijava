@@ -588,6 +588,33 @@ namespace minijava
 			}
 		}
 
+		void create_buildin_method(const semantic_info& /*sem_info*/,
+		                        const ir_types& /*firm_types*/,
+		                        const ast::instance_method& method)
+		{
+			auto irg = firm::get_current_ir_graph();
+
+			auto prim = primitive_types::get_instance();
+			auto rt = runtime_library::get_instance();
+			if (method.name() == "println") {
+				firm::ir_node *arguments[1] = {
+						firm::new_Proj(firm::get_irg_args(irg), prim.int_mode, 1)
+				};
+				auto call_node = firm::new_Call(
+						firm::get_store(),
+						firm::new_Address(rt.println),
+						1,
+						arguments,
+						rt.println_type
+				);
+				firm::set_store(new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
+			}
+			auto store = firm::get_store();
+			auto ret = firm::new_Return(store, 0, NULL);
+			firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
+			firm::mature_immBlock(firm::get_r_cur_block(irg));
+		}
+
 		void create_firm_method(const semantic_info& sem_info,
 		                        const ir_types& firm_types,
 		                        const ast::main_method& method)
@@ -624,12 +651,17 @@ namespace minijava
 		void _create_method_entity(
 				const semantic_info& info,
 				const ir_types& types,
-				const ast::instance_method& method)
+				const ast::instance_method& method,
+				const bool is_builtin)
 		{
 			const auto method_entity = types.methodmap.at(method);
 			const auto irg = new_ir_graph(method_entity, _get_local_var_count(info, method));
 			set_current_ir_graph(irg);
-			create_firm_method(info, types, method);
+			if (is_builtin) {
+				create_buildin_method(info, types, method);
+			} else {
+				create_firm_method(info, types, method);
+			}
 			mature_immBlock(get_irg_end_block(irg));
 			irg_finalize_cons(irg);
 			assert(irg_verify(irg));
@@ -658,7 +690,7 @@ namespace minijava
 				if (types.classmap.find(clazz) != types.classmap.end()) {
 					// type was actually used in program
 					for (const auto& method : clazz->instance_methods()) {
-						_create_method_entity(info, types, *method);
+						_create_method_entity(info, types, *method, kv.second.is_builtin());
 					}
 				}
 				for (const auto& method : clazz->main_methods()) {
