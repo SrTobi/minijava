@@ -38,6 +38,19 @@ namespace minijava
 				return firm::new_Mux(node, bot, top);
 			}
 
+			firm::ir_node* unmaterialize(firm::ir_node* value)
+			{
+				auto mode_B = primitive_types::get_instance().boolean_mode;
+				if (firm::get_irn_mode(value) == mode_B) {
+					return firm::new_Cmp(
+							value,
+							firm::new_Const_long(mode_B, 1),
+							firm::ir_relation_equal
+					);
+				}
+				return value;
+			}
+
 			using var_id_map_type = std::unordered_map<const ast::var_decl*, int>;
 
 			class expression_generator final : public ast::visitor
@@ -226,18 +239,6 @@ namespace minijava
 
 			private:
 
-				firm::ir_node* unmaterialize(firm::ir_node* value)
-				{
-					if (firm::get_irn_mode(value) == _primitives.boolean_mode) {
-						return firm::new_Cmp(
-								value,
-						        firm::new_Const_long(_primitives.boolean_mode, 1),
-						        firm::ir_relation_equal
-						);
-					}
-					return value;
-				}
-
 				void visit_field(const ast::variable_access& node,
 								 const ast::var_decl& declaration,
 								 firm::ir_entity* field)
@@ -378,8 +379,38 @@ namespace minijava
 
 				void visit_logical_expression(const ast::binary_expression& expression)
 				{
-					// TODO
-					(void)expression;
+					auto right_block = firm::new_immBlock();
+					auto exit_block = firm::new_immBlock();
+
+					auto lhs = unmaterialize(get_expression_node(expression.lhs()));
+					auto cond_node = firm::new_Cond(lhs);
+
+					if (expression.type() == ast::binary_operation_type::logical_and) {
+						// goto exit_block, when lhs is false
+						firm::add_immBlock_pred(right_block, firm::new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_true));
+						firm::add_immBlock_pred(exit_block, firm::new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_false));
+					} else if (expression.type() == ast::binary_operation_type::logical_or) {
+						// goto _block, when lhs is false
+						firm::add_immBlock_pred(right_block, firm::new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_false));
+						firm::add_immBlock_pred(exit_block, firm::new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_true));
+					} else {
+						MINIJAVA_NOT_REACHED();
+					}
+
+					firm::mature_immBlock(right_block);
+					firm::set_cur_block(right_block);
+					auto left_mem = firm::get_store();
+					auto rhs = unmaterialize(get_expression_node(expression.rhs()));
+					auto right_mem = firm::get_store();
+
+					firm::add_immBlock_pred(exit_block, firm::new_Jmp());
+					firm::mature_immBlock(exit_block);
+					firm::set_cur_block(exit_block);
+
+					firm::ir_node* phi_mem_nodes[2] = {left_mem, right_mem};
+					firm::ir_node* phi_nodes[2] = {lhs, rhs};
+					firm::set_store(firm::new_Phi(2, phi_mem_nodes, firm::mode_M));
+					_current_node = materialize(firm::new_Phi(2, phi_nodes,  firm::mode_b));
 				}
 
 				bool is_logical_expression(const ast::binary_expression& expression)
