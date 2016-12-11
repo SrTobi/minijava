@@ -1,0 +1,24 @@
+// pragma output 5
+
+/* TODO: Fix the compiler and don't make this an expected failure any more. */
+
+// ifdef FIRM
+//   pragma failure
+// endif
+
+class A {
+
+	public void test(A a) {
+		A b = new A();
+		b.test(a);
+	}
+
+	public static void main(String[] args) {
+		A a = new A();
+		A b = new A();
+		a.test(b);
+		(new A()).test(new A());
+		System.out.println(5);
+	}
+
+}

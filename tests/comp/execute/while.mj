@@ -1,0 +1,17 @@
+// pragma output 10 9 8 7 6 5 4 3 2 1
+
+class a {
+
+	public static void main(String[]ar) {
+        a a = new a();
+		a.print(0);
+		a.print(10);
+	}
+
+	public void print(int x) {
+		while (x > 0) {
+		    System.out.println(x);
+		    x = x - 1;
+		}
+	}
+}

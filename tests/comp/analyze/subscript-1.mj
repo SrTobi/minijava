@@ -1,0 +1,14 @@
+class A {
+
+	public void test(int foo) {
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+		foo[0];
+// endif
+	}
+
+	public static void main(String[] args) { }
+
+}
