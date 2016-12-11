@@ -18,13 +18,25 @@
 
 namespace minijava
 {
+
 	/**
 	 * @brief
-	 *    References an IR of a program
+	 *     Initializes `libfirm`.
+	 *
+	 * @returns
+	 *     global Firm state
+	 *
+	 * @throws std::logic_error
+	 *     if `libfirm` was already initialized before
 	 *
 	 */
-	using firm_ir = std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>;
+	std::unique_ptr<global_firm_state> initialize_firm();
 
+	/** @brief References a IRG of a program and its global `libfirm` state. */
+	using firm_ir_entry = std::pair<firm::ir_prog*, global_firm_state*>;
+
+	/** @brief RAII handle for a program IRG. */
+	using firm_ir = std::unique_ptr<firm_ir_entry, void(*)(firm_ir_entry*)>;
 
 	/**
 	 * @brief
@@ -50,8 +62,14 @@ namespace minijava
 	 * @return
 	 *     intermediate representation
 	 *
+	 * @throws std::logic_error
+	 *     if `libfirm`'s global state is not what is expected
+	 *
 	 */
-	firm_ir create_firm_ir(global_firm_state& state, const ast::program& ast, const semantic_info& semantic_info, const std::string& name);
+	firm_ir create_firm_ir(global_firm_state& state,
+	                       const ast::program& ast,
+	                       const semantic_info& semantic_info,
+	                       const std::string& name);
 
 	/**
 	 * @brief
@@ -64,19 +82,25 @@ namespace minijava
 	 * @param directory
 	 *     target directory (default: current working directory)
 	 *
+	 * @throws std::logic_error
+	 *     if `libfirm`'s global state is not what is expected
+	 *
 	 */
 	void dump_firm_ir(firm_ir& ir, const std::string& directory = "");
 
 	/**
 	 * @brief
 	 *     Converts the given intermediate representation into x64 assembly
-	 *     using libfirm's backend and writes it to the given file.
+	 *     using Firm's own backend and writes it to the given file.
 	 *
 	 * @param ir
 	 *     intermediate representation
 	 *
 	 * @param output_file
 	 *     assembly file
+	 *
+	 * @throws std::logic_error
+	 *     if `libfirm`'s global state is not what is expected
 	 *
 	 */
 	void emit_x64_assembly_firm(firm_ir& ir, file_output& output_file);

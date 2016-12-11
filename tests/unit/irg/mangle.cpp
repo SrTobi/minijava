@@ -13,7 +13,7 @@
 #include "testaux/ast_test_factory.hpp"
 
 
-static auto global_state_is_evil = minijava::initialize_firm();
+static const minijava::global_firm_state evil{};
 
 
 // TOTHINK: What good is class name mangling?

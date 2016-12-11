@@ -249,7 +249,7 @@ namespace minijava
 				return;
 			}
 			auto firm = initialize_firm();
-			auto ir = create_firm_ir(firm, *ast, sem_info, "TODO: Name");
+			auto ir = create_firm_ir(*firm, *ast, sem_info, in.filename());
 			if (stage == compilation_stage::dump_ir) {
 				dump_firm_ir(ir); // TODO: allow setting directory
 				return;

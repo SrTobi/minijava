@@ -13,5 +13,5 @@ BOOST_AUTO_TEST_CASE(create_firm_ir_for_hello_world)
 	const auto ast = tf.make_hello_world();
 	const auto seminfo = minijava::check_program(*ast, tf.pool, tf.factory);
 	auto firm = minijava::initialize_firm();
-	minijava::create_firm_ir(firm, *ast, seminfo, "test");
+	minijava::create_firm_ir(*firm, *ast, seminfo, "test");
 }
