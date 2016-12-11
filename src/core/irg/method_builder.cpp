@@ -291,13 +291,14 @@ namespace minijava
 						assert(!lhs);
 						assert(!mode);
 						set_value(id, rhs);
+						_current_node = rhs;
 					} else {
 						// member
 						assert(lhs);
 						assert(mode);
 						auto store = firm::new_Store(firm::get_store(), lhs, rhs, firm::get_type_for_mode(mode), firm::cons_none);
 						set_store(new_Proj(store, firm::get_modeM(), firm::pn_Store_M));
-						_current_node = store;
+						_current_node = rhs;
 					}
 				}
 
