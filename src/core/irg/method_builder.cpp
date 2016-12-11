@@ -30,15 +30,11 @@ namespace minijava
 
 				expression_generator(const semantic_info& sem_info,
 				                     const var_id_map_type& var_ids,
-				                     const ir_types& firm_types,
-				                     firm::ir_node* then_block = nullptr,
-				                     firm::ir_node* else_block = nullptr)
+				                     const ir_types& firm_types)
 						: _sem_info{sem_info}, _var_ids{var_ids},
 						  _firm_types{firm_types},
 				          _primitives{primitive_types::get_instance()},
-				          _runtime_library{runtime_library::get_instance()},
-				          _then_block{then_block},
-				          _else_block{else_block}
+				          _runtime_library{runtime_library::get_instance()}
 				{}
 
 				using ast::visitor::visit;
@@ -213,14 +209,8 @@ namespace minijava
 					return _current_node;
 				}
 
-				firm::ir_node* then_block() const noexcept
-				{
-					return _then_block;
-				}
 
-				firm::ir_node* else_block() const noexcept
 				{
-					return _else_block;
 				}
 
 			private:
@@ -415,9 +405,6 @@ namespace minijava
 				bool _do_store{false};
 				firm::ir_mode* _current_mode{};
 				firm::ir_node* _current_node{};
-
-				firm::ir_node* _then_block{};
-				firm::ir_node* _else_block{};
 			};
 
 			class method_generator final : public ast::visitor
@@ -467,12 +454,9 @@ namespace minijava
 					}
 				}
 
-				firm::ir_node* get_compare_node(
-						const ast::expression& condition,
-						firm::ir_node** then_node,
-						firm::ir_node** else_node)
+				firm::ir_node* get_compare_node(const ast::expression& condition)
 				{
-					auto cmp_node = get_expression_node(condition, then_node, else_node);
+					auto cmp_node = get_expression_node(condition);
 					if (firm::get_irn_mode(cmp_node) == _primitives.boolean_mode) {
 						cmp_node = firm::new_Cmp(
 								cmp_node,
@@ -541,7 +525,7 @@ namespace minijava
 					// condition
 					firm::add_immBlock_pred(condition_block, firm::new_Jmp());
 					firm::set_cur_block(condition_block);
-					auto cond_node = get_compare_node(node.condition(), &while_block, &exit_block);
+					auto cond_node = get_compare_node(node.condition());
 					add_immBlock_pred(while_block, new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_true));
 					add_immBlock_pred(exit_block, new_Proj(cond_node, firm::get_modeX(), firm::pn_Cond_false));
 
@@ -635,21 +619,7 @@ namespace minijava
 
 			private:
 
-				void visit_expression_node(
-						const ast::expression& node,
-						firm::ir_node** then_block,
-						firm::ir_node** else_block)
-				{
-					expression_generator generator{
-							_sem_info, _var_ids, _firm_types, *then_block, *else_block
-					};
-					*then_block = generator.then_block();
-					*else_block = generator.else_block();
-					node.accept(generator);
-				}
-
-				void visit_expression_node(
-						const ast::expression& node)
+				void visit_expression_node(const ast::expression& node)
 				{
 					expression_generator generator{
 							_sem_info, _var_ids, _firm_types
@@ -657,22 +627,7 @@ namespace minijava
 					node.accept(generator);
 				}
 
-				firm::ir_node* get_expression_node(
-						const ast::expression& node,
-						firm::ir_node** then_block,
-						firm::ir_node** else_block)
-				{
-					expression_generator generator{
-							_sem_info, _var_ids, _firm_types, *then_block, *else_block
-					};
-					node.accept(generator);
-					*then_block = generator.then_block();
-					*else_block = generator.else_block();
-					return generator.current_node();
-				}
-
-				firm::ir_node* get_expression_node(
-						const ast::expression& node)
+				firm::ir_node* get_expression_node(const ast::expression& node)
 				{
 					expression_generator generator{
 							_sem_info, _var_ids, _firm_types
