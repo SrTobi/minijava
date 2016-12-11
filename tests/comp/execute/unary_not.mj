@@ -1,4 +1,4 @@
-// should print 3 times 1
+// pragma output 1 1 1
 class a {
 
     public static void main(String[] args) {
