@@ -50,8 +50,7 @@ namespace minijava
 					} else if (node.type() == ast::binary_operation_type::assign) {
 						visit_assignment(node);
 					} else {
-						// should no be reached
-						assert(false);
+						MINIJAVA_NOT_REACHED();
 					}
 				}
 
@@ -396,9 +395,7 @@ namespace minijava
 						// doc:  less or greater ('not equal' for integer numbers)
 						return firm::ir_relation_less_greater;
 					default:
-						// should not be reached
-						assert(false);
-						return firm::ir_relation_false;
+						MINIJAVA_NOT_REACHED();
 					}
 				}
 
@@ -564,7 +561,7 @@ namespace minijava
 						//firm::ir_node* results[1] = {expression_node};
 						ret = firm::new_Return(firm::get_store(), 1, &expression_node);
 					} else {
-						ret = firm::new_Return(firm::get_store(), 0, NULL);
+						ret = firm::new_Return(firm::get_store(), 0, nullptr);
 					}
 
 					auto irg = firm::get_current_ir_graph();
@@ -572,7 +569,7 @@ namespace minijava
 					firm::mature_immBlock(firm::get_r_cur_block(irg));
 
 					// mark as unreachable
-					firm::set_cur_block(NULL);
+					firm::set_cur_block(nullptr);
 				}
 
 				void visit(const ast::empty_statement& node) override
@@ -668,7 +665,7 @@ namespace minijava
 			// no explicit return statement found?
 			if (firm::get_cur_block()) {
 				auto store = firm::get_store();
-				auto ret = firm::new_Return(store, 0, NULL);
+				auto ret = firm::new_Return(store, 0, nullptr);
 				firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
 				firm::mature_immBlock(firm::get_r_cur_block(irg));
 			}
@@ -695,10 +692,10 @@ namespace minijava
 				);
 				firm::set_store(new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
 			} else {
-				assert(false);
+				MINIJAVA_NOT_REACHED();
 			}
 			auto store = firm::get_store();
-			auto ret = firm::new_Return(store, 0, NULL);
+			auto ret = firm::new_Return(store, 0, nullptr);
 			firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
 			firm::mature_immBlock(firm::get_r_cur_block(irg));
 		}
@@ -714,7 +711,7 @@ namespace minijava
 			// no return statement at the end => implicit return
 			if (firm::get_cur_block()) {
 				auto store = firm::get_store();
-				auto ret = firm::new_Return(store, 0, NULL);
+				auto ret = firm::new_Return(store, 0, nullptr);
 				firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
 				firm::mature_immBlock(firm::get_r_cur_block(irg));
 			}
