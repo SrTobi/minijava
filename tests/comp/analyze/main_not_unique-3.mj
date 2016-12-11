@@ -1,0 +1,14 @@
+class Good {
+	public static void main(String[] args) { }
+}
+
+class NotSoGood {
+
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+	public static void main(String[] args) { }
+// endif
+
+}

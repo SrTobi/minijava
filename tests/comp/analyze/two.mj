@@ -1,0 +1,11 @@
+// ifdef CHECK
+//   pragma skip
+// endif
+
+class Two {
+
+	public int[][] two(int dim) {
+		return new int[dim][];
+	}
+
+}

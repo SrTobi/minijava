@@ -1,7 +1,0 @@
-class Evil {
-	public int test;
-
-	public static void main(String[] args) {
-		/*** test = 5; ***/
-    }
-}

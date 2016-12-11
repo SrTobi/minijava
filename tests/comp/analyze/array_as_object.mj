@@ -1,0 +1,16 @@
+class A {
+
+	public int lol;
+
+	public void test(A[][] foo) {
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+		foo[0].lol;
+// endif
+	}
+
+	public static void main(String[] args) { }
+
+}

@@ -1,6 +1,0 @@
-class Bad {
-    public int badMethod(int x/***, int x***/) {
-        return 5;
-    }
-    public static void main(String[] args) {}
-}

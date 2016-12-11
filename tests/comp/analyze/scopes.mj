@@ -1,0 +1,19 @@
+class A {
+
+	public int field;
+
+	public void test(A a) {
+		A b;
+		{
+			A c;
+			{
+				a; b; c;
+			}
+			a; b; c;
+		}
+		a; b;
+	}
+
+	public static void main(String[] args) { }
+
+}

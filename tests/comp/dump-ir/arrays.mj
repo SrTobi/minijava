@@ -1,9 +1,0 @@
-class A {
-
-	public static void main(String[] args) {
-		A[][] a = new A[2 + 2][];
-		/*A[2] = new A[1];*/
-		return;
-	}
-
-}

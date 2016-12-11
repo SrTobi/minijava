@@ -1,0 +1,10 @@
+class A {
+
+	public void foo(A a) {
+		System.out;
+		System.out.println(5);
+	}
+
+	public static void main(String[] args) { }
+
+}

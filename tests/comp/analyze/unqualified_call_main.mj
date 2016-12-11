@@ -1,0 +1,14 @@
+class Evil {
+
+	public void test() { }
+
+	public static void main(String[] args) {
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+		test();
+// endif
+    }
+
+}
