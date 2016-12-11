@@ -15,6 +15,7 @@
 #include "semantic/semantic_error.hpp"
 #include "semantic/symbol_table.hpp"
 #include "symbol/symbol.hpp"
+#include "util/raii.hpp"
 
 using namespace std::string_literals;
 
@@ -411,44 +412,13 @@ namespace minijava
 					return std::unique_ptr<symbol_table, decltype(del)>{&_symbols, del};
 				}
 
-				// Sets the `_cur_method` pointer to `&cur` and returns an RAII
-				// guard object of unspecified type that will set it to
-				// `nullptr` again in its destructor.
-				auto _method_scope(const ast::method& cur)
-				{
-					auto del = [](const ast::method** p){ *p = nullptr; };
-					_cur_method = &cur;
-					return std::unique_ptr<const ast::method*, decltype(del)>{&_cur_method, del};
-				}
-
-				// Sets `_this_type` to `typ` and returns an RAII guard object
-				// of unspecified type that will set it to `void` again in its
-				// destructor.
-				auto _this_scope(const basic_type_info typ)
-				{
-					auto del = [](basic_type_info* p){ *p = basic_type_info::make_void_type(); };
-					_this_type = typ;
-					return std::unique_ptr<basic_type_info, decltype(del)>{&_this_type, del};
-				}
-
-				// Sets `_poisoned_symbol` to `toxine` and returns an RAII
-				// guard object of unspecified type that will set it to the
-				// empty symbol again in its destructor.
-				auto _poison_scope(const symbol toxine)
-				{
-					assert(_poisoned_symbol == symbol{});
-					auto del = [](symbol* p){ *p = symbol{}; };
-					_poisoned_symbol = toxine;
-					return std::unique_ptr<symbol, decltype(del)>{&_poisoned_symbol, del};
-				}
-
 			protected:
 
 
 				void visit_method(const ast::method& node) override
 				{
 					const auto stck_guard = _stack_scope(false);
-					const auto mthd_guard = _method_scope(node);
+					const auto mthd_guard = set_temporarily(_cur_method, &node);
 					auto locals = locals_attributes::mapped_type{};
 					for (const auto& param : node.parameters()) {
 						_symbols.add_def(param.get());
@@ -757,14 +727,14 @@ namespace minijava
 
 				void visit(const ast::main_method& node) override
 				{
-					const auto guard = _poison_scope(node.argname());
+					const auto guard = set_temporarily(_poisoned_symbol, node.argname());
 					visit_method(node);
 				}
 
 				void visit(const ast::class_declaration& node) override
 				{
 					const auto stck_guard = _stack_scope(true);
-					const auto this_guard = _this_scope(_classes.at(node.name()));
+					const auto this_guard = set_temporarily(_this_type, _classes.at(node.name()));
 					for (const auto& main : node.main_methods()) {
 						visit(*main);
 					}

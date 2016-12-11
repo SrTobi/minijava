@@ -64,6 +64,7 @@ set(COMPONENTS
 	symbol/symbol_pool
 	system/system
 	util/meta
+	util/raii
 )
 
 add_subdirectory("src")

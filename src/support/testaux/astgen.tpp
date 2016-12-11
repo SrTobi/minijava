@@ -15,6 +15,7 @@
 
 #include "exceptions.hpp"
 #include "symbol/symbol.hpp"
+#include "util/raii.hpp"
 
 #include "testaux/random_tokens.hpp"
 
@@ -24,13 +25,6 @@ namespace testaux
 
 	namespace detail
 	{
-
-		template <typename T, typename DelT>
-		std::unique_ptr<T, DelT> make_unique_ptr(T* ptr, DelT del)
-		{
-			return {ptr, del};
-		}
-
 
 		class yet_another_type_type
 		{
@@ -57,6 +51,19 @@ namespace testaux
 				: _type_name{classname}
 				, _rank{rank}
 			{
+			}
+
+			yet_another_type_type(const yet_another_type_type& other) noexcept
+				: _type_name{other._type_name}
+				, _rank{other._rank}
+			{
+			}
+
+			yet_another_type_type& operator=(const yet_another_type_type& other) noexcept
+			{
+				_type_name = other._type_name;
+				_rank = other._rank;
+				return *this;
 			}
 
 			const minijava::ast::type_name& name() const noexcept
@@ -223,13 +230,6 @@ namespace testaux
 				return p;
 			}
 
-			auto _enter_nested()
-			{
-				const auto del = [](ast_generator* p){ p->_nest_depth -= 1; };
-				_nest_depth += 1;
-				return std::unique_ptr<ast_generator, decltype(del)>{this, del};
-			}
-
 			bool _nest_deeper_eh()
 			{
 				if (_nest_depth >= _nest_limit) {
@@ -255,15 +255,6 @@ namespace testaux
 			{
 				const auto del = [](auto* p){ p->_scopes.pop_back(); };
 				_scopes.emplace_back();
-				return std::unique_ptr<ast_generator, decltype(del)>{this, del};
-			}
-
-			auto _set_return_type(const yet_another_type_type& type)
-			{
-				const auto del = [](ast_generator* p){
-					p->_current_return_type = yet_another_type_type{};
-				};
-				_current_return_type = type;
 				return std::unique_ptr<ast_generator, decltype(del)>{this, del};
 			}
 
@@ -329,7 +320,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::class_declaration>
 			_make_class(const minijava::symbol name, const bool with_main)
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto fields = std::vector<std::unique_ptr<minijava::ast::var_decl>>{};
 				auto instance_methods = std::vector<std::unique_ptr<minijava::ast::instance_method>>{};
 				auto main_methods = std::vector<std::unique_ptr<minijava::ast::main_method>>{};
@@ -339,13 +330,7 @@ namespace testaux
 					fields.push_back(std::move(field));
 				}
 				{
-					const auto class_guard = make_unique_ptr(
-						this,
-						[](ast_generator* p){
-							p->_current_class = minijava::symbol{};
-						}
-					);
-					_current_class = name;
+					const auto class_guard = minijava::set_temporarily(_current_class, name);
 					const auto scope_guard = _do_enter_scope();
 					std::for_each(
 						std::begin(fields), std::end(fields),
@@ -375,8 +360,10 @@ namespace testaux
 			std::unique_ptr<minijava::ast::instance_method>
 			_make_instance_method(method_signature signature)
 			{
-				const auto g = _enter_nested();
-				const auto ret_guard = _set_return_type(signature.return_type);
+				const auto g = minijava::increment_temporarily(_nest_depth);
+				const auto ret_guard = minijava::set_temporarily(
+					_current_return_type, signature.return_type
+				);
 				const auto scope_guard = _do_enter_scope();
 				auto params = std::vector<std::unique_ptr<minijava::ast::var_decl>>{};
 				for (const auto& yatt : signature.parameter_types) {
@@ -410,7 +397,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::main_method>
 			_make_main_method()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				const auto scope_guard = _do_enter_scope();
 				return _factory.make<minijava::ast::main_method>()(
 					_pool.normalize("main"),
@@ -450,7 +437,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::block_statement>
 			_make_block_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto dist = std::bernoulli_distribution{0.2};
 				if (dist(_engine)) {
 					return _make_local_variable_statement();
@@ -462,7 +449,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::local_variable_statement>
 			_make_local_variable_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto type = _make_type(false);
 				auto decl = std::unique_ptr<minijava::ast::var_decl>{};
 				for (auto p = 0.5; true; p /= 2.0) {
@@ -486,7 +473,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::statement>
 			_make_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto dist = std::uniform_int_distribution<>{1, 6};
 				switch (dist(_engine)) {
 				case 1:
@@ -508,7 +495,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::block>
 			_make_block()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				const auto scope_guard = _do_enter_scope();
 				auto blkstmts = std::vector<std::unique_ptr<minijava::ast::block_statement>>{};
 				std::generate_n(
@@ -522,7 +509,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::expression_statement>
 			_make_expression_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto inner = std::unique_ptr<minijava::ast::expression>{};
 				do {
 					const auto yatt = _random_type(true);
@@ -535,7 +522,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::if_statement>
 			_make_if_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto cond = _make_boolean_expression();
 				auto then = _make_statement();
 				auto othr = std::unique_ptr<minijava::ast::statement>{};
@@ -549,7 +536,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::while_statement>
 			_make_while_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto cond = _make_boolean_expression();
 				auto body = _make_statement();
 				return _factory.make<minijava::ast::while_statement>()
@@ -559,7 +546,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::return_statement>
 			_make_return_statement()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto value = std::unique_ptr<minijava::ast::expression>{};
 				if (!is_void(_current_return_type)) {
 					value = _make_expression(_current_return_type);
@@ -573,7 +560,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::expression>
 			_make_expression_impl(const yet_another_type_type& type, const int quality)
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				if (is_void(type)) {
 					return _maybe_make_method_invocation(type);
 				}
@@ -672,7 +659,7 @@ namespace testaux
 			_make_assignment(const yet_another_type_type& type)
 			{
 				assert(!is_void(type));
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				return _factory.make<minijava::ast::binary_expression>()(
 					minijava::ast::binary_operation_type::assign,
 					_make_destination(type),
@@ -687,7 +674,7 @@ namespace testaux
 				assert(is_primitive(type));
 				assert(!is_array(type));
 				assert(!is_void(type) && is_primitive(type) && !is_array(type));
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				if (is_integer(type)) {
 					const auto operation = _random_choice_from(
 						minijava::ast::binary_operation_type::plus,
@@ -746,7 +733,7 @@ namespace testaux
 			_make_unary_expression(const yet_another_type_type& type)
 			{
 				assert(!is_void(type) && is_primitive(type) && !is_array(type));
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				if (is_integer(type)) {
 					return _factory.make<minijava::ast::unary_expression>()(
 						minijava::ast::unary_operation_type::minus,
@@ -765,7 +752,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::method_invocation>
 			_maybe_make_method_invocation(const yet_another_type_type& type)
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto candidates = std::vector<std::pair<minijava::symbol, const method_signature*>>{};
 				for (const auto& kv : _class_methods) {
 					for (const auto& sig : kv.second) {
@@ -804,7 +791,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::expression>
 			_maybe_make_variable_access(const yet_another_type_type& type)
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto node = std::unique_ptr<minijava::ast::expression>{};
 				auto vars = std::unordered_map<minijava::symbol, const minijava::ast::var_decl*>{};
 				for (auto it = std::rbegin(_scopes); it != std::rend(_scopes); ++it) {
@@ -840,7 +827,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::this_ref>
 			_maybe_make_this_ref(const yet_another_type_type& type)
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto node = std::unique_ptr<minijava::ast::this_ref>{};
 				if (type.rank() == 0) {
 					const auto p = boost::get<minijava::symbol>(&type.name());
@@ -855,7 +842,7 @@ namespace testaux
 			_make_constant(const yet_another_type_type& type)
 			{
 				assert(!is_void(type));
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				if (type.rank() > 0) {
 					return _factory.make<minijava::ast::null_constant>()();
 				} else if (is_integer(type)) {
@@ -870,7 +857,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::integer_constant>
 			_make_integer_constant()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto dist = std::uniform_int_distribution<std::int64_t>{
 					std::numeric_limits<std::int32_t>::min(),
 					std::numeric_limits<std::int32_t>::max()
@@ -885,7 +872,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::boolean_constant>
 			_make_boolean_constant()
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				auto dist = std::bernoulli_distribution{};
 				return _factory.make<minijava::ast::boolean_constant>()
 					(dist(_engine));
@@ -900,7 +887,7 @@ namespace testaux
 			std::unique_ptr<minijava::ast::type>
 			_make_type(const yet_another_type_type& yatt)
 			{
-				const auto g = _enter_nested();
+				const auto g = minijava::increment_temporarily(_nest_depth);
 				if (const auto p = boost::get<minijava::symbol>(&yatt.name())) {
 					return _factory.make<minijava::ast::type>()(*p, yatt.rank());
 				} else {

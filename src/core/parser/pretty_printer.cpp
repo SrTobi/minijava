@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "exceptions.hpp"
+#include "util/raii.hpp"
 
 using namespace std::string_literals;
 
@@ -14,73 +15,6 @@ namespace minijava
 {
 	namespace /* anonymous */
 	{
-
-		// TODO: This is copy-pasta from `/tests/testaux/syntaxgen.tpp`.  Maybe
-		// we should put it into a utility header.  Maybe I should suibmit a
-		// proposal to add this to the standard library.  Maybe I should sit by
-		// a lake.
-
-		template <typename T>
-		class restore_finally final
-		{
-		public:
-
-			restore_finally() noexcept = default;
-
-			restore_finally(T& dest, const T update) noexcept
-				: _destp{&dest}, _prev{dest}
-			{
-				dest = update;
-			}
-
-			~restore_finally() noexcept
-			{
-				if (_destp != nullptr) {
-					*_destp = _prev;
-				}
-			}
-
-			restore_finally(const restore_finally&) = delete;
-
-			restore_finally(restore_finally&& other) noexcept : restore_finally{}
-			{
-				swap(*this, other);
-			}
-
-			restore_finally& operator=(const restore_finally&) = delete;
-
-			restore_finally& operator=(restore_finally&& other) noexcept
-			{
-				restore_finally temp{};
-				swap(*this, temp);
-				swap(*this, other);
-				return *this;
-			}
-
-			friend void swap(restore_finally& lhs, restore_finally& rhs) noexcept
-			{
-				std::swap(lhs._destp, rhs._destp);
-				std::swap(lhs._prev, rhs._prev);
-			}
-
-		private:
-
-			T * _destp{};
-			T _prev{};
-
-		};  // class restore_finally
-
-		template <typename T>
-		restore_finally<T> make_guard(T& dest, const T update) noexcept
-		{
-			return restore_finally<T>{dest, update};
-		}
-
-		template <typename T>
-		restore_finally<T> make_guard_incr(T& dest) noexcept
-		{
-			return restore_finally<T>{dest, dest + T{1}};
-		}
 
 		template <typename FuncT>
 		void repeat(const std::size_t start, const std::size_t stop, FuncT&& func)
@@ -148,7 +82,7 @@ namespace minijava
 	void pretty_printer::visit(const ast::binary_expression& node)
 	{
 		const auto parens = _print_expression_parens;
-		const auto pep_guard = make_guard(_print_expression_parens, true);
+		const auto pep_guard = set_temporarily(_print_expression_parens, true);
 		if (parens) {
 			_output << "(";
 		}
@@ -206,7 +140,7 @@ namespace minijava
 	void pretty_printer::visit(const ast::unary_expression& node)
 	{
 		const auto parens = _print_expression_parens;
-		const auto pep_guard = make_guard(_print_expression_parens, true);
+		const auto pep_guard = set_temporarily(_print_expression_parens, true);
 		if (parens) {
 			_output << "(";
 		}
@@ -245,7 +179,7 @@ namespace minijava
 		_output << "new " << _type_name(node.array_type().name());
 		_output << "[";
 		{
-			const auto pep_guard = make_guard(_print_expression_parens, false);
+			const auto pep_guard = set_temporarily(_print_expression_parens, false);
 			node.extent().accept(*this);
 		}
 		_output << "]";
@@ -258,14 +192,14 @@ namespace minijava
 	void pretty_printer::visit(const ast::array_access& node)
 	{
 		const auto parens = _print_expression_parens;
-		const auto pep_guard = make_guard(_print_expression_parens, true);
+		const auto pep_guard = set_temporarily(_print_expression_parens, true);
 		if (parens) {
 			_output << "(";
 		}
 		node.target().accept(*this);
 		_output << "[";
 		{
-			const auto inner_pep_guard = make_guard(_print_expression_parens, false);
+			const auto inner_pep_guard = set_temporarily(_print_expression_parens, false);
 			node.index().accept(*this);
 		}
 		_output << "]";
@@ -277,7 +211,7 @@ namespace minijava
 	void pretty_printer::visit(const ast::variable_access& node)
 	{
 		const auto parens = (_print_expression_parens && node.target());
-		const auto pep_guard = make_guard(_print_expression_parens, true);
+		const auto pep_guard = set_temporarily(_print_expression_parens, true);
 		if (parens) {
 			_output << "(";
 		}
@@ -294,7 +228,7 @@ namespace minijava
 	void pretty_printer::visit(const ast::method_invocation& node)
 	{
 		const auto parens = _print_expression_parens;
-		const auto pep_guard = make_guard(_print_expression_parens, true);
+		const auto pep_guard = set_temporarily(_print_expression_parens, true);
 		if (parens) {
 			_output << "(";
 		}
@@ -304,7 +238,7 @@ namespace minijava
 		}
 		_output << node.name() << "(";
 		{
-			const auto inner_pep_guard = make_guard(_print_expression_parens, false);
+			const auto inner_pep_guard = set_temporarily(_print_expression_parens, false);
 			for_each_glue_c(
 				node.arguments(),
 				[this](auto&& arg){ arg->accept(*this); },
@@ -352,7 +286,7 @@ namespace minijava
 		if (node.initial_value() != nullptr) {
 			_output << " = ";
 			{
-				const auto pep_guard = make_guard(_print_expression_parens, false);
+				const auto pep_guard = set_temporarily(_print_expression_parens, false);
 				node.initial_value()->accept(*this);
 			}
 		}
@@ -364,7 +298,7 @@ namespace minijava
 		_start_block_statement();
 		_print("");
 		{
-			const auto pep_guard = make_guard(_print_expression_parens, false);
+			const auto pep_guard = set_temporarily(_print_expression_parens, false);
 			node.inner_expression().accept(*this);
 		}
 		_output << ";\n";
@@ -412,7 +346,7 @@ namespace minijava
 		}
 		_output << '\n';
 		{
-			const auto il_guard = make_guard_incr(_indentation_level);
+			const auto il_guard = increment_temporarily(_indentation_level);
 			std::for_each(std::begin(node.body()), std::end(node.body()),
 			              [this](auto&& bs){ bs->accept(*this); });
 		}
@@ -438,7 +372,7 @@ namespace minijava
 		}
 		_start_if = _start_else = _start_loop = false;
 		{
-			const auto pep_guard = make_guard(_print_expression_parens, false);
+			const auto pep_guard = set_temporarily(_print_expression_parens, false);
 			node.condition().accept(*this);
 		}
 		_output << ")";
@@ -484,7 +418,7 @@ namespace minijava
 
 		_print("while (");
 		{
-			const auto pep_guard = make_guard(_print_expression_parens, false);
+			const auto pep_guard = set_temporarily(_print_expression_parens, false);
 			node.condition().accept(*this);
 		}
 		_output << ")";
@@ -507,7 +441,7 @@ namespace minijava
 		} else {
 			_print("return ");
 			{
-				const auto pep_guard = make_guard(_print_expression_parens, false);
+				const auto pep_guard = set_temporarily(_print_expression_parens, false);
 				node.value()->accept(*this);
 			}
 			_output << ';';
@@ -537,7 +471,7 @@ namespace minijava
 		node.return_type().accept(*this);
 		_output << " " << node.name() << "(";
 		{
-			const auto ip_guard = make_guard(_in_parameters, true);
+			const auto ip_guard = set_temporarily(_in_parameters, true);
 			for_each_glue_c(
 				node.parameters(),
 				[this](auto&& prm){ prm->accept(*this); },
@@ -567,7 +501,7 @@ namespace minijava
 		const auto vst = [this](auto&& p){ p.second->accept(*this); };
 		_println("class "s + node.name().c_str() + " {");
 		{
-			const auto on_the_level_guard = make_guard_incr(_indentation_level);
+			const auto on_the_level_guard = increment_temporarily(_indentation_level);
 			auto members = std::vector<member_pair>{};
 			members.reserve(std::max(
 					node.instance_methods().size() + node.main_methods().size(),
@@ -584,7 +518,7 @@ namespace minijava
 			std::sort(std::begin(members), std::end(members), cmp);
 			std::for_each(std::begin(members), std::end(members), vst);
 			members.clear();  // recycle the storage
-			const auto in_the_fields_guard = make_guard(_in_fields, true);
+			const auto in_the_fields_guard = set_temporarily(_in_fields, true);
 			std::transform(
 					std::begin(node.fields()), std::end(node.fields()),
 					std::back_inserter(members), ext

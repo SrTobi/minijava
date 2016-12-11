@@ -9,6 +9,7 @@
 
 #include "exceptions.hpp"
 #include "lexer/token_type.hpp"
+#include "util/raii.hpp"
 
 #include "testaux/random_tokens.hpp"
 
@@ -18,56 +19,6 @@ namespace testaux
 
 	namespace detail
 	{
-
-		template <typename T>
-		class restore_finally final
-		{
-		public:
-
-			restore_finally() = default;
-
-			restore_finally(T& dest, const T update) : _destp{&dest}, _prev{dest}
-			{
-				dest = update;
-			}
-
-			~restore_finally()
-			{
-				if (_destp != nullptr) {
-					*_destp = _prev;
-				}
-			}
-
-			restore_finally(const restore_finally&) = delete;
-
-			restore_finally(restore_finally&& other) noexcept : restore_finally{}
-			{
-				swap(*this, other);
-			}
-
-			restore_finally& operator=(const restore_finally&) = delete;
-
-			restore_finally& operator=(restore_finally&& other) noexcept
-			{
-				restore_finally temp{};
-				swap(*this, temp);
-				swap(*this, other);
-				return *this;
-			}
-
-			friend void swap(restore_finally& lhs, restore_finally& rhs) noexcept
-			{
-				std::swap(lhs._destp, rhs._destp);
-				std::swap(lhs._prev, rhs._prev);
-			}
-
-		private:
-
-			T * _destp{};
-			T _prev{};
-
-		};  // class restore_finally
-
 
 		template <typename RndEngT, typename PoolT>
 		class syntaxgen final
@@ -95,6 +46,79 @@ namespace testaux
 			}
 
 		private:
+
+			RndEngT& _engine;
+
+			PoolT& _pool;
+
+			std::vector<minijava::token> _tokens{};
+
+			std::size_t _nest_depth{};
+
+			std::size_t _nest_limit{};
+
+			bool _nest_deeper_eh()
+			{
+				if (_nest_depth >= _nest_limit) {
+					return false;
+				}
+				const auto p = 1.0 - std::sqrt(
+					static_cast<double>(_nest_depth) / static_cast<double>(_nest_limit)
+				);
+				auto dist = std::bernoulli_distribution{p};
+				return dist(_engine);
+			}
+
+			auto _enter_nested()
+			{
+				return minijava::increment_temporarily(_nest_depth, _nest_depth + 1);
+			}
+
+			void _set_positions()
+			{
+				for (auto i = std::size_t{}; i < _tokens.size(); ++i) {
+					_tokens[i].set_position({1 + i, 0});
+				}
+			}
+
+			template<typename... T>
+			void _push_one(T... args)
+			{
+				static_assert(sizeof...(args) > 0, "");
+				const tt tts[] = { args... };
+				auto dist = std::uniform_int_distribution<std::size_t>{0, sizeof...(args) - 1};
+				_push(tts[dist(_engine)]);
+			}
+
+			void _push_id()
+			{
+				const auto id = get_random_identifier(_engine);
+				_push_id(id);
+			}
+
+			void _push_Id()
+			{
+				const auto id = get_random_identifier(_engine);
+				_push_id(id);
+			}
+
+			void _push_id(const std::string& id)
+			{
+				const auto canon = _pool.normalize(id);
+				_tokens.push_back(minijava::token::create_identifier(canon));
+			}
+
+			void _push_lit()
+			{
+				const auto lit = get_random_integer_literal(_engine);
+				const auto canon = _pool.normalize(lit);
+				_tokens.push_back(minijava::token::create_integer_literal(canon));
+			}
+
+			void _push(const tt type)
+			{
+				_tokens.push_back(minijava::token::create(type));
+			}
 
 			void _gen_program()
 			{
@@ -549,79 +573,6 @@ namespace testaux
 					_push(tt::right_bracket);
 				}
 			}
-
-			template<typename... T>
-			void _push_one(T... args)
-			{
-				static_assert(sizeof...(args) > 0, "");
-				const tt tts[] = { args... };
-				auto dist = std::uniform_int_distribution<std::size_t>{0, sizeof...(args) - 1};
-				_push(tts[dist(_engine)]);
-			}
-
-			void _push_id()
-			{
-				const auto id = get_random_identifier(_engine);
-				_push_id(id);
-			}
-
-			void _push_Id()
-			{
-				const auto id = get_random_identifier(_engine);
-				_push_id(id);
-			}
-
-			void _push_id(const std::string& id)
-			{
-				const auto canon = _pool.normalize(id);
-				_tokens.push_back(minijava::token::create_identifier(canon));
-			}
-
-			void _push_lit()
-			{
-				const auto lit = get_random_integer_literal(_engine);
-				const auto canon = _pool.normalize(lit);
-				_tokens.push_back(minijava::token::create_integer_literal(canon));
-			}
-
-			void _push(const tt type)
-			{
-				_tokens.push_back(minijava::token::create(type));
-			}
-
-			bool _nest_deeper_eh()
-			{
-				if (_nest_depth >= _nest_limit) {
-					return false;
-				}
-				const auto p = 1.0 - std::sqrt(
-					static_cast<double>(_nest_depth) / static_cast<double>(_nest_limit)
-				);
-				auto dist = std::bernoulli_distribution{p};
-				return dist(_engine);
-			}
-
-			restore_finally<std::size_t> _enter_nested()
-			{
-				return {_nest_depth, _nest_depth + 1};
-			}
-
-			void _set_positions()
-			{
-				for (auto i = std::size_t{}; i < _tokens.size(); ++i) {
-					_tokens[i].set_position({1 + i, 0});
-				}
-			}
-
-			RndEngT& _engine;
-
-			PoolT& _pool;
-
-			std::vector<minijava::token> _tokens{};
-
-			std::size_t _nest_depth{};
-
-			std::size_t _nest_limit{};
 
 		};  // struct syntaxgen
 
