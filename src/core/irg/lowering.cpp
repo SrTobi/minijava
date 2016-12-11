@@ -48,9 +48,20 @@ namespace minijava
 		}
 	}
 
+	void layout_graphs()
+	{
+		auto num_graphs = firm::get_irp_n_irgs();
+		for (size_t i = 0; i < num_graphs; i++) {
+			auto irg = firm::get_irp_irg(i);
+			firm::lower_mux(irg, nullptr);
+		}
+	}
+
 	void irg::lower() {
 		// layout all types for later use
 		layout_types();
+		// layout graphs
+		layout_graphs();
 		// replaces Offsets, TypeConsts by real constants(if possible)
 		// replaces Members and Sel nodes by address computation
 		firm::lower_highlevel();
