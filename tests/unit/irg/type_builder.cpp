@@ -6,7 +6,7 @@
 #include "irg/global_firm_state.hpp"
 
 
-static const auto global_state_is_evil = minijava::initialize_firm();
+static const minijava::global_firm_state evil{};
 
 
 BOOST_AUTO_TEST_CASE(default_constructed_primitive_types_are_null)
