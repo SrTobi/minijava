@@ -209,11 +209,19 @@ namespace minijava
 					return _current_node;
 				}
 
-
-				{
-				}
-
 			private:
+
+				firm::ir_node* unmaterialize(firm::ir_node* value)
+				{
+					if (firm::get_irn_mode(value) == _primitives.boolean_mode) {
+						return firm::new_Cmp(
+								value,
+						        firm::new_Const_long(_primitives.boolean_mode, 1),
+						        firm::ir_relation_equal
+						);
+					}
+					return value;
+				}
 
 				void visit_field(const ast::variable_access& node,
 								 const ast::var_decl& declaration,
@@ -256,7 +264,11 @@ namespace minijava
 						_current_node = new_Minus(rhs);
 						break;
 					case ast::unary_operation_type::logical_not:
-						// @TODO: handle boolean expression
+						_current_node = firm::new_Mux(
+								unmaterialize(_current_node),
+						        firm::new_Const(firm::get_tarval_b_true()),
+						        firm::new_Const(firm::get_tarval_b_false())
+						);
 						break;
 					}
 				}
