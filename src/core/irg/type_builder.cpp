@@ -64,11 +64,12 @@ namespace minijava
 						return pos->second;
 					}
 					if (type.rank == 0) {
-						// FIXME: special case for null
 						if (type.info.is_boolean()) {
 							return _primitives.boolean_type;
 						} else if (type.info.is_int()) {
 							return _primitives.int_type;
+						} else if (type.info.is_null()) {
+							return _primitives.pointer_type;
 						} else if (type.info.is_reference()) {
 							return _create_class_type(*type.info.declaration()).second;
 						} else {
@@ -231,7 +232,7 @@ namespace minijava
 				pt.pointer_mode = firm::mode_P;
 				pt.int_type = firm::new_type_primitive(pt.int_mode);
 				pt.boolean_type = firm::new_type_primitive(pt.boolean_mode);
-				pt.pointer_type = firm::new_type_primitive(firm::mode_P);
+				pt.pointer_type = firm::new_type_primitive(pt.pointer_mode);
 				return pt;
 			}();
 			return instance;
@@ -248,11 +249,19 @@ namespace minijava
 				firm::set_method_param_type(rt.alloc_type, 0, primitives.int_type);
 				firm::set_method_param_type(rt.alloc_type, 1, primitives.int_type);
 				firm::set_method_res_type(rt.alloc_type, 0, primitives.pointer_type);
-				rt.alloc = firm::new_entity(firm::get_glob_type(), firm::new_id_from_str("mj_runtime_allocate"), rt.alloc_type);
+				rt.alloc = firm::new_entity(
+					firm::get_glob_type(),
+					firm::new_id_from_str("mj_runtime_allocate"),
+					rt.alloc_type
+				);
 				// create println method
 				rt.println_type = firm::new_type_method(1, 0, 0, cc_cdecl_set, firm::mtp_no_property);
 				firm::set_method_param_type(rt.println_type, 0, primitives.int_type);
-				rt.println = firm::new_entity(firm::get_glob_type(), firm::new_id_from_str("mj_runtime_println"), rt.println_type);
+				rt.println = firm::new_entity(
+					firm::get_glob_type(),
+					firm::new_id_from_str("mj_runtime_println"),
+					rt.println_type
+				);
 				return rt;
 			}();
 			return instance;

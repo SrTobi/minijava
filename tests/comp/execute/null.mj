@@ -1,0 +1,48 @@
+// pragma output 1 0 0 1 1 1 1 0 0 1 1 1 1 0 0
+
+class X { }
+
+class Test {
+
+	public X x;
+
+	public void testThis() {
+		printBoolean(this == this);
+		printBoolean(this == null);
+		printBoolean(null == this);
+	}
+
+	public void testField(X ref) {
+		this.x = ref;
+		printBoolean(this.x == this.x);
+		printBoolean(this.x == null);
+		printBoolean(null == this.x);
+	}
+
+	public void testLocal(X ref) {
+		printBoolean(ref == ref);
+		printBoolean(ref == null);
+		printBoolean(null == ref);
+	}
+
+	public static void main(String[] args) {
+		null;
+		Test t = new Test();
+		if (null == null) {
+			t.testThis();
+			t.testField(null);
+			t.testField(new X());
+			t.testLocal(null);
+			t.testLocal(new X());
+		}
+	}
+
+	public void printBoolean(boolean value) {
+		if (value) {
+			System.out.println(1);
+		} else {
+			System.out.println(0);
+		}
+	}
+
+}

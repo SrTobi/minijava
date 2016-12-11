@@ -61,6 +61,16 @@
 	)
 
 
+/**
+ * @brief
+ *     Use this macro to annotate places in the code that require handling by
+ *     code that is not yet written.
+ *
+ */
+#define MINIJAVA_NOT_IMPLEMENTED()                                            \
+	MINIJAVA_THROW_ICE(::minijava::not_implemented_error)
+
+
 namespace minijava
 {
 
