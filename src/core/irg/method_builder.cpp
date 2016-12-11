@@ -362,7 +362,8 @@ namespace minijava
 					       type == ast::binary_operation_type::greater_than ||
 					       type == ast::binary_operation_type::less_equal ||
 					       type == ast::binary_operation_type::less_than ||
-					       type == ast::binary_operation_type::equal;
+					       type == ast::binary_operation_type::equal ||
+					       type == ast::binary_operation_type::not_equal;
 				}
 
 				bool is_arithmetic_expression(const ast::binary_expression& expression)
@@ -388,6 +389,9 @@ namespace minijava
 						return firm::ir_relation_less_equal;
 					case ast::binary_operation_type::equal:
 						return firm::ir_relation_equal;
+					case ast::binary_operation_type::not_equal:
+						// doc:  less or greater ('not equal' for integer numbers)
+						return firm::ir_relation_less_greater;
 					default:
 						// should not be reached
 						assert(false);
