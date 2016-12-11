@@ -1,6 +1,6 @@
 #include "irg/irg.hpp"
 
-#define BOOST_TEST_MODULE  firm_firm
+#define BOOST_TEST_MODULE  irg_irg
 #include <boost/test/unit_test.hpp>
 
 #include "semantic/semantic.hpp"
