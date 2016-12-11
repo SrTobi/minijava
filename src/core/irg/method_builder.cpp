@@ -19,24 +19,24 @@ namespace minijava
 	namespace irg
 	{
 
-		// Converts a data node into a data node that is not of mode
-		// 'b'.  In effect, this converts logical values to integers
-		// and leaves other nodes alone.
-		firm::ir_node* materialize(firm::ir_node*const node)
-		{
-			const auto mode = firm::get_irn_mode(node);
-			assert(firm::mode_is_data(mode));
-			if (mode != firm::mode_b) {
-				return node;
-			}
-			const auto boolean_mode = primitive_types::get_instance().boolean_mode;
-			const auto bot = firm::new_Const_long(boolean_mode, 0);
-			const auto top = firm::new_Const_long(boolean_mode, 1);
-			return firm::new_Mux(node, bot, top);
-		}
-
 		namespace /* anonymous */
 		{
+
+			// Converts a data node into a data node that is not of mode
+			// 'b'.  In effect, this converts logical values to integers
+			// and leaves other nodes alone.
+			firm::ir_node* materialize(firm::ir_node*const node)
+			{
+				const auto mode = firm::get_irn_mode(node);
+				assert(firm::mode_is_data(mode));
+				if (mode != firm::mode_b) {
+					return node;
+				}
+				const auto boolean_mode = primitive_types::get_instance().boolean_mode;
+				const auto bot = firm::new_Const_long(boolean_mode, 0);
+				const auto top = firm::new_Const_long(boolean_mode, 1);
+				return firm::new_Mux(node, bot, top);
+			}
 
 			using var_id_map_type = std::unordered_map<const ast::var_decl*, int>;
 
