@@ -1,7 +1,0 @@
-class Good {
-	public static void main(String[] args) { }
-}
-
-class Evil {
-	/*** public static void main(String[] args) { } ***/
-}

@@ -4,74 +4,46 @@ set(comptest_exec "${CMAKE_CURRENT_SOURCE_DIR}/driver.py")
 add_dependencies(check minijava)
 
 add_test(
-	NAME comptest-lexical-valid
+	NAME comptest-lextest
 	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/lex/valid/*.mj"
+	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/analyze/*.mj"
+			"--define=LEXER"
 	        --
 			"${minijava_exec}" --lextest
 )
 
 add_test(
-	NAME comptest-lexical-invalid
+	NAME comptest-parsetest
 	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/lex/invalid/*.mj"
-	        "--status=1"
-	        "--message=error: "
-	        --
-			"${minijava_exec}" --lextest
-)
-
-add_test(
-	NAME comptest-syntax-valid
-	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/syn/valid/*.mj"
+	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/analyze/*.mj"
+			"--define=LEXER,PARSER"
 	        --
 			"${minijava_exec}" --parsetest
 )
 
 add_test(
-	NAME comptest-syntax-invalid
+	NAME comptest-check-valid
 	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/syn/invalid/*.mj"
-	        "--status=1"
-	        "--message=error: "
-	        --
-			"${minijava_exec}" --parsetest
-)
-
-add_test(
-	NAME comptest-semantic-valid
-	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/sem/valid/*.mj"
+	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/analyze/*.mj"
+			"--define=LEXER,PARSER,CHECK"
 	        --
 			"${minijava_exec}" --check
 )
 
 add_test(
-	NAME comptest-semantic-invalid
+	NAME comptest-check-invalid
 	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/sem/invalid/*.mj"
-	        "--status=1"
-	        "--message=error: "
-			"--escape"
+	        "--input=${CMAKE_CURRENT_SOURCE_DIR}/analyze/*.mj"
+			"--define=LEXER,PARSER,CHECK,BUG"
 	        --
-			"${minijava_exec}" --check
-)
-
-add_test(
-	NAME comptest-semantic-invalid-noescape
-	COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-			"--input=${CMAKE_CURRENT_SOURCE_DIR}/sem/invalid_noescape/*.mj"
-			"--status=1"
-			"--message=error: "
-			--
 			"${minijava_exec}" --check
 )
 
 add_test(
 		NAME comptest-dump-ir
 		COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-		"--input=${CMAKE_CURRENT_SOURCE_DIR}/dump-ir/*.mj"
+		"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
+		"--define=LEXER,PARSER,CHECK,FIRM"
 		--
 		"${minijava_exec}" --dump-ir
 )
@@ -79,7 +51,8 @@ add_test(
 add_test(
 		NAME comptest-compile-firm
 		COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-		"--input=${CMAKE_CURRENT_SOURCE_DIR}/asm/*.mj"
+		"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
+		"--define=LEXER,PARSER,CHECK,FIRM"
 		--execute
 		--
 		"${minijava_exec}" --compile-firm

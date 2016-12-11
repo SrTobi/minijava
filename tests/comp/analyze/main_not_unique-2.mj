@@ -1,0 +1,9 @@
+class Test {
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+	public static void wrong(String[] args) { }
+// endif
+	public static void main(String[] args) { }
+}

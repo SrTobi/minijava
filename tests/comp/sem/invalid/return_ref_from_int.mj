@@ -1,9 +1,0 @@
-class A {
-
-
-	/*** public int test(A foo) { return foo; } ***/
-
-	public static void main(String[] args) {
-	}
-
-}

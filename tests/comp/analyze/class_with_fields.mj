@@ -1,0 +1,8 @@
+class A {
+
+	public int mem1;
+	public boolean mem2;
+
+	public static void main(String[] args) { }
+
+}

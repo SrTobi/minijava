@@ -1,0 +1,16 @@
+class A {
+
+	public int lol;
+
+	public void test() {
+		lol = 3;
+		lol = 4 + 3;
+		lol = 9 - 3;
+		lol = 3 * 3;
+		lol = 3 % 3;
+		lol = 3 / 0;
+	}
+
+	public static void main(String[] args) { }
+
+}

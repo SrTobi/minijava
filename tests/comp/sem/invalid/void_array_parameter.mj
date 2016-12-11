@@ -1,9 +1,0 @@
-class A {
-
-	public void foo(/*** void[] x ***/){
-	}
-
-	public static void main(String[] args) {
-	}
-
-}

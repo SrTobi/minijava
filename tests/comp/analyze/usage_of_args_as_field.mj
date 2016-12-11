@@ -1,0 +1,10 @@
+class A {
+
+	public static void main(String[] args) {
+		A a = new A();
+		a.args = 10;
+	}
+
+  public int args;
+
+}

@@ -1,0 +1,10 @@
+class B { }
+
+class A {
+	public A foo;
+	public B bar;
+}
+
+class C {
+	public static void main(String[] args) { }
+}
