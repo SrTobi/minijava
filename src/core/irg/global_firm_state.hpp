@@ -86,7 +86,7 @@ namespace minijava
 		 *     *N/A*
 		 *
 		 */
-		global_firm_state& operator=(const global_firm_state&) = delete;
+		global_firm_state& operator=(const global_firm_state& other) = delete;
 
 		/**
 		 * @brief
