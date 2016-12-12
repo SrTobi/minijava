@@ -77,10 +77,10 @@ namespace minijava
 						}
 					}
 					// TODO: Use iteration instead of recursion
-					auto recursive_type = new_type_array(
+					auto recursive_type = firm::new_type_pointer(firm::new_type_array(
 						_get_var_type(sem::type{type.info, type.rank - 1}),
 						0
-					);
+					));
 					_typemap.insert({type, recursive_type});
 					return recursive_type;
 				}

@@ -154,8 +154,9 @@ namespace minijava
 					auto target = get_expression_node(node.target());
 					_do_store = store;
 
-					auto array_type = _sem_info.type_annotations().at(node.target());
-					auto array_ir_type =  _firm_types.typemap.at(array_type);
+					auto array_ref_type = _sem_info.type_annotations().at(node.target());
+					auto array_ref_ir_type =  _firm_types.typemap.at(array_ref_type);
+					auto array_ir_type = firm::get_pointer_points_to_type(array_ref_ir_type);
 
 					auto sel = firm::new_Sel(target, index, array_ir_type);
 
