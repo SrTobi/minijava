@@ -214,7 +214,7 @@ namespace minijava
 		static void skip_line_comment(lexer_type& lex)
 		{
 			auto c = current(lex);
-			while (c >= 0 && c != '\n') {
+			while (c >= 0 && c != '\n' && c != '\r') {
 				c = next(lex);
 			}
 		}
