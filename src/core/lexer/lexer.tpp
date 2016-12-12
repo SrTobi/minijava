@@ -44,6 +44,9 @@ namespace minijava
 					next(lex);
 					skip_block_comment(lex);
 					return false;
+				} else if (after == '/') {
+					skip_line_comment(lex);
+					return false;
 				} else if (after == '=') {
 					lex._current_token = token::create(token_type::divides_assign);
 					next(lex);
@@ -204,6 +207,15 @@ namespace minijava
 				if (c < 0) {
 					throw lexical_error{"Input ended before block-comment was closed"};
 				}
+			}
+		}
+
+		// Skips over a line // comment.
+		static void skip_line_comment(lexer_type& lex)
+		{
+			auto c = current(lex);
+			while (c >= 0 && c != '\n') {
+				c = next(lex);
 			}
 		}
 
