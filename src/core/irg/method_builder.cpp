@@ -118,20 +118,7 @@ namespace minijava
 				{
 					auto type = _sem_info.type_annotations().at(node);
 					auto inner_type = sem::type{type.info, type.rank - 1};
-					firm::ir_type* inner_ir_type;
-					if (inner_type.rank > 0) {
-						inner_ir_type = _primitives.pointer_type;
-					} else {
-					if (inner_type.info.is_boolean()) {
-						inner_ir_type = _primitives.boolean_type;
-					} else if (inner_type.info.is_int()) {
-						inner_ir_type = _primitives.int_type;
-					} else {
-						inner_ir_type = _firm_types.classmap.at(
-							*inner_type.info.declaration()
-					);
-					}
-					}
+					auto inner_ir_type =  _firm_types.typemap.at(inner_type);
 					auto inner_type_size = firm::get_type_size(inner_ir_type);
 					if (inner_type_size > INT_MAX) {
 						throw internal_compiler_error{
@@ -158,10 +145,42 @@ namespace minijava
 					_current_node = firm::new_Proj(tuple, firm::get_modeP(), 0);
 				}
 
+
 				void visit(const ast::array_access& node) override
 				{
-					// FIXME
-					(void) node;
+					auto store = _do_store;
+					_do_store = false;
+					auto index = get_expression_node(node.index());
+					auto target = get_expression_node(node.target());
+					_do_store = store;
+
+					auto array_type = _sem_info.type_annotations().at(node.target());
+					auto array_ir_type =  _firm_types.typemap.at(array_type);
+
+					auto sel = firm::new_Sel(target, index, array_ir_type);
+
+					_var_id = -1;
+					auto inner_ir_type = firm::get_array_element_type(array_ir_type);
+					auto mode = firm::get_type_mode(inner_ir_type);
+					if (store) {
+						_current_node  = sel;
+						_current_mode = mode;
+					} else {
+						auto mem = firm::get_store();
+						auto load = firm::new_Load(mem, sel, mode, inner_ir_type, firm::cons_none);
+						auto new_mem = firm::new_Proj(load, firm::mode_M, firm::pn_Load_M);
+						auto value = firm::new_Proj(load, mode, firm::pn_Load_res);
+						firm::set_store(new_mem);
+
+						_current_mode = mode;
+						_current_node = value;
+					}
+					/*auto new_mem   = new_Proj(load, mode_M, pn_Load_M);
+					auto value     = new_Proj(load, mode, pn_Load_res);
+					set_store(new_mem);
+
+					value = get_arith_value(value);
+					symbolic_push(value);*/
 				}
 
 				void visit(const ast::variable_access& node) override
@@ -324,7 +343,7 @@ namespace minijava
 						set_value(id, rhs);
 						_current_node = rhs;
 					} else {
-						// member
+						// member or array access
 						assert(lhs);
 						assert(mode);
 						auto store = firm::new_Store(
