@@ -118,9 +118,20 @@ namespace minijava
 				{
 					auto type = _sem_info.type_annotations().at(node);
 					auto inner_type = sem::type{type.info, type.rank - 1};
-					auto inner_ir_type = _firm_types.classmap.at(
+					firm::ir_type* inner_ir_type;
+					if (inner_type.rank > 0) {
+						inner_ir_type = _primitives.pointer_type;
+					} else {
+					if (inner_type.info.is_boolean()) {
+						inner_ir_type = _primitives.boolean_type;
+					} else if (inner_type.info.is_int()) {
+						inner_ir_type = _primitives.int_type;
+					} else {
+						inner_ir_type = _firm_types.classmap.at(
 							*inner_type.info.declaration()
 					);
+					}
+					}
 					auto inner_type_size = firm::get_type_size(inner_ir_type);
 					if (inner_type_size > INT_MAX) {
 						throw internal_compiler_error{
