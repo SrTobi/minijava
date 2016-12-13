@@ -89,12 +89,101 @@ namespace testaux
 		 *     filename of the temporary file
 		 *
 		 */
-		std::string filename() const
+		const std::string& filename() const noexcept
 		{
 			return _filename;
 		}
 
 	};  // class temporary_file
+
+
+	/**
+	 * @brief
+	 *     A temporary directory that is created in the constructor and deleted
+	 *     recursively in the destructor.
+	 *
+	 * This feature is by no means secure.  Even a moderately sophisticated
+	 * attacker will be able to provoke reace conditions on the generated file
+	 * names.
+	 *
+	 */
+	class temporary_directory final
+	{
+	private:
+
+		/** @brief Absolute file name of the temporary directory. */
+		std::string _filename {};
+
+	public:
+
+		/**
+		 * @brief
+		 *     Creates an empty temporary directory.
+		 *
+		 * @throws std::system_error
+		 *     upon failure to create the directory
+		 *
+		 */
+		temporary_directory();
+
+		/** @brief Deletes the temporary directory recursively. */
+		~temporary_directory();
+
+		/**
+		 * @brief
+		 *     `delete`d copy constructor.
+		 *
+		 * `temporary_directory`s are not copyable and not moveable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 */
+		temporary_directory(const temporary_directory& other) = delete;
+
+		/**
+		 * @brief
+		 *     `delete`d copy-assignment operator.
+		 *
+		 * `temporary_directory`s are not copyable and not moveable.
+		 *
+		 * @param other
+		 *     *N/A*
+		 *
+		 * @returns
+		 *     *N/A*
+		 *
+		 */
+		temporary_directory& operator=(const temporary_directory& other) = delete;
+
+		/**
+		 * @brief
+		 *     `return`s the absolute path of the temporary directory.
+		 *
+		 * @returns
+		 *     filename of the temporary directory
+		 *
+		 */
+		const std::string& filename() const noexcept
+		{
+			return _filename;
+		}
+
+		/**
+		 * @brief
+		 *     `return`s the absolute path of the file `local` relative to the
+		 *     temporary directory.
+		 *
+		 * For example, if the temporary directory is `/tmp/1492/` then
+		 * `filename("file.txt")` will give `/tmp/1492/file.txt`.
+		 *
+		 * @returns
+		 *     filename of the file inside the temporary directory
+		 *
+		 */
+		std::string filename(const std::string& local) const;
+
+	};  // class temporary_directory
 
 
 	/**

@@ -1,7 +1,7 @@
 set(FUZZERS
 	parsetest
 	print-ast
-	sem-check
+	generic
 )
 
 foreach(fuzz ${FUZZERS})
@@ -12,6 +12,13 @@ foreach(fuzz ${FUZZERS})
 		LINK_PRIVATE support
 		LINK_PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARIES}
 	)
-	add_test(fuzztest-${fuzz} ${fuzz})
 	add_dependencies(check ${fuzz})
 endforeach(fuzz)
+
+add_test(fuzztest-parsetest   parsetest)
+add_test(fuzztest-print-ast   print-ast)
+add_test(fuzztest-check       generic -r 50 -a check)
+add_test(fuzztest-firm-create generic -r 50 -a firm-create)
+add_test(fuzztest-firm-dump   generic -r 50 -a firm-dump)
+add_test(fuzztest-firm-asm    generic -r 50 -a firm-asm)
+add_test(fuzztest-firm-link   generic -r 50 -a firm-link)

@@ -37,6 +37,37 @@ namespace testaux
 		}
 	}
 
+	temporary_directory::temporary_directory()
+	{
+		namespace fs = boost::filesystem;
+		const auto path = fs::temp_directory_path() / fs::unique_path();
+		_filename = path.string();
+		if (!fs::create_directory(path)) {
+			const auto ec = std::error_code{EEXIST, std::generic_category()};
+			throw std::system_error{ec};
+		}
+	}
+
+	temporary_directory::~temporary_directory()
+	{
+		namespace fs = boost::filesystem;
+		const auto path = fs::path{_filename};
+		auto ec = boost::system::error_code{};
+		if (!fs::remove_all(path, ec) || ec) {
+			// We cannot throw an exception from a destructor.
+			std::cerr << "Cannot remove temporary directory: " << _filename
+			          << ": " << ec.message() << "\n";
+		}
+	}
+
+	std::string temporary_directory::filename(const std::string& local) const
+	{
+		namespace fs = boost::filesystem;
+		const auto path = fs::path{_filename} / local;
+		return path.string();
+	}
+
+
 	bool file_has_content(const std::string& filename, const std::string& expected)
 	{
 		std::ifstream istr{filename, std::ios_base::binary | std::ios_base::in};
