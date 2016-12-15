@@ -426,7 +426,7 @@ export-macro check-fuzz-12 check-fuzz-48 check-fuzz-90 check-fuzz-119
 
 (cd "${tempdir}/macro/" && gnuplot) <<'EOF'
 set terminal svg enhanced size 800,600
-set output 'parser-fuzz.svg'
+set output 'check-fuzz.svg'
 set xdata time
 set timefmt '%s'
 set xlabel "point in history"

@@ -71,7 +71,7 @@ namespace testaux
 
 			auto _enter_nested()
 			{
-				return minijava::increment_temporarily(_nest_depth, _nest_depth + 1);
+				return minijava::increment_temporarily(_nest_depth);
 			}
 
 			void _set_positions()
