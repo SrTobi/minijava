@@ -410,7 +410,7 @@ set ylabel "execution time / ms MiB^{-1}"
 set xrange [* : *]
 set yrange [0 : *]
 set format y '%.0f'
-set title "Syntactic Analysis and Printing of AST (--lextest)"
+set title "Syntactic Analysis and Pretty-Printing of AST (--print-ast)"
 plot                                                                          \
 	'pretty-fuzz-20.dat'                                                      \
 		using 1:($2 / 19.31e-3):($3 / 19.31e-3) with yerror                   \
