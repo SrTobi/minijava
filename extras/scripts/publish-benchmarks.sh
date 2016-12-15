@@ -224,7 +224,7 @@ set output 'lexer.svg'
 set xdata time
 set timefmt '%s'
 set xlabel "point in history"
-set ylabel "average time per token / us"
+set ylabel "average time per token / µs"
 set xrange [* : *]
 set yrange [0 : *]
 set format y '%.2f'
