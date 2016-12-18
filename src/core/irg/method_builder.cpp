@@ -165,15 +165,12 @@ namespace minijava
 					auto mode = firm::get_type_mode(inner_ir_type);
 					if (store) {
 						_current_node  = sel;
-						_current_mode = mode;
 					} else {
 						auto mem = firm::get_store();
 						auto load = firm::new_Load(mem, sel, mode, inner_ir_type, firm::cons_none);
 						auto new_mem = firm::new_Proj(load, firm::mode_M, firm::pn_Load_M);
 						auto value = firm::new_Proj(load, mode, firm::pn_Load_res);
 						firm::set_store(new_mem);
-
-						_current_mode = mode;
 						_current_node = value;
 					}
 					/*auto new_mem   = new_Proj(load, mode_M, pn_Load_M);
@@ -294,7 +291,6 @@ namespace minijava
 					auto field_type = firm::get_entity_type(field);
 					auto field_mode = firm::get_type_mode(field_type);
 					if (_do_store) {
-						_current_mode = field_mode;
 						_current_node = member;
 					} else {
 						auto mem = firm::get_store();
@@ -331,27 +327,24 @@ namespace minijava
 					_do_store = true;
 					auto lhs = get_expression_node(expression.lhs());
 					auto id = _var_id;
-					auto mode = _current_mode;
 					// reset visitor state
-					_current_mode = nullptr;
 					_do_store = old_do_store;
 					_var_id = -1;
 
 					if (id != -1) {
 						// local
 						assert(!lhs);
-						assert(!mode);
 						set_value(id, rhs);
 						_current_node = rhs;
 					} else {
 						// member or array access
 						assert(lhs);
-						assert(mode);
+						rhs = materialize(rhs);
 						auto store = firm::new_Store(
 							firm::get_store(),
 							lhs,
 							rhs,
-							firm::get_type_for_mode(mode),
+							firm::get_type_for_mode(firm::get_irn_mode(rhs)),
 							firm::cons_none
 						);
 						set_store(firm::new_Proj(store, firm::get_modeM(), firm::pn_Store_M));
@@ -362,8 +355,8 @@ namespace minijava
 				void visit_boolean_expression(const ast::binary_expression& expression)
 				{
 					assert(is_boolean_expression(expression));
-					const auto lhs = get_expression_node(expression.lhs());
-					const auto rhs = get_expression_node(expression.rhs());
+					const auto lhs = materialize(get_expression_node(expression.lhs()));
+					const auto rhs = materialize(get_expression_node(expression.rhs()));
 					_current_node = firm::new_Cmp(
 						lhs,
 						rhs,
@@ -507,7 +500,6 @@ namespace minijava
 
 				int _var_id{-1};
 				bool _do_store{false};
-				firm::ir_mode* _current_mode{};
 				firm::ir_node* _current_node{};
 			};
 
