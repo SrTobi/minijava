@@ -309,11 +309,11 @@ namespace minijava
 						_current_node = firm::new_Minus(rhs);
 						return;
 					case ast::unary_operation_type::logical_not:
-						_current_node = firm::new_Mux(
+						_current_node = materialize(firm::new_Mux(
 								unmaterialize(_current_node),
 						        firm::new_Const(firm::get_tarval_b_true()),
 						        firm::new_Const(firm::get_tarval_b_false())
-						);
+						));
 						return;
 					}
 					MINIJAVA_NOT_REACHED();
