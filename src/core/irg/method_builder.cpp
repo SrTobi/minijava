@@ -71,7 +71,9 @@ namespace minijava
 
 				void visit(const ast::binary_expression& node) override
 				{
-					if (is_boolean_expression(node)) {
+					if (_maybe_use_constant(node)) {
+						// Use the constant provided by the front-end
+					} else if (is_boolean_expression(node)) {
 						visit_boolean_expression(node);
 					} else if (is_arithmetic_expression(node)) {
 						visit_arithmetic_expression(node);
@@ -82,6 +84,26 @@ namespace minijava
 					} else {
 						MINIJAVA_NOT_REACHED();
 					}
+				}
+
+				void visit(const ast::unary_expression &node) override {
+					if (_maybe_use_constant(node)) {
+						return;
+					}
+					auto rhs = get_expression_node(node.target());
+					switch (node.type()) {
+					case ast::unary_operation_type::minus:
+						_current_node = firm::new_Minus(rhs);
+						return;
+					case ast::unary_operation_type::logical_not:
+						_current_node = materialize(firm::new_Mux(
+								unmaterialize(_current_node),
+						        firm::new_Const(firm::get_tarval_b_true()),
+						        firm::new_Const(firm::get_tarval_b_false())
+						));
+						return;
+					}
+					MINIJAVA_NOT_REACHED();
 				}
 
 				void visit(const ast::object_instantiation& node) override
@@ -246,13 +268,14 @@ namespace minijava
 
 				void visit(const ast::boolean_constant& node) override
 				{
-					_current_node = firm::new_Const_long(_primitives.boolean_mode, node.value());
+					const auto ok = _maybe_use_constant(node);
+					assert(ok); (void) ok;
 				}
 
 				void visit(const ast::integer_constant& node) override
 				{
-					auto value = _sem_info.const_annotations().at(node);
-					_current_node = firm::new_Const_long(_primitives.int_mode, value);
+					const auto ok = _maybe_use_constant(node);
+					assert(ok); (void) ok;
 				}
 
 				void visit(const ast::null_constant&/* node */) override
@@ -302,21 +325,27 @@ namespace minijava
 					}
 				}
 
-				void visit(const ast::unary_expression &node) override {
-					auto rhs = get_expression_node(node.target());
-					switch (node.type()) {
-					case ast::unary_operation_type::minus:
-						_current_node = firm::new_Minus(rhs);
-						return;
-					case ast::unary_operation_type::logical_not:
-						_current_node = materialize(firm::new_Mux(
-								unmaterialize(_current_node),
-						        firm::new_Const(firm::get_tarval_b_true()),
-						        firm::new_Const(firm::get_tarval_b_false())
-						));
-						return;
+				// If the front-end already extracted a constant for `node`,
+				// assigns it to `_current_node` (with the correct mode) and
+				// `return`s `true`.  Otherwise, `return`s `false` and leaves
+				// `_current_node` unchanged.
+				bool _maybe_use_constant(const ast::expression& node)
+				{
+					const auto pos = _sem_info.const_annotations().find(&node);
+					if (pos == _sem_info.const_annotations().end()) {
+						return false;
 					}
-					MINIJAVA_NOT_REACHED();
+					const auto type = _sem_info.type_annotations().at(node);
+					if (type.rank != 0) {
+						MINIJAVA_NOT_REACHED();
+					} else if (type.info.is_boolean()) {
+						_current_node = firm::new_Const_long(_primitives.boolean_mode, pos->second);
+					} else if (type.info.is_int()) {
+						_current_node = firm::new_Const_long(_primitives.int_mode, pos->second);
+					} else {
+						MINIJAVA_NOT_REACHED();
+					}
+					return true;
 				}
 
 				void visit_assignment(const ast::binary_expression& expression)
