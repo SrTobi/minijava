@@ -1,6 +1,7 @@
 #include "semantic/constant.hpp"
 
 #include <cstdint>
+#include <cstring>
 #include <sstream>
 #include <string>
 
@@ -18,6 +19,13 @@ namespace minijava
 
 		namespace /* anonymous */
 		{
+
+			std::int32_t wrap(const std::int64_t value) noexcept
+			{
+				std::int32_t result;
+				std::memcpy(&result, &value, sizeof(result));
+				return result;
+			}
 
 			[[noreturn, gnu::cold]] void
 			throw_literal_overflow(const ast::integer_constant& node)
@@ -133,7 +141,6 @@ namespace minijava
 					if ((lit != _constants.end()) && (rit != _constants.end())) {
 						const auto lval = lit->second;
 						const auto rval = rit->second;
-						auto res = std::int32_t{};
 						switch (node.type()) {
 						case ast::binary_operation_type::logical_or:
 							_constants[node] = (lval || rval);
@@ -160,38 +167,30 @@ namespace minijava
 							_constants[node] = (lval > rval);
 							return;
 						case ast::binary_operation_type::plus:
-							if (!__builtin_add_overflow(lval, rval, &res)) {
-								_constants[node] = res;
-							} else {
-								_maybe_call_handler(node);
-							}
+							_constants[node] = wrap(std::int64_t{lval} + std::int64_t{rval});
 							return;
 						case ast::binary_operation_type::minus:
-							if (!__builtin_sub_overflow(lval, rval, &res)) {
-								_constants[node] = res;
-							} else {
-								_maybe_call_handler(node);
-							}
+							_constants[node] = wrap(std::int64_t{lval} - std::int64_t{rval});
 							return;
 						case ast::binary_operation_type::multiply:
-							if (!__builtin_mul_overflow(lval, rval, &res)) {
-								_constants[node] = res;
-							} else {
-								_maybe_call_handler(node);
-							}
+							_constants[node] = wrap(std::int64_t{lval} * std::int64_t{rval});
 							return;
 						case ast::binary_operation_type::divide:
-							if (rval != 0) {
-								_constants[node] = lval / rval;
-							} else {
+							if (rval == 0) {
 								_maybe_call_handler(node);
+							} else {
+								_constants[node] = wrap(std::int64_t{lval} / std::int64_t{rval});
 							}
 							return;
 						case ast::binary_operation_type::modulo:
-							if (rval != 0) {
-								_constants[node] = lval % rval;  // ok since C++11
-							} else {
+							if (rval == 0) {
 								_maybe_call_handler(node);
+							} else {
+								// C++11 changed the formerly
+								// implementation-defined behavior of the
+								// modulus operator to require the semantics
+								// specified by the JLS.
+								_constants[node] = wrap(std::int64_t{lval} % std::int64_t{rval});
 							}
 							return;
 						case ast::binary_operation_type::assign:
