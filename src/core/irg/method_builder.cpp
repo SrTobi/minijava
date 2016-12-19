@@ -357,11 +357,12 @@ namespace minijava
 					assert(is_boolean_expression(expression));
 					const auto lhs = materialize(get_expression_node(expression.lhs()));
 					const auto rhs = materialize(get_expression_node(expression.rhs()));
-					_current_node = firm::new_Cmp(
+					const auto node = firm::new_Cmp(
 						lhs,
 						rhs,
 						relation_from_binary_operation_type(expression.type())
 					);
+					_current_node = materialize(node);
 				}
 
 				void visit_arithmetic_expression(const ast::binary_expression& expression)
