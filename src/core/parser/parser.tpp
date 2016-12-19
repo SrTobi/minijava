@@ -169,6 +169,9 @@ namespace minijava
 							params = parse_parameters();
 						}
 						consume(token_type::right_paren);
+						if (current_is(token_type::kw_throws)) {
+							consume_throws_spec();
+						}
 						expect(token_type::left_brace);
 						auto body = parse_block();
 						auto method = make<ast::instance_method>().at(pos)(
@@ -205,6 +208,9 @@ namespace minijava
 				const auto id_args = current();
 				consume(token_type::identifier);
 				consume(token_type::right_paren);
+				if (current_is(token_type::kw_throws)) {
+					consume_throws_spec();
+				}
 				expect(block_first);
 				auto body = parse_block();
 				return make<ast::main_method>().at(pos)
@@ -268,6 +274,12 @@ namespace minijava
 					++rank;
 				}
 				return make_type(type_tok, rank);
+			}
+
+			void consume_throws_spec()
+			{
+				consume(token_type::kw_throws);
+				consume(token_type::identifier);
 			}
 
 			static constexpr auto block_first = set_t<

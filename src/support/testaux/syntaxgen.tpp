@@ -182,6 +182,9 @@ namespace testaux
 				_push(tt::right_bracket);
 				_push_id();
 				_push(tt::right_paren);
+				if (_nest_deeper_eh()) {
+					_gen_throws_spec();
+				}
 				_gen_block();
 			}
 
@@ -196,6 +199,9 @@ namespace testaux
 					_gen_parameters();
 				}
 				_push(tt::right_paren);
+				if (_nest_deeper_eh()) {
+					_gen_throws_spec();
+				}
 				_gen_block();
 			}
 
@@ -207,6 +213,13 @@ namespace testaux
 					_push(tt::comma);
 					_gen_parameters();
 				}
+			}
+
+			void _gen_throws_spec()
+			{
+				const auto guard = _enter_nested();
+				_push(tt::kw_throws);
+				_push_id();
 			}
 
 			void _gen_parameter()
