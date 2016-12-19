@@ -177,8 +177,11 @@ namespace testaux
 		 * For example, if the temporary directory is `/tmp/1492/` then
 		 * `filename("file.txt")` will give `/tmp/1492/file.txt`.
 		 *
+		 * @param local
+		 *     relative path of the file inside the temporary directory
+		 *
 		 * @returns
-		 *     filename of the file inside the temporary directory
+		 *     absolute path of the file inside the temporary directory
 		 *
 		 */
 		std::string filename(const std::string& local) const;
