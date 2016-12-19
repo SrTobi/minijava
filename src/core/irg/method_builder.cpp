@@ -97,10 +97,10 @@ namespace minijava
 						};
 					}
 					firm::ir_node* arguments[2] = {
+							firm::new_Const_long(firm::get_modeIs(), 1),
 							firm::new_Const_long(
 									firm::get_modeIs(), static_cast<long>(type_size)
-							),
-							firm::new_Const_long(firm::get_modeIs(), 1)
+							)
 					};
 					auto call_node = firm::new_Call(
 							firm::get_store(),
@@ -127,11 +127,11 @@ namespace minijava
 					}
 					auto extent = get_expression_node(node.extent());
 					firm::ir_node* arguments[2] = {
+							extent,
 							firm::new_Const_long(
 									firm::get_modeIs(),
 									static_cast<long>(inner_type_size)
-							),
-							extent
+							)
 					};
 					auto call_node = firm::new_Call(
 							firm::get_store(),
