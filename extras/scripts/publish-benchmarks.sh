@@ -224,7 +224,7 @@ set output 'lexer.svg'
 set xdata time
 set timefmt '%s'
 set xlabel "point in history"
-set ylabel "average time per token / us"
+set ylabel "average time per token / µs"
 set xrange [* : *]
 set yrange [0 : *]
 set format y '%.2f'
@@ -257,6 +257,31 @@ set nokey
 set title "Parser (Micro-Benchmark)"
 plot                                                                          \
 	'parser.dat'                                                              \
+		using 1:(1e6 * $2):(1e6 * $3) with yerror                             \
+		notitle
+EOF
+
+
+# ------------------------------ #
+#   Semantic (Micro-Benchmark)   #
+# ------------------------------ #
+
+export-micro semantic
+
+(cd "${tempdir}/micro/" && gnuplot) <<'EOF'
+set terminal svg enhanced size 800,600
+set output 'semantic.svg'
+set xdata time
+set timefmt '%s'
+set xlabel "point in history"
+set ylabel "average time per AST node / µs"
+set xrange [* : *]
+set yrange [0 : *]
+set format y '%.2f'
+set nokey
+set title "Semantic (Micro-Benchmark)"
+plot                                                                          \
+	'semantic.dat'                                                            \
 		using 1:(1e6 * $2):(1e6 * $3) with yerror                             \
 		notitle
 EOF
