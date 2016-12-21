@@ -40,8 +40,13 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https:
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
+	asm/asm
 	cli
 	exceptions
+	global
+	io/file_data
+	io/file_output
+	io/misc
 	irg/builtins
 	irg/global_firm_state
 	irg/irg
@@ -49,10 +54,6 @@ set(COMPONENTS
 	irg/mangle
 	irg/method_builder
 	irg/type_builder
-	global
-	io/file_data
-	io/file_output
-	io/misc
 	lexer/character
 	lexer/keyword
 	lexer/lexer
@@ -61,6 +62,7 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	opt/opt
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc
