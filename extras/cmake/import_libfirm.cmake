@@ -15,7 +15,8 @@ function(import_libfirm target)
 		# Skip revision.h generation, since it won't work on Windows
 		PATCH_COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_BINARY_DIR}/downloads/libFirm/src/libFirmBuilder/.git"
 		UPDATE_COMMAND ""
-		CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${install_dir}"
+		CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+		           "-DCMAKE_INSTALL_PREFIX=${install_dir}"
 	)
 	add_library(${target} INTERFACE)
 	add_dependencies(${target} libFirmBuilder)
