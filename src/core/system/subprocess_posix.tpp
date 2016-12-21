@@ -50,7 +50,12 @@ namespace /* anonymous */
 			close(pipe_fds[0]);
 			pipe_fds[0] = -1;
 			execvp(argv[0], argv.data());
-			write(pipe_fds[1], &errno, sizeof(errno));
+			ssize_t bytes_written;
+			while ((bytes_written = write(pipe_fds[1], &errno, sizeof(errno))) == -1) {
+				if (errno != EAGAIN && errno != EINTR) {
+					_exit(EXIT_FAILURE);
+				}
+			}
 			_exit(EXIT_SUCCESS);
 		} else {
 			close(pipe_fds[1]);
