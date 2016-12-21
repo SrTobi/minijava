@@ -8,8 +8,13 @@ include("extras/cmake/activate_cpp14.cmake")
 include("extras/cmake/enable_diagnostics.cmake")
 include("extras/cmake/import_libfirm.cmake")
 
+option(MAINTAINER_MODE "Enable diagnostic options for maintainers" ON)
+
 buildx_activate_cpp14()
-buildx_enable_diagnostics()
+
+if(MAINTAINER_MODE)
+	buildx_enable_diagnostics()
+endif(MAINTAINER_MODE)
 
 find_package(PythonInterp 3.4)
 
