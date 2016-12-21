@@ -132,6 +132,7 @@ do
 				export LD_LIBRARY_PATH="${PWD}/dynlib/"
 			fi
 		fi
+		export LSAN_OPTIONS=suppressions="${PWD}/../extras/asan/suppressions.txt"
 		cmake --build . || exit
 		[ ${dodocs} -eq 0 ] || cmake --build . --target docs 2>doxygen.err || exit
 		if [ -s doxygen.err ]
