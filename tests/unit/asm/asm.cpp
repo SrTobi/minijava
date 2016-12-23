@@ -3,6 +3,7 @@
 #define BOOST_TEST_MODULE  asm_asm
 #include <boost/test/unit_test.hpp>
 
+#include "exceptions.hpp"
 #include "io/file_output.hpp"
 #include "irg/irg.hpp"
 #include "opt/opt.hpp"
@@ -22,5 +23,8 @@ BOOST_AUTO_TEST_CASE(demo)
 	minijava::optimize(irg);
 	testaux::temporary_file tempfile{};
 	auto asmfile = minijava::file_output{tempfile.filename()};
-	minijava::assemble(irg, asmfile);
+	BOOST_REQUIRE_THROW(
+		minijava::assemble(irg, asmfile),
+		minijava::not_implemented_error
+	);
 }

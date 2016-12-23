@@ -20,24 +20,6 @@ namespace minijava
 	namespace /* anonymous */
 	{
 
-		auto make_irp_guard(const global_firm_state& state)
-		{
-			assert(global_firm_state::program_count());
-			const auto old = firm::get_irp();
-			if (old != state.get_default_irp()) {
-				throw std::logic_error{"Somebody is messing with libfirm's global state"};
-			}
-			auto del = [](firm::ir_prog* p) { firm::set_irp(p); };
-			return std::unique_ptr<firm::ir_prog, decltype(del)>{old, del};
-		}
-
-		auto make_irp_guard(const global_firm_state& state, firm::ir_prog*const p)
-		{
-			auto guard = make_irp_guard(state);
-			firm::set_irp(p);
-			return guard;
-		}
-
 		auto destroy(firm_ir_entry*const p)
 		{
 			// If `global_firm_state::program_count()` is not zero, it is safe
@@ -51,8 +33,27 @@ namespace minijava
 			delete p;
 		}
 
+		std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>
+		make_irp_guard(const global_firm_state& state)
+		{
+			assert(global_firm_state::program_count());
+			const auto old = firm::get_irp();
+			if (old != state.get_default_irp()) {
+				throw std::logic_error{"Somebody is messing with libfirm's global state"};
+			}
+			auto del = [](firm::ir_prog* p) { firm::set_irp(p); };
+			return std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>{old, del};
+		}
+
 	}  // namespace /* anonymous */
 
+	std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>
+	make_irp_guard(const global_firm_state& state, firm::ir_prog*const p)
+	{
+		auto guard = make_irp_guard(state);
+		firm::set_irp(p);
+		return guard;
+	}
 
 	firm_ir create_firm_ir(global_firm_state& state,
 	                       const ast::program& ast,

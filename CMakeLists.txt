@@ -41,6 +41,11 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
 	asm/asm
+	asm/data
+	asm/instruction
+	asm/opcode
+	asm/register
+	asm/text
 	cli
 	exceptions
 	global

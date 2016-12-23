@@ -21,8 +21,19 @@ add_custom_command(
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
+add_custom_command(
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/asm/opcode.hpp"
+	COMMAND "${CMAKE_COMMAND}" -E make_directory asm
+	COMMAND "${PYTHON_EXECUTABLE}"
+	        "${PROJECT_SOURCE_DIR}/extras/gen/x64-isa.py"
+	        -o "asm/opcode.hpp"
+	DEPENDS "${PROJECT_SOURCE_DIR}/extras/gen/x64-isa.py"
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
 add_custom_target(core-generate-sources
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/lexer/keyword_pearson.tpp"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/asm/opcode.hpp"
 )
 
 add_dependencies(core core-generate-sources)

@@ -40,6 +40,23 @@ namespace minijava
 
 	/**
 	 * @brief
+	 *     Sets the global IRG pointer in `libfirm`.
+	 *
+	 * @param state
+	 *     global `libfirm` state
+	 *
+	 * @param prog
+	 *     IRG to operate on
+	 *
+	 * @returns
+	 *     RAII guard that will reset the global IRG again
+	 *
+	 */
+	std::unique_ptr<firm::ir_prog, void(*)(firm::ir_prog*)>
+	make_irp_guard(const global_firm_state& state, firm::ir_prog*const prog);
+
+	/**
+	 * @brief
 	 *     Creates an intermediate representation of the given program.
 	 *
 	 * This function may only be called after semantic analysis of the given
