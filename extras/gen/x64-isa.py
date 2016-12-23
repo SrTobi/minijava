@@ -315,8 +315,8 @@ namespace minijava
         col1 = 'case opcode::op_{:s}:'.format(mnemotic.lower())
         col2 = 'return "{:s}";'.format(mnemotic.lower())
         print('\t\t\t{:32s}{:s}'.format(col1, col2))
+    print('\t\t\t{:32s}{:s}'.format('default:', 'return nullptr;'))
     print("""\t\t\t}
-\t\t\treturn nullptr;
 \t\t}
 
 \t}  // namespace backend
