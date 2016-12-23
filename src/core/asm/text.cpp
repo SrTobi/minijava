@@ -14,6 +14,7 @@ namespace minijava
 		void assemble_function(firm::ir_graph* irg, virtual_assembly& /*virtasm*/)
 		{
 			assert(irg != nullptr);
+			(void) irg;
 			MINIJAVA_NOT_IMPLEMENTED();
 		}
 
