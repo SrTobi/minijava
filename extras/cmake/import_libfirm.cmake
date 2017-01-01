@@ -10,7 +10,7 @@ function(import_libfirm target)
 	ExternalProject_Add(
 		libFirmBuilder
 		GIT_REPOSITORY "${LIBFIRM_GIT_URL}"
-		GIT_TAG "5a89d4b83cdf70286bfc338f98527ace8bbc4c60"
+		GIT_TAG "457ba52f6e29cbc2febe58c11b08a59dae5680eb"
 		PREFIX "${CMAKE_BINARY_DIR}/downloads/libFirm"
 		# Skip revision.h generation, since it won't work on Windows
 		PATCH_COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_BINARY_DIR}/downloads/libFirm/src/libFirmBuilder/.git"
