@@ -20,6 +20,7 @@
 #include "io/file_output.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "opt/opt.hpp"
 #include "parser/ast_misc.hpp"
 #include "parser/parser.hpp"
 #include "runtime/host_cc.hpp"
@@ -254,6 +255,9 @@ namespace minijava
 				dump_firm_ir(ir); // TODO: allow setting directory
 				return;
 			}
+			// optimize
+			minijava::register_all_optimizations();
+			minijava::optimize(ir);
 			if (stage == compilation_stage::compile_firm) {
 				namespace fs = boost::filesystem;
 				const auto pattern = fs::temp_directory_path() / "%%%%%%%%%%%%.s";
