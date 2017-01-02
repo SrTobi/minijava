@@ -1,5 +1,6 @@
 #include "opt/opt.hpp"
-
+#include "opt/algebraic_simplifier.hpp"
+#include <iostream>
 
 namespace minijava
 {
@@ -8,6 +9,7 @@ namespace minijava
 
 	void optimize(firm_ir& ir)
 	{
+		const auto guard = make_irp_guard(*ir->second, ir->first);
 		auto changed = false;
 		do
 		{
@@ -23,6 +25,8 @@ namespace minijava
 	}
 
 	void register_all_optimizations()
-	{ }
+	{
+		register_optimization(std::make_unique<opt::algebraic_simplifier>());
+	}
 
 }  // namespace minijava
