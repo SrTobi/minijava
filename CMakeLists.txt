@@ -68,6 +68,7 @@ set(COMPONENTS
 	lexer/token_type
 	lexer/token_type_set
 	opt/opt
+	opt/algebraic_simplifier
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc
