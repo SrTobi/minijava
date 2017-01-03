@@ -10,9 +10,10 @@ namespace minijava
 	void optimize(firm_ir& ir)
 	{
 		const auto guard = make_irp_guard(*ir->second, ir->first);
-		auto changed = false;
+		bool changed;
 		do
 		{
+			changed = false;
 			for (auto& opt : optimizations) {
 				changed |= opt->optimize(ir);
 			}
