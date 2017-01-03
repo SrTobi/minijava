@@ -11,13 +11,15 @@ namespace minijava
 	{
 		const auto guard = make_irp_guard(*ir->second, ir->first);
 		bool changed;
+		unsigned int count = 0;
+		unsigned int max_count = 99;
 		do
 		{
 			changed = false;
 			for (auto& opt : optimizations) {
 				changed |= opt->optimize(ir);
 			}
-		} while (changed);
+		} while (changed && count++ < max_count);
 	}
 
 	void register_optimization(std::unique_ptr<minijava::opt::optimization> opt)
