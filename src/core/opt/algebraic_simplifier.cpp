@@ -22,22 +22,12 @@ bool is_tarval_with_num(firm::ir_tarval* val, long num)
 	return is_tarval_numeric(val) && firm::get_tarval_long(val) == num;
 }
 
-std::vector<std::pair<firm::ir_node*, int>> get_out_edges_safe(firm::ir_node* node)
-{
-	auto vec = std::vector<std::pair<firm::ir_node*, int>>();
-	for (auto out_edge = firm::get_irn_out_edge_first(node); out_edge; out_edge = firm::get_irn_out_edge_next(node, out_edge, firm::EDGE_KIND_NORMAL)) {
-		vec.push_back(std::make_pair(firm::get_edge_src_irn(out_edge), firm::get_edge_src_pos(out_edge)));
-	}
-	return vec;
-}
-
-void minijava::opt::algebraic_simplifier::exchange_walker(firm::ir_node* node, void* env) {
-	auto as = (algebraic_simplifier*)env;
+void minijava::opt::algebraic_simplifier::cleanup(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	if (opcode != firm::iro_Const) {
 		firm::ir_tarval* tv = (firm::ir_tarval*)firm::get_irn_link(node);
 		if (tv && is_tarval_numeric(tv)) {
-			auto new_node = firm::new_r_Const_long(as->_irg, firm::get_tarval_mode(tv), firm::get_tarval_long(tv));
+			auto new_node = firm::new_r_Const_long(_irg, firm::get_tarval_mode(tv), firm::get_tarval_long(tv));
 			firm::set_irn_link(new_node, tv);
 			// keep memory edges of div/mod nodes
 			if (opcode == firm::iro_Div || opcode == firm::iro_Mod) {
@@ -54,12 +44,12 @@ void minijava::opt::algebraic_simplifier::exchange_walker(firm::ir_node* node, v
 				firm::exchange(node, new_node);
 			}
 			// mark optimization as changed
-			as->_changed = true;
+			_changed = true;
 		}
 	}
 }
 
-void minijava::opt::algebraic_simplifier::algebraic_walker(firm::ir_node* node, void* /*env*/) {
+bool minijava::opt::algebraic_simplifier::handle(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	firm::ir_tarval *ret_tv = nullptr;
 	if (opcode == firm::iro_Const) {
@@ -121,20 +111,5 @@ void minijava::opt::algebraic_simplifier::algebraic_walker(firm::ir_node* node, 
 		}
 	}
 	firm::set_irn_link(node, ret_tv);
-}
-
-bool minijava::opt::algebraic_simplifier::optimize(firm_ir& /*ir*/) {
-	auto n = firm::get_irp_n_irgs();
-	for (size_t i = 0; i < n; i++) {
-		_irg = firm::get_irp_irg(i);
-		firm::ir_reserve_resources(_irg, firm::IR_RESOURCE_IRN_LINK);
-		firm::edges_activate(_irg);
-		void* env = this;
-		firm::irg_walk_topological(_irg, algebraic_walker, env);
-		firm::irg_walk_topological(_irg, exchange_walker, env);
-		firm::edges_deactivate(_irg);
-		firm::ir_free_resources(_irg, firm::IR_RESOURCE_IRN_LINK);
-	}
-
-	return _changed;
+	return ret_tv ? true : false;
 }

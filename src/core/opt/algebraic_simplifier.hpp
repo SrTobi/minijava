@@ -14,20 +14,12 @@ namespace minijava
 {
 	namespace opt
 	{
-		class algebraic_simplifier : public optimization
+		class algebraic_simplifier : public worklist_optimization
 		{
 		public:
 
-			virtual bool optimize(firm_ir& ir) override;
-
-
-
-		private:
-			bool _changed{};
-			firm::ir_graph* _irg{};
-
-			static void algebraic_walker(firm::ir_node* node, void* env);
-			static void exchange_walker(firm::ir_node* node, void* env);
+			virtual bool handle(firm::ir_node* node);
+			virtual void cleanup(firm::ir_node* node);
 		};
 	}
 }
