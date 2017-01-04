@@ -14,7 +14,7 @@ firm::ir_tarval* get_tarval(firm::ir_node* node, int n)
 
 bool is_tarval_numeric(firm::ir_tarval* val)
 {
-	return firm::get_mode_arithmetic(firm::get_tarval_mode(val)) == firm::irma_twos_complement;
+	return val && firm::get_mode_arithmetic(firm::get_tarval_mode(val)) == firm::irma_twos_complement;
 }
 
 bool is_tarval_with_num(firm::ir_tarval* val, long num)
