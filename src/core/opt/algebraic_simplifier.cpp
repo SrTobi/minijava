@@ -109,7 +109,41 @@ bool minijava::opt::algebraic_simplifier::handle(firm::ir_node* node) {
 		if (is_tarval_numeric(tv)) {
 			ret_tv = firm::new_tarval_from_long(-firm::get_tarval_long(tv), firm::get_irn_mode(node));
 		}
+	} else if (opcode == firm::iro_Phi) {
+		auto child_count = firm::get_irn_arity(node);
+		auto is_bad = false;
+		auto found = false;
+		long val = 0;
+		auto mode = firm::get_irn_mode(node);
+		for (int i = 0; i < child_count && !is_bad; i++) {
+			auto tv = get_tarval(node, i);
+			if (!tv) {
+				// no tarval set
+			} else if (tv == firm::tarval_bad) {
+				is_bad = true;
+			} else if (mode == firm::get_tarval_mode(tv)) {
+				auto cur = firm::get_tarval_long(tv);
+				if (found == false) {
+					found = true;
+					val = cur;
+				} else if (val != cur) {
+					is_bad = true;
+				}
+			}
+		}
+		if (is_bad) {
+			ret_tv = firm::tarval_bad;
+		} else if (found) {
+			ret_tv = firm::new_tarval_from_long(val, mode);
+		}
+	}
+	auto changed = ret_tv ? true : false;
+	auto cur_tv = (firm::ir_tarval*)firm::get_irn_link(node);
+	if (cur_tv && ret_tv) {
+		if (is_tarval_numeric(cur_tv) && is_tarval_numeric(ret_tv)) {
+			changed = firm::get_tarval_long(cur_tv) != firm::get_tarval_long(ret_tv);
+		}
 	}
 	firm::set_irn_link(node, ret_tv);
-	return ret_tv ? true : false;
+	return changed;
 }
