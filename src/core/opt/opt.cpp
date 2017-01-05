@@ -61,6 +61,8 @@ namespace minijava
 			}, this);
 			firm::edges_deactivate(_irg);
 			firm::ir_free_resources(_irg, firm::IR_RESOURCE_IRN_LINK);
+			firm::remove_unreachable_code(_irg);
+			firm::remove_bads(_irg);
 		}
 		return _changed;
 	}
