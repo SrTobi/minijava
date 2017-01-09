@@ -17,7 +17,7 @@ namespace minijava
 		{
 			changed = false;
 			for (auto& opt : optimizations) {
-				changed |= opt->optimize(ir);
+				changed = opt->optimize(ir) || changed;
 			}
 		} while (changed && count++ < max_count);
 	}
