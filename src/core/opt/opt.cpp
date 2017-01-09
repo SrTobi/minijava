@@ -1,6 +1,5 @@
 #include "opt/opt.hpp"
 #include "opt/algebraic_simplifier.hpp"
-#include <iostream>
 #include <queue>
 
 namespace minijava

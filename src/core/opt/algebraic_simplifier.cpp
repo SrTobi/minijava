@@ -1,6 +1,4 @@
 #include "opt/algebraic_simplifier.hpp"
-#include "opt/tarval.hpp"
-#include <iostream>
 
 using namespace minijava::opt;
 
