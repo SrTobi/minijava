@@ -1,5 +1,6 @@
 #include "opt/opt.hpp"
 #include "opt/algebraic_simplifier.hpp"
+#include "opt/load_store.hpp"
 #include <queue>
 
 namespace minijava
@@ -30,6 +31,7 @@ namespace minijava
 	void register_all_optimizations()
 	{
 		register_optimization(std::make_unique<opt::algebraic_simplifier>());
+		register_optimization(std::make_unique<opt::load_store>());
 	}
 
 	std::vector<std::pair<firm::ir_node*, int>> opt::get_out_edges_safe(firm::ir_node *node)
