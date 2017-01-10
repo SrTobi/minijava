@@ -12,21 +12,21 @@ extern void minijava_main(void);
 
 static const char* program_name;
 
-void* mj_runtime_allocate(const int32_t nmemb, const int32_t size)
+void* mj_runtime_new(const int32_t nmemb, const int32_t size)
 {
 	if (nmemb < 0) {
-		fprintf(stderr, "%s: allocate: Request for negative array size %ld\n", program_name, (long) nmemb);
+		fprintf(stderr, "%s: new: Request for negative array size %ld\n", program_name, (long) nmemb);
 		abort();
 	}
 	if (size <= 0) {
-		fprintf(stderr, "%s: allocate: Request for non-positive object size %ld\n", program_name, (long) size);
+		fprintf(stderr, "%s: new: Request for non-positive object size %ld\n", program_name, (long) size);
 		abort();
 	}
 	const size_t nbytes = ((size_t) nmemb) * ((size_t) size);
     /* Always allocate at least one byte to make sure arrays have unique addresses. */
 	void* memory = malloc(nbytes > 0 ? nbytes : 1);
 	if (memory == NULL) {
-		fprintf(stderr, "%s: allocate: %s\n", program_name, strerror(errno));
+		fprintf(stderr, "%s: new: %s\n", program_name, strerror(errno));
 		abort();
 	}
 	return memory;
