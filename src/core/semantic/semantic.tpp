@@ -100,6 +100,12 @@ namespace minijava
 					)
 				);
 				auto methods = std::vector<std::unique_ptr<ast::instance_method>>{};
+				methods.push_back(make_builtin_method(
+					"id",
+					ast::primitive_type::type_int,
+					{ast::primitive_type::type_int},
+					pool, factory
+				));
 				return factory.make<ast::class_declaration>()(
 					pool.normalize("java.lang.System"),
 					std::move(fields),

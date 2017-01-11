@@ -38,6 +38,11 @@ void mj_runtime_println(const int32_t n)
 	}
 }
 
+int32_t mj_runtime_id(const int32_t x)
+{
+	return x;
+}
+
 int main(int argc, char** argv)
 {
 	program_name = (argc > 0) ? argv[0] : "minijava";
