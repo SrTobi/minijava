@@ -11,19 +11,45 @@ struct search_calls_info {
 	std::vector<firm::ir_node*> result;
 };
 
-void replace_call_node(firm::ir_node* call_node, std::vector<unsigned int> params_to_keep, firm::ir_type* new_method_type)
+void replace_call_node(firm::ir_node* call_node, std::vector<unsigned int> params_to_keep, firm::ir_entity* new_method_entity)
 {
-	(void)call_node;
-	(void)params_to_keep;
-	(void)new_method_type;
+	auto params = new firm::ir_node*[params_to_keep.size()];
+	for (unsigned int i = 0; i < params_to_keep.size(); i++) {
+		params[i] = firm::get_Call_param(call_node, (int)params_to_keep[i]);
+	}
+	auto new_call_node = firm::new_r_Call(
+			firm::get_nodes_block(call_node),
+	        firm::get_Call_mem(call_node),
+	        firm::new_r_Address(firm::get_irn_irg(call_node), new_method_entity),
+			(int) params_to_keep.size(),
+	        params,
+	        firm::get_entity_type(new_method_entity)
+	);
+	delete [] params;
+	firm::exchange(call_node, new_call_node);
+}
+
+// rewires old param projs to new order
+void update_params(firm::ir_graph* irg, std::vector<unsigned int> params_to_keep)
+{
+	auto args = firm::get_irg_args(irg);
+	firm::edges_activate(irg);
+	for (unsigned int num = 0; num < params_to_keep.size(); num++) {
+		auto old_num = params_to_keep[num];
+		for (auto &out : get_out_edges_safe(args)) {
+			if (firm::is_Proj(out.first)) {
+				if (firm::get_Proj_num(out.first) == old_num) {
+					firm::set_Proj_num(out.first, num);
+				}
+			}
+		}
+	}
+	firm::edges_deactivate(irg);
 }
 
 void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> params_to_keep)
 {
 	auto irg = firm::get_entity_irg(method);
-	std::cout << std::endl << firm::get_entity_ident(method) << std::endl;
-
-	// todo: create new type and entity (remove old ones maybe not possible..)
 	auto method_type = firm::get_entity_type(method);
 	auto new_method_type = firm::new_type_method(
 			params_to_keep.size(),
@@ -48,11 +74,9 @@ void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> par
 	auto new_irg = firm::new_ir_graph(
 			new_method_entity,
 			firm::get_irg_n_locs(irg));
-	//clone_irg(irg, new_irg);
-
-	firm::dump_ir_graph(new_irg, "cloned");
+	clone_irg(irg, new_irg);
+	update_params(new_irg, params_to_keep);
 	firm::irg_verify(new_irg);
-	std::cout << "created new entity " << firm::get_entity_ident(new_method_entity) << " from " << firm::get_entity_ident(method) << std::endl;
 
 	// change usage of existing calls
 	auto n = firm::get_irp_n_irgs();
@@ -71,7 +95,7 @@ void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> par
 				}
 			}, &env);
 			for (auto call_node : env.result) {
-				replace_call_node(call_node, params_to_keep, new_method_type);
+				replace_call_node(call_node, params_to_keep, new_method_entity);
 			}
 		}
 	}
