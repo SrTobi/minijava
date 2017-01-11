@@ -41,6 +41,106 @@ namespace minijava
 		return vec;
 	}
 
+	void opt::copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg)
+	{
+		firm::ir_node* nn = nullptr;
+		auto old_irg = firm::get_irn_irg(n);
+		switch (firm::get_irn_opcode(n)) {
+			case firm::iro_NoMem:
+				nn = firm::get_irg_no_mem(irg);
+				break;
+			case firm::iro_Block:
+				if (n == firm::get_irg_start_block(old_irg))
+					nn = firm::get_irg_start_block(irg);
+				else if (n == firm::get_irg_end_block(old_irg))
+					nn = firm::get_irg_end_block(irg);
+				break;
+			case firm::iro_Start:
+				nn = firm::get_irg_start(irg);
+				break;
+			case firm::iro_End:
+				nn = firm::get_irg_end(irg);
+				break;
+			case firm::iro_Proj:
+				if (n == firm::get_irg_initial_mem(old_irg))
+					nn = firm::get_irg_initial_mem(irg);
+				else if (n == firm::get_irg_args(old_irg))
+					nn = firm::get_irg_args(irg);
+				break;
+		}
+
+		if (nn) {
+			// link old with new node
+			firm::set_irn_link(n, nn);
+			return;
+		}
+
+		auto arity = firm::get_irn_arity(n);
+		firm::ir_node** inputs = new firm::ir_node*[firm::get_irn_arity(n)];
+		for (int i = 0; i < arity; i++) {
+			inputs[i] = (firm::ir_node*)firm::get_irn_link(firm::get_irn_n(n, i));
+		}
+		nn = firm::new_ir_node(
+				firm::get_irn_dbg_info(n),
+				irg,
+				nullptr,
+				firm::get_irn_op(n),
+				firm::get_irn_mode(n),
+				arity,
+				inputs
+		);
+		firm::set_irn_link(n, nn);
+		firm::copy_node_attr(irg, n, nn);
+	}
+
+	void copy_nodes(firm::ir_node* node, void* env)
+	{
+		opt::copy_irn_to_irg(node, (firm::ir_graph*)env);
+	}
+
+	void set_preds(firm::ir_node* node, void* env)
+	{
+		auto new_irg = (firm::ir_graph*)env;
+		auto nn = (firm::ir_node*)firm::get_irn_link(node);
+
+		if (firm::is_Block(node)) {
+			auto irg = firm::get_irn_irg(node);
+			auto end_block = firm::get_irg_end_block(irg);
+			for (int i = firm::get_Block_n_cfgpreds(node); i-- > 0;) {
+				auto pred = firm::get_Block_cfgpred(node, i);
+				if (end_block == node) {
+					firm::add_immBlock_pred(firm::get_irg_end_block(new_irg), (firm::ir_node*)firm::get_irn_link(pred));
+				} else {
+					firm::set_Block_cfgpred(nn, i, (firm::ir_node*)firm::get_irn_link(pred));
+				}
+			}
+		} else {
+			firm::set_nodes_block(nn, (firm::ir_node*)firm::get_irn_link(firm::get_nodes_block(node)));
+			if (firm::is_End(node)) {
+				for (int i = 0, nodes = firm::get_End_n_keepalives(node); i < nodes; ++i) {
+					firm::add_End_keepalive(nn, (firm::ir_node*)firm::get_irn_link(firm::get_End_keepalive(node, i)));
+				}
+			} else {
+				// #foreach_irn_in_r macro from irnode_t.h
+				for (bool pred__b = true; pred__b;) {
+					for (firm::ir_node* pred__irn = node; pred__b; pred__b = false) {
+						for (int idx = firm::get_irn_arity(pred__irn); pred__b && idx-- != 0;) {
+							for (firm::ir_node* pred = (pred__b = false, firm::get_irn_n(pred__irn, idx)); !pred__b; pred__b = true) {
+								set_irn_n(nn, idx, (firm::ir_node*)firm::get_irn_link(pred));
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void opt::clone_irg(firm::ir_graph* from, firm::ir_graph* to)
+	{
+		firm::irg_walk_graph(from, copy_nodes, set_preds, to);
+		firm::irg_finalize_cons(to);
+	}
+
 	// worklist stuff
 
 	bool opt::worklist_optimization::optimize(firm_ir& /*ir*/)
