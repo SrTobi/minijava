@@ -47,7 +47,7 @@ void update_params(firm::ir_graph* irg, std::vector<unsigned int> params_to_keep
 	firm::edges_deactivate(irg);
 }
 
-void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> params_to_keep)
+void unused_params::remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> params_to_keep)
 {
 	auto irg = firm::get_entity_irg(method);
 	auto method_type = firm::get_entity_type(method);
@@ -96,6 +96,7 @@ void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> par
 			}, &env);
 			for (auto call_node : env.result) {
 				replace_call_node(call_node, params_to_keep, new_method_entity);
+				_changed = true;
 			}
 		}
 	}
@@ -103,6 +104,7 @@ void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> par
 
 bool unused_params::optimize(firm_ir& /*ir*/)
 {
+	_changed = false;
 	auto n = firm::get_irp_n_irgs();
 	for (size_t i = 0; i < n; i++) {
 		auto irg = firm::get_irp_irg(i);
@@ -132,5 +134,5 @@ bool unused_params::optimize(firm_ir& /*ir*/)
 		firm::remove_bads(irg);
 	}
 
-	return false;
+	return _changed;
 }

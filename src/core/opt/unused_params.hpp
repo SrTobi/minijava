@@ -16,6 +16,10 @@ namespace minijava
 	{
 		class unused_params : public optimization
 		{
+		private:
+			bool _changed{false};
+			void remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> params_to_keep);
+
 		public:
 			virtual bool optimize(firm_ir &ir) override;
 		};
