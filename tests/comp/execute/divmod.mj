@@ -1,10 +1,12 @@
-// pragma output -2147483648 0
+// pragma output -2147483648 0 -2147483648 0
 
 class Test {
 
 	public static void main(String[] args) {
 		System.out.println(-2147483648 / -1);
 		System.out.println(-2147483648 % -1);
+		System.out.println(System.id(-2147483648) / System.id(-1));
+		System.out.println(System.id(-2147483648) % System.id(-1));
 	}
 
 }

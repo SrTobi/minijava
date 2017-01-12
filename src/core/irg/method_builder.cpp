@@ -402,19 +402,29 @@ namespace minijava
 					auto memory = firm::get_store();
 					switch (expression.type()) {
 					case ast::binary_operation_type::divide: {
-						auto div_result = firm::new_DivRL(memory, lhs, rhs, firm::op_pin_state_pinned);
-						_current_node = firm::new_Proj(
-							div_result, _primitives.int_mode, firm::pn_Div_res
+						auto div_result = firm::new_DivRL(
+							memory,
+							firm::new_Conv(lhs, firm::mode_Ls),
+							firm::new_Conv(rhs, firm::mode_Ls),
+							firm::op_pin_state_pinned
 						);
+						_current_node = firm::new_Conv(firm::new_Proj(
+							div_result, firm::mode_Ls, firm::pn_Div_res
+						), firm::mode_Is);
 						firm::set_store(firm::new_Proj(div_result, firm::mode_M, firm::pn_Div_M));
 						return;
 					}
 					case ast::binary_operation_type::modulo: {
-						auto mod_result = firm::new_Mod(memory, lhs, rhs,firm::op_pin_state_pinned);
-						firm::set_store(firm::new_Proj(mod_result, firm::mode_M, firm::pn_Mod_M));
-						_current_node = firm::new_Proj(
-							mod_result, _primitives.int_mode, firm::pn_Mod_res
+						auto mod_result = firm::new_Mod(
+							memory,
+							firm::new_Conv(lhs, firm::mode_Ls),
+							firm::new_Conv(rhs, firm::mode_Ls),
+							firm::op_pin_state_pinned
 						);
+						firm::set_store(firm::new_Proj(mod_result, firm::mode_M, firm::pn_Mod_M));
+						_current_node = firm::new_Conv(firm::new_Proj(
+							mod_result, firm::mode_Ls, firm::pn_Mod_res
+						), firm::mode_Is);
 						return;
 					}
 					case ast::binary_operation_type::multiply:
