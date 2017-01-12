@@ -322,7 +322,6 @@ namespace minijava
 				void visit_assignment(const ast::binary_expression& expression)
 				{
 					assert(expression.type() == ast::binary_operation_type::assign);
-					auto rhs = get_expression_node(expression.rhs());
 					auto old_do_store = _do_store;
 					_do_store = true;
 					auto lhs = get_expression_node(expression.lhs());
@@ -330,6 +329,7 @@ namespace minijava
 					// reset visitor state
 					_do_store = old_do_store;
 					_var_id = -1;
+					auto rhs = get_expression_node(expression.rhs());
 
 					if (id != -1) {
 						// local
@@ -660,11 +660,7 @@ namespace minijava
 					firm::set_cur_block(nullptr);
 				}
 
-				void visit(const ast::empty_statement& node) override
-				{
-					// FIXME
-					(void) node;
-				}
+				void visit(const ast::empty_statement&) override {}
 
 				void visit(const ast::main_method& node) override
 				{
