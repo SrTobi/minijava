@@ -1,5 +1,5 @@
 /**
- * @file builtins.hpp
+ * @file globals.hpp
  *
  * @brief
  *     Methods for adding the builtins to the IR graph.
