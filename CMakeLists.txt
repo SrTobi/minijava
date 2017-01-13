@@ -52,8 +52,8 @@ set(COMPONENTS
 	io/file_data
 	io/file_output
 	io/misc
-	irg/builtins
 	irg/global_firm_state
+	irg/globals
 	irg/irg
 	irg/lowering
 	irg/mangle

@@ -1,0 +1,20 @@
+// pragma stdout system_out_write.txt
+
+class Test {
+
+	public static void main(String[] args) {
+		System.out.write(69);
+		System.out.write(32);
+		System.out.write(61);
+		System.out.write(32);
+		System.out.write(109);
+		System.out.write(32);
+		System.out.write(42);
+		System.out.write(32);
+		System.out.write(99);
+		System.out.write(94);
+		System.out.write(50);
+		System.out.write(7252736 + 10);
+	}
+
+}

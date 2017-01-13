@@ -1,0 +1,15 @@
+// pragma output 1 2 3
+
+class Test {
+
+	public static void main(String[] args) {
+		System.out.flush();
+		System.out.write(49);
+		System.out.write(10);
+		System.out.flush();
+		System.out.println(2);
+		System.out.flush();
+		System.out.println(3);
+	}
+
+}
