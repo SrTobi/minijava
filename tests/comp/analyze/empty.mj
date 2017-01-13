@@ -1,0 +1,13 @@
+// pragma output
+
+class Main {
+
+// ifndef BUG
+	public static void main(String[] args) { }
+// else
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+// endif
+
+}

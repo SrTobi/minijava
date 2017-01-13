@@ -6,9 +6,15 @@ enable_testing()
 include(CheckIncludeFileCXX)
 include("extras/cmake/activate_cpp14.cmake")
 include("extras/cmake/enable_diagnostics.cmake")
+include("extras/cmake/import_libfirm.cmake")
+
+option(MAINTAINER_MODE "Enable diagnostic options for maintainers" ON)
 
 buildx_activate_cpp14()
-buildx_enable_diagnostics()
+
+if(MAINTAINER_MODE)
+	buildx_enable_diagnostics()
+endif(MAINTAINER_MODE)
 
 find_package(PythonInterp 3.4)
 
@@ -16,12 +22,17 @@ if(WIN32)
 	set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS
+# This list includes transitive dependencies, since older versions of CMake
+# include a version of FindBoost.cmake which does not know version 1.62. Those
+# versions will print warnings, which can safely be ignored.
+find_package(Boost 1.61 REQUIRED COMPONENTS
 	filesystem
 	program_options
 	system
 	unit_test_framework
 )
+
+import_libfirm(libFirm)
 
 check_include_file_cxx("sys/resource.h" MINIJAVA_HAVE_RLIMIT)
 
@@ -29,12 +40,25 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https:
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
+	asm/asm
+	asm/data
+	asm/instruction
+	asm/opcode
+	asm/register
+	asm/text
 	cli
 	exceptions
 	global
 	io/file_data
 	io/file_output
 	io/misc
+	irg/global_firm_state
+	irg/globals
+	irg/irg
+	irg/lowering
+	irg/mangle
+	irg/method_builder
+	irg/type_builder
 	lexer/character
 	lexer/keyword
 	lexer/lexer
@@ -43,6 +67,7 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	opt/opt
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc
@@ -50,6 +75,8 @@ set(COMPONENTS
 	parser/parser
 	parser/pretty_printer
 	position
+	runtime/host_cc
+	runtime/runtime
 	semantic/attribute
 	semantic/constant
 	semantic/name_type_analysis
@@ -62,6 +89,7 @@ set(COMPONENTS
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
+	system/subprocess
 	system/system
 	util/meta
 	util/raii

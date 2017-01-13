@@ -12,6 +12,7 @@
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
 #include "parser/parser.hpp"
+#include "runtime/runtime.hpp"
 #include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
 
@@ -241,7 +242,10 @@ namespace /* anonymous */
 
 		void visit(const ast::object_instantiation& node) override
 		{
-			_out.print("mj_runtime_allocate(sizeof(struct %s), 1)", mangle_class(node.class_name()).c_str());
+			_out.print(
+				"mj_runtime_allocate(1, (int32_t) sizeof(struct %s))",
+				mangle_class(node.class_name()).c_str()
+			);
 		}
 
 		void visit(const ast::array_instantiation& node) override
@@ -249,8 +253,10 @@ namespace /* anonymous */
 			auto member_type = get_formatted_type_name(node.array_type());
 			assert(member_type.back() == '*');
 			member_type.pop_back();
-			_out.print("mj_runtime_allocate(sizeof(%s), ", member_type.c_str());
+			_out.write("mj_runtime_allocate(");
 			visit_expression(node.extent());
+			_out.write(", ");
+			_out.print("(int32_t) sizeof(%s)", member_type.c_str());
 			_out.write(")");
 		}
 
@@ -272,7 +278,9 @@ namespace /* anonymous */
 				visit_expression(*p);
 				_out.write("->");
 			} else if ((_current_method != nullptr) && !_seminfo.is_global(decl)) {
-				const auto it = _seminfo.locals_annotations().at(*_current_method).find(decl);
+				const auto it = [decl](const auto& locals) {
+					return std::find(std::begin(locals), std::end(locals), decl);
+				}(_seminfo.locals_annotations().at(*_current_method));
 				if (it == decltype(it){}) {
 					_out.write("THIS->");
 				}
@@ -386,19 +394,18 @@ namespace /* anonymous */
 			const auto system_name = mangle_variable("System");
 			const auto printstream_class_name = mangle_class("java.io.PrintStream");
 			const auto out_name = mangle_variable("out");
-			_out.write("int main()\n");
+			_out.write("void minijava_main(void)\n");
 			const auto g = _nest_braces();
 			_out.print(
-				"%s%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
+				"%s%s = mj_runtime_allocate(1, (int32_t) sizeof(struct %s));\n",
 				_indent.c_str(), system_name.c_str(), system_class_name.c_str()
 			);
 			_out.print(
-				"%s%s->%s = mj_runtime_allocate(sizeof(struct %s), 1);\n",
+				"%s%s->%s = mj_runtime_allocate(1, (int32_t) sizeof(struct %s));\n",
 				_indent.c_str(), system_name.c_str(), out_name.c_str(),
 				printstream_class_name.c_str()
 			);
 			node.body().accept(*this);
-			_out.print("%sreturn 0;\n", _indent.c_str());
 		}
 
 		void visit(const ast::instance_method& node) override
@@ -449,12 +456,11 @@ namespace /* anonymous */
 
 	void to_c(const ast::program& ast, const semantic_info& seminfo, file_output& out)
 	{
+		out.write(runtime_source());
+		out.write("\n");
 		out.write("#include <stdbool.h>\n");
 		out.write("#include <stddef.h>\n");
 		out.write("#include <stdint.h>\n");
-		out.write("\n");
-		out.write("extern void* mj_runtime_allocate(size_t, size_t);\n");
-		out.write("extern void mj_runtime_println(int32_t);\n");
 		out.write("\n");
 		for (auto&& clazz : seminfo.classes()) {
 			out.print("struct %s;\n", mangle_class(clazz.first).c_str());

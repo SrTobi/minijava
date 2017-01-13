@@ -15,6 +15,10 @@ consistent as a whole.
 This section describes the differences between our compiler and the behavior
 expected by the official test suite.
 
+### Line comments
+
+Our implementation supports line comments `//` like every other modern Java
+compiler.
 
 ### Treatment of `main`
 
@@ -79,6 +83,12 @@ In order to build the compiler, you will need the following.
    October 2016.  Somewhat older versions might work, too &ndash; or they might
    not.
 
+ - On Windows, you'll need to compile and install an
+   [additional regex library](https://sourceforge.net/projects/mingw/files/Other/UserContributed/regex/mingw-regex-2.5.1/).
+   Both the headers and the library itself must be installed into a folder where
+   your compiler will find them, for example the MinGW `include` and `bin`
+   directories.
+
  - In order to check out the sources, you'll also need Git.
 
  - If you want to build the HTML documentation (which is purely optional), you
@@ -86,6 +96,25 @@ In order to build the compiler, you will need the following.
 
 We have tested the setup on POSIX and Windows with MinGW or Cygwin and wish you
 Good Luck if you're trying anything else.
+
+
+#### Firm
+
+The project also depends on the [Firm](http://pp.ipd.kit.edu/firm/) library.
+Unlike the other dependencies, it will be automatically downloaded and built
+locally by the build system.  This will make a HTTP connection to a Git server
+at the KIT.
+
+If you don't want to connect to the KIT server, you can provide an alternative
+URL to clone the repository from by setting the environment variable
+`LIBFIRM_GIT_URL` prior to running CMake.
+
+For example, the following commands will create a local mirror of the Firm
+repository and then instruct CMake to clone from it.  Of course, now it is your
+responsibility to keep the local mirror up to date.
+
+    $ git clone --mirror http://pp.ipd.kit.edu/git/libfirm.git
+    $ export LIBFIRM_GIT_URL="${PWD}/libfirm.git"
 
 
 ### Building for Humans

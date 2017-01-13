@@ -1,0 +1,15 @@
+class B { }
+
+class A {
+
+	public static void main(String[] args) {
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+		new B() == new A();
+		new B() != new A();
+ // endif
+	}
+
+}

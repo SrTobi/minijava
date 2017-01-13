@@ -1760,7 +1760,7 @@ namespace minijava
 			 *     method return type
 			 *
 			 * @param parameters
-			 *     method parameters
+			 *     method parameters (ordered as in the declaration)
 			 *
 			 * @param body
 			 *     method body
@@ -1801,7 +1801,7 @@ namespace minijava
 			 *     Returns the parameter list of this method.
 			 *
 			 * @return
-			 *     parameter list
+			 *     parameter list (ordered as in the declaration)
 			 *
 			 */
 			const std::vector<std::unique_ptr<var_decl>>& parameters() const noexcept

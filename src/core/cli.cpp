@@ -9,17 +9,20 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
 #include "exceptions.hpp"
 #include "global.hpp"
+#include "irg/irg.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
 #include "parser/ast_misc.hpp"
 #include "parser/parser.hpp"
+#include "runtime/host_cc.hpp"
 #include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/system.hpp"
@@ -43,6 +46,8 @@ namespace minijava
 			parser = 3,
 			print_ast = 4,
 			semantic = 5,
+			dump_ir = 6,
+			compile_firm = 7,
 		};
 
 
@@ -52,11 +57,14 @@ namespace minijava
 			// Stage at which the compilation should be intercepted.
 			compilation_stage stage{};
 
-			// File-name of the input file (may be `-` to read from stdin).
+			// Name of the input file (may be `-` to read from stdin).
 			std::string input{};
 
-			// File-name of the output file (may be `-` to write to stdout).
+			// Name of the output file (may be `-` to write to stdout).
 			std::string output{};
+
+			// Name of the C compiler executable (for linking the runtime)
+			std::string cc{};
 		};
 
 
@@ -132,6 +140,12 @@ namespace minijava
 			if (varmap.count("check")) {
 				return compilation_stage::semantic;
 			}
+			if (varmap.count("dump-ir")) {
+				return compilation_stage::dump_ir;
+			}
+			if (varmap.count("compile-firm")) {
+				return compilation_stage::compile_firm;
+			}
 			return compilation_stage{};
 		}
 
@@ -157,9 +171,12 @@ namespace minijava
 				("lextest", "stop after lexical analysis and output a token sequence")
 				("parsetest", "stop after parsing and reporting any syntax errors")
 				("print-ast", "stop after parsing and print the parsed ast")
-				("check", "stop after semantic analysis and report semantic errors");
+				("check", "stop after semantic analysis and report semantic errors")
+				("dump-ir", "stop after IR creation and dump the intermediate representation into the current directory")
+				("compile-firm", "stop after IR creation and compile the input using the firm backend");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
+				("cc", po::value<std::string>(&setup.cc)->default_value(get_default_c_compiler()), "C compiler to use for linking the runtime")
 				("output", po::value<std::string>(&setup.output)->default_value("-"), "redirect output to file");
 			auto inputfiles = po::options_description{"Input Files"};
 			inputfiles.add_options()
@@ -187,7 +204,7 @@ namespace minijava
 		}
 
 
-		// Prints the token `tok` to `out` in the formet required for
+		// Prints the token `tok` to `out` in the format required for
 		// `--lextest`.  This function could be optimized to avoid the string
 		// formatting but the fun for tweaking this stage is probably over now.
 		void print_token(file_output& out, const token& tok)
@@ -203,8 +220,9 @@ namespace minijava
 		// Runs the compiler reading input from `istr`, writing output to
 		// `ostr` and optionally intercepting compilation at `stage`.
 		void run_compiler(file_data& in, file_output& out,
-		                  const compilation_stage stage)
+		                  const compilation_stage stage, const std::string& cc)
 		{
+			using namespace std::string_literals;
 			if (stage == compilation_stage::input) {
 				out.write(in.data(), in.size());
 				return;
@@ -230,7 +248,23 @@ namespace minijava
 			if (stage == compilation_stage::semantic) {
 				return;
 			}
-			(void) sem_info; // FIXME
+			auto firm = initialize_firm();
+			auto ir = create_firm_ir(*firm, *ast, sem_info, in.filename());
+			if (stage == compilation_stage::dump_ir) {
+				dump_firm_ir(ir); // TODO: allow setting directory
+				return;
+			}
+			if (stage == compilation_stage::compile_firm) {
+				namespace fs = boost::filesystem;
+				const auto pattern = fs::temp_directory_path() / "%%%%%%%%%%%%.s";
+				const auto tmp_path = fs::unique_path(pattern);
+				const auto assembly_filename = tmp_path.string();
+				auto assembly_file = file_output{assembly_filename};
+				emit_x64_assembly_firm(ir, assembly_file);
+				assembly_file.close();
+				link_runtime(cc, "a.out", assembly_filename);
+				return;
+			}
 			// If we get until here, we have a problem...
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
@@ -313,7 +347,7 @@ namespace minijava
 		auto out = (setup.output == "-")
 			? file_output{thestdout, "stdout"}
 			: file_output{setup.output};
-		run_compiler(in, out, setup.stage);
+		run_compiler(in, out, setup.stage, setup.cc);
 		out.finalize();
 	}
 

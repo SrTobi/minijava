@@ -1,0 +1,4 @@
+# libfirm is known to leak arrays of dynamic size because it doesn't use its
+# obstacks for them.
+
+leak:xmalloc.c

@@ -1,0 +1,12 @@
+class A {
+
+	public static void main(String[] args) {
+		int[] a1 = new int[0];
+		int[][] a2 = new int[0][];
+		boolean[] a3 = new boolean[0];
+		boolean[][] a4 = new boolean[0][];
+		A[] a5 = new A[0];
+		A[][] a6 = new A[0][];
+	}
+
+}

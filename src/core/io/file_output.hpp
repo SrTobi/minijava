@@ -353,7 +353,7 @@ namespace minijava
 		 * state.
 		 *
 		 *  - in the owning state, `close()` is called,
-		 *  - in the non-owning state, `flus()` is called and
+		 *  - in the non-owning state, `flush()` is called and
 		 *  - in the empty state, nothing happens.
 		 *
 		 * That is, this function does exactly what the destructor will do plus

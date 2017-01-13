@@ -1,0 +1,13 @@
+class A {
+
+	public int field;
+
+	public void test(A a) {
+		A b;
+		a.field;
+		b.field;
+	}
+
+	public static void main(String[] args) { }
+
+}

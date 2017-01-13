@@ -1,0 +1,21 @@
+// pragma output 1 1 1
+class a {
+
+    public static void main(String[] args) {
+        a a = new a();
+        a.foo();
+    }
+
+    public void foo() {
+        if (!b()) System.out.println(0);
+        if (!(1 == 1)) System.out.println(0);
+        if (!(1 == 2)) System.out.println(1);
+        if (!(42 == x())) System.out.println(0);
+        if (!(2 == x())) System.out.println(1);
+        if (!(true)) System.out.println(0);
+        if (!(false)) System.out.println(1);
+    }
+
+    public int x() { return 42; }
+    public boolean b() { return true; }
+}

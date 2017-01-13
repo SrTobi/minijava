@@ -1,5 +1,6 @@
 #include "semantic/name_type_analysis.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -86,6 +87,37 @@ BOOST_DATA_TEST_CASE(type_is_not_equal_to_type_with_different_rank, some_ranks)
 	const auto rhs = sem::type{bti_type::make_int_type(), sample + 1};
 	BOOST_CHECK(lhs != rhs);
 	BOOST_CHECK(!(lhs == rhs));
+}
+
+
+BOOST_AUTO_TEST_CASE(std_hash_no_terrible_collisions)
+{
+	using bti_type = minijava::sem::basic_type_info;
+	auto tf = testaux::ast_test_factory{};
+	const auto c1 = tf.make_empty_class();
+	const auto c2 = tf.make_empty_class();
+	const bti_type basics[] = {
+		bti_type::make_boolean_type(),
+		bti_type::make_int_type(),
+		bti_type::make_null_type(),
+		bti_type::make_void_type(),
+		bti_type{*c1, false},
+		bti_type{*c1, true},
+		bti_type{*c2, false},
+		bti_type{*c2, true},
+	};
+	const std::size_t ranks[] = {0, 1, 2, 5, 10, 20, 50, 100};
+	auto hashes = std::vector<std::size_t>{};
+	const auto hasher = std::hash<sem::type>{};
+	for (const auto& bti : basics) {
+		for (const auto& rank : ranks) {
+			const auto typ = sem::type{bti, rank};
+			hashes.push_back(hasher(typ));
+		}
+	}
+	std::sort(std::begin(hashes), std::end(hashes));
+	const auto pos = std::unique(std::begin(hashes), std::end(hashes));
+	BOOST_REQUIRE(pos == std::end(hashes));
 }
 
 

@@ -8,3 +8,5 @@
 /stage-*/
 /stage/
 __pycache__/
+*.out
+*.vcg

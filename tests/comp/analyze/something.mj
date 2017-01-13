@@ -1,0 +1,5 @@
+// ifdef PARSER
+//   pragma skip
+// endif
+
+abstract[] void foo = ~class;

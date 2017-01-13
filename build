@@ -10,6 +10,7 @@ clean=0
 force=0
 dox=0
 buildtype="${CMAKE_BUILD_TYPE-Release}"
+maintainer=0
 
 message() {
 	level="${1}"
@@ -70,6 +71,7 @@ do
 			echo "  --force             always force reconfiguration and rebuild everything"
 			echo "  --clean             only remove the build-directory"
 			echo "  --doxygen           generate API documentation"
+			echo "  --maintainer-mode   enable maintainer mode (off by default)"
 			echo "  --help              display this text and exit"
 			echo "  --version           display version information and exit"
 			echo ""
@@ -97,6 +99,9 @@ do
 			;;
 		--build-type=*)
 			buildtype="${arg#--build-type=}"
+			;;
+		--maintainer-mode)
+			maintainer=1
 			;;
 		--force)
 			force=1
@@ -130,8 +135,12 @@ then
    rm -rf "${builddir}/" || die "Cannot remove old build directory"
    mkdir -p "${builddir}/" || die "Cannot create build directory"
    dumpenv > "${envfile}" || die "Cannot save environment"
-   ( cd "${builddir}/" && cmake -DCMAKE_BUILD_TYPE="${buildtype}" .. )        \
-	   || die "Cannot configure project"
+   (                                                                          \
+	   cd "${builddir}/"                                                      \
+		   && cmake -DCMAKE_BUILD_TYPE="${buildtype}"                         \
+					-DMAINTAINER_MODE=${maintainer}                           \
+					..                                                        \
+   ) || die "Cannot configure project"
 fi
 
 ( cd "${builddir}/" && cmake --build . ) || die "Cannot build project"

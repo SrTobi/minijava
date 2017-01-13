@@ -1,0 +1,46 @@
+// pragma output 1 2 42 1 0
+
+class A {
+
+	public int test() {
+		return 42;
+	}
+
+	public static void main(String[] args) {
+		{
+			int[] a = new int[2];
+			a[0] = 1;
+			a[1] = 2;
+			System.out.println(a[0]);
+			System.out.println(a[1]);
+			if(a[0] > 3) {
+				System.out.println(10);
+			}
+		}
+
+		{
+
+			A[] a = new A[1];
+			a[0] = new A();
+			System.out.println(a[0].test());
+			a = null;
+		}
+
+		{
+			boolean[] b = new boolean[2];
+			b[0] = true;
+			b[1] = false;
+
+			if(b[0])
+				System.out.println(1);
+			else
+				System.out.println(0);
+
+            if(b[1])
+                System.out.println(1);
+            else
+                System.out.println(0);
+		}
+	}
+
+}

@@ -45,7 +45,7 @@ namespace minijava
 	                             method_attributes method_annotations,
 	                             const_attributes const_annotations,
 	                             std::unique_ptr<ast::program> builtin_ast,
-	                             sem::globals_vector globals)
+	                             globals_vector globals)
 		: _classes{std::move(classes)}
 		, _type_annotations{std::move(type_annotations)}
 		, _locals_annotations{std::move(locals_annotations)}

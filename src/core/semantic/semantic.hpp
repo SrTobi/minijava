@@ -46,7 +46,7 @@ namespace minijava
 		/** @brief Type mapping typed AST nodes to type definitions. */
 		using type_attributes = sem::type_attributes;
 
-		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
+		/** @brief Type mapping `method` nodes to a vector of `var_decl` nodes. */
 		using locals_attributes = sem::locals_attributes;
 
 		/** @brief Type mapping `var_access` and `array_access` nodes to `var_decl` nodes. */
@@ -57,6 +57,9 @@ namespace minijava
 
 		/** @brief Type mapping `expression` nodes to integers. */
 		using const_attributes = sem::const_attributes;
+
+		/** @brief Type of the vector containing all global variable declarations. */
+		using globals_vector = sem::globals_vector;
 
 		/**
 		 * @brief
@@ -77,7 +80,7 @@ namespace minijava
 		 *     mapping of typed AST nodes to the definition of their type
 		 *
 		 * @param locals_annotations
-		 *     mapping of `method` nodes to the set of their local variable
+		 *     mapping of `method` nodes to the a vector of their local variable
 		 *     declarations
 		 *
 		 * @param vardecl_annotations
@@ -105,7 +108,7 @@ namespace minijava
 		              method_attributes method_annotations,
 		              const_attributes const_annotations,
 		              std::unique_ptr<ast::program> builtin_ast,
-		              sem::globals_vector globals);
+		              globals_vector globals);
 
 		/**
 		 * @brief
@@ -147,7 +150,7 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s a mapping from `method` nodes to sets of `var_decl`
+		 *     `return`s a mapping from `method` nodes to a vector of `var_decl`
 		 *     nodes of their local variable declarations.
 		 *
 		 * For example, the `instance_method` node for the following method
@@ -161,8 +164,10 @@ namespace minijava
 		 *
 		 * will be mapped to the `var_decl` nodes for the declarations of `a`,
 		 * `b` and `c`.  Note that the `return` value is not a declared
-		 * variable.  Neither are the unnamed intermediary results.  This set
+		 * variable.  Neither are the unnamed intermediary results.  This vector
 		 * is flattened over all nested scopes a method body might contain.
+		 * The vector contains at first all params in their declaring order
+		 * without the implicit this pointer
 		 *
 		 * All `instance_method` and `main_method` nodes will have this
 		 * attribute set.
@@ -275,6 +280,24 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     `return`s a vector containing all global variable declarations.
+		 *
+		 * The returned vector contains the `ast::var_decl`s in an undefined
+		 * order. Do not use this vector to check whether a variable declaration
+		 * declares a global variable; for this purpose, use `is_global`
+		 * instead.
+		 *
+		 * @return
+		 *     global variable declarations
+		 *
+		 */
+		const globals_vector& globals() const noexcept
+		{
+			return _globals;
+		}
+
+		/**
+		 * @brief
 		 *     Checks whether the given declaration declares global variable.
 		 *
 		 * If `declaration` does not point to an existing declaration (in
@@ -298,7 +321,7 @@ namespace minijava
 		/** @brief Mapping of typed AST nodes to the definition of their type. */
 		type_attributes _type_annotations;
 
-		/** @brief Mapping of `method` nodes to the set of their local variable declarations. */
+		/** @brief Mapping of `method` nodes to the vector of their local variable declarations. */
 		locals_attributes _locals_annotations;
 
 		/** @brief Mapping of `var_access` nodes to the node that declare the used identifier. */
@@ -314,7 +337,7 @@ namespace minijava
 		std::unique_ptr<ast::program> _builtin_ast;
 
 		/** @brief global variables, sorted by memory address of the AST node */
-		sem::globals_vector _globals;
+		globals_vector _globals;
 
 	};
 

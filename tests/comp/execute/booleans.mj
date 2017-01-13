@@ -1,0 +1,44 @@
+class Test {
+
+	public boolean truth;
+
+	public boolean getConstant() {
+		return true;
+	}
+
+	public boolean getField() {
+		return this.truth;
+	}
+
+	public boolean copyBoolean(boolean value) {
+		return value;
+	}
+
+	public boolean equal(int a, int b) {
+		return a == b;
+	}
+
+	public boolean stackOverflow() {
+		return stackOverflow();
+	}
+
+	public void setField() {
+		this.truth = true;
+		this.truth = getConstant();
+		this.truth = getField();
+		this.truth = equal(1, 2);
+		this.truth = copyBoolean(true);
+	}
+
+	public void callFunction() {
+		copyBoolean(true);
+		copyBoolean(this.truth);
+		copyBoolean(getConstant());
+		copyBoolean(getField());
+		copyBoolean(stackOverflow());
+		copyBoolean(equal(0, 0));
+	}
+
+	public static void main(String[] args) { }
+
+}

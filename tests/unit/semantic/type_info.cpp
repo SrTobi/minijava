@@ -156,6 +156,35 @@ BOOST_AUTO_TEST_CASE(types_are_equal_only_to_themselves)
 }
 
 
+BOOST_AUTO_TEST_CASE(std_hash_no_terrible_collisions)
+{
+	using bti_type = minijava::sem::basic_type_info;
+	auto tf = testaux::ast_test_factory{};
+	const auto c1 = tf.make_empty_class();
+	const auto c2 = tf.make_empty_class();
+	const bti_type basics[] = {
+		bti_type::make_boolean_type(),
+		bti_type::make_int_type(),
+		bti_type::make_null_type(),
+		bti_type::make_void_type(),
+		bti_type{*c1, false},
+		bti_type{*c1, true},
+		bti_type{*c2, false},
+		bti_type{*c2, true},
+	};
+	auto hashes = std::vector<std::size_t>{};
+	std::transform(
+		std::begin(basics),
+		std::end(basics),
+		std::back_inserter(hashes),
+		std::hash<bti_type>{}
+	);
+	std::sort(std::begin(hashes), std::end(hashes));
+	const auto pos = std::unique(std::begin(hashes), std::end(hashes));
+	BOOST_REQUIRE(pos == std::end(hashes));
+}
+
+
 BOOST_AUTO_TEST_CASE(stream_insertion)
 {
 	using namespace std::string_literals;

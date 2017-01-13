@@ -1,0 +1,15 @@
+class A {
+
+	public boolean test(int a) {
+// ifdef BUG
+//   ifdef CHECK
+//     pragma status 1
+//   endif
+		(a = a) = 3;
+// endif
+		return false;
+	}
+
+	public static void main(String[] args) { }
+
+}

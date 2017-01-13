@@ -9,10 +9,12 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <iosfwd>
 #include <vector>
-#include <unordered_set>
+
+#include <boost/functional/hash.hpp>
 
 #include "parser/ast.hpp"
 #include "semantic/attribute.hpp"
@@ -54,6 +56,21 @@ namespace minijava
 
 			/** @brief Rank of the array or 0 if this type is not an array. */
 			std::size_t rank;
+
+			/**
+			 * @brief
+			 *     Updates a hash state with the internal state of this object.
+			 *
+			 * @param state
+			 *     hash state to update
+			 *
+			 */
+			void append_hash(std::size_t& state) const noexcept
+			{
+				info.append_hash(state);
+				boost::hash_combine(state, rank);
+			}
+
 		};
 
 		/**
@@ -94,6 +111,7 @@ namespace minijava
 			return !(lhs == rhs);
 		}
 
+
 		/**
 		 * @brief
 		 *     Inserts a human-readable representation of a `type` into a
@@ -122,9 +140,9 @@ namespace minijava
 			ast_node_filter<ast::expression, ast::var_decl, ast::method>
 		>;
 
-		/** @brief Type mapping `method` nodes to sets of `var_decl` nodes. */
+		/** @brief Type mapping `method` nodes to a vector of `var_decl` nodes. */
 		using locals_attributes = ast_attributes<
-			std::unordered_set<const ast::var_decl*>,
+			std::vector<const ast::var_decl*>,
 			ast_node_filter<ast::method>
 		>;
 
@@ -239,3 +257,36 @@ namespace minijava
 	}  // namespace sem
 
 }  // namespace minijava
+
+
+namespace std
+{
+
+	/**
+	 * @brief
+	 *     `std::hash` specialization for `type` objects.
+	 *
+	 */
+	template <>
+	struct hash<minijava::sem::type>
+	{
+		/**
+		 * @brief
+		 *     Hashes the given `type`.
+		 *
+		 * @param type
+		 *     `type` to hash
+		 *
+		 * @returns
+		 *     hash value
+		 *
+		 */
+		size_t operator()(const minijava::sem::type& type) const noexcept
+		{
+			auto seed = size_t{};
+			type.append_hash(seed);
+			return seed;
+		}
+	};
+
+}  // namespace std

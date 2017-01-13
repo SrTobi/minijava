@@ -1,0 +1,25 @@
+// pragma output 1 2 3 4 5 6 7
+class a {
+
+    public static void main(String[] args) {
+        a a = new a();
+        a.foo();
+    }
+
+    public void foo() {
+        print(1) || print(0);
+        true || print(1);
+        false || print(2);
+        if (true && false) System.out.println(0);
+        if (false && true) System.out.println(0);
+        if (false || true) System.out.println(3);
+        if (true || false) System.out.println(4);
+        if (true || print(0)) System.out.println(5);
+        if (print(6) || print(0)) System.out.println(7);
+    }
+
+    public boolean print(int x) {
+        System.out.println(x);
+        return true;
+    }
+}
