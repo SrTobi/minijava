@@ -2,7 +2,6 @@
 
 #include "irg/mangle.hpp"
 
-
 namespace minijava
 {
 
@@ -79,12 +78,10 @@ namespace minijava
 						}
 					}
 					// TODO: Use iteration instead of recursion
-					auto recursive_type = firm::new_type_pointer(firm::new_type_array(
-						_get_var_type(sem::type{type.info, type.rank - 1}),
-						0
-					));
-					_typemap.insert({type, recursive_type});
-					return recursive_type;
+					const auto inner_type_sem = sem::type{type.info, type.rank - 1};
+					const auto inner_type_irg = _get_var_type(inner_type_sem);
+					_typemap.insert({inner_type_sem, inner_type_irg});
+					return firm::new_type_pointer(firm::new_type_array(inner_type_irg, 0));
 				}
 
 				firm::ir_type* _get_class_type(const ast::class_declaration& clazz)
