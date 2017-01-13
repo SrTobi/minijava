@@ -28,6 +28,9 @@ namespace minijava
 		/** @brief Type mapping semantic types to Firm IR types. */
 		using type_mapping = std::unordered_map<sem::type, firm::ir_type*>;
 
+		/** @brief Type mapping runtime library builtin functions to their Firm entities. */
+		using builtin_mapping = std::unordered_map<std::string, firm::ir_entity*>;
+
 		/** @brief AST attribute type mapping class declarations to Firm IR types. */
 		// TODO: Use entities instead of types as values
 		using class_mapping = ast_attributes<firm::ir_type*, ast_node_filter<ast::class_declaration>>;
@@ -59,6 +62,30 @@ namespace minijava
 			 *
 			 */
 			type_mapping typemap{};
+
+			/**
+			 * @brief
+			 *     Mapping of runtime library builtins to their Firm entities.
+			 *
+			 * The keys to this map are the names of the builtins.  (For
+			 * example, `println` for `java.io.PrintStream.println`.)  The
+			 * obvious caveat is that there are no name-spaces but this turns
+			 * out to work well enough for MiniJava.  The name mangling used to
+			 * derive the linker names is purposefully different because this
+			 * avoids name clashed with any uder-defined symbols.
+			 *
+			 * The map will always contain an entry for `new`.  (This name is
+			 * impossible to clash with any name defined in the AST because
+			 * `new` is a reserved keyword in MiniJava.)  All other builtins
+			 * are extracted from the semantic information.  enough for
+			 * MiniJava.  Builtins defined in types that are never used in the
+			 * program are not extracted.
+			 *
+			 * The builtins are always associated with firms global type, not
+			 * with the type that contains the MiniJava wrapper methods.
+			 *
+			 */
+			builtin_mapping builtins{};
 
 			/**
 			 * @brief
@@ -96,6 +123,7 @@ namespace minijava
 			method_mapping methodmap{};
 
 		};
+
 
 		/**
 		 * @brief
@@ -174,54 +202,6 @@ namespace minijava
 
 			/** @brief Unique pointer to Firm type for MiniJava's pointer type.  */
 			firm::ir_type* pointer_type{};
-		};
-
-		/**
-		 * @brief
-		 *     `struct` holding Firm types for MiniJava's runtime library calls.
-		 *
-		 * A default-constructed struct will hold only `nullptr`s. In order to
-		 * get an initialized object, use the `get_instance` function.
-		 *
-		 * As this `struct` merely stores two pointers, it can be freely copied.
-		 * It's the pointer members that won't change value.
-		 *
-		 */
-		struct runtime_library
-		{
-
-			/**
-			 * @brief
-			 *     Creates an empty record with all members `nullptr`s.
-			 *
-			 */
-			runtime_library() noexcept = default;
-
-			/**
-			 * @brief
-			 *     Obtains a reference to the singleton instance, lazily
-			 *     initializing it in a race-free manner if necessary.
-			 *
-			 * If `libfirm` is not initialized prior to calling this function,
-			 * the behavior is undefined.
-			 *
-			 * @returns
-			 *     reference to initialized singleton
-			 *
-			 */
-			static const runtime_library& get_instance();
-
-			/** @brief Unique pointer to Firm entity for %mj_runtime_allocate */
-			firm::ir_entity* alloc{};
-
-			/** @brief Unique pointer to Firm type for %mj_runtime_allocate */
-			firm::ir_type* alloc_type{};
-
-			/** @brief Unique pointer to Firm entity for %mj_runtime_println */
-			firm::ir_entity* println{};
-
-			/** @brief Unique pointer to Firm type for %mj_runtime_println */
-			firm::ir_type* println_type{};
 		};
 
 	}  // namespace irg

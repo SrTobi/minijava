@@ -2,6 +2,8 @@
 #error "Never `#include <semantic/semantic.tpp>` directly; `#include <semantic/semantic.hpp>` instead."
 #endif
 
+#include <cstdio>
+#include <initializer_list>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -24,73 +26,116 @@ namespace minijava
 		{
 
 			template<typename PoolT>
-			std::unique_ptr<ast::program> make_builtin_ast(PoolT& pool, ast_factory& factory)
+			std::unique_ptr<ast::instance_method>
+			make_builtin_method(const char *const name,
+			                    const ast::primitive_type rettype,
+			                    const std::initializer_list<ast::primitive_type> paramtypes,
+			                    PoolT& pool, ast_factory& factory)
 			{
-				auto println_arg = factory.make<ast::var_decl>()(
-						factory.make<ast::type>()(
-								ast::primitive_type::type_int
-						),
-						pool.normalize(".")
-				);
-				std::vector<std::unique_ptr<ast::var_decl>> args{};
-				args.push_back(std::move(println_arg));
-				auto println = factory.make<ast::instance_method>()(
-						pool.normalize("println"),
-						factory.make<ast::type>()(
-								ast::primitive_type::type_void
-						),
-						std::move(args),
-						factory.make<ast::block>()(
-								std::vector<std::unique_ptr<ast::block_statement>>{}
+				auto args = std::vector<std::unique_ptr<ast::var_decl>>{};
+				auto i = 0;
+				for (const auto typ : paramtypes) {
+					char param[32];
+					std::snprintf(param, sizeof(param), "_%u", ++i);
+					args.push_back(
+						factory.make<ast::var_decl>()(
+							factory.make<ast::type>()(typ),
+							pool.normalize(param)
 						)
+					);
+				}
+				return factory.make<ast::instance_method>()(
+					pool.normalize(name),
+					factory.make<ast::type>()(rettype),
+					std::move(args),
+					factory.make<ast::block>()(
+						std::vector<std::unique_ptr<ast::block_statement>>{}
+					)
 				);
-				std::vector<std::unique_ptr<ast::instance_method>> methods{};
-				methods.push_back(std::move(println));
-				auto print_class = factory.make<ast::class_declaration>()(
-						pool.normalize("java.io.PrintStream"),
-						std::vector<std::unique_ptr<ast::var_decl>>{},
-						std::move(methods),
-						std::vector<std::unique_ptr<ast::main_method>>{}
+			}
+
+			template<typename PoolT>
+			std::unique_ptr<ast::class_declaration>
+			make_builtin_class_string(PoolT& pool, ast_factory& factory)
+			{
+				return factory.make<ast::class_declaration>()(
+					pool.normalize("java.lang.String"),
+					std::vector<std::unique_ptr<ast::var_decl>>{},
+					std::vector<std::unique_ptr<ast::instance_method>>{},
+					std::vector<std::unique_ptr<ast::main_method>>{}
 				);
-				auto out = factory.make<ast::var_decl>()(
+			}
+
+			template<typename PoolT>
+			std::unique_ptr<ast::class_declaration>
+			make_builtin_class_printstream(PoolT& pool, ast_factory& factory)
+			{
+				auto fields = std::vector<std::unique_ptr<ast::var_decl>>{};
+				auto methods = std::vector<std::unique_ptr<ast::instance_method>>{};
+				methods.push_back(make_builtin_method(
+					"println",
+					ast::primitive_type::type_void,
+					{ast::primitive_type::type_int},
+					pool, factory
+				));
+				return factory.make<ast::class_declaration>()(
+					pool.normalize("java.io.PrintStream"),
+					std::move(fields),
+					std::move(methods),
+					std::vector<std::unique_ptr<ast::main_method>>{}
+				);
+			}
+
+			template<typename PoolT>
+			std::unique_ptr<ast::class_declaration>
+			make_builtin_class_system(PoolT& pool, ast_factory& factory)
+			{
+				auto fields = std::vector<std::unique_ptr<ast::var_decl>>{};
+				fields.push_back(
+					factory.make<ast::var_decl>()(
 						factory.make<ast::type>()(
-								pool.normalize("java.io.PrintStream")
+							pool.normalize("java.io.PrintStream")
 						),
 						pool.normalize("out")
+					)
 				);
-				std::vector<std::unique_ptr<ast::var_decl>> fields{};
-				fields.push_back(std::move(out));
-				auto system_class = factory.make<ast::class_declaration>()(
-						pool.normalize("java.lang.System"),
-						std::move(fields),
-						std::vector<std::unique_ptr<ast::instance_method>>{},
-						std::vector<std::unique_ptr<ast::main_method>>{}
+				auto methods = std::vector<std::unique_ptr<ast::instance_method>>{};
+				methods.push_back(make_builtin_method(
+					"id",
+					ast::primitive_type::type_int,
+					{ast::primitive_type::type_int},
+					pool, factory
+				));
+				return factory.make<ast::class_declaration>()(
+					pool.normalize("java.lang.System"),
+					std::move(fields),
+					std::move(methods),
+					std::vector<std::unique_ptr<ast::main_method>>{}
 				);
-				// Currently unused, but let's keep it anyway
-				auto string_class = factory.make<ast::class_declaration>()(
-						pool.normalize("java.lang.String"),
-						std::vector<std::unique_ptr<ast::var_decl>>{},
-						std::vector<std::unique_ptr<ast::instance_method>>{},
-						std::vector<std::unique_ptr<ast::main_method>>{}
-				);
-				std::vector<std::unique_ptr<ast::class_declaration>> clazzes{};
-				clazzes.push_back(std::move(print_class));
-				clazzes.push_back(std::move(system_class));
-				clazzes.push_back(std::move(string_class));
-				return factory.make<ast::program>()(std::move(clazzes));
+			}
+
+			template<typename PoolT>
+			std::unique_ptr<ast::program>
+			make_builtin_ast(PoolT& pool, ast_factory& factory)
+			{
+				auto classes = std::vector<std::unique_ptr<ast::class_declaration>>{};
+				classes.push_back(make_builtin_class_string(pool, factory));
+				classes.push_back(make_builtin_class_printstream(pool, factory));
+				classes.push_back(make_builtin_class_system(pool, factory));
+				return factory.make<ast::program>()(std::move(classes));
 			}
 
 			template<typename PoolT>
 			globals_vector make_globals(PoolT& pool, ast_factory& factory)
 			{
-				sem::globals_vector result{};
-				result.push_back(factory.make<ast::var_decl>()(
-						factory.make<ast::type>()(
-								pool.normalize("java.lang.System")
-						),
-						pool.normalize("System")
+				auto globals = sem::globals_vector{};
+				globals.push_back(factory.make<ast::var_decl>()(
+					factory.make<ast::type>()(
+						pool.normalize("java.lang.System")
+					),
+					pool.normalize("System")
 				));
-				return result;
+				return globals;
 			}
 
 		}  // namespace detail

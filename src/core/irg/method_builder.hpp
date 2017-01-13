@@ -43,6 +43,7 @@ namespace minijava
 		 */
 		void create_methods(const semantic_info& semantic_info,
 		                    const ir_types& types);
+
 	}  // namespace irg
 
 }  // namespace minijava

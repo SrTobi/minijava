@@ -12,10 +12,11 @@
 #include <boost/test/data/test_case.hpp>
 
 #include "parser/ast.hpp"
-#include "parser/ast_factory.hpp"
+#include "parser/ast_misc.hpp"
 #include "semantic/semantic_error.hpp"
 #include "symbol/symbol_pool.hpp"
 
+#include "testaux/ast_test_factory.hpp"
 #include "testaux/random_tokens.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
@@ -196,13 +197,28 @@ static const std::tuple<
 	// +
 	{ast::binary_operation_type::plus, 5, 7, 12},
 	{ast::binary_operation_type::plus, max32, 0, max32},
+	{ast::binary_operation_type::plus, max32, 1, min32},
+	{ast::binary_operation_type::plus, max32 - 10, 20, min32 + 9},
 	// -
 	{ast::binary_operation_type::minus, 5, 7, -2},
 	{ast::binary_operation_type::minus, 0, max32, -max32},
+	{ast::binary_operation_type::minus, -1, max32, min32},
+	{ast::binary_operation_type::minus, min32, 1, max32},
+	{ast::binary_operation_type::minus, min32 + 10, 20, max32 - 9},
 	// *
 	{ast::binary_operation_type::multiply, 5, 7, 35},
 	{ast::binary_operation_type::multiply, 0, max32, 0},
 	{ast::binary_operation_type::multiply, 1, max32, max32},
+	{ast::binary_operation_type::multiply, max32, 1, max32},
+	{ast::binary_operation_type::multiply, max32, -1, -max32},
+	{ast::binary_operation_type::multiply, -1, max32, -max32},
+	{ast::binary_operation_type::multiply, min32, -1, min32},
+	{ast::binary_operation_type::multiply, -1, min32, min32},
+	{ast::binary_operation_type::multiply, max32 / 2, 2, max32 - 1},
+	{ast::binary_operation_type::multiply, max32, max32, 1},
+	{ast::binary_operation_type::multiply, min32, min32, 0},
+	{ast::binary_operation_type::multiply, min32, max32, -INT32_C(0x80000000)},
+	{ast::binary_operation_type::multiply, max32, min32, -INT32_C(0x80000000)},
 	// /
 	{ast::binary_operation_type::divide, 5, 7, 0},
 	{ast::binary_operation_type::divide, 7, 5, 1},
@@ -211,6 +227,7 @@ static const std::tuple<
 	{ast::binary_operation_type::divide, 0, max32, 0},
 	{ast::binary_operation_type::divide, 0, 1, 0},
 	{ast::binary_operation_type::divide, 10, 4, 2},
+	{ast::binary_operation_type::divide, min32, -1, min32},
 	// %
 	{ast::binary_operation_type::modulo, 5, 7, 5},
 	{ast::binary_operation_type::modulo, 7, 5, 2},
@@ -220,6 +237,11 @@ static const std::tuple<
 	{ast::binary_operation_type::modulo, 0, max32, 0},
 	{ast::binary_operation_type::modulo, 0, 1, 0},
 	{ast::binary_operation_type::modulo, 10, 4, 2},
+	{ast::binary_operation_type::modulo, 10, 3, 1},
+	{ast::binary_operation_type::modulo, 10, -3, 1},
+	{ast::binary_operation_type::modulo, -10, 3, -1},
+	{ast::binary_operation_type::modulo, -10, -3, -1},
+	{ast::binary_operation_type::modulo, min32, -1, 0},
 };
 
 BOOST_AUTO_TEST_CASE(binary_operations)
@@ -230,72 +252,17 @@ BOOST_AUTO_TEST_CASE(binary_operations)
 		const auto lhs = std::get<1>(sample);
 		const auto rhs = std::get<2>(sample);
 		const auto res = std::get<3>(sample);
-		auto factory = minijava::ast_factory{};
-		const auto ast = factory.make<ast::binary_expression>()(
-			bop,
-			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(lhs))),
-			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(rhs)))
+		auto tf = testaux::ast_test_factory{};
+		const auto ast = tf.factory.make<ast::binary_expression>()(
+			bop, tf.make_integer(lhs), tf.make_integer(rhs)
 		);
 		const auto extracted = sem::extract_constants(*ast);
+		std::clog << *ast << std::endl;
 		BOOST_REQUIRE_EQUAL(3, extracted.size());
 		BOOST_REQUIRE_EQUAL(res, extracted.at(*ast));
 		BOOST_REQUIRE_EQUAL(lhs, extracted.at(ast->lhs()));
 		BOOST_REQUIRE_EQUAL(rhs, extracted.at(ast->rhs()));
 	}
-}
-
-
-BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_1st)
-{
-	auto pool = minijava::symbol_pool<>{};
-	auto factory = minijava::ast_factory{};
-	const auto ast = factory.make<ast::binary_expression>()(
-		ast::binary_operation_type::modulo,
-		factory.make<ast::integer_constant>()(pool.normalize("10")),
-		factory.make<ast::unary_expression>()(
-			ast::unary_operation_type::minus,
-			factory.make<ast::integer_constant>()(pool.normalize("3"))
-		)
-	);
-	const auto extracted = sem::extract_constants(*ast);
-	BOOST_REQUIRE_EQUAL(1, extracted.at(*ast));
-}
-
-
-BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_2nd)
-{
-	auto pool = minijava::symbol_pool<>{};
-	auto factory = minijava::ast_factory{};
-	const auto ast = factory.make<ast::binary_expression>()(
-		ast::binary_operation_type::modulo,
-		factory.make<ast::unary_expression>()(
-			ast::unary_operation_type::minus,
-			factory.make<ast::integer_constant>()(pool.normalize("10"))
-		),
-		factory.make<ast::integer_constant>()(pool.normalize("3"))
-	);
-	const auto extracted = sem::extract_constants(*ast);
-	BOOST_REQUIRE_EQUAL(-1, extracted.at(*ast));
-}
-
-
-BOOST_AUTO_TEST_CASE(modulo_has_sign_of_dividend_3rd)
-{
-	auto pool = minijava::symbol_pool<>{};
-	auto factory = minijava::ast_factory{};
-	const auto ast = factory.make<ast::binary_expression>()(
-		ast::binary_operation_type::modulo,
-		factory.make<ast::unary_expression>()(
-			ast::unary_operation_type::minus,
-			factory.make<ast::integer_constant>()(pool.normalize("10"))
-		),
-		factory.make<ast::unary_expression>()(
-			ast::unary_operation_type::minus,
-			factory.make<ast::integer_constant>()(pool.normalize("3"))
-		)
-	);
-	const auto extracted = sem::extract_constants(*ast);
-	BOOST_REQUIRE_EQUAL(-1, extracted.at(*ast));
 }
 
 
@@ -333,9 +300,6 @@ static const std::tuple<
 	std::int32_t,
 	std::int32_t
 > binop_invalid_data[] = {
-	{ast::binary_operation_type::plus, max32, 1},
-	{ast::binary_operation_type::multiply, max32, max32},
-	{ast::binary_operation_type::multiply, 1 + max32 / 2, max32 / 2},
 	{ast::binary_operation_type::divide, 6, 0},
 	{ast::binary_operation_type::divide, 0, 0},
 	{ast::binary_operation_type::modulo, 0, 0},
@@ -345,15 +309,12 @@ static const std::tuple<
 BOOST_AUTO_TEST_CASE(binary_operations_invalid)
 {
 	for (const auto& sample : binop_invalid_data) {
-		auto pool = minijava::symbol_pool<>{};
 		const auto bop = std::get<0>(sample);
 		const auto lhs = std::get<1>(sample);
 		const auto rhs = std::get<2>(sample);
-		auto factory = minijava::ast_factory{};
-		const auto ast = factory.make<ast::binary_expression>()(
-			bop,
-			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(lhs))),
-			factory.make<ast::integer_constant>()(pool.normalize(std::to_string(rhs)))
+		auto tf = testaux::ast_test_factory{};
+		const auto ast = tf.factory.make<ast::binary_expression>()(
+			bop, tf.make_integer(lhs), tf.make_integer(rhs)
 		);
 		auto problems = std::vector<const ast::node*>{};
 		auto handler = [&problems](const ast::node& n){ problems.push_back(&n); };

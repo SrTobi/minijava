@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <climits>
-#include <iostream>
 #include <set>
 #include <type_traits>
 #include <unordered_map>
@@ -63,15 +62,16 @@ namespace minijava
 				                     const ir_types& firm_types)
 						: _sem_info{sem_info}, _var_ids{var_ids},
 						  _firm_types{firm_types},
-				          _primitives{primitive_types::get_instance()},
-				          _runtime_library{runtime_library::get_instance()}
+				          _primitives{primitive_types::get_instance()}
 				{}
 
 				using ast::visitor::visit;
 
 				void visit(const ast::binary_expression& node) override
 				{
-					if (is_boolean_expression(node)) {
+					if (_maybe_use_constant(node)) {
+						// Use the constant provided by the front-end
+					} else if (is_boolean_expression(node)) {
 						visit_boolean_expression(node);
 					} else if (is_arithmetic_expression(node)) {
 						visit_arithmetic_expression(node);
@@ -82,6 +82,26 @@ namespace minijava
 					} else {
 						MINIJAVA_NOT_REACHED();
 					}
+				}
+
+				void visit(const ast::unary_expression &node) override {
+					if (_maybe_use_constant(node)) {
+						return;
+					}
+					auto rhs = get_expression_node(node.target());
+					switch (node.type()) {
+					case ast::unary_operation_type::minus:
+						_current_node = firm::new_Minus(rhs);
+						return;
+					case ast::unary_operation_type::logical_not:
+						_current_node = materialize(firm::new_Mux(
+								unmaterialize(_current_node),
+						        firm::new_Const(firm::get_tarval_b_true()),
+						        firm::new_Const(firm::get_tarval_b_false())
+						));
+						return;
+					}
+					MINIJAVA_NOT_REACHED();
 				}
 
 				void visit(const ast::object_instantiation& node) override
@@ -102,12 +122,13 @@ namespace minijava
 									firm::get_modeIs(), static_cast<long>(type_size)
 							)
 					};
+					const auto builtin_new = _firm_types.builtins.at("new");
 					auto call_node = firm::new_Call(
 							firm::get_store(),
-					        firm::new_Address(_runtime_library.alloc),
+					        firm::new_Address(builtin_new),
 							2,
 					        arguments,
-					        _runtime_library.alloc_type
+					        firm::get_entity_type(builtin_new)
 					);
 					firm::set_store(firm::new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
 					auto tuple = firm::new_Proj(call_node, firm::get_modeT(), firm::pn_Call_T_result);
@@ -133,12 +154,13 @@ namespace minijava
 									static_cast<long>(inner_type_size)
 							)
 					};
+					const auto builtin_new = _firm_types.builtins.at("new");
 					auto call_node = firm::new_Call(
 							firm::get_store(),
-							firm::new_Address(_runtime_library.alloc),
+							firm::new_Address(builtin_new),
 							2,
 							arguments,
-							_runtime_library.alloc_type
+							firm::get_entity_type(builtin_new)
 					);
 					firm::set_store(firm::new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
 					auto tuple = firm::new_Proj(call_node, firm::get_modeT(), firm::pn_Call_T_result);
@@ -246,13 +268,14 @@ namespace minijava
 
 				void visit(const ast::boolean_constant& node) override
 				{
-					_current_node = firm::new_Const_long(_primitives.boolean_mode, node.value());
+					const auto ok = _maybe_use_constant(node);
+					assert(ok); (void) ok;
 				}
 
 				void visit(const ast::integer_constant& node) override
 				{
-					auto value = _sem_info.const_annotations().at(node);
-					_current_node = firm::new_Const_long(_primitives.int_mode, value);
+					const auto ok = _maybe_use_constant(node);
+					assert(ok); (void) ok;
 				}
 
 				void visit(const ast::null_constant&/* node */) override
@@ -302,21 +325,27 @@ namespace minijava
 					}
 				}
 
-				void visit(const ast::unary_expression &node) override {
-					auto rhs = get_expression_node(node.target());
-					switch (node.type()) {
-					case ast::unary_operation_type::minus:
-						_current_node = firm::new_Minus(rhs);
-						return;
-					case ast::unary_operation_type::logical_not:
-						_current_node = materialize(firm::new_Mux(
-								unmaterialize(_current_node),
-						        firm::new_Const(firm::get_tarval_b_true()),
-						        firm::new_Const(firm::get_tarval_b_false())
-						));
-						return;
+				// If the front-end already extracted a constant for `node`,
+				// assigns it to `_current_node` (with the correct mode) and
+				// `return`s `true`.  Otherwise, `return`s `false` and leaves
+				// `_current_node` unchanged.
+				bool _maybe_use_constant(const ast::expression& node)
+				{
+					const auto pos = _sem_info.const_annotations().find(&node);
+					if (pos == _sem_info.const_annotations().end()) {
+						return false;
 					}
-					MINIJAVA_NOT_REACHED();
+					const auto type = _sem_info.type_annotations().at(node);
+					if (type.rank != 0) {
+						MINIJAVA_NOT_REACHED();
+					} else if (type.info.is_boolean()) {
+						_current_node = firm::new_Const_long(_primitives.boolean_mode, pos->second);
+					} else if (type.info.is_int()) {
+						_current_node = firm::new_Const_long(_primitives.int_mode, pos->second);
+					} else {
+						MINIJAVA_NOT_REACHED();
+					}
+					return true;
 				}
 
 				void visit_assignment(const ast::binary_expression& expression)
@@ -373,19 +402,29 @@ namespace minijava
 					auto memory = firm::get_store();
 					switch (expression.type()) {
 					case ast::binary_operation_type::divide: {
-						auto div_result = firm::new_DivRL(memory, lhs, rhs, firm::op_pin_state_pinned);
-						_current_node = firm::new_Proj(
-							div_result, _primitives.int_mode, firm::pn_Div_res
+						auto div_result = firm::new_DivRL(
+							memory,
+							firm::new_Conv(lhs, firm::mode_Ls),
+							firm::new_Conv(rhs, firm::mode_Ls),
+							firm::op_pin_state_pinned
 						);
+						_current_node = firm::new_Conv(firm::new_Proj(
+							div_result, firm::mode_Ls, firm::pn_Div_res
+						), firm::mode_Is);
 						firm::set_store(firm::new_Proj(div_result, firm::mode_M, firm::pn_Div_M));
 						return;
 					}
 					case ast::binary_operation_type::modulo: {
-						auto mod_result = firm::new_Mod(memory, lhs, rhs,firm::op_pin_state_pinned);
-						firm::set_store(firm::new_Proj(mod_result, firm::mode_M, firm::pn_Mod_M));
-						_current_node = firm::new_Proj(
-							mod_result, _primitives.int_mode, firm::pn_Mod_res
+						auto mod_result = firm::new_Mod(
+							memory,
+							firm::new_Conv(lhs, firm::mode_Ls),
+							firm::new_Conv(rhs, firm::mode_Ls),
+							firm::op_pin_state_pinned
 						);
+						firm::set_store(firm::new_Proj(mod_result, firm::mode_M, firm::pn_Mod_M));
+						_current_node = firm::new_Conv(firm::new_Proj(
+							mod_result, firm::mode_Ls, firm::pn_Mod_res
+						), firm::mode_Is);
 						return;
 					}
 					case ast::binary_operation_type::multiply:
@@ -497,7 +536,6 @@ namespace minijava
 				const var_id_map_type& _var_ids;
 				const ir_types& _firm_types;
 				const primitive_types _primitives;
-				const runtime_library _runtime_library;
 
 				int _var_id{-1};
 				bool _do_store{false};
@@ -755,31 +793,43 @@ namespace minijava
 			}
 		}
 
-		void create_builtin_method(const semantic_info & /*sem_info*/,
-		                           const ir_types & /*firm_types*/,
+		void create_builtin_method(const semantic_info & sem_info,
+		                           const ir_types & firm_types,
 		                           const ast::instance_method &method)
 		{
-			auto irg = firm::get_current_ir_graph();
-
-			auto prim = primitive_types::get_instance();
-			auto rt = runtime_library::get_instance();
-			if (method.name() == "println") {
-				firm::ir_node *arguments[1] = {
-						firm::new_Proj(firm::get_irg_args(irg), prim.int_mode, 1)
-				};
-				auto call_node = firm::new_Call(
-						firm::get_store(),
-						firm::new_Address(rt.println),
-						1,
-						arguments,
-						rt.println_type
-				);
-				firm::set_store(firm::new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
-			} else {
-				MINIJAVA_NOT_REACHED();
+			const auto irg = firm::get_current_ir_graph();
+			// The AST nodes for all builtin methods have empty bodies.  Visit
+			// them like ordinary methods to get the signature right.
+			method_generator generator{sem_info, firm_types};
+			method.accept(generator);
+			const auto builtin_entity = firm_types.builtins.at(method.name().c_str());
+			const auto builtin_type = firm::get_entity_type(builtin_entity);
+			const auto argc = firm::get_method_n_params(builtin_type);
+			auto arguments = std::make_unique<firm::ir_node*[]>(argc);
+			assert(argc == method.parameters().size());
+			for (std::size_t i = 0; i < argc; ++i) {
+				const auto argtype = firm::get_method_param_type(builtin_type, i);
+				const auto id = static_cast<int>(i + 1);
+				arguments[i] = firm::get_value(id, firm::get_type_mode(argtype));
 			}
-			auto store = firm::get_store();
-			auto ret = firm::new_Return(store, 0, nullptr);
+			const auto call_node = firm::new_Call(
+				firm::get_store(),
+				firm::new_Address(builtin_entity),
+				static_cast<int>(argc),
+				arguments.get(),
+				builtin_type
+			);
+			firm::set_store(firm::new_Proj(call_node, firm::get_modeM(), firm::pn_Call_M));
+			const auto store = firm::get_store();
+			firm::ir_node* ret = nullptr;
+			if (firm::get_method_n_ress(builtin_type) > 0) {
+				const auto tuple = firm::new_Proj(call_node, firm::get_modeT(), firm::pn_Call_T_result);
+				const auto res_type = firm::get_method_res_type(builtin_type, 0);
+				const auto res = firm::new_Proj(tuple, firm::get_type_mode(res_type), 0);
+				ret = firm::new_Return(firm::get_store(), 1, &res);
+			} else {
+				ret = firm::new_Return(store, 0, nullptr);
+			}
 			firm::add_immBlock_pred(firm::get_irg_end_block(irg), ret);
 			firm::mature_immBlock(firm::get_r_cur_block(irg));
 		}
@@ -816,7 +866,6 @@ namespace minijava
 			       : static_cast<int>(num_locals) + 1;
 		}
 
-
 		void _create_method_entity(
 				const semantic_info& info,
 				const ir_types& types,
@@ -851,9 +900,8 @@ namespace minijava
 			assert(irg_verify(irg));
 		}
 
-		void create_methods(const semantic_info& info,
-		                    const ir_types& types) {
-
+		void create_methods(const semantic_info& info, const ir_types& types)
+		{
 			for (const auto& kv : info.classes()) {
 				const auto clazz = kv.second.declaration();
 				if (types.classmap.find(clazz) != types.classmap.end()) {

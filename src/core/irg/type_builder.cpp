@@ -30,6 +30,7 @@ namespace minijava
 				{
 					return ir_types{
 						std::move(_typemap),
+						std::move(_builtins),
 						std::move(_classmap),
 						std::move(_fieldmap),
 						std::move(_methodmap)
@@ -43,6 +44,7 @@ namespace minijava
 				primitive_types _primitives{};
 
 				type_mapping _typemap{};
+				builtin_mapping _builtins{};
 				class_mapping _classmap{};
 				field_mapping _fieldmap{};
 				method_mapping _methodmap{};
@@ -96,19 +98,38 @@ namespace minijava
 
 				void _init_methods()
 				{
-					for (const auto& clazz : _seminfo.classes()) {
-						const auto class_decl = clazz.second.declaration();
+					_init_builtin_new();
+					for (const auto& kv : _seminfo.classes()) {
+						const auto class_decl = kv.second.declaration();
 						const auto class_type = _classmap.find(class_decl);
+						const auto is_rt_builtin = kv.second.is_builtin();
 						if (class_type != _classmap.end()) {
 							// class is actually used in the program
 							for (const auto& method : class_decl->instance_methods()) {
 								_init_method(class_type->second, *class_decl, *method);
+								if (is_rt_builtin) {
+									_init_builtin(*method);
+								}
 							}
 						}
 						for (const auto& method : class_decl->main_methods()) {
 							_init_method(firm::get_glob_type(), *method);
 						}
 					}
+				}
+
+				void _init_builtin_new()
+				{
+					const auto builtin_type = firm::new_type_method(2, 1, 0, cc_cdecl_set, firm::mtp_no_property);
+					firm::set_method_param_type(builtin_type, 0, _primitives.int_type);
+					firm::set_method_param_type(builtin_type, 1, _primitives.int_type);
+					firm::set_method_res_type(builtin_type, 0, _primitives.pointer_type);
+					const auto builtin_entity = firm::new_entity(
+						firm::get_glob_type(),
+						firm::new_id_from_str("mj_runtime_new"),
+						builtin_type
+					);
+					_builtins["new"] = builtin_entity;
 				}
 
 				void _init_method(firm::ir_type* class_type,
@@ -140,6 +161,37 @@ namespace minijava
 						method_type);
 					firm::set_entity_ld_ident(method_entity, mangle(clazz, method));
 					_methodmap.insert({&method, method_entity});
+				}
+
+				void _init_builtin(const ast::instance_method& method)
+				{
+					const auto param_count = method.parameters().size();
+					const auto return_type = _seminfo.type_annotations().at(method);
+					const auto has_return_type = !return_type.info.is_void();
+					const auto builtin_type = new_type_method(
+						param_count,             // builtins don't have 'this'
+						has_return_type ? 1 : 0, // number of return types
+						0,                       // variadic?
+						cc_cdecl_set,            // calling convention
+						firm::mtp_no_property
+					);
+					auto i = std::size_t{0};
+					for (const auto& param : method.parameters()) {
+						const auto param_type = _get_var_type(_seminfo.type_annotations().at(*param));
+						firm::set_method_param_type(builtin_type, i++, param_type);
+					}
+					if (has_return_type) {
+						firm::set_method_res_type(builtin_type, 0, _get_var_type(return_type));
+					}
+					const auto builtin_ldname = firm::new_id_fmt(
+						"mj_runtime_%s", method.name().c_str()
+					);
+					const auto builtin_entity = new_entity(
+						firm::get_glob_type(),
+						builtin_ldname,
+						builtin_type);
+					firm::set_entity_ld_ident(builtin_entity, builtin_ldname);
+					_builtins[method.name().c_str()] = builtin_entity;
 				}
 
 				void _init_method(firm::ir_type* class_type, const ast::main_method& method)
@@ -202,8 +254,8 @@ namespace minijava
 				}
 
 				firm::ir_entity* _create_field_entity(firm::ir_type *class_type,
-												const ast::class_declaration& clazz,
-												const ast::var_decl& field)
+													  const ast::class_declaration& clazz,
+													  const ast::var_decl& field)
 				{
 					const auto field_type = _seminfo.type_annotations().at(field);
 					const auto ir_type = _get_var_type(field_type);
@@ -216,7 +268,6 @@ namespace minijava
 					_fieldmap.put(field, field_entity);
 					return field_entity;
 				}
-
 
 			};  // class ir_types_impl
 
@@ -237,36 +288,6 @@ namespace minijava
 			}();
 			return instance;
 		}
-
-
-		const runtime_library& runtime_library::get_instance()
-		{
-			static const auto instance = [](){
-				auto primitives = primitive_types::get_instance();
-				auto rt = runtime_library{};
-				// create allocate method
-				rt.alloc_type = firm::new_type_method(2, 1, 0, cc_cdecl_set, firm::mtp_no_property);
-				firm::set_method_param_type(rt.alloc_type, 0, primitives.int_type);
-				firm::set_method_param_type(rt.alloc_type, 1, primitives.int_type);
-				firm::set_method_res_type(rt.alloc_type, 0, primitives.pointer_type);
-				rt.alloc = firm::new_entity(
-					firm::get_glob_type(),
-					firm::new_id_from_str("mj_runtime_allocate"),
-					rt.alloc_type
-				);
-				// create println method
-				rt.println_type = firm::new_type_method(1, 0, 0, cc_cdecl_set, firm::mtp_no_property);
-				firm::set_method_param_type(rt.println_type, 0, primitives.int_type);
-				rt.println = firm::new_entity(
-					firm::get_glob_type(),
-					firm::new_id_from_str("mj_runtime_println"),
-					rt.println_type
-				);
-				return rt;
-			}();
-			return instance;
-		}
-
 
 		ir_types create_types(const ast::program& ast, const semantic_info& seminfo)
 		{
