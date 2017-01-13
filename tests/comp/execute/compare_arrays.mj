@@ -8,5 +8,5 @@ class Test {
 		int[] a = new int[0];
 		if (a != a) { System.out.println(3); }
 	}
-	
+
 }
