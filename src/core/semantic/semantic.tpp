@@ -78,8 +78,40 @@ namespace minijava
 					{ast::primitive_type::type_int},
 					pool, factory
 				));
+				methods.push_back(make_builtin_method(
+					"write",
+					ast::primitive_type::type_void,
+					{ast::primitive_type::type_int},
+					pool, factory
+				));
+				methods.push_back(make_builtin_method(
+					"flush",
+					ast::primitive_type::type_void,
+					{},
+					pool, factory
+				));
 				return factory.make<ast::class_declaration>()(
 					pool.normalize("java.io.PrintStream"),
+					std::move(fields),
+					std::move(methods),
+					std::vector<std::unique_ptr<ast::main_method>>{}
+				);
+			}
+
+			template<typename PoolT>
+			std::unique_ptr<ast::class_declaration>
+			make_builtin_class_inputstream(PoolT& pool, ast_factory& factory)
+			{
+				auto fields = std::vector<std::unique_ptr<ast::var_decl>>{};
+				auto methods = std::vector<std::unique_ptr<ast::instance_method>>{};
+				methods.push_back(make_builtin_method(
+					"read",
+					ast::primitive_type::type_int,
+					{},
+					pool, factory
+				));
+				return factory.make<ast::class_declaration>()(
+					pool.normalize("java.io.InputStream"),
 					std::move(fields),
 					std::move(methods),
 					std::vector<std::unique_ptr<ast::main_method>>{}
@@ -91,18 +123,28 @@ namespace minijava
 			make_builtin_class_system(PoolT& pool, ast_factory& factory)
 			{
 				auto fields = std::vector<std::unique_ptr<ast::var_decl>>{};
-				fields.push_back(
-					factory.make<ast::var_decl>()(
-						factory.make<ast::type>()(
-							pool.normalize("java.io.PrintStream")
-						),
-						pool.normalize("out")
-					)
-				);
+				const std::pair<const char*, const char*> members[] = {
+					{"in",  "java.io.InputStream"},
+					{"out", "java.io.PrintStream"},
+				};
+				for (auto&& kv : members) {
+					fields.push_back(
+						factory.make<ast::var_decl>()(
+							factory.make<ast::type>()(pool.normalize(kv.second)),
+							pool.normalize(kv.first)
+						)
+					);
+				}
 				auto methods = std::vector<std::unique_ptr<ast::instance_method>>{};
 				methods.push_back(make_builtin_method(
 					"id",
 					ast::primitive_type::type_int,
+					{ast::primitive_type::type_int},
+					pool, factory
+				));
+				methods.push_back(make_builtin_method(
+					"exit",
+					ast::primitive_type::type_void,
 					{ast::primitive_type::type_int},
 					pool, factory
 				));
@@ -121,6 +163,7 @@ namespace minijava
 				auto classes = std::vector<std::unique_ptr<ast::class_declaration>>{};
 				classes.push_back(make_builtin_class_string(pool, factory));
 				classes.push_back(make_builtin_class_printstream(pool, factory));
+				classes.push_back(make_builtin_class_inputstream(pool, factory));
 				classes.push_back(make_builtin_class_system(pool, factory));
 				return factory.make<ast::program>()(std::move(classes));
 			}

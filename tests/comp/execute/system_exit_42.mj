@@ -1,0 +1,10 @@
+// pragma execstatus 42
+// pragma output
+
+class Test {
+
+	public static void main(String[] args) {
+		System.exit(42);
+	}
+
+}
