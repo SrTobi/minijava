@@ -41,7 +41,7 @@ namespace minijava
 		return vec;
 	}
 
-	void opt::copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg)
+	firm::ir_node* opt::copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg)
 	{
 		firm::ir_node* nn = nullptr;
 		auto old_irg = firm::get_irn_irg(n);
@@ -72,7 +72,7 @@ namespace minijava
 		if (nn) {
 			// link old with new node
 			firm::set_irn_link(n, nn);
-			return;
+			return nn;
 		}
 
 		auto arity = firm::get_irn_arity(n);
@@ -91,6 +91,7 @@ namespace minijava
 		);
 		firm::set_irn_link(n, nn);
 		firm::copy_node_attr(irg, n, nn);
+		return nn;
 	}
 
 	void copy_nodes(firm::ir_node* node, void* env)
