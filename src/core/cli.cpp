@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -24,6 +25,7 @@
 #include "parser/parser.hpp"
 #include "runtime/host_cc.hpp"
 #include "semantic/semantic.hpp"
+#include "source_error.hpp"
 #include "symbol/symbol_pool.hpp"
 #include "system/logger.hpp"
 #include "system/system.hpp"
@@ -225,17 +227,9 @@ namespace minijava
 		}
 
 
-		// Runs the compiler reading input from `istr`, writing output to
-		// `ostr` and optionally intercepting compilation at `stage`.
-		void run_compiler(file_data& in, file_output& out,
-		                  const compilation_stage stage, const std::string& cc)
+		void run_compiler_stages(file_data& in, file_output& out,
+		                         const compilation_stage stage, const std::string& cc, symbol_pool<>& pool)
 		{
-			using namespace std::string_literals;
-			if (stage == compilation_stage::input) {
-				out.write(in.data(), in.size());
-				return;
-			}
-			auto pool = symbol_pool<>{};  // TODO: Use an appropriate allocator
 			auto lex = make_lexer(std::begin(in), std::end(in), pool, pool);
 			const auto tokfirst = token_begin(lex);
 			const auto toklast = token_end(lex);
@@ -275,6 +269,87 @@ namespace minijava
 			}
 			// If we get until here, we have a problem...
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
+		}
+
+		std::pair<std::size_t, std::string> get_line_section_by_position(file_data& data, const position& pos, const std::size_t max_length)
+		{
+			assert(pos.line() >= 1);
+			std::size_t line = 1;
+			auto cur = data.begin();
+			while(line < pos.line()) {
+				while(*cur != '\n') {
+					++cur;
+				}
+				++cur; // skip \n
+				++line;
+			}
+			const auto line_begin = cur;
+
+			while(cur != data.end() && *cur != '\n') {
+				++cur;
+			}
+			const auto line_end = cur;
+
+			const std::size_t line_length = static_cast<std::size_t>(std::distance(line_begin, line_end));
+			if (line_length <= max_length) {
+				return std::make_pair(0, std::string(line_begin, line_end));
+			} else {
+				const size_t column_position_in_section = max_length / 3;
+				const size_t skip = std::max(std::size_t(0), pos.column() - column_position_in_section);
+				auto section_begin = line_begin + skip;
+				auto section_end = std::min(line_end, line_begin + max_length);
+				return std::make_pair(skip, std::string(section_begin,  section_end));
+			}
+		}
+
+		void print_source_error(logger& log, const source_error& e, file_data& in, const char* stage_verb)
+		{
+			log.printf("Error while %s %s:\n", stage_verb, in.filename().c_str());
+			const position pos = e.position();
+			if(pos == position{0, 0})
+			{
+				log.printf("  At an unknown location: %s\n", e.what());
+			} else {
+				log.printf("  In line %zu at column %zu: %s\n", pos.line(), pos.column(), e.what());
+
+				std::size_t skip_chars;
+				std::string section;
+				std::tie(skip_chars, section) = get_line_section_by_position(in, pos, 100);
+
+				// adjust section to support tabs
+				int indent = static_cast<int>(pos.column() - skip_chars);
+				indent += static_cast<int>(std::count(section.begin(), section.end(), '\t'));
+				boost::replace_all(section, "\t", "  ");
+
+				if(skip_chars > 0) {
+					log.printf("  <%zu skipped> %s\n", skip_chars, section.c_str());
+					log.printf("  <%zu skipped> %*s\n", skip_chars, indent, "^");
+				}else{
+					log.printf("  %s\n", section.c_str());
+					log.printf("  %*s\n", indent, "^");
+				}
+			}
+		}
+
+		// Runs the compiler reading input from `istr`, writing output to
+		// `ostr` and optionally intercepting compilation at `stage`.
+		void run_compiler(file_data& in, file_output& out, logger& log,
+		                  const compilation_stage stage, const std::string& cc)
+		{
+			using namespace std::string_literals;
+			if (stage == compilation_stage::input) {
+				out.write(in.data(), in.size());
+				return;
+			}
+			auto pool = symbol_pool<>{};  // TODO: Use an appropriate allocator
+
+			try {
+				run_compiler_stages(in, out, stage, cc, pool);
+
+			} catch(source_error& e) {
+				print_source_error(log, e, in, "compiling");
+				throw;
+			}
 		}
 
 
@@ -357,7 +432,7 @@ namespace minijava
 		auto out = (setup.output == "-")
 			? file_output{thestdout, "stdout"}
 			: file_output{setup.output};
-		run_compiler(in, out, setup.stage, setup.cc);
+		run_compiler(in, out, log, setup.stage, setup.cc);
 		out.finalize();
 	}
 
