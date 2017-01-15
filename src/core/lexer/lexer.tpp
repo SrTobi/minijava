@@ -41,7 +41,7 @@ namespace minijava
 		static bool do_advance(lexer_type& lex)
 		{
 			const auto c = lexer_impl::skip_white_space(lex);
-			auto current_position = position(lex._line, lex._column);
+			auto current_position = lex._position();
 			if (c < 0) {
 				lex._current_token = token::create(token_type::eof);
 			} else if (is_word_head(c)) {
@@ -119,7 +119,7 @@ namespace minijava
 					maybe_token(lex, '=', token_type::bit_or_assign);
 				}
 			} else {
-				throw lexical_error{};
+				throw lexical_error{"Invalid input", current_position};
 			}
 			lex._current_token.set_position(current_position);
 			return true;
@@ -216,7 +216,7 @@ namespace minijava
 					return c;
 				}
 				if (c < 0) {
-					throw lexical_error{"Input ended before block-comment was closed"};
+					throw lexical_error{"Input ended before block-comment was closed", lex._position()};
 				}
 			}
 		}
@@ -309,6 +309,12 @@ namespace minijava
 		while (!lexer_impl::do_advance(*this)) {
 			// Try again, eh?
 		}
+	}
+
+	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>
+	position lexer<InIterT, IdPoolT, LitPoolT, AllocT>::_position() const
+	{
+		return position{_line, _column};
 	}
 
 	template<typename InIterT, typename IdPoolT, typename LitPoolT, typename AllocT>

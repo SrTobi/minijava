@@ -15,8 +15,8 @@ namespace minijava
 	{
 	}
 
-	lexical_error::lexical_error(const std::string& msg)
-			: source_error{msg}
+	lexical_error::lexical_error(const std::string& msg, minijava::position pos)
+			: source_error{msg, pos}
 	{
 	}
 

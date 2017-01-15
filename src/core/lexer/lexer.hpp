@@ -30,20 +30,25 @@ namespace minijava
 	{
 		/**
 		 * @brief
-		 *     Creates an exception object with a generic error message.
+		 *     Creates a new exception object with a generic error message and
+		 *     no source location information.
 		 *
 		 */
 		lexical_error();
 
 		/**
 		 * @brief
-		 *     Creates an exception object with the provided error message.
+		 *     Creates a new exception object with a custom error message and
+		 *     optional source location information.
 		 *
 		 * @param msg
-		 *     error message
+		 *     custom error message
+		 *
+		 * @param pos
+		 *     parser-defined error location
 		 *
 		 */
-		explicit lexical_error(const std::string& msg);
+		explicit lexical_error(const std::string& msg, minijava::position pos = {});
 	};
 
 	/**
@@ -205,6 +210,9 @@ namespace minijava
 		 *
 		 */
 		void advance();
+
+	private:
+		position _position() const;
 
 	private:
 
