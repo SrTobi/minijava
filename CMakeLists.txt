@@ -86,6 +86,7 @@ set(COMPONENTS
 	semantic/symbol_table
 	semantic/thou_shalt_return
 	semantic/type_info
+	source_error
 	symbol/symbol
 	symbol/symbol_anchor
 	symbol/symbol_entry

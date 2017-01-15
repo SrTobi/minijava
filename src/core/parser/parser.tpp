@@ -19,12 +19,6 @@
 
 namespace minijava
 {
-
-	inline position syntax_error::position() const noexcept
-	{
-		return _position;
-	}
-
 	namespace detail
 	{
 

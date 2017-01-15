@@ -14,12 +14,12 @@ namespace minijava
 {
 
 	syntax_error::syntax_error()
-		: std::runtime_error{"invalid syntax"}
+		: source_error{"invalid syntax"}
 	{
 	}
 
 	syntax_error::syntax_error(const std::string& msg, const minijava::position pos)
-		: std::runtime_error{msg}, _position{pos}
+		: source_error{msg, pos}
 	{
 	}
 

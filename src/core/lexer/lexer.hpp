@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "lexer/token.hpp"
+#include "source_error.hpp"
 
 
 namespace minijava
@@ -25,7 +26,7 @@ namespace minijava
 	 *     Exception indicating a lexical error in the input.
 	 *
 	 */
-	struct lexical_error : std::runtime_error
+	struct lexical_error : source_error
 	{
 		/**
 		 * @brief

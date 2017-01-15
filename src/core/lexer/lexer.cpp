@@ -11,12 +11,12 @@ namespace minijava
 	}
 
 	lexical_error::lexical_error()
-			: std::runtime_error{default_lexical_error_msg}
+			: source_error{default_lexical_error_msg}
 	{
 	}
 
 	lexical_error::lexical_error(const std::string& msg)
-			: std::runtime_error{msg}
+			: source_error{msg}
 	{
 	}
 

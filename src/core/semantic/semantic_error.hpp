@@ -11,6 +11,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "source_error.hpp"
+
 
 namespace minijava
 {
@@ -20,7 +22,7 @@ namespace minijava
 	 *     Exception used to report errors from the semantic analysis.
 	 *
 	 */
-	struct semantic_error: std::runtime_error
+	struct semantic_error: source_error
 	{
 
 		/**
