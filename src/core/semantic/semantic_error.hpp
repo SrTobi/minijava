@@ -36,13 +36,16 @@ namespace minijava
 		/**
 		 * @brief
 		 *     Creates a new exception object with a custom error message and
-		 *     no source location information.
+		 *     optional source location information.
 		 *
 		 * @param msg
 		 *     custom error message
 		 *
+		 * @param pos
+		 *     parser-defined error location
+		 *
 		 */
-		semantic_error(const std::string& msg);
+		semantic_error(const std::string& msg, minijava::position pos = {});
 
 	};  // struct semantic_error
 

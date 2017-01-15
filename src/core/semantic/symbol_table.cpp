@@ -16,7 +16,7 @@ namespace minijava
 
 			[[noreturn]] void throw_conflicting_symbol_definitions(
 				const symbol name,
-				const ast::var_decl*const /* curr */,
+				const ast::var_decl*const curr,
 				const ast::var_decl*const /* prev */
 			)
 			{
@@ -26,7 +26,7 @@ namespace minijava
 				auto oss = std::ostringstream{};
 				oss << "Redefinition of symbol '" << name << "' "
 					<< "conflicts with previous declaration";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), curr->position()};
 			}
 
 		}  // namespace detail

@@ -28,7 +28,7 @@ namespace minijava
 					<< " on line " << c2->position().line()
 					<< " conflicts with previous declaration on line "
 					<< c1->position().line();
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), c2->position()};
 			}
 
 		}  // namespace /* anonymous */

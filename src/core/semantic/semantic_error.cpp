@@ -9,8 +9,8 @@ namespace minijava
 	{
 	}
 
-	semantic_error::semantic_error(const std::string& msg)
-		: source_error{msg}
+	semantic_error::semantic_error(const std::string& msg, minijava::position pos)
+		: source_error{msg, pos}
 	{
 	}
 

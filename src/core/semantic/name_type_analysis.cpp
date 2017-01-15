@@ -51,10 +51,10 @@ namespace minijava
 					const auto pti = primitive_type_info(*primitive);
 					if (pti.is_void()) {
 						if (rank > 0) {
-							throw semantic_error{"Cannot have array of 'void'"};
+							throw semantic_error{"Cannot have array of 'void'", declared_type.position()};
 						}
 						if (!voidok) {
-							throw semantic_error{"Variable cannot be 'void'"};
+							throw semantic_error{"Variable cannot be 'void'", declared_type.position()};
 						}
 					}
 					return type{pti, rank};
@@ -62,7 +62,7 @@ namespace minijava
 				const auto type_name = boost::get<symbol>(declared_basic_type);
 				const auto pos = classes.find(type_name);
 				if (pos == classes.end()) {
-					throw semantic_error{"Unknown type '"s + type_name.c_str() + "'"};
+					throw semantic_error{"Unknown type '"s + type_name.c_str() + "'", declared_type.position()};
 				}
 				return type{pos->second, rank};
 			}
@@ -183,7 +183,7 @@ namespace minijava
 					for (const auto& main : clazz->main_methods()) {
 						annotate_method(*main, classes, type_annotations);
 						if (main->name() != "main") {
-							throw semantic_error{"Only 'main' can be 'static'"};
+							throw semantic_error{"Only 'main' can be 'static'", main->position()};
 						}
 						if (main_class_ptr != nullptr) {
 							throw_duplicate_main(clazz.get(), main_class_ptr);
@@ -203,71 +203,74 @@ namespace minijava
 
 			[[noreturn, gnu::cold]] void
 			throw_return_void_expected(const ast::method& m,
-									   const ast::return_statement& /* s */)
+									   const ast::return_statement& s)
 			{
+				assert(s.value());
 				std::ostringstream oss{};
 				oss << "Method '" << m.name().c_str() << "' has return type"
 					<< " 'void' and therefore cannot return any value";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), s.value()->position()};
 			}
 
 			[[noreturn, gnu::cold]] void
 			throw_return_value_expected(const ast::method& m,
-										const ast::return_statement& /* s */)
+										const ast::return_statement& s)
 			{
 				std::ostringstream oss{};
 				oss << "Method '" << m.name().c_str() << "' has non-'void'"
 					<< " return type and therefore must return a value";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), s.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
 			throw_incompatible_type(const type expected, const type actual,
-									const ast::expression& /* expr */)
+									const ast::expression& expr)
 			{
 				std::ostringstream oss{};
 				oss << "Type of expression (" << actual
 					<< ") is not compatible with the expected type ("
 					<< expected << ")";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), expr.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
 			throw_unknown_type(const symbol unknown_type,
-							   const ast::object_instantiation& /* expr */)
+							   const ast::object_instantiation& expr)
 			{
 				std::ostringstream oss{};
 				oss << "Unknown type '" << unknown_type.c_str() << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), expr.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
 			throw_invalid_subscript(const type actual,
-									const ast::array_access& /* expr */)
+									const ast::array_access& expr)
 			{
 				std::ostringstream oss{};
 				oss << "Subscript operator used on non-array type '" << actual << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), expr.target().position()};
 			}
 
 			[[noreturn, gnu::cold]] void
 			throw_invalid_field_access(const type actual,
-									   const ast::variable_access& /* expr */)
+									   const ast::variable_access& expr)
 			{
+				assert(expr.target());
 				std::ostringstream oss{};
 				oss << "Invalid field access on expression of non-object type "
 					<< "'" << actual << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), expr.target()->position()};
 			}
 
 			[[noreturn, gnu::cold]] void
 			throw_invalid_method_access(const type actual,
-										const ast::method_invocation& /* expr */)
+										const ast::method_invocation& expr)
 			{
+				assert(expr.target());
 				std::ostringstream oss{};
 				oss << "Invalid method access on expression of non-object type "
 					<< "'" << actual << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), expr.target()->position()};
 			}
 
 			[[noreturn, gnu::cold]] void
@@ -277,7 +280,7 @@ namespace minijava
 				std::ostringstream oss{};
 				oss << "Object of type '" << clazz.name().c_str() << "'"
 					<< " has no field named '" << node.name().c_str() << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
@@ -287,7 +290,7 @@ namespace minijava
 				std::ostringstream oss{};
 				oss << "Object of type '" << clazz.name().c_str() << "'"
 					<< " has no method named '" << node.name().c_str() << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
@@ -295,7 +298,7 @@ namespace minijava
 			{
 				std::ostringstream oss{};
 				oss << "Unknown variable or field '" << node.name().c_str() << "'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
@@ -305,7 +308,7 @@ namespace minijava
 				std::ostringstream oss{};
 				oss << "Tried to access '" << node.name().c_str()
 					<< "', which is illegal";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
@@ -315,7 +318,7 @@ namespace minijava
 				std::ostringstream oss{};
 				oss << "Tried to re-declare '" << node.name().c_str()
 				    << "', which is illegal";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
@@ -324,7 +327,7 @@ namespace minijava
 				std::ostringstream oss{};
 				oss << "Cannot call instance method '" << node.name().c_str() << "'"
 					<< " from within 'main'";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 
@@ -337,13 +340,13 @@ namespace minijava
 				oss << "Method '" << node.name().c_str() << "'"
 					<< " expects " << expected_size << " arguments but "
 					<< actual_size << " were given";
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 			[[noreturn, gnu::cold]] void
-			throw_lvalue_expected(const ast::expression& /* expr */)
+			throw_lvalue_expected(const ast::expression& expr)
 			{
-				throw semantic_error{"Expression cannot be used on the left side of an assignment"};
+				throw semantic_error{"Expression cannot be used on the left side of an assignment", expr.position()};
 			}
 
 
@@ -638,7 +641,7 @@ namespace minijava
 				void visit(const ast::this_ref& node) override
 				{
 					if (_in_main()) {
-						throw semantic_error{"Cannot reference 'this' from 'main'"};
+						throw semantic_error{"Cannot reference 'this' from 'main'", node.position()};
 					}
 					_type_annotations.put(node, {_this_type, 0});
 				}

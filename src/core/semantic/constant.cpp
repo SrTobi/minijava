@@ -44,7 +44,7 @@ namespace minijava
 					oss << "Value of integer literal too large for 32 bit two's complement integer: "
 						<< node.literal();
 				}
-				throw semantic_error{oss.str()};
+				throw semantic_error{oss.str(), node.position()};
 			}
 
 
