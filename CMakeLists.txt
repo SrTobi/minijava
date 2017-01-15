@@ -90,6 +90,7 @@ set(COMPONENTS
 	symbol/symbol_anchor
 	symbol/symbol_entry
 	symbol/symbol_pool
+	system/logger
 	system/subprocess
 	system/system
 	util/meta
