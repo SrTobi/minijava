@@ -25,6 +25,7 @@
 #include "runtime/host_cc.hpp"
 #include "semantic/semantic.hpp"
 #include "symbol/symbol_pool.hpp"
+#include "system/logger.hpp"
 #include "system/system.hpp"
 
 
@@ -65,6 +66,9 @@ namespace minijava
 
 			// Name of the C compiler executable (for linking the runtime)
 			std::string cc{};
+
+			// Prevent output to the log?
+			bool quiet = false;
 		};
 
 
@@ -164,7 +168,8 @@ namespace minijava
 			auto generic = po::options_description{"Generic Options"};
 			generic.add_options()
 				("help", "show help text and exit")
-				("version", "show version text and exit");
+				("version", "show version text and exit")
+				("quiet", "prevent log output");
 			auto interception = po::options_description{"Intercepting the Compilation at Specific Stages"};
 			interception.add_options()
 				("echo", "stop after reading input and output it verbatim")
@@ -196,6 +201,9 @@ namespace minijava
 			if (varmap.count("version")) {
 				print_version(out);
 				return false;
+			}
+			if (varmap.count("quiet")) {
+				setup.quiet = true;
 			}
 			po::notify(varmap);
 			check_mutex_option_group(interception, varmap);
@@ -275,7 +283,7 @@ namespace minijava
 		// has a valid value, its value is `return`ed.  Otherwise, 0 (which is
 		// not a valid value) is `return`ed.  If it is set to an invalid value,
 		// a warning is printed to `err`.
-		std::ptrdiff_t get_stack_limit(std::FILE* err)
+		std::ptrdiff_t get_stack_limit(logger& log)
 		{
 			const auto envval = std::getenv(MINIJAVA_ENVVAR_STACK_LIMIT);
 			if (envval == nullptr) {
@@ -296,8 +304,7 @@ namespace minijava
 			} catch (const boost::bad_lexical_cast&) { /* fall through */ }
 			// TODO: Once we have a logging facility, we should use it here
 			// instead of printing directly.
-			std::fprintf(
-				err, "%s: warning: %s: %s: %s\n",
+			log.printf("%s: warning: %s: %s: %s\n",
 				MINIJAVA_PROJECT_NAME, MINIJAVA_ENVVAR_STACK_LIMIT,
 			    "not a valid stack size in bytes", envval
 			);
@@ -308,16 +315,16 @@ namespace minijava
 		// is set, adjust the resource limt accordingly.  This function handles
 		// erros by printing a warning to `err` and otherwise ignoring them,
 		// letting the stack limit as it is.
-		void try_adjust_stack_limit(std::FILE* err)
+		void try_adjust_stack_limit(logger& log)
 		{
-			if (const auto limit = get_stack_limit(err)) {
+			if (const auto limit = get_stack_limit(log)) {
 				try {
 					set_max_stack_size_limit(limit);
 				} catch (const std::system_error& e) {
 					// TODO: Once we have a logging facility, we should use it
 					// here instead of printing directly.
-					std::fprintf(
-						err, "%s: warning: %s\n",
+					log.printf(
+						"%s: warning: %s\n",
 						MINIJAVA_PROJECT_NAME, e.what()
 					);
 				}
@@ -340,7 +347,10 @@ namespace minijava
 				return;
 			}
 		}
-		try_adjust_stack_limit(thestderr);
+
+		logger log = setup.quiet? logger{} : logger{thestderr};
+
+		try_adjust_stack_limit(log);
 		auto in = (setup.input == "-")
 			? file_data{thestdin, "stdin"}
 			: file_data{setup.input};
