@@ -318,7 +318,7 @@ namespace minijava
 
 				// adjust section to support tabs
 				int indent = static_cast<int>(pos.column() - skip_chars);
-				indent += static_cast<int>(std::count(section.begin(), section.end(), '\t'));
+				indent += static_cast<int>(std::count(section.begin(), section.end(), '\t'));  // 2 spaces per tab
 				boost::replace_all(section, "\t", "  ");
 
 				if(skip_chars > 0) {
@@ -345,7 +345,15 @@ namespace minijava
 
 			try {
 				run_compiler_stages(in, out, stage, cc, pool);
-
+			} catch(lexical_error& e) {
+				print_source_error(log, e, in, "tokenizing");
+				throw;
+			} catch(syntax_error& e) {
+				print_source_error(log, e, in, "parsing");
+				throw;
+			} catch(semantic_error& e) {
+				print_source_error(log, e, in, "analysing the semantics of");
+				throw;
 			} catch(source_error& e) {
 				print_source_error(log, e, in, "compiling");
 				throw;
