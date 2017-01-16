@@ -297,12 +297,12 @@ namespace minijava
 			if (line_length <= max_length) {
 				return std::make_tuple(0, 0, std::string(line_begin, line_end));
 			} else {
-				const size_t column_position_in_section = max_length / 3;
-				const size_t skip_suggestion = std::max(std::size_t(0), pos.column() - column_position_in_section);
-				const size_t skip = (skip_suggestion >= min_skip? skip_suggestion : 0);
+				const std::size_t column_position_in_section = max_length / 3;
+				const std::size_t skip_suggestion = pos.column() < column_position_in_section? 0 : pos.column() - column_position_in_section;
+				const std::size_t skip = (skip_suggestion >= min_skip? skip_suggestion : 0);
 				auto section_begin = line_begin + skip;
 				auto section_end = std::min(line_end, line_begin + max_length);
-				const size_t skip_after = line_length - max_length;
+				const std::size_t skip_after = static_cast<std::size_t>(section_end - section_begin);
 				return std::make_tuple(skip, skip_after, std::string(section_begin,  section_end));
 			}
 		}
@@ -327,16 +327,21 @@ namespace minijava
 				indent += static_cast<int>(std::count(section.begin(), section.end(), '\t'));  // 2 spaces per tab
 				boost::replace_all(section, "\t", "  ");
 
-				if(skip_chars > 0) {
-					indent += static_cast<int>(std::to_string(skip_chars).size());
-					log.printf("  <%zu skipped> %s", skip_chars, section.c_str());
+				auto print_after_skip = [&] {
 					if(skip_after > 0) {
 						log.printf(" <%zu skipped>", skip_after);
 					}
+				};
+
+				if(skip_chars > 0) {
+					indent += static_cast<int>(std::to_string(skip_chars).size());
+					log.printf("  <%zu skipped> %s", skip_chars, section.c_str());
+					print_after_skip();
 					log.printf("\n             %*s\n", indent, "^");
 				}else{
-					log.printf("  %s\n", section.c_str());
-					log.printf("  %*s\n", indent, "^");
+					log.printf("  %s", section.c_str());
+					print_after_skip();
+					log.printf("\n  %*s\n", indent, "^");
 				}
 			}
 		}
