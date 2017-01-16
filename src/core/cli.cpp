@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -271,7 +272,9 @@ namespace minijava
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
 
-		std::pair<std::size_t, std::string> get_line_section_by_position(file_data& data, const position& pos, const std::size_t max_length)
+		std::tuple<std::size_t, std::size_t, std::string>
+			get_line_section_by_position(file_data& data, const position& pos,
+			                             const std::size_t max_length, const std::size_t min_skip)
 		{
 			assert(pos.line() >= 1);
 			std::size_t line = 1;
@@ -292,13 +295,15 @@ namespace minijava
 
 			const std::size_t line_length = static_cast<std::size_t>(std::distance(line_begin, line_end));
 			if (line_length <= max_length) {
-				return std::make_pair(0, std::string(line_begin, line_end));
+				return std::make_tuple(0, 0, std::string(line_begin, line_end));
 			} else {
 				const size_t column_position_in_section = max_length / 3;
-				const size_t skip = std::max(std::size_t(0), pos.column() - column_position_in_section);
+				const size_t skip_suggestion = std::max(std::size_t(0), pos.column() - column_position_in_section);
+				const size_t skip = (skip_suggestion >= min_skip? skip_suggestion : 0);
 				auto section_begin = line_begin + skip;
 				auto section_end = std::min(line_end, line_begin + max_length);
-				return std::make_pair(skip, std::string(section_begin,  section_end));
+				const size_t skip_after = line_length - max_length;
+				return std::make_tuple(skip, skip_after, std::string(section_begin,  section_end));
 			}
 		}
 
@@ -313,8 +318,9 @@ namespace minijava
 				log.printf("  In line %zu at column %zu: %s\n", pos.line(), pos.column(), e.what());
 
 				std::size_t skip_chars;
+				std::size_t skip_after;
 				std::string section;
-				std::tie(skip_chars, section) = get_line_section_by_position(in, pos, 100);
+				std::tie(skip_chars, skip_after, section) = get_line_section_by_position(in, pos, 100, 10);
 
 				// adjust section to support tabs
 				int indent = static_cast<int>(pos.column() - skip_chars);
@@ -322,8 +328,12 @@ namespace minijava
 				boost::replace_all(section, "\t", "  ");
 
 				if(skip_chars > 0) {
-					log.printf("  <%zu skipped> %s\n", skip_chars, section.c_str());
-					log.printf("  <%zu skipped> %*s\n", skip_chars, indent, "^");
+					indent += static_cast<int>(std::to_string(skip_chars).size());
+					log.printf("  <%zu skipped> %s", skip_chars, section.c_str());
+					if(skip_after > 0) {
+						log.printf(" <%zu skipped>", skip_after);
+					}
+					log.printf("\n             %*s\n", indent, "^");
 				}else{
 					log.printf("  %s\n", section.c_str());
 					log.printf("  %*s\n", indent, "^");
