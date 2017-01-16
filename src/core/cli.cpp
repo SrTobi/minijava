@@ -297,11 +297,11 @@ namespace minijava
 			if (line_length <= max_length) {
 				return std::make_tuple(0, 0, std::string(line_begin, line_end));
 			} else {
-				const std::size_t column_position_in_section = max_length / 3;
+				const std::size_t column_position_in_section = max_length / 2;
 				const std::size_t skip_suggestion = pos.column() < column_position_in_section? 0 : pos.column() - column_position_in_section;
 				const std::size_t skip = (skip_suggestion >= min_skip? skip_suggestion : 0);
 				auto section_begin = line_begin + skip;
-				auto section_end = std::min(line_end, line_begin + max_length);
+				auto section_end = std::min(line_end, section_begin + max_length);
 				const std::size_t skip_after = static_cast<std::size_t>(section_end - section_begin);
 				return std::make_tuple(skip, skip_after, std::string(section_begin,  section_end));
 			}
