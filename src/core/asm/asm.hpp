@@ -31,4 +31,11 @@ namespace minijava
 	 */
 	void assemble(firm_ir& ir, file_output& out);
 
+	/**
+	 * @brief
+	 *     Assembly code generation backend.
+	 *
+	 */
+	namespace backend {}
+
 }  // namespace minijava
