@@ -13,11 +13,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
+#include "asm/asm.hpp"
 #include "exceptions.hpp"
 #include "global.hpp"
-#include "irg/irg.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
+#include "irg/irg.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
 #include "parser/ast_misc.hpp"
@@ -222,6 +223,7 @@ namespace minijava
 		void run_compiler(file_data& in, file_output& out,
 		                  const compilation_stage stage, const std::string& cc)
 		{
+			namespace fs = boost::filesystem;
 			using namespace std::string_literals;
 			if (stage == compilation_stage::input) {
 				out.write(in.data(), in.size());
@@ -254,19 +256,21 @@ namespace minijava
 				dump_firm_ir(ir); // TODO: allow setting directory
 				return;
 			}
-			if (stage == compilation_stage::compile_firm) {
-				namespace fs = boost::filesystem;
-				const auto pattern = fs::temp_directory_path() / "%%%%%%%%%%%%.s";
-				const auto tmp_path = fs::unique_path(pattern);
-				const auto assembly_filename = tmp_path.string();
-				auto assembly_file = file_output{assembly_filename};
-				emit_x64_assembly_firm(ir, assembly_file);
-				assembly_file.close();
-				link_runtime(cc, "a.out", assembly_filename);
-				return;
+			// From now on, output defaults to 'a.out' not to stdout.
+			if (out.filename().empty()) {
+				out = file_output{"a.out"};
 			}
-			// If we get until here, we have a problem...
-			throw not_implemented_error{"The rest of the compiler has yet to be written"};
+			const auto tempdir = fs::temp_directory_path();
+			const auto asmname = fs::unique_path(tempdir / "%%%%%%%%%%%%.s").string();
+			auto asmout = file_output{asmname};
+			if (stage == compilation_stage::compile_firm) {
+				emit_x64_assembly_firm(ir, asmout);
+			} else {
+				assert(stage == compilation_stage{});
+				assemble(ir, asmout);
+			}
+			asmout.close();
+			link_runtime(cc, out.filename(), asmname);
 		}
 
 
@@ -342,10 +346,10 @@ namespace minijava
 		}
 		try_adjust_stack_limit(thestderr);
 		auto in = (setup.input == "-")
-			? file_data{thestdin, "stdin"}
+			? file_data{thestdin}
 			: file_data{setup.input};
 		auto out = (setup.output == "-")
-			? file_output{thestdout, "stdout"}
+			? file_output{thestdout}
 			: file_output{setup.output};
 		run_compiler(in, out, setup.stage, setup.cc);
 		out.finalize();
