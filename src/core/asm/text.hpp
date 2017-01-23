@@ -1,3 +1,11 @@
+/**
+ * @file text.hpp
+ *
+ * @brief
+ *     Backend for text segment assembly generation.
+ *
+ */
+
 #pragma once
 
 #include <vector>
