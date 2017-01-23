@@ -432,8 +432,6 @@ void inliner::inline_into(firm::ir_graph *irg)
 	}
 
 	current_irg = irg;
-	// PHI_LIST is for firm::collect_phiprojs_and_start_block_nodes
-	firm::ir_reserve_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
 
 	// get calls to inline
 	std::queue<call_node_info> queue;
@@ -460,9 +458,7 @@ void inliner::inline_into(firm::ir_graph *irg)
 		}
 		// phiproj computation is needed for part_block
 		firm::collect_phiprojs_and_start_block_nodes(irg);
-		firm::ir_reserve_resources(callee, firm::IR_RESOURCE_IRN_LINK);
 		if (!inline_method(call_node, callee)) {
-			firm::ir_free_resources(callee, firm::IR_RESOURCE_IRN_LINK);
 			continue;
 		}
 		// remove call_node from call_nodes list
@@ -507,11 +503,7 @@ void inliner::inline_into(firm::ir_graph *irg)
 				_call_to_ignore.insert(new_call);
 			}
 		}
-
-		firm::ir_free_resources(callee, firm::IR_RESOURCE_IRN_LINK);
 	}
-
-	firm::ir_free_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
 }
 
 /**
@@ -558,7 +550,11 @@ bool inliner::optimize(firm_ir &)
 	auto irgs = get_irgs();
 
 	// link the info with the irgs
-	for (auto &kv : irgs) firm::set_irg_link(kv.first, &kv.second);
+	for (auto &kv : irgs) {
+		// PHI_LIST is for firm::collect_phiprojs_and_start_block_nodes
+		firm::ir_reserve_resources(kv.first, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
+		firm::set_irg_link(kv.first, &kv.second);
+	}
 
 	// collect calls
 	for (auto &kv : irgs) {
@@ -575,6 +571,12 @@ bool inliner::optimize(firm_ir &)
 	// cleanup irgs
 	for (auto &kv : irgs) {
 		auto irg = kv.first;
+		// reset irn links
+		firm::irg_walk_graph(irg, [](firm::ir_node *node, void*) {
+			firm::set_irn_link(node, nullptr);
+		}, nullptr, nullptr);
+		firm::ir_free_resources(kv.first, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
+
 		// cleanup irg
 		firm::remove_tuples(irg);
 		firm::remove_bads(irg);
