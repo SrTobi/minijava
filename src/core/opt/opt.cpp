@@ -1,5 +1,5 @@
 #include "opt/opt.hpp"
-#include "opt/algebraic_simplifier.hpp"
+#include "opt/folding.hpp"
 #include "opt/inline.hpp"
 #include <queue>
 
@@ -30,7 +30,7 @@ namespace minijava
 
 	void register_all_optimizations()
 	{
-		register_optimization(std::make_unique<opt::algebraic_simplifier>());
+		register_optimization(std::make_unique<opt::folding>());
 		register_optimization(std::make_unique<opt::inliner>());
 	}
 

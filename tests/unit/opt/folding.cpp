@@ -1,4 +1,4 @@
-#include "opt/algebraic_simplifier.hpp"
+#include "opt/folding.hpp"
 #include "opt/opt.hpp"
 
 #define BOOST_TEST_MODULE  opt_algebraic_simplifie

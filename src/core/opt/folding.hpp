@@ -1,8 +1,8 @@
 /**
- * @file algebraic_simplifier.hpp
+ * @file folding.hpp
  *
  * @brief
- *     Algebraic simplifier optimization.
+ *     Constant folder optimization.
  *
  */
 
@@ -14,7 +14,7 @@ namespace minijava
 {
 	namespace opt
 	{
-		class algebraic_simplifier : public worklist_optimization
+		class folding : public worklist_optimization
 		{
 		public:
 

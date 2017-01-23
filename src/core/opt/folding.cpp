@@ -1,4 +1,4 @@
-#include "opt/algebraic_simplifier.hpp"
+#include "opt/folding.hpp"
 
 using namespace minijava::opt;
 
@@ -20,7 +20,7 @@ bool is_tarval_with_num(firm::ir_tarval* val, long num)
 	return is_tarval_numeric(val) && firm::get_tarval_long(val) == num;
 }
 
-void minijava::opt::algebraic_simplifier::cleanup(firm::ir_node* node) {
+void minijava::opt::folding::cleanup(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	if (opcode != firm::iro_Const) {
 		firm::ir_tarval* tv = (firm::ir_tarval*)firm::get_irn_link(node);
@@ -47,7 +47,7 @@ void minijava::opt::algebraic_simplifier::cleanup(firm::ir_node* node) {
 	}
 }
 
-bool minijava::opt::algebraic_simplifier::handle(firm::ir_node* node) {
+bool minijava::opt::folding::handle(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	firm::ir_tarval *ret_tv = nullptr;
 	if (opcode == firm::iro_Const) {
