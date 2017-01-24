@@ -344,9 +344,9 @@ def pp_parse_pragma(name, args, basedir='.'):
     elif name in {'stdin', 'stdout', 'stderr'}:
         if len(args) != 1:
             raise SetupError("Pragma '{:s}' must be followed by a single file name".format(name))
-        filename = os.path.join(basedir, args[0])
-        if filename == '/dev/null':
+        if args[0] == '/dev/null':
             return os.devnull
+        filename = os.path.join(basedir, args[0])
         if not os.path.isfile(filename):
             raise SetupError("File (mentioned in pragma {:s}) does not exist: {:s}".format(name, filename))
         return filename
