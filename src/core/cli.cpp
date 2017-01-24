@@ -262,6 +262,7 @@ namespace minijava
 			}
 			const auto tempdir = fs::temp_directory_path();
 			const auto asmname = fs::unique_path(tempdir / "%%%%%%%%%%%%.s").string();
+			std::fprintf(stderr, "Writing assembly to file: %s\n", asmname.c_str());  // TODO: FIXME: Remove again!
 			auto asmout = file_output{asmname};
 			if (stage == compilation_stage::compile_firm) {
 				emit_x64_assembly_firm(ir, asmout);

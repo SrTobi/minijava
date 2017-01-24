@@ -14,6 +14,11 @@ TIMESTAMP = formatdate()
 # order, even if you think that some instructions therein might not be needed.
 # Otherwise, this collection will quickly become a mess.
 
+MACROS = [
+    ("CALL_ALIGNED", "Call a function with correct stack pointer alignment (macro)"),
+    ("DIVMOD", "Compute quotient and remainder of two registers (macro)"),
+]
+
 INSTRUCTIONS = [
 
     # 5.1 General Purpose Instructions
@@ -279,17 +284,17 @@ namespace minijava
 \t{
 \t\t/**
 \t\t * @brief
-\t\t *     General-purpose x64 instructions.
+\t\t *     General-purpose x64 instructions (including macros).
 \t\t *
 \t\t */
 \t\tenum class opcode
 \t\t{""")
     print('\t\t\t{:24s}{:s}'.format('none = 0,', '///< No instruction'))
-    for (mnemotic, description) in INSTRUCTIONS:
-        enumerator = 'op_' + mnemotic.lower()
-        col1 = 'op_{:s},'.format(mnemotic.lower())
-        col2 = '///< {:s}'.format(description)
-        print('\t\t\t{:24s}{:s}'.format(col1, col2))
+    for (prefix, codeset) in [('mac', MACROS), ('op', INSTRUCTIONS)]:
+        for (mnemotic, description) in codeset:
+            enumerator = prefix + '_' + mnemotic.lower()
+            docstring = '///< {:s}'.format(description)
+            print('\t\t\t{:24s}{:s}'.format(enumerator + ',', docstring))
     print("""\t\t};
 
 \t\t/**
@@ -311,10 +316,11 @@ namespace minijava
 \t\t{
 \t\t\t// TODO: Replace the `switch` with a more efficient table lookup
 \t\t\tswitch (op) {""")
-    for (mnemotic, description) in INSTRUCTIONS:
-        col1 = 'case opcode::op_{:s}:'.format(mnemotic.lower())
-        col2 = 'return "{:s}";'.format(mnemotic.lower())
-        print('\t\t\t{:32s}{:s}'.format(col1, col2))
+    for (prefix, codeset) in [('mac', MACROS), ('op', INSTRUCTIONS)]:
+        for (mnemotic, description) in codeset:
+            col1 = 'case opcode::{:s}_{:s}:'.format(prefix, mnemotic.lower())
+            col2 = 'return "{:s}";'.format(mnemotic.lower())
+            print('\t\t\t{:32s}{:s}'.format(col1, col2))
     print('\t\t\t{:32s}{:s}'.format('default:', 'return nullptr;'))
     print("""\t\t\t}
 \t\t}

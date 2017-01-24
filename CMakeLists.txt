@@ -40,12 +40,14 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https:
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
+	asm/allocator
 	asm/asm
 	asm/data
+	asm/generator
 	asm/instruction
 	asm/opcode
+	asm/output
 	asm/register
-	asm/text
 	cli
 	exceptions
 	global
