@@ -22,13 +22,16 @@ namespace minijava
 		 *     Virtual (unlimited) registers.
 		 *
 		 * There are declared enumerators for well-known registers that must be
-		 * used for their respective purpose.  Use the `make_virtual_register`
-		 * function to obtain general-purpose registers without preset meaning.
+		 * used for their respective purpose.  Use the `next_general_register`
+		 * function to obtain further general-purpose registers without preset
+		 * meaning or `next_argument_register` to obtain further argument
+		 * registers.
 		 *
 		 */
 		enum class virtual_register : int
 		{
-			dummy,          ///< garbage register (value is never read)
+			argument = -1,  ///< first argument register
+			dummy = 0,      ///< garbage register (value is never read)
 			stack_pointer,  ///< stack pointer
 			base_pointer,   ///< base pointer
 			result,         ///< function return value
@@ -37,41 +40,46 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     `return`s the virtual register with the given number.
+		 *     `return`s the next virtual argument register after `reg`.
 		 *
-		 * If the register number is negative, the behavior is undefined.
-		 *
-		 * @param num
-		 *     non-negative number of the virtual register
-		 *
-		 * @returns
-		 *     the virtual register
-		 *
-		 */
-		constexpr virtual_register make_virtual_register(int num);
-
-		/**
-		 * @brief
-		 *     `return`s the next virtual register after `reg`.
-		 *
-		 * This is a convenience function for
-		 * `make_virtual_register(number(reg) + 1)`.  The behavior is undefined
-		 * unless said call is well-defined.
+		 * If the given register is not an argument register, the behavior is
+		 * undefined.
 		 *
 		 * @param reg
 		 *     register before the desired register
 		 *
 		 * @returns
-		 *     the virtual register
+		 *     the next argument register
 		 *
 		 */
-		constexpr virtual_register next(virtual_register reg);
+		constexpr virtual_register next_argument_register(virtual_register reg);
 
 		/**
 		 * @brief
-		 *     `return`s the number of a virtual register.
+		 *     `return`s the next virtual general-purpose register after `reg`.
 		 *
-		 * If the number of `reg` is negative, the behavior is undefined.
+		 * If the given register is not a general-purpose register, the behavior
+		 * is undefined.
+		 *
+		 * @param reg
+		 *     register before the desired register
+		 *
+		 * @returns
+		 *     the next general-purpose register
+		 *
+		 */
+		constexpr virtual_register next_general_register(virtual_register reg);
+
+		/**
+		 * @brief
+		 *     `return`s the number of a virtual argument or general-purpose
+		 *     register.
+		 *
+		 * If the given register is not an argument register and not a
+		 * general-purpose register, the behavior is undefined.  The declared
+		 * enumerators `virtual_register::general` and
+		 * `virtual_register::argument` have the number 1; subsequent registers
+		 * have consecutive numbers.
 		 *
 		 * @param reg
 		 *     virtual register

@@ -11,22 +11,27 @@ namespace minijava
 	namespace backend
 	{
 
-		constexpr virtual_register make_virtual_register(const int num)
+		constexpr virtual_register next_argument_register(const virtual_register reg)
 		{
-			assert(num >= 0);
-			return static_cast<virtual_register>(num);
+			assert(reg <= virtual_register::argument);
+			return static_cast<virtual_register>(static_cast<int>(reg) - 1);
 		}
 
-		constexpr virtual_register next(const virtual_register reg)
+		constexpr virtual_register next_general_register(const virtual_register reg)
 		{
-			return make_virtual_register(number(reg) + 1);
+			assert(reg >= virtual_register::general);
+			return static_cast<virtual_register>(static_cast<int>(reg) + 1);
 		}
 
 		constexpr int number(const virtual_register reg)
 		{
+			assert(reg >= virtual_register::general || reg <= virtual_register::argument);
 			const auto num = static_cast<int>(reg);
-			assert(num >= 0);
-			return num;
+			if (reg >= virtual_register::general) {
+				return num - static_cast<int>(virtual_register::general) + 1;
+			} else {
+				return -num;
+			}
 		}
 
 		constexpr int number(const real_register reg)
