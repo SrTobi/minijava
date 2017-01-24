@@ -145,7 +145,7 @@ bool minijava::opt::folding::handle(firm::ir_node* node) {
 		for (int i = 0; i < child_count && !is_bad; i++) {
 			auto tv = get_tarval(node, i);
 			if (!tv) {
-				is_bad = true;
+				found = false;
 				break;
 			} else if (tv == firm::tarval_bad) {
 				is_bad = true;
