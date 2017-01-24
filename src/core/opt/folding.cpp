@@ -124,11 +124,11 @@ bool minijava::opt::folding::handle(firm::ir_node* node) {
 		}
 	} else if (opcode == firm::iro_Cmp) {
 		auto lhs = get_tarval(node, 0);
-		auto rhs = get_tarval(node, 0);
+		auto rhs = get_tarval(node, 1);
 
 		if (lhs && rhs) {
-			//auto rel = firm::tarval_cmp(lhs, rhs);
-			ret_tv = lhs == rhs ? firm::tarval_b_true : firm::tarval_b_false;
+			ret_tv = firm::tarval_cmp(lhs, rhs) & firm::get_Cmp_relation(node) ?
+			         firm::tarval_b_true : firm::tarval_b_false;
 		}
 	} else if (opcode == firm::iro_Mux) {
 		// pass tv from sel node to mux node
