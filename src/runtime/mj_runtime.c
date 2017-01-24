@@ -6,13 +6,17 @@
 #include <setjmp.h>
 #include <string.h>
 
-
 extern void minijava_main(void);
 
 static const char* program_name;
 
 static jmp_buf exception_jump_buffer;
 
+
+static inline int32_t maximum(const int32_t a, const int32_t b)
+{
+	return (a > b) ? a : b;
+}
 
 void* mj_runtime_new(const int32_t nmemb, const int32_t size)
 {
@@ -24,9 +28,8 @@ void* mj_runtime_new(const int32_t nmemb, const int32_t size)
 		fprintf(stderr, "%s: new: Request for non-positive object size %ld\n", program_name, (long) size);
 		longjmp(exception_jump_buffer, 1);
 	}
-	const size_t nbytes = ((size_t) nmemb) * ((size_t) size);
 	/* Always allocate at least one byte to make sure arrays have unique addresses. */
-	void* memory = malloc(nbytes > 0 ? nbytes : 1);
+	void* memory = calloc((size_t) maximum(1, nmemb), (size_t) size);
 	if (memory == NULL) {
 		fprintf(stderr, "%s: new: %s\n", program_name, strerror(errno));
 		longjmp(exception_jump_buffer, 1);

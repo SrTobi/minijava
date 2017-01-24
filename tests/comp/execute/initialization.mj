@@ -1,0 +1,63 @@
+// pragma output   0 0 0 0   0 0 0 0
+
+class Thing {
+	public boolean m_boolean;
+	public int m_integer;
+	public Thing m_object;
+	public Thing[] m_array;
+}
+
+class Test {
+
+	public static void main(String[] args) {
+		Test t = new Test();
+		t.testArrays();
+		t.testFields();
+	}
+
+	/* Arrays should be initialized with zero / false / null. */
+	public void testArrays() {
+		{
+			boolean[] array = new boolean[1];
+			printBoolean(array[0]);
+		}
+		{
+			int[] array = new int[1];
+			printInteger(array[0]);
+		}
+		{
+			Thing[] array = new Thing[1];
+			printObject(array[0]);
+		}
+		{
+			Thing[][] array = new Thing[1][];
+			printArray(array[0]);
+		}
+	}
+
+	/* Fields should be initialized with zero / false / null. */
+	public void testFields() {
+		Thing obj = new Thing();
+		printBoolean(obj.m_boolean);
+		printInteger(obj.m_integer);
+		printObject(obj.m_object);
+		printArray(obj.m_array);
+	}
+
+	public void printBoolean(boolean b) {
+		if (!b) { System.out.println(0); } else { System.out.println(1); }
+	}
+
+	public void printInteger(int i) {
+		if (i == 0) { System.out.println(0); } else { System.out.println(1); }
+	}
+
+	public void printObject(Thing o) {
+		if (o == null) { System.out.println(0); } else { System.out.println(1); }
+	}
+
+	public void printArray(Thing[] a) {
+		if (a == null) { System.out.println(0); } else { System.out.println(1); }
+	}
+
+}
