@@ -13,21 +13,31 @@ namespace minijava
 
 		constexpr virtual_register next_argument_register(const virtual_register reg)
 		{
-			assert(reg <= virtual_register::argument);
+			assert(is_argument_register(reg));
 			return static_cast<virtual_register>(static_cast<int>(reg) - 1);
 		}
 
 		constexpr virtual_register next_general_register(const virtual_register reg)
 		{
-			assert(reg >= virtual_register::general);
+			assert(is_general_register(reg));
 			return static_cast<virtual_register>(static_cast<int>(reg) + 1);
+		}
+
+		constexpr bool is_argument_register(virtual_register reg)
+		{
+			return reg <= virtual_register::argument;
+		}
+
+		constexpr bool is_general_register(virtual_register reg)
+		{
+			return reg >= virtual_register::general;
 		}
 
 		constexpr int number(const virtual_register reg)
 		{
-			assert(reg >= virtual_register::general || reg <= virtual_register::argument);
+			assert(is_argument_register(reg) || is_general_register(reg));
 			const auto num = static_cast<int>(reg);
-			if (reg >= virtual_register::general) {
+			if (is_general_register(reg)) {
 				return num - static_cast<int>(virtual_register::general) + 1;
 			} else {
 				return -num;

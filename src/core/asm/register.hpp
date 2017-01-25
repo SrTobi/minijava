@@ -32,8 +32,6 @@ namespace minijava
 		{
 			argument = -1,  ///< first argument register
 			dummy = 0,      ///< garbage register (value is never read)
-			stack_pointer,  ///< stack pointer
-			base_pointer,   ///< base pointer
 			result,         ///< function return value
 			general,        ///< first general-purpose register
 		};
@@ -69,6 +67,34 @@ namespace minijava
 		 *
 		 */
 		constexpr virtual_register next_general_register(virtual_register reg);
+
+		/**
+		 * @brief
+		 *     `return`s whether `reg` is an argument register.
+		 *
+		 * @param reg
+		 *     register to check
+		 *
+		 * @returns
+		 *     true if the given register is an argument register, false
+		 *     otherwise
+		 *
+		 */
+		constexpr bool is_argument_register(virtual_register reg);
+
+		/**
+		 * @brief
+		 *     `return`s whether `reg` is a general-purpose register.
+		 *
+		 * @param reg
+		 *     register to check
+		 *
+		 * @returns
+		 *     true if the given register is a general-purpose register, false
+		 *     otherwise
+		 *
+		 */
+		constexpr bool is_general_register(virtual_register reg);
 
 		/**
 		 * @brief
