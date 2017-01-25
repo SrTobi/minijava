@@ -119,7 +119,7 @@ responsibility to keep the local mirror up to date.
 
 ### Building for Humans
 
-    $ git clone https://git@slixe.de:7999/comprak/compiler.git
+    $ git clone https://git@slixe.de/stash/scm/comprak/compiler.git
     $ cd compiler/
     $ mkdir ${builddir}/
     $ cd ${builddir}/
