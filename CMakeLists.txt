@@ -9,6 +9,7 @@ include("extras/cmake/enable_diagnostics.cmake")
 include("extras/cmake/import_libfirm.cmake")
 
 option(MAINTAINER_MODE "Enable diagnostic options for maintainers" ON)
+option(MINIJAVA_LINE_COMMENTS "Enable extension for line-comment support" OFF)
 
 buildx_activate_cpp14()
 

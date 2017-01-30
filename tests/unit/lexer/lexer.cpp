@@ -171,8 +171,15 @@ static const success_test success_data[] = {
 		{"/*/**/*/", tt::multiply, tt::divide},
 		{"**/*= */*", tt::multiply, tt::multiply, tt::multiply},
 		{"false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="s, tt::kw_false, tt::assign},
+#if MINIJAVA_LINE_COMMENTS
 		{"//"},
-		{"false// */ const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/\n="s, tt::kw_false, tt::assign},
+		{"// this is a comment"},
+		{"// this is also a comment\n"},
+		{"// \x7F/ ()\0\b\"\xFF ***\n5"s, lit("5")},
+#else
+		{"//", tt::divide, tt::divide},
+		{"// this", tt::divide, tt::divide, tt::kw_this},
+#endif
 
 		// integer literals
 		{"0", lit("0")},
