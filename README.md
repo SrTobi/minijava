@@ -17,8 +17,15 @@ expected by the official test suite.
 
 ### Line comments
 
-Our implementation supports line comments `//` like every other modern Java
-compiler.
+If configured with the CMake option `MINIJAVA_LINE_COMMENTS`, our compiler will
+support Java-style line comments as a compatible extension to MiniJava.
+
+```java
+// this is a line comment
+```
+
+By default, this extension is disabled and the above code snippet would be a
+syntax error.
 
 ### Treatment of `main`
 

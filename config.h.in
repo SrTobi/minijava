@@ -10,3 +10,6 @@
 
 /** @brief `#define` to 1 if the `getrlimit` and `setrlimit` functions are available. */
 #cmakedefine MINIJAVA_HAVE_RLIMIT 1
+
+/** @brief `#define` to 1 to enable support for line-comments. */
+#cmakedefine MINIJAVA_LINE_COMMENTS 1

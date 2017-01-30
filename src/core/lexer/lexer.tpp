@@ -25,6 +25,17 @@ namespace minijava
 		// Type alias for the outer `class`.
 		using lexer_type = lexer<InIterT, IdPoolT, LitPoolT, AllocT>;
 
+		// Wrapper around `MINIJAVA_LINE_COMMENTS` that is agnostic as to
+		// whether the macro is undefined or defined to zero.
+		static constexpr bool line_comments() noexcept
+		{
+#if MINIJAVA_LINE_COMMENTS
+			return true;
+#else
+			return false;
+#endif
+		}
+
 		// Like the public `lexer::advance` function but has to be called in a
 		// loop until it succeeds.
 		static bool do_advance(lexer_type& lex)
@@ -44,7 +55,7 @@ namespace minijava
 					next(lex);
 					skip_block_comment(lex);
 					return false;
-				} else if (after == '/') {
+				} else if (line_comments() && (after == '/')) {
 					skip_line_comment(lex);
 					return false;
 				} else if (after == '=') {
