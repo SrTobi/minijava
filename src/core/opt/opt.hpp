@@ -72,6 +72,10 @@ namespace minijava
 		std::vector<std::pair<firm::ir_node*, int>> get_out_edges_safe(firm::ir_node* node);
 		firm::ir_node* copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg);
 		void clone_irg(firm::ir_graph* from, firm::ir_graph* to);
+
+		firm::ir_tarval* get_tarval(firm::ir_node* node, int n);
+		bool is_tarval_numeric(firm::ir_tarval* val);
+		bool is_tarval_with_num(firm::ir_tarval* val, long num);
 	}
 
 	/**

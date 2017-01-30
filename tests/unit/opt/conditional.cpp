@@ -1,7 +1,8 @@
-#include "opt/folding.hpp"
+#include "opt/conditional.hpp"
 #include "opt/opt.hpp"
 
-#define BOOST_TEST_MODULE  opt_folding
+
+#define BOOST_TEST_MODULE  opt_conditional
 #include <boost/test/unit_test.hpp>
 
 #include "irg/irg.hpp"

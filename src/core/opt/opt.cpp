@@ -1,4 +1,5 @@
 #include "opt/opt.hpp"
+#include "opt/conditional.hpp"
 #include "opt/folding.hpp"
 #include "opt/inline.hpp"
 #include <queue>
@@ -31,6 +32,7 @@ namespace minijava
 	void register_all_optimizations()
 	{
 		register_optimization(std::make_unique<opt::folding>());
+		register_optimization(std::make_unique<opt::conditional>());
 		register_optimization(std::make_unique<opt::inliner>());
 	}
 
@@ -142,6 +144,24 @@ namespace minijava
 	{
 		firm::irg_walk_graph(from, copy_nodes, set_preds, to);
 		firm::irg_finalize_cons(to);
+	}
+
+	firm::ir_tarval* opt::get_tarval(firm::ir_node* node, int n)
+	{
+		if (n < firm::get_irn_arity(node)) {
+			return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
+		}
+		return nullptr;
+	}
+
+	bool opt::is_tarval_numeric(firm::ir_tarval* val)
+	{
+		return val && firm::get_mode_arithmetic(firm::get_tarval_mode(val)) == firm::irma_twos_complement;
+	}
+
+	bool opt::is_tarval_with_num(firm::ir_tarval* val, long num)
+	{
+		return is_tarval_numeric(val) && firm::get_tarval_long(val) == num;
 	}
 
 	// worklist stuff

@@ -4,24 +4,6 @@
 
 using namespace minijava::opt;
 
-firm::ir_tarval* get_tarval(firm::ir_node* node, int n)
-{
-	if (n < firm::get_irn_arity(node)) {
-		return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
-	}
-	return nullptr;
-}
-
-bool is_tarval_numeric(firm::ir_tarval* val)
-{
-	return val && firm::get_mode_arithmetic(firm::get_tarval_mode(val)) == firm::irma_twos_complement;
-}
-
-bool is_tarval_with_num(firm::ir_tarval* val, long num)
-{
-	return is_tarval_numeric(val) && firm::get_tarval_long(val) == num;
-}
-
 void minijava::opt::folding::cleanup(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	if (opcode == firm::iro_Const) {
@@ -29,17 +11,7 @@ void minijava::opt::folding::cleanup(firm::ir_node* node) {
 	}
 
 	firm::ir_tarval* tv = (firm::ir_tarval*)firm::get_irn_link(node);
-	if (opcode == firm::iro_Cmp) {
-		// wait for following mux
-	} else if (opcode == firm::iro_Mux) {
-		if (tv) {
-			if (tv == firm::tarval_b_true) {
-				firm::exchange(node, firm::get_irn_n(node, firm::n_Mux_true));
-			} else {
-				firm::exchange(node, firm::get_irn_n(node, firm::n_Mux_false));
-			}
-		}
-	} else if (tv && is_tarval_numeric(tv)) {
+	if (tv && is_tarval_numeric(tv)) {
 		auto new_node = firm::new_r_Const_long(_irg, firm::get_tarval_mode(tv), firm::get_tarval_long(tv));
 		firm::set_irn_link(new_node, tv);
 		// keep memory edges of div/mod nodes
@@ -59,7 +31,6 @@ void minijava::opt::folding::cleanup(firm::ir_node* node) {
 		// mark optimization as changed
 		_changed = true;
 	}
-
 }
 
 bool minijava::opt::folding::handle(firm::ir_node* node) {
@@ -121,20 +92,6 @@ bool minijava::opt::folding::handle(firm::ir_node* node) {
 		auto tv = get_tarval(node, 0);
 		if (is_tarval_numeric(tv)) {
 			ret_tv = firm::new_tarval_from_long(-firm::get_tarval_long(tv), firm::get_irn_mode(node));
-		}
-	} else if (opcode == firm::iro_Cmp) {
-		auto lhs = get_tarval(node, 0);
-		auto rhs = get_tarval(node, 1);
-
-		if (lhs && rhs) {
-			ret_tv = firm::tarval_cmp(lhs, rhs) & firm::get_Cmp_relation(node) ?
-			         firm::tarval_b_true : firm::tarval_b_false;
-		}
-	} else if (opcode == firm::iro_Mux) {
-		// pass tv from sel node to mux node
-		auto sel = get_tarval(node, 0);
-		if (sel) {
-			ret_tv = sel;
 		}
 	} else if (opcode == firm::iro_Phi) {
 		auto child_count = firm::get_irn_arity(node);
