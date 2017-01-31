@@ -68,6 +68,7 @@ set(COMPONENTS
 	lexer/token_type
 	lexer/token_type_set
 	opt/conditional
+	opt/control_flow
 	opt/opt
 	opt/folding
 	opt/inline

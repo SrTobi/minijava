@@ -1,5 +1,6 @@
 #include "opt/opt.hpp"
 #include "opt/conditional.hpp"
+#include "opt/control_flow.hpp"
 #include "opt/folding.hpp"
 #include "opt/inline.hpp"
 #include <queue>
@@ -33,6 +34,7 @@ namespace minijava
 	{
 		register_optimization(std::make_unique<opt::folding>());
 		register_optimization(std::make_unique<opt::conditional>());
+		register_optimization(std::make_unique<opt::control_flow>());
 		register_optimization(std::make_unique<opt::inliner>());
 	}
 
