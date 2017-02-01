@@ -66,6 +66,18 @@ bool minijava::opt::conditional::handle(firm::ir_node* node) {
 			} else if (rel == firm::ir_relation_less_greater) {
 				ret_tv = firm::tarval_b_false;
 			}
+		} else if ((firm::is_Mux(rhs) && firm::is_Const(lhs)) ||
+				(firm::is_Mux(lhs) && firm::is_Const(rhs))) {
+			auto mux = firm::is_Mux(lhs) ? lhs : rhs;
+			//auto cons = firm::is_Const(lhs) ? lhs : rhs;
+			auto sel = firm::get_Mux_sel(mux);
+			if (firm::is_Cmp(sel) && firm::get_Cmp_relation(node) == firm::ir_relation_equal) {
+				// TODO? Additional checks needed?
+				// in this case, we should replace node directly with our sel compare node
+				// the current node is just for conversion
+				// dont wait for cleanup and do it directly here, because we just store tv in link
+				firm::exchange(node, sel);
+			}
 		}
 	} else if (opcode == firm::iro_Mux) {
 		// pass tv from sel node to mux node
