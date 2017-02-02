@@ -5,6 +5,7 @@
 #include "opt/inline.hpp"
 #include "opt/unused_params.hpp"
 #include "opt/unused_method.hpp"
+#include "opt/load_store.hpp"
 #include <queue>
 
 namespace minijava
@@ -40,6 +41,7 @@ namespace minijava
 		// they might be created from unused_params opt
 		register_optimization(std::make_unique<opt::unused_method>());
 		register_optimization(std::make_unique<opt::folding>());
+		register_optimization(std::make_unique<opt::load_store>());
 		register_optimization(std::make_unique<opt::conditional>());
 		register_optimization(std::make_unique<opt::control_flow>());
 		register_optimization(std::make_unique<opt::inliner>());

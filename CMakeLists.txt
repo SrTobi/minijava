@@ -72,6 +72,7 @@ set(COMPONENTS
 	opt/opt
 	opt/folding
 	opt/inline
+	opt/load_store
 	opt/unused_method
 	opt/unused_params
 	parser/ast
