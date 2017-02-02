@@ -3,6 +3,8 @@
 #include "opt/control_flow.hpp"
 #include "opt/folding.hpp"
 #include "opt/inline.hpp"
+#include "opt/unused_params.hpp"
+#include "opt/unused_method.hpp"
 #include <queue>
 
 namespace minijava
@@ -36,6 +38,8 @@ namespace minijava
 		register_optimization(std::make_unique<opt::conditional>());
 		register_optimization(std::make_unique<opt::control_flow>());
 		register_optimization(std::make_unique<opt::inliner>());
+		register_optimization(std::make_unique<opt::unused_params>());
+		register_optimization(std::make_unique<opt::unused_method>());
 	}
 
 	std::vector<std::pair<firm::ir_node*, int>> opt::get_out_edges_safe(firm::ir_node *node)
