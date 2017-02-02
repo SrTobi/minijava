@@ -67,8 +67,11 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	opt/conditional
+	opt/control_flow
 	opt/opt
-	opt/algebraic_simplifier
+	opt/folding
+	opt/inline
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc

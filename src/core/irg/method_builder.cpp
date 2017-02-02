@@ -839,6 +839,7 @@ namespace minijava
 		                        const ast::main_method& method)
 		{
 			auto irg = firm::get_current_ir_graph();
+			firm::set_irp_main_irg(irg);
 			method_generator generator{sem_info, firm_types};
 			method.accept(generator);
 			// main has no return value - so we don't need method_generator.current_node()

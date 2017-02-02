@@ -1,53 +1,39 @@
-#include "opt/algebraic_simplifier.hpp"
+#include "opt/folding.hpp"
+
+#include <iostream>
 
 using namespace minijava::opt;
 
-firm::ir_tarval* get_tarval(firm::ir_node* node, int n)
-{
-	if (n < firm::get_irn_arity(node)) {
-		return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
-	}
-	return nullptr;
-}
-
-bool is_tarval_numeric(firm::ir_tarval* val)
-{
-	return val && firm::get_mode_arithmetic(firm::get_tarval_mode(val)) == firm::irma_twos_complement;
-}
-
-bool is_tarval_with_num(firm::ir_tarval* val, long num)
-{
-	return is_tarval_numeric(val) && firm::get_tarval_long(val) == num;
-}
-
-void minijava::opt::algebraic_simplifier::cleanup(firm::ir_node* node) {
+void minijava::opt::folding::cleanup(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
-	if (opcode != firm::iro_Const) {
-		firm::ir_tarval* tv = (firm::ir_tarval*)firm::get_irn_link(node);
-		if (tv && is_tarval_numeric(tv)) {
-			auto new_node = firm::new_r_Const_long(_irg, firm::get_tarval_mode(tv), firm::get_tarval_long(tv));
-			firm::set_irn_link(new_node, tv);
-			// keep memory edges of div/mod nodes
-			if (opcode == firm::iro_Div || opcode == firm::iro_Mod) {
-				for (auto &out_edge : get_out_edges_safe(node)) {
-					if (firm::get_irn_mode(out_edge.first) == firm::mode_M) {
-						for (auto &child_edge : get_out_edges_safe(out_edge.first)) {
-							firm::set_irn_n(child_edge.first, child_edge.second, firm::get_irn_n(node, 0));
-						}
-					} else {
-						firm::exchange(out_edge.first, new_node);
+	if (opcode == firm::iro_Const) {
+		return;
+	}
+
+	firm::ir_tarval* tv = (firm::ir_tarval*)firm::get_irn_link(node);
+	if (tv && is_tarval_numeric(tv)) {
+		auto new_node = firm::new_r_Const_long(_irg, firm::get_tarval_mode(tv), firm::get_tarval_long(tv));
+		firm::set_irn_link(new_node, tv);
+		// keep memory edges of div/mod nodes
+		if (opcode == firm::iro_Div || opcode == firm::iro_Mod) {
+			for (auto &out_edge : get_out_edges_safe(node)) {
+				if (firm::get_irn_mode(out_edge.first) == firm::mode_M) {
+					for (auto &child_edge : get_out_edges_safe(out_edge.first)) {
+						firm::set_irn_n(child_edge.first, child_edge.second, firm::get_irn_n(node, 0));
 					}
+				} else {
+					firm::exchange(out_edge.first, new_node);
 				}
-			} else {
-				firm::exchange(node, new_node);
 			}
-			// mark optimization as changed
-			_changed = true;
+		} else {
+			firm::exchange(node, new_node);
 		}
+		// mark optimization as changed
+		_changed = true;
 	}
 }
 
-bool minijava::opt::algebraic_simplifier::handle(firm::ir_node* node) {
+bool minijava::opt::folding::handle(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	firm::ir_tarval *ret_tv = nullptr;
 	if (opcode == firm::iro_Const) {
@@ -116,7 +102,8 @@ bool minijava::opt::algebraic_simplifier::handle(firm::ir_node* node) {
 		for (int i = 0; i < child_count && !is_bad; i++) {
 			auto tv = get_tarval(node, i);
 			if (!tv) {
-				// no tarval set
+				found = false;
+				break;
 			} else if (tv == firm::tarval_bad) {
 				is_bad = true;
 			} else if (mode == firm::get_tarval_mode(tv)) {

@@ -1,5 +1,8 @@
 #include "opt/opt.hpp"
-#include "opt/algebraic_simplifier.hpp"
+#include "opt/conditional.hpp"
+#include "opt/control_flow.hpp"
+#include "opt/folding.hpp"
+#include "opt/inline.hpp"
 #include <queue>
 
 namespace minijava
@@ -29,7 +32,10 @@ namespace minijava
 
 	void register_all_optimizations()
 	{
-		register_optimization(std::make_unique<opt::algebraic_simplifier>());
+		register_optimization(std::make_unique<opt::folding>());
+		register_optimization(std::make_unique<opt::conditional>());
+		register_optimization(std::make_unique<opt::control_flow>());
+		register_optimization(std::make_unique<opt::inliner>());
 	}
 
 	std::vector<std::pair<firm::ir_node*, int>> opt::get_out_edges_safe(firm::ir_node *node)
@@ -136,10 +142,53 @@ namespace minijava
 		}
 	}
 
+	bool opt::is_nop(firm::ir_node* node)
+	{
+		switch (firm::get_irn_opcode(node)) {
+			case firm::iro_Anchor:
+			case firm::iro_Bad:
+			case firm::iro_Confirm:
+			case firm::iro_Deleted:
+			case firm::iro_Dummy:
+			case firm::iro_End:
+			case firm::iro_Id:
+			case firm::iro_NoMem:
+			case firm::iro_Pin:
+			case firm::iro_Proj:
+			case firm::iro_Start:
+			case firm::iro_Sync:
+			case firm::iro_Tuple:
+			case firm::iro_Unknown:
+				return true;
+			case firm::iro_Phi:
+				return firm::get_irn_mode(node) == firm::mode_M;
+			default:
+				return false;
+		}
+	}
+
 	void opt::clone_irg(firm::ir_graph* from, firm::ir_graph* to)
 	{
 		firm::irg_walk_graph(from, copy_nodes, set_preds, to);
 		firm::irg_finalize_cons(to);
+	}
+
+	firm::ir_tarval* opt::get_tarval(firm::ir_node* node, int n)
+	{
+		if (n < firm::get_irn_arity(node)) {
+			return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
+		}
+		return nullptr;
+	}
+
+	bool opt::is_tarval_numeric(firm::ir_tarval* val)
+	{
+		return val && firm::get_mode_arithmetic(firm::get_tarval_mode(val)) == firm::irma_twos_complement;
+	}
+
+	bool opt::is_tarval_with_num(firm::ir_tarval* val, long num)
+	{
+		return is_tarval_numeric(val) && firm::get_tarval_long(val) == num;
 	}
 
 	// worklist stuff

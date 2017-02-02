@@ -1,8 +1,8 @@
 /**
- * @file algebraic_simplifier.hpp
+ * @file conditional.hpp
  *
  * @brief
- *     Algebraic simplifier optimization.
+ *     Conditional optimization.
  *
  */
 
@@ -14,7 +14,7 @@ namespace minijava
 {
 	namespace opt
 	{
-		class algebraic_simplifier : public worklist_optimization
+		class conditional : public worklist_optimization
 		{
 		public:
 
