@@ -22,7 +22,6 @@ BOOST_AUTO_TEST_CASE(assemble_empty_function)
 	const auto irg = firm::new_ir_graph(method_entity, 0);
 	firm::set_current_ir_graph(irg);
 	firm::lower_highlevel();
-	auto virtasm = minijava::backend::virtual_assembly{};
-	minijava::backend::assemble_function(irg, virtasm);
+	const auto virtasm = minijava::backend::assemble_function(irg);
 	// TODO: Check something meaningful.
 }

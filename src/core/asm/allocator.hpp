@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "asm/instruction.hpp"
+#include "asm/assembly.hpp"
 
 
 namespace minijava
@@ -24,11 +24,11 @@ namespace minijava
 		 * @param virtasm
 		 *     virtual assembly listing to transform
 		 *
-		 * @param realasm
-		 *     real assembly listing to append to
+		 * @returns
+		 *     real assembly listing
 		 *
 		 */
-		void allocate_registers(const virtual_assembly& virtasm, real_assembly& realasm);
+		real_assembly allocate_registers(const virtual_assembly& virtasm);
 
 	}  // namespace backend
 

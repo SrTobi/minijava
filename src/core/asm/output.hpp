@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "asm/instruction.hpp"
+#include "asm/assembly.hpp"
 #include "io/file_output.hpp"
 
 

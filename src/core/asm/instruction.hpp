@@ -9,7 +9,6 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 
 #include <boost/optional.hpp>
 #include <boost/utility/string_ref.hpp>
@@ -188,7 +187,7 @@ namespace minijava
 
 		/**
 		 * @brief
-		 *     An x64 instruction with a width, operands and an optional label.
+		 *     An x64 instruction with a width and zero to two operands.
 		 *
 		 * This type is simply an aggregate holding all information about the
 		 * instruction.  A default-constructed `instruction` is empty (which is
@@ -224,20 +223,15 @@ namespace minijava
 			 * @param op2
 			 *     second (destination) operand
 			 *
-			 * @param label
-			 *     label
-			 *
 			 */
 			instruction(const opcode code = opcode{},
 						const bit_width width = bit_width{},
 						operand_type op1 = operand_type{},
-						operand_type op2 = operand_type{},
-						boost::string_ref label = boost::string_ref{})
+						operand_type op2 = operand_type{})
 				: code{code}
 				, width{width}
 				, op1{std::move(op1)}
 				, op2{std::move(op2)}
-				, label{std::move(label)}
 			{
 			}
 
@@ -253,9 +247,6 @@ namespace minijava
 			/** @brief Second (destination) operand of the instruction. */
 			operand<RegT> op2{};
 
-			/** @brief Optional label of the instruction. */
-			boost::string_ref label{};
-
 		};
 
 		/** @brief Type for x64 instructions using virtual registers. */
@@ -263,12 +254,6 @@ namespace minijava
 
 		/** @brief Type for x64 instructions using real registers. */
 		using real_instruction = instruction<real_register>;
-
-		/** @brief Type used for x64 assemblies using virtual registers. */
-		using virtual_assembly = std::vector<virtual_instruction>;
-
-		/** @brief Type used for x64 assemblies using real registers. */
-		using real_assembly = std::vector<real_instruction>;
 
 	}  // namespace backend
 

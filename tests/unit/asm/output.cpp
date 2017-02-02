@@ -13,11 +13,25 @@
 
 BOOST_AUTO_TEST_CASE(write_text_for_nothing)
 {
-	auto assembly = minijava::backend::real_assembly{};
+	auto assembly = minijava::backend::real_assembly{"foo"};
 	testaux::temporary_file tempfile{};
 	auto asmfile = minijava::file_output{tempfile.filename()};
 	minijava::backend::write_text(assembly, asmfile);
-	BOOST_CHECK(testaux::file_has_content(tempfile.filename(), ""));
+	asmfile.close();
+	BOOST_CHECK(testaux::file_has_content(tempfile.filename(), "foo:\n"));
+}
+
+
+BOOST_AUTO_TEST_CASE(empty_labels_are_not_printed)
+{
+	auto assembly = minijava::backend::real_assembly{"func"};
+	assembly.blocks.emplace_back(".L");
+	assembly.blocks.emplace_back("");
+	testaux::temporary_file tempfile{};
+	auto asmfile = minijava::file_output{tempfile.filename()};
+	minijava::backend::write_text(assembly, asmfile);
+	asmfile.close();
+	BOOST_CHECK(testaux::file_has_content(tempfile.filename(), "func:\n.L:\n"));
 }
 
 
@@ -26,17 +40,17 @@ BOOST_AUTO_TEST_CASE(write_text_for_empty_function)
 	using opc = minijava::backend::opcode;
 	using bw = minijava::backend::bit_width;
 	using rr = minijava::backend::real_register;
-	auto assembly = minijava::backend::real_assembly{};
-	assembly.emplace_back();
-	assembly.back().label = "func";
-	assembly.emplace_back(opc::op_push, bw::lxiv, rr::bp);
-	assembly.emplace_back(opc::op_mov, bw::lxiv, rr::sp, rr::bp);
-	assembly.emplace_back(opc::op_sub, bw::lxiv, 0, rr::sp);
-	assembly.emplace_back(opc::op_mov, bw::lxiv, rr::bp, rr::sp);
-	assembly.emplace_back(opc::op_pop, bw::lxiv, rr::bp);
-	assembly.emplace_back(opc::op_ret);
+	auto assembly = minijava::backend::real_assembly{"func"};
+	assembly.blocks.emplace_back(".L0");
+	assembly.blocks.back().code.emplace_back(opc::op_push, bw::lxiv, rr::bp);
+	assembly.blocks.back().code.emplace_back(opc::op_mov, bw::lxiv, rr::sp, rr::bp);
+	assembly.blocks.back().code.emplace_back(opc::op_sub, bw::lxiv, 0, rr::sp);
+	assembly.blocks.back().code.emplace_back(opc::op_mov, bw::lxiv, rr::bp, rr::sp);
+	assembly.blocks.back().code.emplace_back(opc::op_pop, bw::lxiv, rr::bp);
+	assembly.blocks.back().code.emplace_back(opc::op_ret);
 	const auto expected = std::string{}
 		+ "func:\n"
+		+ ".L0:\n"
 		+ "\tpushq %rbp\n"
 		+ "\tmovq %rsp, %rbp\n"
 		+ "\tsubq $0, %rsp\n"
@@ -55,9 +69,10 @@ BOOST_AUTO_TEST_CASE(write_text_for_arbitrary_crap)
 	using opc = minijava::backend::opcode;
 	using bw = minijava::backend::bit_width;
 	using rr = minijava::backend::real_register;
-	auto assembly = minijava::backend::real_assembly{};
-	assembly.emplace_back(opc::op_push, bw::xxxii, "button");
-	assembly.emplace_back(opc::op_push, bw::xxxii, 42);
+	auto assembly = minijava::backend::real_assembly{"name"};
+	assembly.blocks.emplace_back("");
+	assembly.blocks.back().code.emplace_back(opc::op_push, bw::xxxii, "button");
+	assembly.blocks.back().code.emplace_back(opc::op_push, bw::xxxii, 42);
 	const minijava::backend::address<rr> addresses[] = {
 		{1234},
 		{boost::none, rr::a},
@@ -71,12 +86,13 @@ BOOST_AUTO_TEST_CASE(write_text_for_arbitrary_crap)
 	};
 	std::transform(
 		std::begin(addresses), std::end(addresses),
-		std::back_inserter(assembly),
+		std::back_inserter(assembly.blocks.back().code),
 		[](auto addr){
 			return minijava::backend::instruction<rr>{opc::op_push, bw::xxxii, std::move(addr)};
 		}
 	);
 	const auto expected = std::string{}
+		+ "name:\n"
 		+ "\tpushl button\n"
 		+ "\tpushl $42\n"
 		+ "\tpushl 1234\n"

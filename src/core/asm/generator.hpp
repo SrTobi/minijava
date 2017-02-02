@@ -8,9 +8,8 @@
 
 #pragma once
 
-#include "asm/instruction.hpp"
+#include "asm/assembly.hpp"
 #include "firm.hpp"
-#include "io/file_output.hpp"
 
 
 namespace minijava
@@ -26,11 +25,11 @@ namespace minijava
 		 * @param irg
 		 *     lowered and optimized Firm IRG for the function
 		 *
-		 * @param virtasm
-		 *     virtual assembly listing to append to
+		 * @returns
+		 *     virtual assembly listing
 		 *
 		 */
-		void assemble_function(firm::ir_graph* irg, virtual_assembly& virtasm);
+		virtual_assembly assemble_function(firm::ir_graph* irg);
 
 	}  // namespace backend
 

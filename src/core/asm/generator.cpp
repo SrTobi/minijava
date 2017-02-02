@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <cstdio>
+#include <utility>
 
 #include <boost/variant/apply_visitor.hpp>
 
@@ -53,8 +54,8 @@ namespace minijava
 			{
 			public:
 
-				generator(virtual_assembly& va)
-					: _virtasm{&va}
+				generator(const char* funcname)
+					: _assembly{funcname}
 					, _nextreg{virtual_register::general}
 				{
 				}
@@ -129,15 +130,15 @@ namespace minijava
 					}
 				}
 
+				virtual_assembly get() &&
+				{
+					return std::move(_assembly);
+				}
+
 			private:
 
-				virtual_assembly* _virtasm;
+				virtual_assembly _assembly;
 				virtual_register _nextreg;
-
-				virtual_assembly& _assembly() noexcept
-				{
-					return *_virtasm;
-				}
 
 				virtual_register _next_register()
 				{
@@ -146,17 +147,25 @@ namespace minijava
 					return current;
 				}
 
+				template <typename... ArgTs>
+				void _emplace_instruction(ArgTs&&... args)
+				{
+					_assembly.blocks.back().code.emplace_back(
+						std::forward<ArgTs>(args)...
+					);
+				}
+
 				void _visit_block(firm::ir_node* irn)
 				{
 					// TODO: Generate unique labels.
                     assert(firm::is_Block(irn));
-					_assembly().emplace_back();
-					_assembly().back().label = ".L";
+					_assembly.blocks.emplace_back(".L");
 				}
 
 				void _visit_start(firm::ir_node* irn)
 				{
                     assert(firm::is_Start(irn));
+					assert(_assembly.blocks.empty());
 					// Nothing to do?
 				}
 
@@ -168,7 +177,7 @@ namespace minijava
 					const auto number = firm::get_tarval_long(tarval);
 					const auto dstreg = _next_register();
 					set_irn_link_reg(irn, dstreg);
-					_assembly().emplace_back(opcode::op_mov, width, number, dstreg);
+					_emplace_instruction(opcode::op_mov, width, number, dstreg);
 				}
 
 				void _visit_binop(firm::ir_node* irn, const opcode binop)
@@ -184,8 +193,8 @@ namespace minijava
 					const auto lhsreg = get_irn_link_reg(lhs);
 					const auto rhsreg = get_irn_link_reg(rhs);
 					set_irn_link_reg(irn, dstreg);
-					_assembly().emplace_back(opcode::op_mov, width, lhsreg, dstreg);
-					_assembly().emplace_back(binop, width, rhsreg, dstreg);
+					_emplace_instruction(opcode::op_mov, width, lhsreg, dstreg);
+					_emplace_instruction(binop, width, rhsreg, dstreg);
 				}
 
 				void _visit_div(firm::ir_node* irn)
@@ -200,9 +209,9 @@ namespace minijava
 					const auto rhsreg = get_irn_link_reg(rhs);
 					const auto divreg = _next_register();
 					const auto modreg = _next_register();
-					_assembly().emplace_back(opcode::op_mov, width, lhsreg, divreg);
-					_assembly().emplace_back(opcode::op_mov, width, rhsreg, modreg);
-					_assembly().emplace_back(opcode::mac_divmod, width, divreg, modreg);
+					_emplace_instruction(opcode::op_mov, width, lhsreg, divreg);
+					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
+					_emplace_instruction(opcode::mac_divmod, width, divreg, modreg);
 					set_irn_link_reg(irn, divreg);
 				}
 
@@ -218,9 +227,9 @@ namespace minijava
 					const auto rhsreg = get_irn_link_reg(rhs);
 					const auto divreg = _next_register();
 					const auto modreg = _next_register();
-					_assembly().emplace_back(opcode::op_mov, width, lhsreg, divreg);
-					_assembly().emplace_back(opcode::op_mov, width, rhsreg, modreg);
-					_assembly().emplace_back(opcode::mac_divmod, width, divreg, modreg);
+					_emplace_instruction(opcode::op_mov, width, lhsreg, divreg);
+					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
+					_emplace_instruction(opcode::mac_divmod, width, divreg, modreg);
 					set_irn_link_reg(irn, modreg);
 				}
 
@@ -243,16 +252,16 @@ namespace minijava
 						const auto node = firm::get_Call_param(irn, i);
 						const auto width = get_width(node);
 						const auto srcreg = get_irn_link_reg(node);
-						_assembly().emplace_back(opcode::op_mov, width, srcreg, argreg);
+						_emplace_instruction(opcode::op_mov, width, srcreg, argreg);
 						argreg = next_argument_register(argreg);
 					}
 					const auto label = firm::get_entity_ld_name(method_entity);
-					_assembly().emplace_back(opcode::mac_call_aligned, bit_width{}, label);
+					_emplace_instruction(opcode::mac_call_aligned, bit_width{}, label);
 					if (res_arity) {
 						assert(res_arity == 1);
 						const auto resreg = _next_register();
 						const auto reswidth = get_width(firm::get_method_res_type(method_type, 0));
-						_assembly().emplace_back(opcode::op_mov, reswidth, virtual_register::result, resreg);
+						_emplace_instruction(opcode::op_mov, reswidth, virtual_register::result, resreg);
 					}
 				}
 
@@ -265,9 +274,9 @@ namespace minijava
 						const auto resarg = firm::get_Return_res(irn, 0);
 						const auto resreg = get_irn_link_reg(resarg);
 						const auto width = get_width(resarg);
-						_assembly().emplace_back(opcode::op_mov, width, resreg, virtual_register::result);
+						_emplace_instruction(opcode::op_mov, width, resreg, virtual_register::result);
 					}
-					_assembly().emplace_back(opcode::op_ret);
+					_emplace_instruction(opcode::op_ret);
 				}
 
 			};  // class generator
@@ -311,15 +320,13 @@ namespace minijava
 
 		}  // namespace /* anonymous */
 
-		void assemble_function(firm::ir_graph* irg, virtual_assembly& virtasm)
+		virtual_assembly assemble_function(firm::ir_graph* irg)
 		{
 			assert(irg != nullptr);
 			const ir_resource_guard guard {irg, firm::IR_RESOURCE_IRN_LINK};
-			auto gen = generator{virtasm};
 			const auto entity = firm::get_irg_entity(irg);
 			const auto ldname = firm::get_entity_ld_name(entity);
-			virtasm.emplace_back();
-			virtasm.back().label = ldname;
+			auto gen = generator{ldname};
 			// TODO: Assign parameters to registers.
 			firm::irg_walk_blkwise_graph(
 				irg,
@@ -327,6 +334,7 @@ namespace minijava
 				visit_node_after,
 				&gen
 			);
+			return std::move(gen).get();
 		}
 
 	}  // namespace backend

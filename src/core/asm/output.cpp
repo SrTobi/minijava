@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <string>
 
+#include <boost/utility/string_ref.hpp>
 #include <boost/variant/apply_visitor.hpp>
 
 #include "exceptions.hpp"
@@ -146,33 +147,43 @@ namespace minijava
 				return boost::apply_visitor(visitor{width}, op);
 			}
 
-			template <typename IterT>
-			void write_text_impl(const IterT first, const IterT last, file_output& out)
+			void write_label(const boost::string_ref label, file_output& out)
 			{
-				for (auto it = first; it != last; ++it) {
-					if (!it->label.empty()) {
-						out.write(it->label.data(), it->label.size());
-						out.write(":\n");
-					}
-					const auto mnemotic = format(it->code, it->width);
-					if (mnemotic.empty()) {
-						continue;
-					}
-					const auto op1 = format(it->op1, it->width);
-					const auto op2 = format(it->op2, it->width);
-					const auto arity = 0 + !op2.empty() + !op1.empty();
-					switch (arity) {
-					case 0:
-						out.print("\t%s\n", mnemotic.c_str());
-						break;
-					case 1:
-						out.print("\t%s %s\n", mnemotic.c_str(), op1.c_str());
-						break;
-					case 2:
-						out.print("\t%s %s, %s\n", mnemotic.c_str(), op1.c_str(), op2.c_str());
-						break;
-					default:
-						MINIJAVA_NOT_REACHED();
+				// Cannot use `print()` because `boost::string_ref` is not NUL
+				// terminated.
+				if (!label.empty()) {
+					out.write(label.data(), label.size());
+					out.write(":\n");
+				}
+			}
+
+			template <typename RegT>
+			void write_text_impl(const assembly<RegT>& assembly, file_output& out)
+			{
+				write_label(assembly.ldname, out);
+				for (const auto& bb : assembly.blocks) {
+					write_label(bb.label, out);
+					for (const auto& instr : bb.code) {
+						const auto mnemotic = format(instr.code, instr.width);
+						if (mnemotic.empty()) {
+							continue;
+						}
+						const auto op1 = format(instr.op1, instr.width);
+						const auto op2 = format(instr.op2, instr.width);
+						const auto arity = 0 + !op2.empty() + !op1.empty();
+						switch (arity) {
+						case 0:
+							out.print("\t%s\n", mnemotic.c_str());
+							break;
+						case 1:
+							out.print("\t%s %s\n", mnemotic.c_str(), op1.c_str());
+							break;
+						case 2:
+							out.print("\t%s %s, %s\n", mnemotic.c_str(), op1.c_str(), op2.c_str());
+							break;
+						default:
+							MINIJAVA_NOT_REACHED();
+						}
 					}
 				}
 			}
@@ -181,12 +192,12 @@ namespace minijava
 
 		void write_text(const virtual_assembly& asmcode, file_output& out)
 		{
-			write_text_impl(std::begin(asmcode), std::end(asmcode), out);
+			write_text_impl(asmcode, out);
 		}
 
 		void write_text(const real_assembly& asmcode, file_output& out)
 		{
-			write_text_impl(std::begin(asmcode), std::end(asmcode), out);
+			write_text_impl(asmcode, out);
 		}
 
 	}  // namespace backend

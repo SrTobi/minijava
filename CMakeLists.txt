@@ -42,6 +42,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 set(COMPONENTS
 	asm/allocator
 	asm/asm
+	asm/assembly
+	asm/basic_block
 	asm/data
 	asm/generator
 	asm/instruction
