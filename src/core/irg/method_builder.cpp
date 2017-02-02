@@ -172,8 +172,8 @@ namespace minijava
 				{
 					auto store = _do_store;
 					_do_store = false;
-					auto index = get_expression_node(node.index());
 					auto target = get_expression_node(node.target());
+					auto index = get_expression_node(node.index());
 					_do_store = store;
 
 					auto array_ref_type = _sem_info.type_annotations().at(node.target());
