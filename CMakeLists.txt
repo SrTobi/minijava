@@ -72,6 +72,7 @@ set(COMPONENTS
 	opt/opt
 	opt/folding
 	opt/inline
+	opt/unroll
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc

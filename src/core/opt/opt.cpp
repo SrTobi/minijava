@@ -3,6 +3,7 @@
 #include "opt/control_flow.hpp"
 #include "opt/folding.hpp"
 #include "opt/inline.hpp"
+#include "opt/unroll.hpp"
 #include <queue>
 
 namespace minijava
@@ -32,9 +33,11 @@ namespace minijava
 
 	void register_all_optimizations()
 	{
+		//opts are registered in a meaningfull order
 		register_optimization(std::make_unique<opt::folding>());
 		register_optimization(std::make_unique<opt::conditional>());
 		register_optimization(std::make_unique<opt::control_flow>());
+		register_optimization(std::make_unique<opt::unroll>());
 		register_optimization(std::make_unique<opt::inliner>());
 	}
 
