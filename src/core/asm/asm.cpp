@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstddef>
 
+#include "asm/allocate_registers.hpp"
 #include "asm/data.hpp"
 #include "asm/text.hpp"
 #include "irg/irg.hpp"

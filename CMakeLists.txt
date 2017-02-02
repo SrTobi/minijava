@@ -40,6 +40,7 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https:
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
+	asm/allocate_registers
 	asm/asm
 	asm/data
 	asm/instruction

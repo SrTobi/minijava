@@ -37,21 +37,6 @@ BOOST_AUTO_TEST_CASE(assemble_empty_function)
 }
 
 
-BOOST_AUTO_TEST_CASE(allocate_registers_for_empty_function)
-{
-	using opc = minijava::backend::opcode;
-	auto virtasm = minijava::backend::virtual_assembly{};
-	auto realasm = minijava::backend::real_assembly{};
-	virtasm.emplace_back();
-	virtasm.back().label = "foo";
-	virtasm.emplace_back(opc::op_ret);
-	BOOST_REQUIRE_THROW(
-		minijava::backend::allocate_registers(virtasm, realasm),
-		minijava::not_implemented_error
-	);
-}
-
-
 BOOST_AUTO_TEST_CASE(write_text_for_nothing)
 {
 	auto assembly = minijava::backend::real_assembly{};

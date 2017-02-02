@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include "asm/instruction.hpp"
 #include "firm.hpp"
 #include "io/file_output.hpp"
@@ -20,12 +18,6 @@ namespace minijava
 
 	namespace backend
 	{
-
-		/** @brief Type used for x64 assemblies using virtual registers. */
-		using virtual_assembly = std::vector<virtual_instruction>;
-
-		/** @brief Type used for x64 assemblies using real registers. */
-		using real_assembly = std::vector<real_instruction>;
 
 		/**
 		 * @brief
@@ -39,19 +31,6 @@ namespace minijava
 		 *
 		 */
 		void assemble_function(firm::ir_graph* irg, virtual_assembly& virtasm);
-
-		/**
-		 * @brief
-		 *     Converts virtual to real assembly by allocating registers.
-		 *
-		 * @param virtasm
-		 *     virtual assembly listing to transform
-		 *
-		 * @param realasm
-		 *     real assembly listing to append to
-		 *
-		 */
-		void allocate_registers(const virtual_assembly& virtasm, real_assembly& realasm);
 
 		/**
 		 * @brief

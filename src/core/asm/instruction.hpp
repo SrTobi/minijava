@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include <boost/optional.hpp>
 #include <boost/utility/string_ref.hpp>
@@ -262,6 +263,12 @@ namespace minijava
 
 		/** @brief Type for x64 instructions using real registers. */
 		using real_instruction = instruction<real_register>;
+
+		/** @brief Type used for x64 assemblies using virtual registers. */
+		using virtual_assembly = std::vector<virtual_instruction>;
+
+		/** @brief Type used for x64 assemblies using real registers. */
+		using real_assembly = std::vector<real_instruction>;
 
 	}  // namespace backend
 
