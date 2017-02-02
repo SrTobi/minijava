@@ -1,0 +1,16 @@
+// pragma stdin system_in_read_data.txt
+// pragma output 97 49 43 10
+
+class Test {
+
+	public static void main(String[] args) {
+		while (true) {
+			int c = System.in.read();
+			if (c < 0) {
+				return;
+			}
+			System.out.println(c);
+		}
+	}
+
+}

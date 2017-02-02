@@ -3,6 +3,7 @@ set(MICRO_BENCHMARKS
 	keyword
 	lexer
 	parser
+	semantic
 	tts-combine
 	tts-lookup
 	tts-modify

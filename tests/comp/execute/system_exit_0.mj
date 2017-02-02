@@ -1,0 +1,12 @@
+// pragma execstatus 0
+// pragma output
+
+class Test {
+
+	public static void main(String[] args) {
+		System.exit(0);
+		/* It should never come this far. */
+		System.out.println(1);
+	}
+
+}

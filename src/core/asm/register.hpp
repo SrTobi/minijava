@@ -164,15 +164,13 @@ namespace minijava
 		 *     `return`s the name of a register with a specified width.
 		 *
 		 * For example, `name(real_register::a, width::xxxii)` will `return`
-		 * the string `"EAX"`.
+		 * the string `"eax"`.
 		 *
 		 * If either argument is not a declared enumerator, the behavior is
 		 * undefined.
 		 *
-		 * The `return` type of this function is a plain old `std::string`
-		 * because the register names are short engough to easily fit into the
-		 * embedded SSO buffer of every modern `std::string` implementation so
-		 * there is no need for additional memory management optimizations.
+		 * The `return`ed pointer refers to a statically allocated buffer that
+		 * must not be modified or `free()`d.
 		 *
 		 * @param reg
 		 *     register
@@ -184,7 +182,7 @@ namespace minijava
 		 *     complete name of the register
 		 *
 		 */
-		std::string name(real_register reg, bit_width width);
+		const char* name(real_register reg, bit_width width);
 
 	}  // namespace backend
 

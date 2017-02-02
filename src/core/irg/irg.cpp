@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 #include "firm.hpp"
-#include "irg/builtins.hpp"
+#include "irg/globals.hpp"
 #include "irg/lowering.hpp"
 #include "irg/method_builder.hpp"
 #include "irg/type_builder.hpp"

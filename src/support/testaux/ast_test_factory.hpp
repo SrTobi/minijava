@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <random>
 
@@ -72,6 +73,20 @@ namespace testaux
 		 */
 		std::unique_ptr<minijava::ast::integer_constant>
 		make_integer(const std::string& lexval, bool negative = false);
+
+		/**
+		 * @brief
+		 *     Creates an integer literal.
+		 *
+		 * @param intval
+		 *     integral value of the integer literal
+		 *
+		 * @returns
+		 *     integer literal AST
+		 *
+		 */
+		std::unique_ptr<minijava::ast::integer_constant>
+		make_integer(std::int32_t intval);
 
 		/**
 		 * @brief

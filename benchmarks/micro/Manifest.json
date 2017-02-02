@@ -75,6 +75,11 @@
     "parser" : {
 	"description" : "raw parser performance",
 	"command" : ["parser", "--recursion-depth=70"]
+    },
+
+    "semantic" : {
+	"description" : "raw semantic analysis performance",
+	"command" : ["semantic", "--recursion-depth=70"]
     }
 
 }

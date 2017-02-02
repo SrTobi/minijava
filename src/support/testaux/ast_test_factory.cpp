@@ -1,5 +1,8 @@
 #include "testaux/ast_test_factory.hpp"
 
+#include <cstdint>
+#include <cstdlib>
+
 #include "testaux/random_tokens.hpp"
 #include "testaux/unique_ptr_vector.hpp"
 
@@ -13,6 +16,15 @@ namespace testaux
 	ast_test_factory::make_integer(const std::string& lexval, const bool negative)
 	{
 		return factory.make<ast::integer_constant>()(pool.normalize(lexval), negative);
+	}
+
+	std::unique_ptr<ast::integer_constant>
+	ast_test_factory::make_integer(std::int32_t intval)
+	{
+		const auto sig = (intval < 0);
+		const auto mag = std::abs(std::int64_t{intval});
+		const auto lexval = std::to_string(mag);
+		return factory.make<ast::integer_constant>()(pool.normalize(lexval), sig);
 	}
 
 	std::unique_ptr<ast::boolean_constant>

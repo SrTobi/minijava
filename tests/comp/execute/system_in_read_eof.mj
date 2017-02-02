@@ -1,0 +1,11 @@
+// pragma stdin /dev/null
+// pragma output -1
+
+class Test {
+
+	public static void main(String[] args) {
+		int c = System.in.read();
+		System.out.println(c);
+	}
+
+}

@@ -36,6 +36,7 @@ BOOST_AUTO_TEST_CASE(operand_none)
 {
 	using operand_type = minijava::backend::operand<mock_register>;
 	const auto operand = operand_type{};
+	BOOST_REQUIRE(empty(operand));
 	BOOST_REQUIRE(nullptr == get_immediate(operand));
 	BOOST_REQUIRE(nullptr == get_register(operand));
 	BOOST_REQUIRE(nullptr == get_address(operand));
@@ -46,6 +47,7 @@ BOOST_AUTO_TEST_CASE(operand_immediate)
 {
 	using operand_type = minijava::backend::operand<mock_register>;
 	const auto operand = operand_type{42};
+	BOOST_REQUIRE(!empty(operand));
 	BOOST_REQUIRE(nullptr != get_immediate(operand));
 	BOOST_REQUIRE_EQUAL(42, *get_immediate(operand));
 	BOOST_REQUIRE(nullptr == get_register(operand));
@@ -57,6 +59,7 @@ BOOST_AUTO_TEST_CASE(operand_register)
 {
 	using operand_type = minijava::backend::operand<mock_register>;
 	const auto operand = operand_type{mock_register::b};
+	BOOST_REQUIRE(!empty(operand));
 	BOOST_REQUIRE(nullptr == get_immediate(operand));
 	BOOST_REQUIRE(nullptr != get_register(operand));
 	BOOST_REQUIRE(mock_register::b == *get_register(operand));
@@ -69,6 +72,7 @@ BOOST_AUTO_TEST_CASE(operand_address)
 	using operand_type = minijava::backend::operand<mock_register>;
 	using address_type = minijava::backend::address<mock_register>;
 	const auto operand = operand_type{address_type{}};
+	BOOST_REQUIRE(!empty(operand));
 	BOOST_REQUIRE(nullptr == get_immediate(operand));
 	BOOST_REQUIRE(nullptr == get_register(operand));
 	BOOST_REQUIRE(nullptr != get_address(operand));
@@ -80,6 +84,7 @@ BOOST_AUTO_TEST_CASE(operand_name)
 	using operand_type = minijava::backend::operand<mock_register>;
 	const auto label = "foo";
 	const auto operand = operand_type{label};
+	BOOST_REQUIRE(!empty(operand));
 	BOOST_REQUIRE(nullptr == get_immediate(operand));
 	BOOST_REQUIRE(nullptr == get_register(operand));
 	BOOST_REQUIRE(nullptr == get_address(operand));

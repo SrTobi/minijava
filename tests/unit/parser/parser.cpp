@@ -215,6 +215,18 @@ static const token_sequence success_data[] = {
 	},
 	{
 		CLASS("Foo", BLOCK(
+				tt::kw_public, tt::kw_void, id("foo"), tt::left_paren, tt::right_paren, tt::kw_throws, id("Exception"),
+				EMPTY_BLOCK
+		))
+	},
+	{
+		CLASS("Foo", BLOCK(
+				tt::kw_public, tt::kw_static, tt::kw_void, id("main"), tt::left_paren, ARRAY(id("String")), id("args"), tt::right_paren, tt::kw_throws, id("Exception"),
+				EMPTY_BLOCK
+		))
+	},
+	{
+		CLASS("Foo", BLOCK(
 			METHOD(ARRAY(tt::kw_int), "bar",
 			       PARAMS(ARRAY(tt::kw_int), id("x")),
 				   EMPTY_BLOCK)

@@ -1,0 +1,13 @@
+// pragma output -2147483648 -1 0 1 2147483647
+
+class Test {
+
+	public static void main(String[] args) {
+		System.out.println(System.id(-2147483648));
+		System.out.println(System.id(-1));
+		System.out.println(System.id(0));
+		System.out.println(System.id(1));
+		System.out.println(System.id(2147483647));
+	}
+
+}

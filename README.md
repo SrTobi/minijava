@@ -15,6 +15,10 @@ consistent as a whole.
 This section describes the differences between our compiler and the behavior
 expected by the official test suite.
 
+### Line comments
+
+Our implementation supports line comments `//` like every other modern Java
+compiler.
 
 ### Treatment of `main`
 
