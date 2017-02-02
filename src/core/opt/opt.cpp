@@ -142,6 +142,31 @@ namespace minijava
 		}
 	}
 
+	bool opt::is_nop(firm::ir_node* node)
+	{
+		switch (firm::get_irn_opcode(node)) {
+			case firm::iro_Anchor:
+			case firm::iro_Bad:
+			case firm::iro_Confirm:
+			case firm::iro_Deleted:
+			case firm::iro_Dummy:
+			case firm::iro_End:
+			case firm::iro_Id:
+			case firm::iro_NoMem:
+			case firm::iro_Pin:
+			case firm::iro_Proj:
+			case firm::iro_Start:
+			case firm::iro_Sync:
+			case firm::iro_Tuple:
+			case firm::iro_Unknown:
+				return true;
+			case firm::iro_Phi:
+				return firm::get_irn_mode(node) == firm::mode_M;
+			default:
+				return false;
+		}
+	}
+
 	void opt::clone_irg(firm::ir_graph* from, firm::ir_graph* to)
 	{
 		firm::irg_walk_graph(from, copy_nodes, set_preds, to);

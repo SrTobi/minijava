@@ -67,39 +67,6 @@ int get_benefice(firm::ir_node* call_node)
 
 /**
  * @brief
- *     Has the given ir_node any runtime influence or does it behave like a nop
- * @param node
- *     ir_node to check it's opcode
- * @return
- *     true, if the node behaves like a nop
- */
-bool is_nop(firm::ir_node* node)
-{
-	switch (firm::get_irn_opcode(node)) {
-		case firm::iro_Anchor:
-		case firm::iro_Bad:
-		case firm::iro_Confirm:
-		case firm::iro_Deleted:
-		case firm::iro_Dummy:
-		case firm::iro_End:
-		case firm::iro_Id:
-		case firm::iro_NoMem:
-		case firm::iro_Pin:
-		case firm::iro_Proj:
-		case firm::iro_Start:
-		case firm::iro_Sync:
-		case firm::iro_Tuple:
-		case firm::iro_Unknown:
-			return true;
-		case firm::iro_Phi:
-			return firm::get_irn_mode(node) == firm::mode_M;
-		default:
-			return false;
-	}
-}
-
-/**
- * @brief
  *     Simple check against a call node with, if it could be inlined.
  * @param call
  *     The call node, which should be inlined
@@ -559,8 +526,6 @@ bool inliner::optimize(firm_ir &)
 	// collect calls
 	for (auto &kv : irgs) {
 		collect_irg_calls(kv.first);
-
-		firm::dump_ir_graph(kv.first, "before-inline");
 	}
 
 	// inline
@@ -584,7 +549,6 @@ bool inliner::optimize(firm_ir &)
 
 		// got something inlined?
 		if (kv.second.got_inlined) {
-			firm::dump_ir_graph(irg, "after-inlined");
 			changed = true;
 		}
 	}
