@@ -142,7 +142,7 @@ namespace minijava
 				virtual_register _next_register()
 				{
 					const auto current = _nextreg;
-					_nextreg = next(current);
+					_nextreg = next_general_register(current);
 					return current;
 				}
 
@@ -238,12 +238,13 @@ namespace minijava
 					const auto arg_arity = firm::get_method_n_params(method_type);
 					const auto res_arity = firm::get_method_n_ress(method_type);
 					assert(arg_arity <= INT_MAX);  // libfirm's randomly chosen integer types...
+					auto argreg = virtual_register::argument;
 					for (auto i = 0; i < static_cast<int>(arg_arity); ++i) {
 						const auto node = firm::get_Call_param(irn, i);
 						const auto width = get_width(node);
 						const auto srcreg = get_irn_link_reg(node);
-						const auto dstreg = static_cast<virtual_register>(-1 - i);  // TODO: Use proper functions
-						_assembly().emplace_back(opcode::op_mov, width, srcreg, dstreg);
+						_assembly().emplace_back(opcode::op_mov, width, srcreg, argreg);
+						argreg = next_argument_register(argreg);
 					}
 					const auto label = firm::get_entity_ld_name(method_entity);
 					_assembly().emplace_back(opcode::mac_call_aligned, bit_width{}, label);

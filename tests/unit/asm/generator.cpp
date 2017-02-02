@@ -23,8 +23,6 @@ BOOST_AUTO_TEST_CASE(assemble_empty_function)
 	firm::set_current_ir_graph(irg);
 	firm::lower_highlevel();
 	auto virtasm = minijava::backend::virtual_assembly{};
-	BOOST_REQUIRE_THROW(
-		minijava::backend::assemble_function(irg, virtasm),
-		minijava::not_implemented_error
-	);
+	minijava::backend::assemble_function(irg, virtasm);
+	// TODO: Check something meaningful.
 }

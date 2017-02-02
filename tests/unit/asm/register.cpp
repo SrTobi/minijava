@@ -8,35 +8,46 @@
 #include <boost/test/unit_test.hpp>
 
 
-BOOST_AUTO_TEST_CASE(make_virtual_register_and_number_round_trip)
+BOOST_AUTO_TEST_CASE(virtual_general_registers_constexpr)
 {
-	for (auto i = 0; i < 10000; ++i) {
-		const auto reg = minijava::backend::make_virtual_register(i);
-		const auto num = number(reg);
-		BOOST_REQUIRE_EQUAL(i, num);
-	}
+	constexpr auto gp_reg = minijava::backend::virtual_register::general;
+	static_assert(1 == number(gp_reg), "");
+	static_assert(minijava::backend::is_general_register(gp_reg), "");
+	static_assert(not minijava::backend::is_argument_register(gp_reg), "");
+	constexpr auto gp_reg_2 = next_general_register(gp_reg);
+	static_assert(2 == number(gp_reg_2), "");
+	static_assert(minijava::backend::is_general_register(gp_reg_2), "");
+	static_assert(not minijava::backend::is_argument_register(gp_reg_2), "");
+	constexpr auto gp_reg_3 = next_general_register(gp_reg_2);
+	static_assert(3 == number(gp_reg_3), "");
+	static_assert(minijava::backend::is_general_register(gp_reg_3), "");
+	static_assert(not minijava::backend::is_argument_register(gp_reg_3), "");
 }
 
-
-BOOST_AUTO_TEST_CASE(make_virtual_register_is_constexpr_pure)
+BOOST_AUTO_TEST_CASE(virtual_argument_registers_constexpr)
 {
-	constexpr auto first = minijava::backend::make_virtual_register(42);
-	constexpr auto second = minijava::backend::make_virtual_register(42);
-	static_assert(first == second, "");
+	constexpr auto arg_reg = minijava::backend::virtual_register::argument;
+	static_assert(1 == number(arg_reg), "");
+	static_assert(minijava::backend::is_argument_register(arg_reg), "");
+	static_assert(not minijava::backend::is_general_register(arg_reg), "");
+	constexpr auto arg_reg_2 = next_argument_register(arg_reg);
+	static_assert(2 == number(arg_reg_2), "");
+	static_assert(minijava::backend::is_argument_register(arg_reg_2), "");
+	static_assert(not minijava::backend::is_general_register(arg_reg_2), "");
+	constexpr auto arg_reg_3 = next_argument_register(arg_reg_2);
+	static_assert(3 == number(arg_reg_3), "");
+	static_assert(minijava::backend::is_argument_register(arg_reg_3), "");
+	static_assert(not minijava::backend::is_general_register(arg_reg_3), "");
 }
 
-
-BOOST_AUTO_TEST_CASE(next_virtual_register_is_constexpr_pure)
+BOOST_AUTO_TEST_CASE(virtual_special_registers_constexpr)
 {
-	constexpr auto reg = minijava::backend::make_virtual_register(42);
-	static_assert(43 == number(next(reg)), "");
-}
-
-
-BOOST_AUTO_TEST_CASE(virtual_register_number_constexpr)
-{
-	constexpr auto reg = minijava::backend::make_virtual_register(42);
-	static_assert(42 == number(reg), "");
+	constexpr auto dummy_reg = minijava::backend::virtual_register::dummy;
+	static_assert(not minijava::backend::is_argument_register(dummy_reg), "");
+	static_assert(not minijava::backend::is_general_register(dummy_reg), "");
+	constexpr auto result_reg = minijava::backend::virtual_register::result;
+	static_assert(not minijava::backend::is_argument_register(result_reg), "");
+	static_assert(not minijava::backend::is_general_register(result_reg), "");
 }
 
 

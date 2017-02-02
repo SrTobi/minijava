@@ -26,12 +26,6 @@ namespace minijava
 				case virtual_register::dummy:
 					regname = "Dummy";
 					break;
-				case virtual_register::stack_pointer:
-					regname = "SP";
-					break;
-				case virtual_register::base_pointer:
-					regname = "BP";
-					break;
 				case virtual_register::result:
 					regname = "RES";
 					break;
