@@ -171,6 +171,8 @@ static const success_test success_data[] = {
 		{"/*/**/*/", tt::multiply, tt::divide},
 		{"**/*= */*", tt::multiply, tt::multiply, tt::multiply},
 		{"false/*/***** const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/="s, tt::kw_false, tt::assign},
+		{"//"},
+		{"false// */ const auto >= false static[] *\x7F/ ()\0\b\"\xFF ***/\n="s, tt::kw_false, tt::assign},
 
 		// integer literals
 		{"0", lit("0")},

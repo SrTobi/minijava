@@ -1,5 +1,5 @@
 /**
- * @file builtins.hpp
+ * @file globals.hpp
  *
  * @brief
  *     Methods for adding the builtins to the IR graph.
@@ -37,8 +37,7 @@ namespace minijava
 		 *     Firm IR types and entities
 		 *
 		 */
-		void create_globals(const semantic_info& semantic_info,
-							ir_types& types);
+		void create_globals(const semantic_info& semantic_info, ir_types& types);
 
 	}  // namespace irg
 

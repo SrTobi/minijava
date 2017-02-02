@@ -42,11 +42,17 @@ namespace minijava
 		try {
 			run_subprocess({
 					compiler_executable,
+					"-g",
+					/* On some systems, ld creates position-independent
+					 * executables by default (for ASLR), which causes a linker
+					 * error since our assembly is not position-independent.
+					 * The easiest way to disable this behavior in a portable
+					 * manner is to link everything statically. */
+					"-static",
 					"-o",
 					output_filename,
 					assembly_filename,
 					runtime_filename,
-					"-g"
 			});
 		} catch (const std::exception& e) {
 			throw std::runtime_error{

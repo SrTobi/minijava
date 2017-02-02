@@ -3,7 +3,7 @@
 
 import argparse
 import glob
-import os.path
+import os
 import re
 import shutil
 import subprocess
@@ -102,19 +102,19 @@ def run_all(inputs, ppsymbols, ns):
     statusfmt = '{:' + str(width) + 's}   {:s}'
     failures = 0
     for src in inputs:
-        displayname = os.path.basename(src)
+        (dirname, basename) = os.path.split(src)
         if ns.debug:
             print("DEBUG: Running test '{:s}' ...".format(src))
         with open(src) as istr:
-            (program, pragmas) = load_program(istr, ppsymbols, ns.debug)
+            (program, pragmas) = load_program(istr, ppsymbols, ns.debug, basedir=dirname)
         if 'skip' in pragmas:
-            print(statusfmt.format(displayname, 'SKIPPED'))
+            print(statusfmt.format(basename, 'SKIPPED'))
             continue
         try:
             run_single(program, ns, pragmas)
-            print(statusfmt.format(displayname, 'PASSED'))
+            print(statusfmt.format(basename, 'PASSED'))
         except Failure as e:
-            print(statusfmt.format(displayname, 'FAILED'))
+            print(statusfmt.format(basename, 'FAILED'))
             if 'failure' not in pragmas:
                 failures += 1
                 print("failure:", e, file=sys.stderr)
@@ -168,23 +168,52 @@ def run_executable(ns, pragmas, directory=None):
         print("DEBUG: Running executable '{:s}' ...".format(executable))
     proc = subprocess.Popen(
         [executable],
-        stdin=subprocess.DEVNULL,
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=directory
     )
-    (out, err) = proc.communicate()
+    with open(pragmas.get('stdin', os.devnull), 'rb') as istr:
+        (out, err) = proc.communicate(istr.read())
     if ns.debug:
         log_popen_result(proc, out, err)
-    if proc.returncode != 0:
-        raise Failure("Executable crashed with error code {:d}".format(proc.returncode))
+    check_exec_status(pragmas, proc.returncode)
+    check_exec_stdios(pragmas, out, 'stdout')
+    check_exec_stdios(pragmas, out, 'stderr')
+    check_exec_output(pragmas, out)
+
+
+def check_exec_status(pragmas, actual):
+    assert type(actual) is int
+    expected = pragmas.get('execstatus', 0)
+    if expected != actual:
+        raise Failure("Executable exited with status {:d} instead of {:d}".format(actual, expected))
+
+
+def check_exec_output(pragmas, actual):
+    assert type(actual) is bytes
     try:
-        actual = [int(s) for s in out.split()]
+        expected = pragmas['output']
+    except KeyError:
+        return
+    try:
+        actual = [int(s) for s in actual.decode().split()]
     except ValueError:
         raise Failure("Executable produced output other than decimal integers")
-    expected = pragmas.get('output')
-    if expected is not None and expected != actual:
-        raise Failure("Executable did not produce the expected output")
+    if expected != actual:
+        raise Failure("Executable did not output the expected list of integers")
+
+
+def check_exec_stdios(pragmas, actual, what):
+    assert type(actual) is bytes
+    try:
+        filename = pragmas[what]
+    except KeyError:
+        return
+    with open(filename, 'rb') as istr:
+        expected = istr.read()
+    if expected != actual:
+        raise Failure("Executable did not produce the expected {:s}".format(what))
 
 
 def log_popen_result(proc, out, err):
@@ -210,7 +239,7 @@ def log_popen_stream(data, what):
         print("DEBUG: Standard {:s} was {:d} bytes of non-textual data".format(what, len(data)))
 
 
-def load_program(istr, ppsymbols, debug=False):
+def load_program(istr, ppsymbols, debug=False, basedir='.'):
     lines = list()
     pragmas = dict()
     collect = [True]
@@ -236,10 +265,10 @@ def load_program(istr, ppsymbols, debug=False):
                 pp_check_arity(0, tokens)
                 collect.pop()
                 if not collect:
-                    raise SetupError("Pragma 'endif' without matching 'if'")
+                    raise SetupError("Pre-processing 'endif' without matching 'if'")
             elif tokens[0] == 'pragma':
                 (_, pragma, *args) = tokens
-                value = pp_parse_pragma(pragma, args)
+                value = pp_parse_pragma(pragma, args, basedir=basedir)
                 if all(collect):
                     if pragma in pragmas:
                         raise SetupError("Pragma '{:s}' cannot be used more than once".format(pragma))
@@ -285,7 +314,7 @@ def pp_check_arity(expected, tokens):
         ).format(tokens[0], expected, w1, actual, w2))
 
 
-def pp_parse_pragma(name, args):
+def pp_parse_pragma(name, args, basedir='.'):
     assert type(name) is str
     assert type(args) is list
     assert all(map(lambda x : type(x) is str, args))
@@ -312,13 +341,22 @@ def pp_parse_pragma(name, args):
             return list(map(int, args))
         except ValueError:
             raise SetupError("Pragma 'output' must be followed by a list of integers")
-    elif name == 'status':
+    elif name in {'stdin', 'stdout', 'stderr'}:
+        if len(args) != 1:
+            raise SetupError("Pragma '{:s}' must be followed by a single file name".format(name))
+        filename = os.path.join(basedir, args[0])
+        if filename == '/dev/null':
+            return os.devnull
+        if not os.path.isfile(filename):
+            raise SetupError("File (mentioned in pragma {:s}) does not exist: {:s}".format(name, filename))
+        return filename
+    elif name in {'status', 'execstatus'}:
         if len(args) == 1:
             try:
                 return int(args[0])
             except ValueError:
                 pass
-        raise SetupError("Pragma 'status' must be followed by exactly one integer")
+        raise SetupError("Pragma '{:s}' must be followed by exactly one integer".format(name))
     else:
         raise SetupError("Unknown directive '{:s}'".format(name))
 
@@ -329,10 +367,11 @@ def abscmd(cmd):
 
 
 if __name__ == '__main__':
-    try:
-        sys.exit(main(sys.argv[1:]))
-    except (AssertionError, TypeError, NameError):
-        raise
-    except Exception as e:
-        print("error:", e, file=sys.stderr)
-        sys.exit(1)
+    sys.exit(main(sys.argv[1:]))
+    # try:
+    #     sys.exit(main(sys.argv[1:]))
+    # except (AssertionError, TypeError, NameError):
+    #     raise
+    # except Exception as e:
+    #     print("error:", e, file=sys.stderr)
+    #     sys.exit(1)

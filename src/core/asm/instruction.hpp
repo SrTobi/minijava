@@ -83,6 +83,26 @@ namespace minijava
 
 		/**
 		 * @brief
+		 *     Tests whether an operand is empty (absent).
+		 *
+		 * @tparam RegT
+		 *     register type (virtual or real)
+		 *
+		 * @param op
+		 *     operand
+		 *
+		 * @returns
+		 *     `true` if the operand is empty
+		 *
+		 */
+		template <typename RegT>
+		bool empty(const operand<RegT>& op) noexcept
+		{
+			return boost::get<boost::blank>(&op);
+		}
+
+		/**
+		 * @brief
 		 *     `return`s a pointer to the immediate value of an operand or
 		 *     `nullptr` if the operand is not an immediate.
 		 *
