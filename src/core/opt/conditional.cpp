@@ -14,10 +14,8 @@ void minijava::opt::conditional::cleanup(firm::ir_node* node) {
 		// wait for following mux
 	} else if (opcode == firm::iro_Mux) {
 		firm::ir_tarval* tv = (firm::ir_tarval*)firm::get_irn_link(node);
-		if (tv == firm::tarval_b_true) {
-			firm::exchange(node, firm::get_irn_n(node, firm::n_Mux_true));
-		} else if (tv == firm::tarval_b_false) {
-			firm::exchange(node, firm::get_irn_n(node, firm::n_Mux_false));
+		if (tv) {
+			firm::exchange(node, firm::new_r_Const(firm::get_irn_irg(node), tv));
 		}
 	} else if (opcode == firm::iro_Phi) {
 		//if (tv) {
@@ -83,7 +81,23 @@ bool minijava::opt::conditional::handle(firm::ir_node* node) {
 		// pass tv from sel node to mux node
 		auto sel = get_tarval(node, 0);
 		if (sel) {
-			ret_tv = sel;
+			if (sel == firm::tarval_b_true) {
+				auto mux_true = firm::get_Mux_true(node);
+				if (firm::is_Const(mux_true)) {
+					ret_tv = firm::get_Const_tarval(mux_true);
+				} else {
+					auto ln = firm::get_irn_link(mux_true);
+					if (ln) ret_tv = (firm::ir_tarval*)ln;
+				}
+			} else if (sel == firm::tarval_b_false) {
+				auto mux_false = firm::get_Mux_false(node);
+				if (firm::is_Const(mux_false)) {
+					ret_tv = firm::get_Const_tarval(mux_false);
+				} else {
+					auto ln = firm::get_irn_link(mux_false);
+					if (ln) ret_tv = (firm::ir_tarval*)ln;
+				}
+			}
 			changed = true;
 		}
 	} else if (opcode == firm::iro_Cond) {
