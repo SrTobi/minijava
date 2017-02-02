@@ -34,12 +34,15 @@ namespace minijava
 
 	void register_all_optimizations()
 	{
+		// should run at first, because after inlining, we couldn't remove them
+		register_optimization(std::make_unique<opt::unused_params>());
+		// important to get rid of unnecessary methods - no need to optimize them or even create code
+		// they might be created from unused_params opt
+		register_optimization(std::make_unique<opt::unused_method>());
 		register_optimization(std::make_unique<opt::folding>());
 		register_optimization(std::make_unique<opt::conditional>());
 		register_optimization(std::make_unique<opt::control_flow>());
 		register_optimization(std::make_unique<opt::inliner>());
-		register_optimization(std::make_unique<opt::unused_params>());
-		register_optimization(std::make_unique<opt::unused_method>());
 	}
 
 	std::vector<std::pair<firm::ir_node*, int>> opt::get_out_edges_safe(firm::ir_node *node)
