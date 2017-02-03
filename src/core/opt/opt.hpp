@@ -38,7 +38,7 @@ namespace minijava
 			 * @return
 			 *     Returns true, if something has changed in the IRG, otherwhise false
 			 */
-			virtual bool optimize(firm_ir& /*ir*/) = 0;
+			virtual bool optimize(firm_ir& ir) = 0;
 		};
 
 		/**

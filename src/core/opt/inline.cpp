@@ -85,6 +85,7 @@ namespace /* anonymous */
 		// parameter count should be equal
 		// assert this shouldn't never happen in our compiler
 		assert (firm::get_method_n_ress(called_type) == firm::get_method_n_ress(call_type));
+		(void)call_type;(void)called_type;
 		return true;
 	}
 
