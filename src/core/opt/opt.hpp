@@ -41,37 +41,104 @@ namespace minijava
 			virtual bool optimize(firm_ir& /*ir*/) = 0;
 		};
 
+		/**
+		 * Type of the worklist queue
+		 */
 		using worklist_queue = std::queue<firm::ir_node*>;
 
+		/**
+		 * @brief
+		 *     Base for all worklist based optimization. Calls `handle` and
+		 *     `cleanup` in topological order.
+		 */
 		class worklist_optimization : public optimization
 		{
 		protected:
 
+			/**
+			 * The current irg
+			 */
 			firm::ir_graph* _irg;
+
+			/**
+			 * Should be set, if something changed
+			 */
 			bool _changed{};
 
 		public:
+			/**
+			 * @brief
+			 *     Called in topological order for each node of each graph.
+			 *     Virtual function which must be overridden by the child class.
+			 * @param node
+			 * @return
+			 */
 			virtual bool handle(firm::ir_node* node) = 0;
+
+			/**
+			 * @brief
+			 *     Called in topological order for each node of each graph, AFTER `handle`.
+			 *     Virtual function which could be overridden by the child class.
+			 * @param node
+			 */
 			virtual void cleanup(firm::ir_node* node);
 
+			/**
+			 * @brief
+			 *     Runs the optimization on the given irp.
+			 *     Virtual function, which could be overriden by the child class.
+			 * @param ir
+			 * @return true, if something has changed
+			 */
 			virtual bool optimize(firm_ir &ir) override;
 		};
 
+		/**
+		 * @brief
+		 *     Runs an worklist based optimization on the given irg.
+		 */
 		class worklist
 		{
 		protected:
+			/**
+			 * The current irg.
+			 */
 			firm::ir_graph* _irg;
 
 		public:
+			/**
+			 * @brief
+			 *     Constructor, expects and irg
+			 * @param irg
+			 */
 			worklist(firm::ir_graph* irg);
 
+			/**
+			 * @brief
+			 *     Runs the worklist optimization.
+			 * @param opt
+			 */
 			void run(worklist_optimization *opt);
 		};
 
-		// functions
+
+		/**
+		 * @brief
+		 *     Get all out edges of the given `node`.
+		 *     Expects, that `firm::edges_activate` is called before.
+		 * @param node
+		 * @return
+		 */
 		std::vector<std::pair<firm::ir_node*, int>> get_out_edges_safe(firm::ir_node* node);
+
+		/**
+		 * @brief
+		 *     Copies the given node `n` to `irg` and returns the new node.
+		 * @param n
+		 * @param irg
+		 * @return
+		 */
 		firm::ir_node* copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg);
-		void clone_irg(firm::ir_graph* from, firm::ir_graph* to);
 
 
 		/**
@@ -84,8 +151,21 @@ namespace minijava
 		 */
 		bool is_nop(firm::ir_node* node);
 
-		firm::ir_tarval* get_tarval(firm::ir_node* node, int n);
+		/**
+		 * @brief
+		 *     Returns true, if the given tarval is numeric
+		 * @param val
+		 * @return
+		 */
 		bool is_tarval_numeric(firm::ir_tarval* val);
+
+		/**
+		 * @brief
+		 *     Returns true, if the given tarval `val` has the given long value `num`
+		 * @param val
+		 * @param num
+		 * @return
+		 */
 		bool is_tarval_with_num(firm::ir_tarval* val, long num);
 	}
 

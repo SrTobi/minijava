@@ -4,47 +4,101 @@
 
 using namespace minijava::opt;
 
-struct search_calls_info {
-	search_calls_info(firm::ir_entity* search) : search{search} {}
-
-	firm::ir_entity* search;
-	std::vector<firm::ir_node*> result;
-};
-
-void replace_call_node(firm::ir_node* call_node, std::vector<unsigned int> params_to_keep, firm::ir_entity* new_method_entity)
+namespace /* anonymous */
 {
-	auto params = new firm::ir_node*[params_to_keep.size()];
-	for (unsigned int i = 0; i < params_to_keep.size(); i++) {
-		params[i] = firm::get_Call_param(call_node, (int)params_to_keep[i]);
+	struct search_calls_info {
+		search_calls_info(firm::ir_entity *search) : search{search} {}
+
+		firm::ir_entity *search;
+		std::vector<firm::ir_node *> result;
+	};
+
+	void copy_nodes(firm::ir_node *node, void *env) {
+		copy_irn_to_irg(node, (firm::ir_graph *) env);
 	}
-	auto new_call_node = firm::new_r_Call(
-			firm::get_nodes_block(call_node),
-	        firm::get_Call_mem(call_node),
-	        firm::new_r_Address(firm::get_irn_irg(call_node), new_method_entity),
-			(int) params_to_keep.size(),
-	        params,
-	        firm::get_entity_type(new_method_entity)
-	);
-	delete [] params;
-	firm::exchange(call_node, new_call_node);
-}
 
-// rewires old param projs to new order
-void update_params(firm::ir_graph* irg, std::vector<unsigned int> params_to_keep)
-{
-	auto args = firm::get_irg_args(irg);
-	firm::edges_activate(irg);
-	for (unsigned int num = 0; num < params_to_keep.size(); num++) {
-		auto old_num = params_to_keep[num];
-		for (auto &out : get_out_edges_safe(args)) {
-			if (firm::is_Proj(out.first)) {
-				if (firm::get_Proj_num(out.first) == old_num) {
-					firm::set_Proj_num(out.first, num);
+	void set_preds(firm::ir_node *node, void *env) {
+		auto new_irg = (firm::ir_graph *) env;
+		auto nn = (firm::ir_node *) firm::get_irn_link(node);
+
+		if (firm::is_Block(node)) {
+			auto irg = firm::get_irn_irg(node);
+			auto end_block = firm::get_irg_end_block(irg);
+			for (int i = firm::get_Block_n_cfgpreds(node); i-- > 0;) {
+				auto pred = firm::get_Block_cfgpred(node, i);
+				if (end_block == node) {
+					firm::add_immBlock_pred(firm::get_irg_end_block(new_irg),
+					                        (firm::ir_node *) firm::get_irn_link(pred));
+				} else {
+					firm::set_Block_cfgpred(nn, i, (firm::ir_node *) firm::get_irn_link(pred));
+				}
+			}
+		} else {
+			firm::set_nodes_block(nn, (firm::ir_node *) firm::get_irn_link(firm::get_nodes_block(node)));
+			if (firm::is_End(node)) {
+				for (int i = 0, nodes = firm::get_End_n_keepalives(node); i < nodes; ++i) {
+					firm::add_End_keepalive(nn, (firm::ir_node *) firm::get_irn_link(firm::get_End_keepalive(node, i)));
+				}
+			} else {
+				// #foreach_irn_in_r macro from irnode_t.h
+				for (bool pred__b = true; pred__b;) {
+					for (firm::ir_node *pred__irn = node; pred__b; pred__b = false) {
+						for (int idx = firm::get_irn_arity(pred__irn); pred__b && idx-- != 0;) {
+							for (firm::ir_node *pred = (pred__b = false, firm::get_irn_n(pred__irn,
+							                                                             idx)); !pred__b; pred__b = true) {
+								set_irn_n(nn, idx, (firm::ir_node *) firm::get_irn_link(pred));
+							}
+						}
+					}
 				}
 			}
 		}
 	}
-	firm::edges_deactivate(irg);
+
+	void clone_irg(firm::ir_graph *from, firm::ir_graph *to) {
+		firm::irg_walk_graph(from, copy_nodes, set_preds, to);
+		firm::irg_finalize_cons(to);
+	}
+
+	void replace_call_node(firm::ir_node *call_node, std::vector<unsigned int> params_to_keep,
+	                       firm::ir_entity *new_method_entity) {
+		auto params = new firm::ir_node *[params_to_keep.size()];
+		for (unsigned int i = 0; i < params_to_keep.size(); i++) {
+			params[i] = firm::get_Call_param(call_node, (int) params_to_keep[i]);
+		}
+		auto new_call_node = firm::new_r_Call(
+				firm::get_nodes_block(call_node),
+				firm::get_Call_mem(call_node),
+				firm::new_r_Address(firm::get_irn_irg(call_node), new_method_entity),
+				(int) params_to_keep.size(),
+				params,
+				firm::get_entity_type(new_method_entity)
+		);
+		delete[] params;
+		firm::exchange(call_node, new_call_node);
+	}
+
+	/**
+	 * rewires old param projs to new order
+	 * @param irg
+	 * @param params_to_keep
+	 */
+	void update_params(firm::ir_graph *irg, std::vector<unsigned int> params_to_keep) {
+		auto args = firm::get_irg_args(irg);
+		firm::edges_activate(irg);
+		for (unsigned int num = 0; num < params_to_keep.size(); num++) {
+			auto old_num = params_to_keep[num];
+			for (auto &out : get_out_edges_safe(args)) {
+				if (firm::is_Proj(out.first)) {
+					if (firm::get_Proj_num(out.first) == old_num) {
+						firm::set_Proj_num(out.first, num);
+					}
+				}
+			}
+		}
+		firm::edges_deactivate(irg);
+	}
+
 }
 
 void unused_params::remove_unused_params(firm::ir_entity* method, std::vector<unsigned int> params_to_keep)

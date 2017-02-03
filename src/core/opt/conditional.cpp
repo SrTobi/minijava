@@ -4,12 +4,19 @@
 
 using namespace minijava::opt;
 
+namespace /* anonymous */
+{
+	firm::ir_tarval* get_tarval(firm::ir_node* node, int n)
+	{
+		if (n < firm::get_irn_arity(node)) {
+			return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
+		}
+		return nullptr;
+	}
+}
+
 void minijava::opt::conditional::cleanup(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
-	if (opcode == firm::iro_Const) {
-		return;
-	}
-
 	if (opcode == firm::iro_Cmp) {
 		// wait for following mux
 	} else if (opcode == firm::iro_Mux) {

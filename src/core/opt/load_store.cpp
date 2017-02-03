@@ -2,36 +2,36 @@
 
 using namespace minijava::opt;
 
-void remove_load_node(firm::ir_node* node)
+namespace /* anonymous */
 {
-	for (auto &out_edge : get_out_edges_safe(node)) {
-		if (firm::get_irn_mode(out_edge.first) == firm::mode_M) {
-			for (auto &child_edge : get_out_edges_safe(out_edge.first)) {
-				firm::set_irn_n(child_edge.first, child_edge.second, firm::get_irn_n(node, 0));
+	void remove_load_node(firm::ir_node *node) {
+		for (auto &out_edge : get_out_edges_safe(node)) {
+			if (firm::get_irn_mode(out_edge.first) == firm::mode_M) {
+				for (auto &child_edge : get_out_edges_safe(out_edge.first)) {
+					firm::set_irn_n(child_edge.first, child_edge.second, firm::get_irn_n(node, 0));
+				}
 			}
 		}
 	}
-}
 
-firm::ir_node* get_res_node(firm::ir_node* node)
-{
-	for (auto &out : get_out_edges_safe(node)) {
-		if (firm::get_irn_mode(out.first) != firm::mode_M) {
-			return out.first;
+	firm::ir_node *get_res_node(firm::ir_node *node) {
+		for (auto &out : get_out_edges_safe(node)) {
+			if (firm::get_irn_mode(out.first) != firm::mode_M) {
+				return out.first;
+			}
 		}
+		return nullptr;
 	}
-	return nullptr;
-}
 
-bool handle_load(firm::ir_node* node)
-{
-	auto res_node = get_res_node(node);
-	if (!res_node) {
-		// load never used
-		remove_load_node(node);
-		return true;
+	bool handle_load(firm::ir_node *node) {
+		auto res_node = get_res_node(node);
+		if (!res_node) {
+			// load never used
+			remove_load_node(node);
+			return true;
+		}
+		return false;
 	}
-	return false;
 }
 
 bool load_store::handle(firm::ir_node* node)
