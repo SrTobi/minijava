@@ -70,6 +70,7 @@ namespace minijava
 
 		// functions
 		std::vector<std::pair<firm::ir_node*, int>> get_out_edges_safe(firm::ir_node* node);
+		std::vector<std::pair<firm::ir_node*, int>> get_block_succ(firm::ir_node* node);
 		firm::ir_node* copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg);
 		void clone_irg(firm::ir_graph* from, firm::ir_graph* to);
 

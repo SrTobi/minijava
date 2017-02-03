@@ -50,6 +50,15 @@ namespace minijava
 		return vec;
 	}
 
+	std::vector<std::pair<firm::ir_node*, int>> opt::get_block_succ(firm::ir_node *node)
+	{
+		auto vec = std::vector<std::pair<firm::ir_node*, int>>();
+		for (auto out_block = firm::get_irn_out_edge_first_kind(node, firm::EDGE_KIND_BLOCK); out_block; out_block = firm::get_irn_out_edge_next(node, out_block, firm::EDGE_KIND_BLOCK)) {
+			vec.push_back(std::make_pair(firm::get_edge_src_irn(out_block), firm::get_edge_src_pos(out_block)));
+		}
+		return vec;
+	}
+
 	firm::ir_node* opt::copy_irn_to_irg(firm::ir_node *n, firm::ir_graph *irg)
 	{
 		firm::ir_node* nn = nullptr;
