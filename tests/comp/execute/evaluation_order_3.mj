@@ -1,0 +1,37 @@
+// pragma output 2 6 2 6 2 6
+
+class Test {
+
+	public int x;
+	public int y;
+
+	public void testFields() {
+		this.x = 3;
+		this.y = this.x * (this.x = 2);
+		System.out.println(this.x);
+		System.out.println(this.y);
+	}
+
+	public void testLocals() {
+		int x = 3;
+		int y = x * (x = 2);
+		System.out.println(x);
+		System.out.println(y);
+	}
+
+	public void testArray() {
+		int[] arr = new int[2];
+		arr[0] = 3;
+		arr[1] = arr[0] * (arr[0] = 2);
+		System.out.println(arr[0]);
+		System.out.println(arr[1]);
+	}
+
+	public static void main(String[] args) {
+		Test test = new Test();
+		test.testFields();
+		test.testLocals();
+		test.testArray();
+	}
+
+}
