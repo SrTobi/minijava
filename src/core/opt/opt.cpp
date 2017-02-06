@@ -9,11 +9,57 @@
 #include "opt/load_store.hpp"
 #include "opt/tailrec.hpp"
 #include <queue>
+#include <unordered_map>
+#include <algorithm>
 
 namespace minijava
 {
+	namespace {
 
-	std::vector<std::unique_ptr<minijava::opt::optimization>> optimizations;
+		std::vector<std::unique_ptr<minijava::opt::optimization>> optimizations;
+
+		template<typename T>
+		struct opt_constr_impl
+		{
+			std::unique_ptr<opt::optimization> operator ()()
+			{
+				return std::make_unique<T>();
+			}
+		};
+
+		using opt_constructor = std::function<std::unique_ptr<opt::optimization>()>;
+
+		std::vector<std::pair<std::string, opt_constructor>> optConstructors = {
+			// should run at first, because after inlining, we couldn't remove them
+			{ "unused_params", opt_constr_impl<opt::unused_params>{}},
+			// important to get rid of unnecessary methods - no need to optimize them or even create code
+			// they might be created from unused_params opt
+			{ "unused_method", opt_constr_impl<opt::unused_method>{}},
+			{ "folding", opt_constr_impl<opt::folding>{}},
+			{ "load_store", opt_constr_impl<opt::load_store>{}},
+			{ "conditional", opt_constr_impl<opt::conditional>{}},
+			{ "unroll", opt_constr_impl<opt::unroll>{}},
+			{ "control_flow", opt_constr_impl<opt::control_flow>{}},
+			{ "tailrec", opt_constr_impl<opt::tailrec>{}},
+			{ "inliner", opt_constr_impl<opt::inliner>{}}
+		};
+
+		const std::unordered_map<std::string, opt_constructor>& get_opt_constr_mapping()
+		{
+			static const std::unordered_map<std::string, opt_constructor> mapping {std::begin(optConstructors), std::end(optConstructors)};
+			return mapping;
+		}
+
+		std::vector<std::string> make_opt_names()
+		{
+			std::vector<std::string> result{};
+			for(const auto& p : optConstructors)
+			{
+				result.push_back(p.first);
+			}
+			return result;
+		}
+	}
 
 	void optimize(firm_ir& ir)
 	{
@@ -37,18 +83,11 @@ namespace minijava
 
 	void register_all_optimizations()
 	{
-		// should run at first, because after inlining, we couldn't remove them
-		register_optimization(std::make_unique<opt::unused_params>());
-		// important to get rid of unnecessary methods - no need to optimize them or even create code
-		// they might be created from unused_params opt
-		register_optimization(std::make_unique<opt::unused_method>());
-		register_optimization(std::make_unique<opt::folding>());
-		register_optimization(std::make_unique<opt::load_store>());
-		register_optimization(std::make_unique<opt::conditional>());
-		register_optimization(std::make_unique<opt::unroll>());
-		register_optimization(std::make_unique<opt::control_flow>());
-		register_optimization(std::make_unique<opt::tailrec>());
-		register_optimization(std::make_unique<opt::inliner>());
+		// loop over all optimizations and add them
+		for(auto& opt_p : optConstructors)
+		{
+			register_optimization(opt_p.second());
+		}
 	}
 
 	std::vector<std::pair<firm::ir_node*, int>> opt::get_out_edges_safe(firm::ir_node *node)
@@ -205,6 +244,24 @@ namespace minijava
 				}
 			}
 		}
+	}
+
+	void register_optimization(const std::string& opt)
+	{
+		auto& mapping = get_opt_constr_mapping();
+		auto it = mapping.find(opt);
+
+		if(it == mapping.end())
+		{
+			throw std::runtime_error("no known optimization '" + opt + "'");
+		}
+		register_optimization(it->second());
+	}
+
+	const std::vector<std::string>& get_optimization_names()
+	{
+		static const auto names = make_opt_names();
+		return names;
 	}
 
 }  // namespace minijava

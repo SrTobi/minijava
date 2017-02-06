@@ -201,4 +201,25 @@ namespace minijava
 	 */
 	void register_optimization(std::unique_ptr<minijava::opt::optimization> opt);
 
+	/**
+	 * @brief
+	 *     Registers a single optimization by name to be evaluated before running the backend
+	 *
+	 * @param opt
+	 *     Name of the optimization to be evaluated
+	 */
+	void register_optimization(const std::string& opt);
+
+	/**
+	 * @brief
+	 *     Returns the names of all optimizations.
+	 *
+	 * The names are sorted in the recommanded order for applying the optimizations.
+	 *
+	 * @return
+	 *     the names of all known optimizations
+	 */
+	const std::vector<std::string>& get_optimization_names();
+
+
 }  // namespace minijava
