@@ -9,9 +9,9 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include <boost/optional.hpp>
-#include <boost/utility/string_ref.hpp>
 #include <boost/variant.hpp>
 
 #include "asm/opcode.hpp"
@@ -50,6 +50,12 @@ namespace minijava
 
 		};
 
+		/** @brief Type for x64 addresses using virtual registers. */
+		using virtual_address = address<virtual_register>;
+
+		/** @brief Type for x64 addresses using real registers. */
+		using real_address = address<real_register>;
+
 
 		/**
 		 * @brief
@@ -64,22 +70,27 @@ namespace minijava
 		 *    (accessible via `get_register`)
 		 *  - `address` is used for addresses
 		 *    (accessible via `get_address`)
-		 *  - `boost::string_ref` is used for names (labels)
+		 *  - `std::string` is used for names (labels)
 		 *    (accessible via `get_name`)
 		 *
 		 * Since these types are not self-explanatory, instead of accessing
 		 * them directly, the use of the `get_*` functions is recommended.
 		 *
-		 * The `operand` only stores a `boost::string_ref` and dones't actually
-		 * own the string data of a name.  It is the user's responsibility to
-		 * keep the referenced data valid as long as it is needed.
+		 * The name is stored in a `std::string` rather than in a
+		 * `boost::string_ref` because people will want to store labels in
+		 * `std::string`s which might use SSO so moving the referenced
+		 * `std::string` would cause the referenced pointer to dangle.  Making
+		 * a copy is a potentially wasteful but effectiveway to avoid this
+		 * problem.  A smarter way could certeinly be thought of but at this
+		 * time, there are no human resources left to waste on debugging
+		 * awkward memory access bugs.
 		 *
 		 * @tparam RegT
 		 *     register type (virtual or real)
 		 *
 		 */
 		template <typename RegT>
-		using operand = boost::variant<boost::blank, std::int64_t, RegT, address<RegT>, boost::string_ref>;
+		using operand = boost::variant<boost::blank, std::int64_t, RegT, address<RegT>, std::string>;
 
 		/**
 		 * @brief
@@ -180,9 +191,9 @@ namespace minijava
 		 *
 		 */
 		template <typename RegT>
-		const boost::string_ref* get_name(const operand<RegT>& op) noexcept
+		const std::string* get_name(const operand<RegT>& op) noexcept
 		{
-			return boost::get<boost::string_ref>(&op);
+			return boost::get<std::string>(&op);
 		}
 
 		/**

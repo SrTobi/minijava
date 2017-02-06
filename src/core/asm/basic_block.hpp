@@ -58,6 +58,12 @@ namespace minijava
 			std::vector<instruction_type> code{};
 		};
 
+		/** @brief Basic block in virtual assembly. */
+		using virtual_basic_block = basic_block<virtual_register>;
+
+		/** @brief Basic block in real assembly. */
+		using real_basic_block = basic_block<real_register>;
+
 	}  // namespace backend
 
 } // namespace minijava

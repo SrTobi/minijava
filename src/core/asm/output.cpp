@@ -147,6 +147,22 @@ namespace minijava
 				return boost::apply_visitor(visitor{width}, op);
 			}
 
+			template <typename RegT>
+			std::pair<bit_width, bit_width> get_operand_widths(const instruction<RegT>& instr)
+			{
+				switch (instr.code) {
+				case opcode::op_movslq:
+					assert(instr.width == bit_width{});
+					return std::make_pair(bit_width::xxxii, bit_width::lxiv);
+				case opcode::op_lea:
+					assert(instr.width == bit_width{});
+					return std::make_pair(bit_width{}, bit_width::lxiv);
+					// TODO: Add other cases here even though we don't need them?
+				default:
+					return std::make_pair(instr.width, instr.width);
+				}
+			}
+
 			void write_label(const boost::string_ref label, file_output& out)
 			{
 				// Cannot use `print()` because `boost::string_ref` is not NUL
@@ -168,8 +184,9 @@ namespace minijava
 						if (mnemotic.empty()) {
 							continue;
 						}
-						const auto op1 = format(instr.op1, instr.width);
-						const auto op2 = format(instr.op2, instr.width);
+						const auto width = get_operand_widths(instr);
+						const auto op1 = format(instr.op1, width.first);
+						const auto op2 = format(instr.op2, width.second);
 						const auto arity = 0 + !op2.empty() + !op1.empty();
 						switch (arity) {
 						case 0:

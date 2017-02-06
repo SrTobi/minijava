@@ -72,6 +72,8 @@ BOOST_AUTO_TEST_CASE(write_text_for_arbitrary_crap)
 	auto assembly = minijava::backend::real_assembly{"name"};
 	assembly.blocks.emplace_back("");
 	assembly.blocks.back().code.emplace_back(opc::op_push, bw::xxxii, "button");
+	assembly.blocks.back().code.emplace_back(opc::op_call, bw{}, "me");
+	assembly.blocks.back().code.emplace_back(opc::op_jmp, bw{}, "high");
 	assembly.blocks.back().code.emplace_back(opc::op_push, bw::xxxii, 42);
 	const minijava::backend::address<rr> addresses[] = {
 		{1234},
@@ -94,6 +96,8 @@ BOOST_AUTO_TEST_CASE(write_text_for_arbitrary_crap)
 	const auto expected = std::string{}
 		+ "name:\n"
 		+ "\tpushl button\n"
+		+ "\tcall me\n"
+		+ "\tjmp high\n"
 		+ "\tpushl $42\n"
 		+ "\tpushl 1234\n"
 		+ "\tpushl (%eax)\n"

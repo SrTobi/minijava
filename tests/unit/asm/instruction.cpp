@@ -89,5 +89,5 @@ BOOST_AUTO_TEST_CASE(operand_name)
 	BOOST_REQUIRE(nullptr == get_register(operand));
 	BOOST_REQUIRE(nullptr == get_address(operand));
 	BOOST_REQUIRE(nullptr != get_name(operand));
-	BOOST_REQUIRE(label == get_name(operand)->data());
+	BOOST_REQUIRE_EQUAL(label, *get_name(operand));
 }
