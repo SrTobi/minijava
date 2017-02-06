@@ -1,7 +1,5 @@
 #include "system/logger.hpp"
 
-#include <stdio.h>
-
 #define BOOST_TEST_MODULE  system_logger
 #include <boost/test/unit_test.hpp>
 

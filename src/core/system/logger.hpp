@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <functional>
+#include <cstdio>
 
 namespace minijava
 {
@@ -14,7 +15,7 @@ namespace minijava
 	class logger
 	{
 	public:
-		using close_t = std::function<void(FILE*)>;
+		using close_t = std::function<void(std::FILE*)>;
 	public:
 		/**
 		 * Creates an empty logger.
@@ -28,7 +29,7 @@ namespace minijava
 		 *
 		 * @param dest the io file this logger writes to.
 		 */
-		logger(FILE* dest);
+		logger(std::FILE* dest);
 
 		/**
 		 * Creates a logger to an io stream.
@@ -36,7 +37,7 @@ namespace minijava
 		 * @param dest the io file this logger writes to.
 		 * @param closef a function called when the logger is detached from the stream.
 		 */
-		logger(FILE* dest, const close_t& closef);
+		logger(std::FILE* dest, const close_t& closef);
 
 		/**
 		 * Writes a formated log message.
@@ -48,6 +49,6 @@ namespace minijava
 
 	private:
 		/** the io stream all log messages are written to */
-		std::unique_ptr<FILE, close_t> _log_dest;
+		std::unique_ptr<std::FILE, close_t> _log_dest;
 	};
 }

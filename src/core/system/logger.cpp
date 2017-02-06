@@ -8,26 +8,24 @@ namespace minijava
 	{
 	}
 
-	logger::logger(FILE* dest)
+	logger::logger(std::FILE* dest)
 		: _log_dest(dest, [](FILE*){})
 	{
 	}
 
-	logger::logger(FILE* dest, const close_t& closef)
+	logger::logger(std::FILE* dest, const close_t& closef)
 		: _log_dest(dest, closef)
 	{
 	}
 
 	void logger::printf(const char* fmt, ...)
 	{
-		va_list args;
-		va_start(args, fmt);
-
-		FILE* dest = _log_dest.get();
-		if(dest)
+		if(auto dest = _log_dest.get())
 		{
-			vfprintf(dest, fmt, args);
+			std::va_list args;
+			va_start(args, fmt);
+			std::vfprintf(dest, fmt, args);
+			va_end(args);
 		}
-		va_end(args);
 	}
 }
