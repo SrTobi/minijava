@@ -8,9 +8,11 @@
 
 #include <boost/program_options.hpp>
 
+#include "asm/firm_backend.hpp"
 #include "exceptions.hpp"
 #include "io/file_output.hpp"
 #include "irg/irg.hpp"
+#include "opt/opt.hpp"
 #include "parser/ast_misc.hpp"
 #include "runtime/host_cc.hpp"
 #include "semantic/semantic.hpp"
@@ -56,6 +58,7 @@ namespace /* anonymous */
 		const testaux::temporary_directory tempdir{};
 		minijava::dump_firm_ir(ir, tempdir.filename());
 		if (action == actions::firm_dump) { return; }
+		minijava::optimize(ir);
 		const auto asmfilename = tempdir.filename("test.s");
 		auto asmfile = minijava::file_output{asmfilename};
 		minijava::emit_x64_assembly_firm(ir, asmfile);

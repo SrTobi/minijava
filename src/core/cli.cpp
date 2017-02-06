@@ -14,6 +14,7 @@
 #include <boost/program_options.hpp>
 
 #include "asm/asm.hpp"
+#include "asm/firm_backend.hpp"
 #include "exceptions.hpp"
 #include "global.hpp"
 #include "io/file_data.hpp"
@@ -21,6 +22,7 @@
 #include "irg/irg.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "opt/opt.hpp"
 #include "parser/ast_misc.hpp"
 #include "parser/parser.hpp"
 #include "runtime/host_cc.hpp"
@@ -43,12 +45,13 @@ namespace minijava
 		enum class compilation_stage
 		{
 			input = 1,
-			lexer = 2,
-			parser = 3,
-			print_ast = 4,
-			semantic = 5,
-			dump_ir = 6,
-			compile_firm = 7,
+			lexer,
+			parser,
+			print_ast,
+			semantic,
+			dump_ir,
+			dump_ir_opt,
+			compile_firm,
 		};
 
 
@@ -144,6 +147,9 @@ namespace minijava
 			if (varmap.count("dump-ir")) {
 				return compilation_stage::dump_ir;
 			}
+			if (varmap.count("dump-ir-opt")) {
+				return compilation_stage::dump_ir_opt;
+			}
 			if (varmap.count("compile-firm")) {
 				return compilation_stage::compile_firm;
 			}
@@ -174,6 +180,7 @@ namespace minijava
 				("print-ast", "stop after parsing and print the parsed ast")
 				("check", "stop after semantic analysis and report semantic errors")
 				("dump-ir", "stop after IR creation and dump the intermediate representation into the current directory")
+				("dump-ir-opt", "same as --dump-ir but only stop after optimizing / lowering")
 				("compile-firm", "stop after IR creation and compile the input using the firm backend");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
@@ -253,7 +260,12 @@ namespace minijava
 			auto firm = initialize_firm();
 			auto ir = create_firm_ir(*firm, *ast, sem_info, in.filename());
 			if (stage == compilation_stage::dump_ir) {
-				dump_firm_ir(ir); // TODO: allow setting directory
+				dump_firm_ir(ir);  // TODO: allow setting directory
+				return;
+			}
+			optimize(ir);
+			if (stage == compilation_stage::dump_ir_opt) {
+				dump_firm_ir(ir);  // TODO: allow setting directory
 				return;
 			}
 			// From now on, output defaults to 'a.out' not to stdout.

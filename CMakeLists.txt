@@ -45,6 +45,7 @@ set(COMPONENTS
 	asm/assembly
 	asm/basic_block
 	asm/data
+	asm/firm_backend
 	asm/generator
 	asm/instruction
 	asm/opcode
@@ -59,7 +60,6 @@ set(COMPONENTS
 	irg/global_firm_state
 	irg/globals
 	irg/irg
-	irg/lowering
 	irg/mangle
 	irg/method_builder
 	irg/type_builder
@@ -71,6 +71,7 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	opt/lowering
 	opt/opt
 	parser/ast
 	parser/ast_factory
