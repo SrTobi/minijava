@@ -15,6 +15,7 @@ namespace minijava
 	class logger
 	{
 	public:
+		/** type of the function used to close the given logfile */
 		using close_t = std::function<void(std::FILE*)>;
 	public:
 		/**
