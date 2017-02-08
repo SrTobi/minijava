@@ -30,6 +30,27 @@ namespace /* anonymous*/
 		return false;
 	}
 
+	be::real_register get_argument_register(int id)
+	{
+		assert(id > 0 && id < 7);
+		switch (id) {
+		case 1:
+			return be::real_register::di;
+		case 2:
+			return be::real_register::si;
+		case 3:
+			return be::real_register::d;
+		case 4:
+			return be::real_register::c;
+		case 5:
+			return be::real_register::r8;
+		case 6:
+			return be::real_register::r9;
+		default:
+			MINIJAVA_NOT_REACHED();
+		}
+	}
+
 
 	/**
 	 * Converts virtual operands to real operands
@@ -49,6 +70,7 @@ namespace /* anonymous*/
 
 		operand operator()(be::address<be::virtual_register>)
 		{
+			// FIXME
 			MINIJAVA_NOT_REACHED();
 		}
 
@@ -56,21 +78,10 @@ namespace /* anonymous*/
 		{
 			if (be::is_argument_register(reg)) {
 				auto num = number(reg);
-				switch (num) {
-				case 1:
-					return be::real_register::di;
-				case 2:
-					return be::real_register::si;
-				case 3:
-					return be::real_register::d;
-				case 4:
-					return be::real_register::c;
-				case 5:
-					return be::real_register::r8;
-				case 6:
-					return be::real_register::r9;
-				default:
-					assert(num > 0);
+				assert(num > 0);
+				if (num < 7) {
+					return get_argument_register(num);
+				} else {
 					auto addr = be::address<be::real_register>{};
 					addr.base = be::real_register::bp;
 					addr.constant = (num - 6) * std::int64_t{8};
@@ -102,7 +113,7 @@ namespace /* anonymous*/
 	/**
 	 * @brief scratch register (no special meaning, not preserved according to ABI)
 	 */
-	static const auto tmp_register = be::real_register::c;
+	static const auto tmp_register = be::real_register::r10;
 
 
 	/**
@@ -229,48 +240,18 @@ namespace minijava
 					{
 						assert_args_complete();
 						auto call_argc = static_cast<int>(next_call_args.size());
-						auto saved_registers = std::min(6, std::min(call_argc, argument_count));
-						// save argument registers
-						switch (saved_registers) {
-						case 6:
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, be::real_register::r9);
-						case 5:
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, be::real_register::r8);
-						case 4:
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, be::real_register::c);
-						case 3:
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, be::real_register::d);
-						case 2:
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, be::real_register::si);
-						case 1:
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, be::real_register::di);
-						case 0:
-							break;
-						default:
-							MINIJAVA_NOT_REACHED();
+						auto saved_registers = std::min(6, argument_count);
+						// save own argument registers (RTL)
+						for (int i = saved_registers; i > 0; --i) {
+							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, get_argument_register(i));
 						}
 						// push stack arguments (RTL)
 						for (int i = call_argc; i > 6; --i) {
 							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, next_call_args.at(i));
 						}
 						// set register arguments
-						switch (std::min(call_argc, 6)) {
-						case 6:
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(6), be::real_register::r9);
-						case 5:
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(5), be::real_register::r8);
-						case 4:
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(4), be::real_register::c);
-						case 3:
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(3), be::real_register::d);
-						case 2:
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(2), be::real_register::si);
-						case 1:
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(1), be::real_register::di);
-						case 0:
-							break;
-						default:
-							MINIJAVA_NOT_REACHED();
+						for (int i = std::min(call_argc, 6); i > 0; --i) {
+							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(i), get_argument_register(i));
 						}
 						// perform actual call
 						auto target = get_name(instr.op1);
@@ -285,45 +266,9 @@ namespace minijava
 						if (call_argc > 6) {
 							real_block.code.emplace_back(opcode::op_add, bit_width::lxiv, std::int64_t{8} * (call_argc - 6), real_register::sp);
 						}
-						// restore argument registers
-						switch (saved_registers) {
-						case 6:
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::di);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::si);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::d);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::c);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::r8);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::r9);
-							break;
-						case 5:
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::di);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::si);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::d);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::c);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::r8);
-							break;
-						case 4:
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::di);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::si);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::d);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::c);
-							break;
-						case 3:
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::di);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::si);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::d);
-							break;
-						case 2:
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::di);
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::si);
-							break;
-						case 1:
-							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, be::real_register::di);
-							break;
-						case 0:
-							break;
-						default:
-							MINIJAVA_NOT_REACHED();
+						// restore own argument registers (LTR)
+						for (int i = 1; i <= saved_registers; ++i) {
+							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, get_argument_register(i));
 						}
 						// reset state
 						next_call_args.clear();
@@ -352,7 +297,10 @@ namespace minijava
 						break;
 					}
 					default:
-						MINIJAVA_NOT_REACHED();
+						MINIJAVA_THROW_ICE_MSG(
+								minijava::not_implemented_error,
+								mnemotic(instr.code)
+						);
 					}
 				}
 				realasm.blocks.push_back(std::move(real_block));
