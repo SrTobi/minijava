@@ -122,10 +122,10 @@ namespace minijava
 						_visit_binop(irn, opcode::op_mul);
 						break;
 					case firm::iro_Div:
-						_visit_div(irn);
+						_visit_binop(irn, opcode::mac_div);
 						break;
 					case firm::iro_Mod:
-						_visit_mod(irn);
+						_visit_binop(irn, opcode::mac_mod);
 						break;
 					case firm::iro_Minus:
 						_visit_minus(irn);
@@ -280,42 +280,6 @@ namespace minijava
 					_emplace_instruction(binop, width, rhsreg, dstreg);
 				}
 
-				void _visit_div(firm::ir_node* irn)
-				{
-                    assert(firm::is_Div(irn));
-					const auto lhs = firm::get_binop_left(irn);
-					const auto rhs = firm::get_binop_right(irn);
-					const auto width = get_width(firm::get_Div_resmode(irn));
-					assert(get_width(lhs) == width);
-					assert(get_width(rhs) == width);
-					const auto lhsreg = get_irn_link_reg(lhs);
-					const auto rhsreg = get_irn_link_reg(rhs);
-					const auto divreg = _next_register();
-					const auto modreg = _next_register();
-					_emplace_instruction(opcode::op_mov, width, lhsreg, divreg);
-					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
-					_emplace_instruction(opcode::mac_divmod, width, divreg, modreg);
-					set_irn_link_reg(irn, divreg);
-				}
-
-				void _visit_mod(firm::ir_node* irn)
-				{
-                    assert(firm::is_Mod(irn));
-					const auto lhs = firm::get_binop_left(irn);
-					const auto rhs = firm::get_binop_right(irn);
-					const auto width = get_width(firm::get_Mod_resmode(irn));
-					assert(get_width(lhs) == width);
-					assert(get_width(rhs) == width);
-					const auto lhsreg = get_irn_link_reg(lhs);
-					const auto rhsreg = get_irn_link_reg(rhs);
-					const auto divreg = _next_register();
-					const auto modreg = _next_register();
-					_emplace_instruction(opcode::op_mov, width, lhsreg, divreg);
-					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
-					_emplace_instruction(opcode::mac_divmod, width, divreg, modreg);
-					set_irn_link_reg(irn, modreg);
-				}
-
 				void _visit_minus(firm::ir_node* irn)
 				{
 					assert(firm::is_Minus(irn));
@@ -323,7 +287,7 @@ namespace minijava
 
 				void _visit_conv(firm::ir_node* irn)
 				{
-                    assert(firm::is_Conv(irn));
+					assert(firm::is_Conv(irn));
 					const auto srcirn = firm::get_irn_n(irn, 0);
 					const auto srcreg = get_irn_link_reg(srcirn);
 					const auto srcmod = firm::get_irn_mode(srcirn);

@@ -1,5 +1,5 @@
 /**
- * @file text.hpp
+ * @file output.hpp
  *
  * @brief
  *     Backend for text segment assembly generation.

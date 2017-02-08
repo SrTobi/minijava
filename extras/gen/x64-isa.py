@@ -16,7 +16,8 @@ TIMESTAMP = formatdate()
 
 MACROS = [
     ("CALL_ALIGNED", "Call a function with correct stack pointer alignment (macro)"),
-    ("DIVMOD", "Compute quotient and remainder of two registers (macro)"),
+    ("DIV", "Compute quotient of two registers (macro)"),
+    ("MOD", "Compute remainder of division of two registers (macro)"),
 ]
 
 INSTRUCTIONS = [
@@ -316,10 +317,10 @@ namespace minijava
 \t\t{
 \t\t\t// TODO: Replace the `switch` with a more efficient table lookup
 \t\t\tswitch (op) {""")
-    for (prefix, codeset) in [('mac', MACROS), ('op', INSTRUCTIONS)]:
+    for (prefix, asm_prefix, codeset) in [('mac', 'mj_', MACROS), ('op', '', INSTRUCTIONS)]:
         for (mnemotic, description) in codeset:
             col1 = 'case opcode::{:s}_{:s}:'.format(prefix, mnemotic.lower())
-            col2 = 'return "{:s}";'.format(mnemotic.lower())
+            col2 = 'return "{:s}{:s}";'.format(asm_prefix, mnemotic.lower())
             print('\t\t\t{:32s}{:s}'.format(col1, col2))
     print('\t\t\t{:32s}{:s}'.format('default:', 'return nullptr;'))
     print("""\t\t\t}
