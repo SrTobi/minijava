@@ -249,12 +249,14 @@ namespace minijava
 				// no matter what order the arguments were originally specified
 				// in, they should have consecutive numbers before a call
 				auto size = next_call_args.size();
-				auto last_arg = static_cast<std::size_t>(next_call_args.rbegin()->first);
-				if (size != last_arg) {
-					MINIJAVA_THROW_ICE_MSG(
-							minijava::internal_compiler_error,
-							"not all function arguments were specified in the virtual assembly"
-					);
+				if (size != 0) {
+					auto last_arg = static_cast<std::size_t>(next_call_args.rbegin()->first);
+					if (size != last_arg) {
+						MINIJAVA_THROW_ICE_MSG(
+								minijava::internal_compiler_error,
+								"not all function arguments were specified in the virtual assembly"
+						);
+					}
 				}
 			};
 			// transform basic blocks
