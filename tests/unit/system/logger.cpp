@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(logger_printf_writes_to_file)
 		size_t size;
 		{
 			FILE* stream = open_memstream (&buffer, &size);
-			minijava::logger logger(stream, std::bind(&fclose, std::placeholders::_1));
+			minijava::logger logger(stream, [](auto f) {fclose(f);});
 			logger.printf("%s,%i,%.2f", "test", 123, 0.0f);
 		}
 
