@@ -212,6 +212,13 @@ namespace minijava
 		void advance();
 
 	private:
+		/**
+		 * @brief
+		 *     Returns the current position of the lexer in the input file.
+		 *
+		 * @returns
+		 *     the current position
+		 */
 		position _position() const;
 
 	private:
