@@ -265,24 +265,6 @@ namespace minijava
 					// working with two addresses would break the address calculation in the visitor
 					assert(get_address(instr.op1) == nullptr || get_address(instr.op2) == nullptr);
 					switch (instr.code) {
-					case opcode::op_mov:
-					{
-						auto op1 = instr.op1.apply_visitor(visitor);
-						if (is_argument(instr.op2)) {
-							auto reg = get_register(instr.op2);
-							assert(reg);
-							next_call_args.emplace(number(*reg), op1);
-						} else {
-							assert_args_empty();
-							auto op2 = instr.op2.apply_visitor(visitor);
-							add_instruction(
-									real_block.code, opcode::op_mov,
-									instr.width, std::move(op1),
-									std::move(op2)
-							);
-						}
-						break;
-					}
 					case opcode::mac_call_aligned:
 					case opcode::op_call:
 					{
@@ -322,18 +304,75 @@ namespace minijava
 						next_call_args.clear();
 						break;
 					}
-					case opcode::op_ret:
-						assert_args_empty();
-						// epilogue
-						real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, real_register::bp, real_register::sp);
-						real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::bp);
-						real_block.code.emplace_back(opcode::op_ret);
+					case opcode::op_mov:
+					{
+						auto op1 = instr.op1.apply_visitor(visitor);
+						if (is_argument(instr.op2)) {
+							auto reg = get_register(instr.op2);
+							assert(reg);
+							next_call_args.emplace(number(*reg), op1);
+						} else {
+							assert_args_empty();
+							auto op2 = instr.op2.apply_visitor(visitor);
+							add_instruction(
+									real_block.code, opcode::op_mov,
+									instr.width, std::move(op1),
+									std::move(op2)
+							);
+						}
 						break;
+					}
+					case opcode::op_movslq:
+					{
+						assert_args_empty();
+						assert(!is_argument(instr.op2));
+						auto op1 = instr.op1.apply_visitor(visitor);
+						auto op2 = instr.op2.apply_visitor(visitor);
+						add_instruction(
+								real_block.code, opcode::op_mov,
+								instr.width, std::move(op1),
+								std::move(op2)
+						);
+						break;
+					}
+					case opcode::op_lea:
+					{
+						assert_args_empty();
+						assert(!is_argument(instr.op2));
+						auto op1 = instr.op1.apply_visitor(visitor);
+						auto op2 = instr.op2.apply_visitor(visitor);
+						add_instruction(
+								real_block.code, instr.code, instr.width,
+								std::move(op1), std::move(op2)
+						);
+						break;
+					}
 					case opcode::op_add:
 					case opcode::op_sub:
 					case opcode::op_mul:
 					case opcode::mac_div:
 					case opcode::mac_mod:
+					{
+						assert_args_empty();
+						assert(!is_argument(instr.op2));
+						auto op1 = instr.op1.apply_visitor(visitor);
+						auto op2 = instr.op2.apply_visitor(visitor);
+						add_instruction(
+								real_block.code, instr.code, instr.width,
+								std::move(op1), std::move(op2)
+						);
+						break;
+					}
+					case opcode::op_neg:
+						assert_args_empty();
+						assert(!is_argument(instr.op1));
+						assert(empty(instr.op2));
+						real_block.code.emplace_back(
+								instr.code, instr.width,
+								instr.op1.apply_visitor(visitor), boost::blank{}
+						);
+						break;
+					case opcode::op_cmp:
 					{
 						assert_args_empty();
 						auto op1 = instr.op1.apply_visitor(visitor);
@@ -344,6 +383,36 @@ namespace minijava
 						);
 						break;
 					}
+					case opcode::op_seta:
+					case opcode::op_setae:
+					case opcode::op_setb:
+					case opcode::op_setbe:
+					case opcode::op_sete:
+					case opcode::op_setne:
+						assert_args_empty();
+						assert(!is_argument(instr.op1));
+						assert(empty(instr.op2));
+						real_block.code.emplace_back(
+								instr.code, instr.width,
+								instr.op1.apply_visitor(visitor), boost::blank{}
+						);
+						break;
+					case opcode::op_jmp:
+					case opcode::op_je:
+						assert_args_empty();
+						assert(empty(instr.op2));
+						real_block.code.emplace_back(
+								instr.code, instr.width,
+								instr.op1.apply_visitor(visitor), boost::blank{}
+						);
+						break;
+					case opcode::op_ret:
+						assert_args_empty();
+						// epilogue
+						real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, real_register::bp, real_register::sp);
+						real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::bp);
+						real_block.code.emplace_back(opcode::op_ret);
+						break;
 					default:
 						MINIJAVA_THROW_ICE_MSG(
 								minijava::not_implemented_error,
