@@ -16,9 +16,9 @@ namespace /* anonymous*/
 	using operand = be::operand<be::real_register>;
 
 
-	bool is_address(const operand& op)
+	bool is_address_or_symbol(const operand& op)
 	{
-		return be::get_address(op) != nullptr;
+		return be::get_address(op) != nullptr || be::get_name(op) != nullptr;
 	}
 
 
@@ -99,7 +99,7 @@ namespace /* anonymous*/
 				// check nature of the base register to determine whether an
 				// additional mov is necessary to get the base address
 				auto base_op = operator()(*base);
-				if (is_address(base_op)) {
+				if (is_address_or_symbol(base_op)) {
 					_code.emplace_back(
 							be::opcode::op_mov, be::bit_width::lxiv,
 							base_op, tmp_address_register
@@ -177,7 +177,7 @@ namespace /* anonymous*/
 						 be::opcode opc, be::bit_width width, operand op1,
 						 operand op2)
 	{
-		if (is_address(op1) && is_address(op2)) {
+		if (is_address_or_symbol(op1) && is_address_or_symbol(op2)) {
 			code.emplace_back(be::opcode::op_mov, width, std::move(op1), tmp_register);
 			code.emplace_back(opc, width, tmp_register, std::move(op2));
 		} else {
