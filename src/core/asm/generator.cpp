@@ -283,6 +283,14 @@ namespace minijava
 				void _visit_minus(firm::ir_node* irn)
 				{
 					assert(firm::is_Minus(irn));
+					const auto opirn = firm::get_Minus_op(irn);
+					const auto opreg = get_irn_link_reg(opirn);
+					const auto width = get_width(irn);
+					assert(width == get_width(opirn));
+					const auto reg = _next_register();
+					_emplace_instruction(opcode::op_mov, width, opreg, reg);
+					_emplace_instruction(opcode::op_neg, width, reg);
+					set_irn_link_reg(irn, reg);
 				}
 
 				void _visit_conv(firm::ir_node* irn)
