@@ -7,6 +7,7 @@
 #include "asm/assembly.hpp"
 #include "asm/data.hpp"
 #include "asm/generator.hpp"
+#include "asm/macros.hpp"
 #include "asm/output.hpp"
 #include "exceptions.hpp"
 #include "irg/irg.hpp"
@@ -25,7 +26,8 @@ namespace minijava
 			const auto irg = firm::get_irp_irg(i);
 			const auto virtasm = backend::assemble_function(irg);
 			//backend::write_text(virtasm, out);  // TODO: remove
-			const auto realasm = backend::allocate_registers(virtasm);
+			auto realasm = backend::allocate_registers(virtasm);
+			backend::expand_macros(realasm);
 			backend::write_text(realasm, out);
 			out.write("\n");
 		}

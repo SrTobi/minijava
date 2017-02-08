@@ -48,6 +48,7 @@ set(COMPONENTS
 	asm/firm_backend
 	asm/generator
 	asm/instruction
+	asm/macros
 	asm/opcode
 	asm/output
 	asm/register
