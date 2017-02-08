@@ -30,6 +30,24 @@ namespace /* anonymous*/
 		return false;
 	}
 
+
+	/**
+	 * @brief scratch register (no special meaning, not preserved according to ABI)
+	 */
+	static const auto tmp_register = be::real_register::r10;
+
+	/**
+	 * @brief scratch register for address calculation (no special meaning, not preserved according to ABI)
+	 */
+	static const auto tmp_address_register = be::real_register::r11;
+
+	/**
+	 * @brief
+	 *     Returns the argument register for the argument at the given position.
+	 *
+	 * @param id argument position
+	 * @return argument register
+	 */
 	be::real_register get_argument_register(int id)
 	{
 		assert(id > 0 && id < 7);
@@ -53,10 +71,16 @@ namespace /* anonymous*/
 
 
 	/**
-	 * Converts virtual operands to real operands
+	 * @brief
+	 *     Converts virtual operands to real operands.
+	 *
+	 * Uses the temporary address register for address calculations, if
+	 * necessary.
 	 */
 	struct op_visitor : public boost::static_visitor<operand>
 	{
+
+		op_visitor(std::vector<be::real_instruction>& code) : _code{code} {}
 
 		operand operator()(std::int64_t imm)
 		{
@@ -68,10 +92,34 @@ namespace /* anonymous*/
 			return name;
 		}
 
-		operand operator()(be::address<be::virtual_register>)
+		operand operator()(be::virtual_address vaddr)
 		{
-			// FIXME
-			MINIJAVA_NOT_REACHED();
+			assert(!vaddr.index);
+			if (auto base = vaddr.base) {
+				// check nature of the base register to determine whether an
+				// additional mov is necessary to get the base address
+				auto base_op = operator()(*base);
+				if (is_address(base_op)) {
+					_code.emplace_back(
+							be::opcode::op_mov, be::bit_width::lxiv,
+							base_op, tmp_address_register
+					);
+					return be::real_address{
+							vaddr.constant, tmp_address_register, boost::none,
+							vaddr.scale
+					};
+				} else {
+					auto base_reg = be::get_register(base_op);
+					assert(base_reg);
+					return be::real_address{
+							vaddr.constant, *base_reg, boost::none, vaddr.scale
+					};
+				}
+			} else {
+				return be::real_address{
+						vaddr.constant, boost::none, boost::none, vaddr.scale
+				};
+			}
 		}
 
 		operand operator()(be::virtual_register reg)
@@ -82,13 +130,13 @@ namespace /* anonymous*/
 				if (num < 7) {
 					return get_argument_register(num);
 				} else {
-					auto addr = be::address<be::real_register>{};
+					auto addr = be::real_address{};
 					addr.base = be::real_register::bp;
 					addr.constant = (num - 6) * std::int64_t{8};
 					return std::move(addr);
 				}
 			} else if (be::is_general_register(reg)) {
-				auto addr = be::address<be::real_register>{};
+				auto addr = be::real_address{};
 				addr.base = be::real_register::bp;
 				addr.constant = -(number(reg) * std::int64_t{8});
 				return std::move(addr);
@@ -107,13 +155,11 @@ namespace /* anonymous*/
 			return blank;
 		}
 
+	private:
+
+		std::vector<be::real_instruction>& _code;
+
 	};
-
-
-	/**
-	 * @brief scratch register (no special meaning, not preserved according to ABI)
-	 */
-	static const auto tmp_register = be::real_register::r10;
 
 
 	/**
@@ -212,10 +258,12 @@ namespace minijava
 				}
 			};
 			// transform basic blocks
-			auto visitor = op_visitor{};
 			for (auto const& block : virtasm.blocks) {
 				auto real_block = basic_block<real_register>{block.label};
+				auto visitor = op_visitor{real_block.code};
 				for (auto const& instr : block.code) {
+					// working with two addresses would break the address calculation in the visitor
+					assert(get_address(instr.op1) == nullptr || get_address(instr.op2) == nullptr);
 					switch (instr.code) {
 					case opcode::op_mov:
 					{
