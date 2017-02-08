@@ -404,6 +404,7 @@ namespace minijava
 						const auto resreg = _next_register();
 						const auto reswidth = get_width(firm::get_method_res_type(method_type, 0));
 						_emplace_instruction(opcode::op_mov, reswidth, virtual_register::result, resreg);
+						set_irn_link_reg(irn, resreg);
 					}
 				}
 
