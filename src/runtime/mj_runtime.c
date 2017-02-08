@@ -6,10 +6,17 @@
 #include <setjmp.h>
 #include <string.h>
 
-extern void minijava_main(void);
+extern void minijava_main      (void                        ) __attribute__ ((sysv_abi));
+void*       mj_runtime_new     (int32_t nmemb, int32_t size ) __attribute__ ((sysv_abi));
+int32_t     mj_runtime_id      (int32_t x                   ) __attribute__ ((sysv_abi));
+void        mj_runtime_exit    (int32_t status              ) __attribute__ ((sysv_abi));
+void        mj_runtime_println (int32_t n                   ) __attribute__ ((sysv_abi));
+void        mj_runtime_write   (int32_t b                   ) __attribute__ ((sysv_abi));
+void        mj_runtime_flush   (void                        ) __attribute__ ((sysv_abi));
+int32_t     mj_runtime_read    (void                        ) __attribute__ ((sysv_abi));
+
 
 static const char* program_name;
-
 static jmp_buf exception_jump_buffer;
 
 

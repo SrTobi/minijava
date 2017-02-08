@@ -122,10 +122,10 @@ namespace minijava
 						_visit_binop(irn, opcode::op_mul);
 						break;
 					case firm::iro_Div:
-						_visit_binop(irn, opcode::mac_div);
+						_visit_div(irn);
 						break;
 					case firm::iro_Mod:
-						_visit_binop(irn, opcode::mac_mod);
+						_visit_mod(irn);
 						break;
 					case firm::iro_Minus:
 						_visit_minus(irn);
@@ -280,9 +280,49 @@ namespace minijava
 					_emplace_instruction(binop, width, rhsreg, dstreg);
 				}
 
+				void _visit_div(firm::ir_node* irn)
+				{
+					assert(firm::is_Div(irn));
+					const auto lhs = firm::get_binop_left(irn);
+					const auto rhs = firm::get_binop_right(irn);
+					const auto width = get_width(firm::get_Div_resmode(irn));
+					assert(get_width(lhs) == width);
+					assert(get_width(rhs) == width);
+					const auto lhsreg = get_irn_link_reg(lhs);
+					const auto rhsreg = get_irn_link_reg(rhs);
+					const auto divreg = _next_register();
+					_emplace_instruction(opcode::op_mov, width, rhsreg, divreg);
+					_emplace_instruction(opcode::mac_div, width, lhsreg, divreg);
+					set_irn_link_reg(irn, divreg);
+				}
+
+				void _visit_mod(firm::ir_node* irn)
+				{
+					assert(firm::is_Mod(irn));
+					const auto lhs = firm::get_binop_left(irn);
+					const auto rhs = firm::get_binop_right(irn);
+					const auto width = get_width(firm::get_Mod_resmode(irn));
+					assert(get_width(lhs) == width);
+					assert(get_width(rhs) == width);
+					const auto lhsreg = get_irn_link_reg(lhs);
+					const auto rhsreg = get_irn_link_reg(rhs);
+					const auto modreg = _next_register();
+					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
+					_emplace_instruction(opcode::mac_mod, width, lhsreg, modreg);
+					set_irn_link_reg(irn, modreg);
+				}
+
 				void _visit_minus(firm::ir_node* irn)
 				{
 					assert(firm::is_Minus(irn));
+					const auto opirn = firm::get_Minus_op(irn);
+					const auto opreg = get_irn_link_reg(opirn);
+					const auto width = get_width(irn);
+					assert(width == get_width(opirn));
+					const auto reg = _next_register();
+					_emplace_instruction(opcode::op_mov, width, opreg, reg);
+					_emplace_instruction(opcode::op_neg, width, reg);
+					set_irn_link_reg(irn, reg);
 				}
 
 				void _visit_conv(firm::ir_node* irn)

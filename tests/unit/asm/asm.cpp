@@ -23,8 +23,5 @@ BOOST_AUTO_TEST_CASE(demo)
 	minijava::optimize(irg);
 	testaux::temporary_file tempfile{};
 	auto asmfile = minijava::file_output{tempfile.filename()};
-	BOOST_REQUIRE_THROW(
-		minijava::assemble(irg, asmfile),
-		minijava::not_implemented_error
-	);
+	minijava::assemble(irg, asmfile);
 }
