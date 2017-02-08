@@ -17,8 +17,5 @@ BOOST_AUTO_TEST_CASE(demo)
 	firm::lower_highlevel();
 	testaux::temporary_file tempfile{};
 	auto asmfile = minijava::file_output{tempfile.filename()};
-	BOOST_REQUIRE_THROW(
-		minijava::backend::write_data_segment(firm::get_glob_type(), asmfile),
-		minijava::not_implemented_error
-	);
+	minijava::backend::write_data_segment(firm::get_glob_type(), asmfile);
 }
