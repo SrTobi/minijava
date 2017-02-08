@@ -1,5 +1,7 @@
 #include "asm/macros.hpp"
 
+#include <cassert>
+
 #include "exceptions.hpp"
 
 
@@ -12,39 +14,63 @@ namespace minijava
 		namespace /*anonymous*/
 		{
 
+			void expand_call_aligned_macro(const real_instruction& call, real_basic_block& dst)
+			{
+				assert(call.code == opcode::mac_call_aligned);
+				auto atsp = real_address{};
+				atsp.base = real_register::sp;
+				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::sp);
+				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, atsp);
+				dst.code.emplace_back(opcode::op_and, bit_width::lxiv, -16, real_register::sp);
+				dst.code.emplace_back(opcode::op_call, bit_width{}, call.op1);
+				atsp.constant = 8;
+				dst.code.emplace_back(opcode::op_mov, bit_width::lxiv, atsp, real_register::sp);
+			}
+
+			void expand_div_macro(const real_instruction& div, real_basic_block& dst)
+			{
+				assert(div.code == opcode::mac_div);
+				if (div.width != bit_width::lxiv) {
+					MINIJAVA_NOT_IMPLEMENTED();
+				}
+				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::a);
+				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::d);
+				dst.code.emplace_back(opcode::op_mov, div.width, *get_register(div.op1), real_register::d);
+				dst.code.emplace_back(opcode::op_cdq);
+				dst.code.emplace_back(opcode::op_idiv, div.width, *get_register(div.op2));
+				dst.code.emplace_back(opcode::op_mov, div.width, real_register::a, *get_register(div.op2));
+				dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::d);
+				dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::a);
+			}
+
+			void expand_mod_macro(const real_instruction& mod, real_basic_block& dst)
+			{
+				assert(mod.code == opcode::mac_mod);
+				if (mod.width != bit_width::lxiv) {
+					MINIJAVA_NOT_IMPLEMENTED();
+				}
+				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::a);
+				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::d);
+				dst.code.emplace_back(opcode::op_mov, mod.width, *get_register(mod.op1), real_register::d);
+				dst.code.emplace_back(opcode::op_cdq);
+				dst.code.emplace_back(opcode::op_idiv, mod.width, *get_register(mod.op2));
+				dst.code.emplace_back(opcode::op_mov, mod.width, real_register::d, *get_register(mod.op2));
+				dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::d);
+				dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::a);
+			}
+
 			void expand_macros(real_basic_block& src, real_basic_block& dst)
 			{
 				for (auto&& instr : src.code) {
 					switch (instr.code) {
 					case opcode::mac_call_aligned:
-						dst.code.push_back(std::move(instr));
-						dst.code.back().code = opcode::op_call;  // TODO: Actually align the call!
+						expand_call_aligned_macro(instr, dst);
 						break;
 					case opcode::mac_div:
-						if (instr.width != bit_width::lxiv) {
-							MINIJAVA_NOT_IMPLEMENTED();
-						}
-						dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::d);
-						dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::a);
-						dst.code.emplace_back(opcode::op_mov, instr.width, *get_register(instr.op1), real_register::d);
-						dst.code.emplace_back(opcode::op_cdq);
-						dst.code.emplace_back(opcode::op_idiv, instr.width, *get_register(instr.op2));
-						dst.code.emplace_back(opcode::op_mov, instr.width, real_register::a, *get_register(instr.op2));
-						dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::a);
-						dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::d);
+						expand_div_macro(instr, dst);
 						break;
 					case opcode::mac_mod:
-						if (instr.width != bit_width::lxiv) {
-							MINIJAVA_NOT_IMPLEMENTED();
-						}
-						dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::d);
-						dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::a);
-						dst.code.emplace_back(opcode::op_mov, instr.width, *get_register(instr.op1), real_register::d);
-						dst.code.emplace_back(opcode::op_cdq);
-						dst.code.emplace_back(opcode::op_idiv, instr.width, *get_register(instr.op2));
-						dst.code.emplace_back(opcode::op_mov, instr.width, real_register::d, *get_register(instr.op2));
-						dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::a);
-						dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::d);
+						expand_mod_macro(instr, dst);
 						break;
 					default:
 						dst.code.push_back(std::move(instr));
