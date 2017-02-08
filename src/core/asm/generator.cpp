@@ -361,7 +361,7 @@ namespace minijava
 					const auto ptrirn = firm::get_Load_ptr(irn);
 					const auto ptrreg = get_irn_link_reg(ptrirn);
 					const auto valreg = _next_register();
-					const auto width = get_width(irn);
+					const auto width = get_width(firm::get_Load_mode(irn));
 					auto addr = virtual_address{};
 					addr.base = ptrreg;
 					_emplace_instruction(opcode::op_mov, width, std::move(addr), valreg);
