@@ -229,7 +229,7 @@ namespace minijava
 					{
 						assert_args_complete();
 						auto call_argc = static_cast<int>(next_call_args.size());
-						auto saved_registers = std::min(6, call_argc, argument_count);
+						auto saved_registers = std::min(6, std::min(call_argc, argument_count));
 						// save argument registers
 						switch (saved_registers) {
 						case 6:
@@ -280,7 +280,7 @@ namespace minijava
 								"call without target encountered"
 							);
 						}
-						real_block.code.emplace_back(instr.code, instr.width, target);
+						real_block.code.emplace_back(instr.code, instr.width, *target);
 						// reset stack pointer (remove stack arguments)
 						if (call_argc > 6) {
 							real_block.code.emplace_back(opcode::op_add, bit_width::lxiv, std::int64_t{8} * (call_argc - 6), real_register::sp);
@@ -339,6 +339,8 @@ namespace minijava
 					case opcode::op_add:
 					case opcode::op_sub:
 					case opcode::op_mul:
+					case opcode::mac_div:
+					case opcode::mac_mod:
 					{
 						assert_args_empty();
 						auto op1 = instr.op1.apply_visitor(visitor);
@@ -349,11 +351,6 @@ namespace minijava
 						);
 						break;
 					}
-					case opcode::mac_divmod:
-						assert_args_empty();
-						// FIXME
-						MINIJAVA_NOT_IMPLEMENTED();
-						break;
 					default:
 						MINIJAVA_NOT_REACHED();
 					}

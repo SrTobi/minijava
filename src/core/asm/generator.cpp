@@ -82,10 +82,10 @@ namespace minijava
 						_visit_binop(irn, opcode::op_mul);
 						break;
 					case firm::iro_Div:
-						_visit_div(irn);
+						_visit_binop(irn, opcode::mac_div);
 						break;
 					case firm::iro_Mod:
-						_visit_mod(irn);
+						_visit_binop(irn, opcode::mac_mod);
 						break;
 					case firm::iro_Address:
 						_visit_address(irn);
@@ -183,7 +183,6 @@ namespace minijava
 				void _visit_binop(firm::ir_node* irn, const opcode binop)
 				{
                     assert(firm::is_binop(irn));
-                    assert(!firm::is_Div(irn) && !firm::is_Mod(irn));
 					const auto lhs = firm::get_binop_left(irn);
 					const auto rhs = firm::get_binop_right(irn);
 					const auto width = get_width(irn);
@@ -195,42 +194,6 @@ namespace minijava
 					set_irn_link_reg(irn, dstreg);
 					_emplace_instruction(opcode::op_mov, width, lhsreg, dstreg);
 					_emplace_instruction(binop, width, rhsreg, dstreg);
-				}
-
-				void _visit_div(firm::ir_node* irn)
-				{
-                    assert(firm::is_Div(irn));
-					const auto lhs = firm::get_binop_left(irn);
-					const auto rhs = firm::get_binop_right(irn);
-					const auto width = get_width(firm::get_Div_resmode(irn));
-					assert(get_width(lhs) == width);
-					assert(get_width(rhs) == width);
-					const auto lhsreg = get_irn_link_reg(lhs);
-					const auto rhsreg = get_irn_link_reg(rhs);
-					const auto divreg = _next_register();
-					const auto modreg = _next_register();
-					_emplace_instruction(opcode::op_mov, width, lhsreg, divreg);
-					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
-					_emplace_instruction(opcode::mac_divmod, width, divreg, modreg);
-					set_irn_link_reg(irn, divreg);
-				}
-
-				void _visit_mod(firm::ir_node* irn)
-				{
-                    assert(firm::is_Mod(irn));
-					const auto lhs = firm::get_binop_left(irn);
-					const auto rhs = firm::get_binop_right(irn);
-					const auto width = get_width(firm::get_Mod_resmode(irn));
-					assert(get_width(lhs) == width);
-					assert(get_width(rhs) == width);
-					const auto lhsreg = get_irn_link_reg(lhs);
-					const auto rhsreg = get_irn_link_reg(rhs);
-					const auto divreg = _next_register();
-					const auto modreg = _next_register();
-					_emplace_instruction(opcode::op_mov, width, lhsreg, divreg);
-					_emplace_instruction(opcode::op_mov, width, rhsreg, modreg);
-					_emplace_instruction(opcode::mac_divmod, width, divreg, modreg);
-					set_irn_link_reg(irn, modreg);
 				}
 
 				void _visit_address(firm::ir_node* irn)
