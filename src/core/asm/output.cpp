@@ -156,7 +156,7 @@ namespace minijava
 					return std::make_pair(bit_width::xxxii, bit_width::lxiv);
 				case opcode::op_lea:
 					assert(instr.width == bit_width{});
-					return std::make_pair(bit_width{}, bit_width::lxiv);
+					return std::make_pair(bit_width::lxiv, bit_width::lxiv);
 					// TODO: Add other cases here even though we don't need them?
 				default:
 					return std::make_pair(instr.width, instr.width);

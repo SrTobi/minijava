@@ -178,7 +178,7 @@ namespace /* anonymous*/
 						 operand op2)
 	{
 		if (is_address_or_symbol(op1) && is_address_or_symbol(op2)) {
-			code.emplace_back(be::opcode::op_mov, width, std::move(op1), tmp_register);
+			code.emplace_back(be::opcode::op_mov, be::bit_width::lxiv, std::move(op1), tmp_register);
 			code.emplace_back(opc, width, tmp_register, std::move(op2));
 		} else {
 			code.emplace_back(opc, width, std::move(op1), std::move(op2));
