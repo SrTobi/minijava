@@ -349,7 +349,7 @@ namespace minijava
 								std::move(op1), tmp_register
 						);
 						real_block.code.emplace_back(
-								instr.code, bit_width::lxiv, // TODO: get actual bit width
+								opcode::op_mov, bit_width::lxiv, // TODO: get actual bit width
 								tmp_register, std::move(op2)
 						);
 						break;
