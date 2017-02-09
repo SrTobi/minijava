@@ -51,6 +51,8 @@ namespace /* anonymous */
 
 		std::vector<loop_edge> head;
 		std::vector<loop_edge> tail;
+		std::vector<loop_edge> loop_entries;
+		std::pair<int, firm::ir_node *> backedge;
 
 		firm::ir_node *loop_phi;
 		firm::ir_node *loop_cmp;
@@ -67,6 +69,22 @@ namespace /* anonymous */
 		loop_info &info;
 		size_t index;
 	};
+
+	/**
+	 * @brief
+	 *     Removes "keep alive" edge from irg end node and replace it with a new bad-node.
+	 * @param node
+	 */
+	void remove_keep_alive(firm::ir_node *node)
+	{
+		auto irg = firm::get_irn_irg(node);
+		auto end = firm::get_irg_end(irg);
+		for (int i = 0, n = firm::get_irn_arity(end); i < n; i++) {
+			if (firm::get_irn_n(end, i) == node) {
+				firm::set_irn_n(end, i, firm::new_r_Bad(irg, firm::get_irn_mode(node)));
+			}
+		}
+	}
 
 	bool is_in_loop(firm::ir_node *node, firm::ir_loop *loop) {
 		if (firm::is_Block(node)) {
@@ -107,6 +125,19 @@ namespace /* anonymous */
 		return ret;
 	}
 
+	firm::ir_node* get_other_cond_proj(firm::ir_node *proj)
+	{
+		assert(firm::is_Proj(proj));
+		auto cond = firm::get_Proj_pred(proj);
+		assert(firm::is_Cond(cond));
+		for (auto &edge : get_out_edges_safe(cond)) {
+			if (edge.first != proj) {
+				return edge.first;
+			}
+		}
+		MINIJAVA_NOT_REACHED();
+	}
+
 	firm::ir_node* get_loop_cmp(loop_info &info)
 	{
 		/*
@@ -128,7 +159,6 @@ namespace /* anonymous */
 		// only handle loops, which have one tail(no returns inside the loop) and
 		// one head (only one jmp inside the loop - not sure, if we could have anything else)
 		if (info.tail.size() != 1 || info.head.size() != 1) {
-			std::cout << "invalid head or tail" << std::endl;
 			return nullptr;
 		}
 
@@ -142,24 +172,26 @@ namespace /* anonymous */
 		return cmp;
 	}
 
-	//firm::ir_node* get_node_copy(firm::ir_node *node, size_t index)
-	//{
-	//	if (copy_node_map.find(node) != copy_node_map.end()) {
-	//		if (index < copy_node_map[node]->copies.size()) {
-	//			return copy_node_map[node]->copies[index];
-	//		}
-	//	}
-	//	return nullptr;
-	//}
+	firm::ir_node* get_node_copy(firm::ir_node *node, size_t index)
+	{
+		if (copy_node_map.find(node) != copy_node_map.end()) {
+			if (index < copy_node_map[node]->copies.size()) {
+				return copy_node_map[node]->copies[index];
+			}
+		}
+		return nullptr;
+	}
 
 	void set_node_copy(firm::ir_node *node, size_t index, firm::ir_node *copy)
 	{
+		assert(index > 0);
 		if (copy_node_map.find(node) == copy_node_map.end()) {
 			copy_node_map[node] = new copy_node();
 		}
 		if (index >= copy_node_map[node]->copies.size()) {
-			copy_node_map[node]->copies.reserve(static_cast<size_t>(index + 1));
+			copy_node_map[node]->copies.resize(static_cast<size_t>(index + 1));
 		}
+		copy_node_map[node]->copies[0] = node;
 		copy_node_map[node]->copies[index] = copy;
 	}
 
@@ -204,9 +236,6 @@ namespace /* anonymous */
 				firm::set_backedge(new_node, i);
 			}
 		}
-		if (firm::is_Block(new_node)) {
-			firm::set_Block_mark(new_node, 0);
-		}
 		firm::set_irn_link(node, new_node);
 		set_node_copy(node, env_info->index, new_node);
 	}
@@ -237,55 +266,115 @@ namespace /* anonymous */
 		}
 	}
 
+	void remove_irn_edge(firm::ir_node *node, int pos) {
+		auto ins = std::vector<firm::ir_node*>();
+		auto arity = firm::get_irn_arity(node);
+		// remove in edge
+		for (int i = 0; i < arity; i++) {
+			if (i != pos) ins.push_back(firm::get_irn_n(node, i));
+		}
+		assert(static_cast<int>(ins.size()) == arity - 1);
+		firm::set_irn_in(node, arity - 1, ins.data());
+		// update phis
+		for (auto phi = firm::get_Block_phis(node); phi; phi = firm::get_Phi_next(phi)) {
+			for (int i = 0; i < arity; i++) {
+				if (i != pos) ins[static_cast<size_t>(i)] = firm::get_irn_n(phi, i);
+			}
+			firm::set_irn_in(phi, arity - 1, ins.data());
+		}
+	}
+
 	void copy_loop(loop_info &info, size_t index)
 	{
 		firm::inc_irg_visited(current_irg);
 		auto env = copy_walker_env(info, index);
 		firm::irg_walk_graph(current_irg, copy_into_loop, rewire_inputs, &env);
-		//firm::irg_walk_topological(current_irg, copy_walker, &env);
 	}
 
 	void do_unroll(loop_info &info)
 	{
-		size_t counter = 0;
+		size_t copies = 0;
 		auto val = info.counter.initial_value;
 		copy_node_map = std::map<firm::ir_node*, copy_node*>();
+		firm::dump_ir_graph(current_irg, "unroll");
 
 		while (firm::tarval_cmp(val, info.counter.upper_bound) & info.counter.relation) {
-			// break, if we reach max loop deep - shouldn't never happen
-			assert(counter++ <= MAX_LOOP_ITERATIONS);
-			//std::cout << "counter: " << firm::get_tarval_long(val) << std::endl;
-			//
-			auto new_val = firm::is_Add(info.loop_cmp)
+			val = firm::is_Add(info.loop_cmp)
 					? firm::tarval_add(val, info.counter.step)
 					: firm::tarval_sub(val, info.counter.step);
 
 			// create the copy
-			copy_loop(info, counter);
+			copies++;
+			copy_loop(info, copies);
 
-			val = new_val;
+			// break, if we reach max loop deep - shouldn't never happen
+			assert(copies <= MAX_LOOP_ITERATIONS);
 		}
 
+		if (copies == 0) {
+			// TODO: Remove
+			remove_keep_alive(info.head[0].node);
+		}
+
+		// rewire the copied loop bodies
+		assert(info.head.size() == 1);
+
+		auto head = info.head[0].node; // block, which is entered first (and contains the loop constraint) 74
+		auto head_pred = info.backedge.second; // jmp to the head 94
+		auto be_block = firm::get_nodes_block(head_pred); // block, which contains the jump back to the head 75
+
+		for (size_t i = 0; i < copies; i++) {
+			auto lower = get_node_copy(head, i + 1);
+			auto upper_be_block = get_node_copy(be_block, i);
+
+
+			auto jmp = firm::new_r_Jmp(upper_be_block);
+			firm::ir_node* ins[] = {jmp};
+			firm::set_irn_in(lower, 1, ins);
+
+			// get rid of always taken proj
+			auto proj = get_other_cond_proj(get_node_copy(info.tail[0].pred, i));
+			firm::exchange(proj, firm::new_r_Jmp(firm::get_nodes_block(proj)));
+
+			// replace phi inputs with single input
+			for (auto phi = firm::get_Block_phis(head); phi; phi = firm::get_Phi_next(phi)) {
+				auto phi_pred = firm::get_Phi_pred(phi, info.backedge.first);
+				auto upper_phi_pred = get_node_copy(phi_pred, i);
+				auto lower_phi = get_node_copy(phi, i + 1);
+
+				firm::ir_node* phi_in[1];
+				if (is_in_loop(phi_pred, info.loop)) {
+					phi_in[0] = upper_phi_pred;
+				} else {
+					phi_in[0] = phi_pred;
+				}
+				firm::set_irn_in(lower_phi, 1, phi_in);
+			}
+		}
+
+		for (auto &edge : info.loop_entries) {
+			auto pred = get_node_copy(edge.pred, copies);
+			firm::set_irn_n(edge.node, edge.pos, pred);
+		}
+
+		for (auto &tail : info.tail) {
+			auto pred = get_node_copy(tail.pred, copies);
+			firm::exchange(pred, firm::new_r_Jmp(firm::get_nodes_block(pred)));
+		}
+
+		for (auto phi = firm::get_Block_phis(head); phi; phi = firm::get_Phi_next(phi)) {
+			auto pred = firm::get_Phi_pred(phi, info.backedge.first);
+			auto last_pred = is_in_loop(pred, info.loop) ?
+			          get_node_copy(pred, copies) : pred;
+			firm::set_irn_n(phi, info.backedge.first, last_pred);
+		}
+
+		// remove backedge from head block
+		remove_irn_edge(head, info.backedge.first);
+
 		free_copy_node_map();
+		firm::dump_ir_graph(current_irg, "unrolled");
 	}
-
-	//firm::ir_tarval* get_next(loop_info &info, firm::ir_tarval *current)
-	//{
-	//	if (!(firm::tarval_cmp(current, info.counter.upper_bound) & info.counter.relation)) {
-	//		return nullptr;
-	//	}
-	//
-	//	auto next = info.counter.direction == up ?
-	//                firm::tarval_add(current, info.counter.step) :
-	//                firm::tarval_sub(current, info.counter.step);
-	//
-	//	return next;
-	//}
-
-	//void copy_loop()
-	//{
-	//
-	//}
 
 	long is_const_loop(loop_info &info)
 	{
@@ -368,9 +457,6 @@ namespace /* anonymous */
 			return 0;
 		}
 
-		//std::cout << "count: " << firm::get_tarval_long(count_tar) << std::endl;
-		//std::cout << "from" << firm::get_tarval_long(info.counter.initial_value) << std::endl;
-		//std::cout << "upper" << firm::get_tarval_long(info.counter.upper_bound) << std::endl;
 		if (firm::tarval_is_negative(count_tar)) {
 			// should never be true
 			return 0;
@@ -411,9 +497,15 @@ namespace /* anonymous */
 
 				if (node_in_loop && !pred_in_loop) {
 					info->head.push_back(loop_edge(node, edge.second, edge.first));
-				} else if (!node_in_loop && pred_in_loop) {
+				}
+			}
+			if (!node_in_loop && pred_in_loop) {
+				// tail blocks
+				if (firm::is_Block(node)) {
 					info->tail.push_back(loop_edge(node, edge.second, edge.first));
 				}
+				// all connections into the loop
+				info->loop_entries.push_back(loop_edge(node, edge.second, edge.first));
 			}
 		}
 	}
@@ -435,7 +527,13 @@ namespace /* anonymous */
 
 		auto unroll_nr = is_const_loop(info);
 		if (unroll_nr > 0 && unroll_nr <= static_cast<long>(MAX_LOOP_ITERATIONS)) {
-			std::cout << "found loop" << std::endl;
+			auto head = info.head[0].node;
+			for (auto &pred : get_in_nodes(head)) {
+				if (firm::is_backedge(head, pred.first) && is_in_loop(pred.second, info.loop)) {
+					info.backedge = pred;
+				}
+			}
+
 			do_unroll(info);
 			return;
 		}
@@ -460,6 +558,8 @@ bool unroll::optimize(firm_ir &) {
 			//assert(false);
 		}
 
+		//firm::remove_bads(irg);
+		//firm::remove_unreachable_code(irg);
 		firm::edges_deactivate(irg);
 		firm::ir_free_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
 	}
