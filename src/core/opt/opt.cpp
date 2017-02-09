@@ -4,6 +4,9 @@
 #include "opt/folding.hpp"
 #include "opt/inline.hpp"
 #include "opt/unroll.hpp"
+#include "opt/unused_params.hpp"
+#include "opt/unused_method.hpp"
+#include "opt/load_store.hpp"
 #include <queue>
 
 namespace minijava
@@ -33,11 +36,16 @@ namespace minijava
 
 	void register_all_optimizations()
 	{
-		//opts are registered in a meaningfull order
+		// should run at first, because after inlining, we couldn't remove them
+		register_optimization(std::make_unique<opt::unused_params>());
+		// important to get rid of unnecessary methods - no need to optimize them or even create code
+		// they might be created from unused_params opt
+		register_optimization(std::make_unique<opt::unused_method>());
 		register_optimization(std::make_unique<opt::folding>());
+		register_optimization(std::make_unique<opt::load_store>());
 		register_optimization(std::make_unique<opt::conditional>());
-		register_optimization(std::make_unique<opt::control_flow>());
 		register_optimization(std::make_unique<opt::unroll>());
+		register_optimization(std::make_unique<opt::control_flow>());
 		register_optimization(std::make_unique<opt::inliner>());
 	}
 
@@ -112,48 +120,6 @@ namespace minijava
 		return nn;
 	}
 
-	void copy_nodes(firm::ir_node* node, void* env)
-	{
-		opt::copy_irn_to_irg(node, (firm::ir_graph*)env);
-	}
-
-	void set_preds(firm::ir_node* node, void* env)
-	{
-		auto new_irg = (firm::ir_graph*)env;
-		auto nn = (firm::ir_node*)firm::get_irn_link(node);
-
-		if (firm::is_Block(node)) {
-			auto irg = firm::get_irn_irg(node);
-			auto end_block = firm::get_irg_end_block(irg);
-			for (int i = firm::get_Block_n_cfgpreds(node); i-- > 0;) {
-				auto pred = firm::get_Block_cfgpred(node, i);
-				if (end_block == node) {
-					firm::add_immBlock_pred(firm::get_irg_end_block(new_irg), (firm::ir_node*)firm::get_irn_link(pred));
-				} else {
-					firm::set_Block_cfgpred(nn, i, (firm::ir_node*)firm::get_irn_link(pred));
-				}
-			}
-		} else {
-			firm::set_nodes_block(nn, (firm::ir_node*)firm::get_irn_link(firm::get_nodes_block(node)));
-			if (firm::is_End(node)) {
-				for (int i = 0, nodes = firm::get_End_n_keepalives(node); i < nodes; ++i) {
-					firm::add_End_keepalive(nn, (firm::ir_node*)firm::get_irn_link(firm::get_End_keepalive(node, i)));
-				}
-			} else {
-				// #foreach_irn_in_r macro from irnode_t.h
-				for (bool pred__b = true; pred__b;) {
-					for (firm::ir_node* pred__irn = node; pred__b; pred__b = false) {
-						for (int idx = firm::get_irn_arity(pred__irn); pred__b && idx-- != 0;) {
-							for (firm::ir_node* pred = (pred__b = false, firm::get_irn_n(pred__irn, idx)); !pred__b; pred__b = true) {
-								set_irn_n(nn, idx, (firm::ir_node*)firm::get_irn_link(pred));
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
 	bool opt::is_nop(firm::ir_node* node)
 	{
 		switch (firm::get_irn_opcode(node)) {
@@ -177,20 +143,6 @@ namespace minijava
 			default:
 				return false;
 		}
-	}
-
-	void opt::clone_irg(firm::ir_graph* from, firm::ir_graph* to)
-	{
-		firm::irg_walk_graph(from, copy_nodes, set_preds, to);
-		firm::irg_finalize_cons(to);
-	}
-
-	firm::ir_tarval* opt::get_tarval(firm::ir_node* node, int n)
-	{
-		if (n < firm::get_irn_arity(node)) {
-			return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
-		}
-		return nullptr;
 	}
 
 	bool opt::is_tarval_numeric(firm::ir_tarval* val)

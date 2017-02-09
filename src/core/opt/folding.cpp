@@ -4,6 +4,17 @@
 
 using namespace minijava::opt;
 
+namespace /* anonymous */
+{
+	firm::ir_tarval* get_tarval(firm::ir_node* node, int n)
+	{
+		if (n < firm::get_irn_arity(node)) {
+			return (firm::ir_tarval*)firm::get_irn_link(firm::get_irn_n(node, n));
+		}
+		return nullptr;
+	}
+}
+
 void minijava::opt::folding::cleanup(firm::ir_node* node) {
 	auto opcode = firm::get_irn_opcode(node);
 	if (opcode == firm::iro_Const) {
@@ -122,13 +133,20 @@ bool minijava::opt::folding::handle(firm::ir_node* node) {
 			ret_tv = firm::new_tarval_from_long(val, mode);
 		}
 	}
-	auto changed = ret_tv ? true : false;
-	auto cur_tv = (firm::ir_tarval*)firm::get_irn_link(node);
-	if (cur_tv && ret_tv) {
-		if (is_tarval_numeric(cur_tv) && is_tarval_numeric(ret_tv)) {
-			changed = firm::get_tarval_long(cur_tv) != firm::get_tarval_long(ret_tv);
-		}
+	if (!ret_tv) {
+		return false;
 	}
 	firm::set_irn_link(node, ret_tv);
-	return changed;
+	if (opcode == firm::iro_Const) {
+		// const nodes doesn't matter
+		return false;
+	}
+	if (ret_tv == firm::tarval_bad) {
+		return false;
+	}
+	auto cur_tv = (firm::ir_tarval*)firm::get_irn_link(node);
+	if (cur_tv) {
+		return firm::get_tarval_long(cur_tv) != firm::get_tarval_long(ret_tv);
+	}
+	return true;
 }

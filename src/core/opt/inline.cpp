@@ -11,17 +11,20 @@
 
 using namespace minijava::opt;
 
+namespace /* anonymous */
+{
+
 // TODO: find useful values for this two consts
-const int max_nodes = 1024;
-const int max_inline_count = 100;
-const int inline_threshold = 1024;
+	const int max_nodes = 1024;
+	const int max_inline_count = 100;
+	const int inline_threshold = 1024;
 
-static firm::ir_graph* current_irg;
+	static firm::ir_graph *current_irg;
 
-struct walker_env {
-	inliner::irg_inline_info* info;
-	firm::ir_graph* irg;
-};
+	struct walker_env {
+		inliner::irg_inline_info *info;
+		firm::ir_graph *irg;
+	};
 
 /**
  * Calculates the benefice, to inline a specific call node
@@ -30,40 +33,39 @@ struct walker_env {
  * @return
  *     benefice to inline the call node - the bigger, the better
  */
-int get_benefice(firm::ir_node* call_node)
-{
-	assert(firm::is_Call(call_node));
-	auto irg = firm::get_entity_irg(firm::get_Call_callee(call_node));
-	auto info = (inliner::irg_inline_info*)firm::get_irg_link(irg);
-	int benefice = firm::get_Call_n_params(call_node) * 5;
+	int get_benefice(firm::ir_node *call_node) {
+		assert(firm::is_Call(call_node));
+		auto irg = firm::get_entity_irg(firm::get_Call_callee(call_node));
+		auto info = (inliner::irg_inline_info *) firm::get_irg_link(irg);
+		int benefice = firm::get_Call_n_params(call_node) * 5;
 
-	bool all_const = true;
-	for (int i = 0, n = firm::get_Call_n_params(call_node); i < n; i++) {
-		auto param = firm::get_Call_param(call_node, i);
-		if (firm::is_Const(param)) {
-			benefice += 100;
-		} else {
-			all_const = false;
+		bool all_const = true;
+		for (int i = 0, n = firm::get_Call_n_params(call_node); i < n; i++) {
+			auto param = firm::get_Call_param(call_node, i);
+			if (firm::is_Const(param)) {
+				benefice += 100;
+			} else {
+				all_const = false;
+			}
 		}
+		// all params are constant?
+		if (all_const) {
+			benefice += 1024;
+		}
+		// only one block in the irg?
+		if (info->blocks == 1) {
+			benefice = benefice * 3 / 2;
+		}
+		// small graph
+		if (info->nodes < 30) {
+			benefice += 2000;
+		}
+		// no calls is also good
+		if (info->calls == 0) {
+			benefice += 400;
+		}
+		return benefice;
 	}
-	// all params are constant?
-	if (all_const) {
-		benefice += 1024;
-	}
-	// only one block in the irg?
-	if (info->blocks == 1) {
-		benefice = benefice * 3 / 2;
-	}
-	// small graph
-	if (info->nodes < 30) {
-		benefice += 2000;
-	}
-	// no calls is also good
-	if (info->calls == 0) {
-		benefice += 400;
-	}
-	return benefice;
-}
 
 /**
  * @brief
@@ -73,20 +75,19 @@ int get_benefice(firm::ir_node* call_node)
  * @return
  *     True, if it could be inlined
  */
-bool can_inline(firm::ir_node* call)
-{
-	assert(firm::is_Call(call));
-	auto call_entity = firm::get_Call_callee(call);
-	auto called_irg = firm::get_entity_irg(call_entity);
-	auto called_entity = firm::get_irg_entity(called_irg);
-	auto called_type = firm::get_entity_type(called_entity);
-	auto call_type = firm::get_entity_type(call_entity);
-	// parameter count should be equal
-	// assert this shouldn't never happen in our compiler
-	auto n_res = firm::get_method_n_ress(called_type);
-	assert (n_res == firm::get_method_n_ress(call_type));
-	return true;
-}
+	bool can_inline(firm::ir_node *call) {
+		assert(firm::is_Call(call));
+		auto call_entity = firm::get_Call_callee(call);
+		auto called_irg = firm::get_entity_irg(call_entity);
+		auto called_entity = firm::get_irg_entity(called_irg);
+		auto called_type = firm::get_entity_type(called_entity);
+		auto call_type = firm::get_entity_type(call_entity);
+		// parameter count should be equal
+		// assert this shouldn't never happen in our compiler
+		assert (firm::get_method_n_ress(called_type) == firm::get_method_n_ress(call_type));
+		(void)call_type;(void)called_type;
+		return true;
+	}
 
 /**
  * @brief
@@ -96,11 +97,10 @@ bool can_inline(firm::ir_node* call)
  * @param new_node
  *     New node
  */
-void set_new_node(firm::ir_node* node, firm::ir_node* new_node)
-{
-	firm::set_irn_link(node, new_node);
-	firm::mark_irn_visited(node);
-}
+	void set_new_node(firm::ir_node *node, firm::ir_node *new_node) {
+		firm::set_irn_link(node, new_node);
+		firm::mark_irn_visited(node);
+	}
 
 /**
  * @brief
@@ -112,11 +112,10 @@ void set_new_node(firm::ir_node* node, firm::ir_node* new_node)
  * @return
  *     The copy
  */
-firm::ir_node* get_new_node(firm::ir_node* node)
-{
-	assert(firm::irn_visited(node));
-	return (firm::ir_node*)firm::get_irn_link(node);
-}
+	firm::ir_node *get_new_node(firm::ir_node *node) {
+		assert(firm::irn_visited(node));
+		return (firm::ir_node *) firm::get_irn_link(node);
+	}
 
 /**
  * @brief
@@ -127,29 +126,28 @@ firm::ir_node* get_new_node(firm::ir_node* node)
  * @param env
  *     Pointer to the new `ir_graph`
  */
-void copy_node_inline(firm::ir_node *node, void *env)
-{
-	auto new_irg = (firm::ir_graph*)env;
-	auto op = firm::get_irn_op(node);
-	auto arity = firm::get_irn_arity(node);
-	// get ins for copy
-	auto inputs = std::vector<firm::ir_node*>();
-	for (int i = 0; i < arity; i++) {
-		inputs.push_back((firm::ir_node*)firm::get_irn_link(firm::get_irn_n(node, i)));
+	void copy_node_inline(firm::ir_node *node, void *env) {
+		auto new_irg = (firm::ir_graph *) env;
+		auto op = firm::get_irn_op(node);
+		auto arity = firm::get_irn_arity(node);
+		// get ins for copy
+		auto inputs = std::vector<firm::ir_node *>();
+		for (int i = 0; i < arity; i++) {
+			inputs.push_back((firm::ir_node *) firm::get_irn_link(firm::get_irn_n(node, i)));
+		}
+		// create copy
+		auto new_node = firm::new_ir_node(
+				firm::get_irn_dbg_info(node),
+				new_irg,
+				op == firm::op_Block ? nullptr : firm::get_nodes_block(node),
+				op,
+				firm::get_irn_mode(node),
+				arity,
+				inputs.data()
+		);
+		firm::copy_node_attr(new_irg, node, new_node);
+		firm::set_irn_link(node, new_node);
 	}
-	// create copy
-	auto new_node = firm::new_ir_node(
-			firm::get_irn_dbg_info(node),
-	        new_irg,
-	        op == firm::op_Block ? nullptr : firm::get_nodes_block(node),
-	        op,
-	        firm::get_irn_mode(node),
-	        arity,
-	        inputs.data()
-	);
-	firm::copy_node_attr(new_irg, node, new_node);
-	firm::set_irn_link(node, new_node);
-}
 
 /**
  * @brief
@@ -160,21 +158,20 @@ void copy_node_inline(firm::ir_node *node, void *env)
  * @see
  *     set_preds_inline
  */
-void rewire_inputs(firm::ir_node* node)
-{
-	auto new_node = get_new_node(node);
-	// set block of non block nodes
-	if (!firm::is_Block(node)) {
-		auto block = firm::get_nodes_block(node);
-		auto new_block = get_new_node(block);
-		firm::set_nodes_block(new_node, new_block);
+	void rewire_inputs(firm::ir_node *node) {
+		auto new_node = get_new_node(node);
+		// set block of non block nodes
+		if (!firm::is_Block(node)) {
+			auto block = firm::get_nodes_block(node);
+			auto new_block = get_new_node(block);
+			firm::set_nodes_block(new_node, new_block);
+		}
+		// set ins
+		foreach_irn_in(node, i, in) {
+						auto new_in = get_new_node(in);
+						firm::set_irn_n(new_node, i, new_in);
+					}
 	}
-	// set ins
-	foreach_irn_in(node, i, in) {
-					auto new_in = get_new_node(in);
-					firm::set_irn_n(new_node, i, new_in);
-				}
-}
 
 /**
  * @brief
@@ -184,17 +181,16 @@ void rewire_inputs(firm::ir_node* node)
  * @param env
  *     Pointer to the new `ir_graph`
  */
-void set_preds_inline(firm::ir_node *node, void *env)
-{
-	rewire_inputs(node);
-	// move consts into start block
-	auto new_node = get_new_node(node);
-	if (firm::is_irn_start_block_placed(new_node)) {
-		auto new_irg = (firm::ir_graph*)env;
-		auto start_block = firm::get_irg_start_block(new_irg);
-		firm::set_nodes_block(new_node, start_block);
+	void set_preds_inline(firm::ir_node *node, void *env) {
+		rewire_inputs(node);
+		// move consts into start block
+		auto new_node = get_new_node(node);
+		if (firm::is_irn_start_block_placed(new_node)) {
+			auto new_irg = (firm::ir_graph *) env;
+			auto start_block = firm::get_irg_start_block(new_irg);
+			firm::set_nodes_block(new_node, start_block);
+		}
 	}
-}
 
 /**
  * @brief
@@ -204,45 +200,46 @@ void set_preds_inline(firm::ir_node *node, void *env)
  * @param env
  *     Contains a pointer to an `walker_env`
  */
-void collect_calls(firm::ir_node* node, void* env)
-{
-	auto w_env = (walker_env*)env;
-	auto info = w_env->info;
+	void collect_calls(firm::ir_node *node, void *env) {
+		auto w_env = (walker_env *) env;
+		auto info = w_env->info;
 
 
-	// nodes without any cost could be ignored
-	if (is_nop(node)) {
-		return;
+		// nodes without any cost could be ignored
+		if (is_nop(node)) {
+			return;
+		}
+
+		if (firm::is_Block(node)) {
+			info->blocks++;
+		} else {
+			info->nodes++;
+		}
+
+		if (!firm::is_Call(node)) {
+			return;
+		}
+		info->calls++;
+		auto callee_ent = firm::get_Call_callee(node);
+		if (!callee_ent) {
+			return;
+		}
+		auto callee = firm::get_entity_irg(callee_ent);
+		if (!callee) {
+			return;
+		}
+		auto callee_info = (inliner::irg_inline_info *) firm::get_irg_link(callee);
+		if (callee_info) {
+			callee_info->callers++;
+		}
+		if (w_env->irg == callee) {
+			info->self_recursive = true;
+		}
+		auto call_info = inliner::call_node_info(node);
+		call_info.benefice = get_benefice(call_info.call);
+		info->call_nodes.push_back(call_info);
 	}
 
-	if (firm::is_Block(node)) {
-		info->blocks++;
-	} else {
-		info->nodes++;
-	}
-
-	if (!firm::is_Call(node)) {
-		return;
-	}
-	info->calls++;
-	auto callee_ent = firm::get_Call_callee(node);
-	if (!callee_ent) {
-		return;
-	}
-	auto callee = firm::get_entity_irg(callee_ent);
-	if (!callee) {
-		return;
-	}
-	auto callee_info = (inliner::irg_inline_info *) firm::get_irg_link(callee);
-	if (callee_info) {
-		callee_info->callers++;
-	}
-	if (w_env->irg == callee) {
-		info->self_recursive = true;
-	}
-	auto call_info = inliner::call_node_info(node);
-	call_info.benefice = get_benefice(call_info.call);
-	info->call_nodes.push_back(call_info);
 }
 
 void inliner::maybe_modify_benefice(firm::ir_graph* /*irg*/, call_node_info& /*call*/, call_node_info& /*info*/)
@@ -473,10 +470,6 @@ void inliner::inline_into(firm::ir_graph *irg)
 	}
 }
 
-/**
- * Collects all calls of an irg and stores the info inside the call's link
- * @param irg
- */
 void inliner::collect_irg_calls(firm::ir_graph* irg)
 {
 	auto env = walker_env();
@@ -485,13 +478,8 @@ void inliner::collect_irg_calls(firm::ir_graph* irg)
 	firm::irg_walk_graph(irg, nullptr, collect_calls, &env);
 }
 
-/**
- * Collects a list of irgs in order and reserves memory for info.
- * @return
- */
 std::vector<std::pair<firm::ir_graph*, inliner::irg_inline_info>> inliner::get_irgs()
 {
-	auto n_irgs = firm::get_irp_n_irgs();
 	auto irgs = std::vector<std::pair<firm::ir_graph*, irg_inline_info>>();
 
 	// needed for compute_callgraph
@@ -506,7 +494,7 @@ std::vector<std::pair<firm::ir_graph*, inliner::irg_inline_info>> inliner::get_i
 		((std::vector<std::pair<firm::ir_graph*, irg_inline_info>>*)env)->push_back(std::make_pair(irg, irg_inline_info()));
 	}, nullptr, &irgs);
 	firm::free_callgraph();
-	assert(irgs.size() == n_irgs);
+	assert(irgs.size() == firm::get_irp_n_irgs());
 	return irgs;
 }
 

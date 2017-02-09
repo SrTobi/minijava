@@ -304,7 +304,7 @@ bool remove_trivial_cond(firm::ir_node *block)
 	return false;
 }
 
-bool control_flow::try_merge(firm::ir_node *block, int pos)
+bool try_merge(firm::ir_node *block, int pos)
 {
 	assert(firm::is_Block(block));
 	assert (firm::get_Block_entity(block) == nullptr);

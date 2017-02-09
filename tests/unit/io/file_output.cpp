@@ -9,17 +9,21 @@
 
 #define BOOST_TEST_MODULE  io_file_output.hpp
 #include <boost/test/unit_test.hpp>
+#include <boost/filesystem.hpp>
 
 #include "testaux/random.hpp"
 #include "testaux/temporary_file.hpp"
 #include "testaux/testaux.hpp"
 
-
-#ifdef __unix__
-#  define POSIX_EH  true
-#else
-#  define POSIX_EH  false
-#endif
+namespace
+{
+        bool have_dev_full()
+        {
+                namespace fs = boost::filesystem;
+                static const bool result = fs::exists(fs::path("/dev/full"));
+                return result;
+        }
+}
 
 #define REQUIRE_SYSTEM_ERROR_WITH_ERRNO(Expr, Errc)                           \
 	BOOST_REQUIRE_EXCEPTION(                                                  \
@@ -165,7 +169,7 @@ BOOST_AUTO_TEST_CASE(non_owning_state_write_2nd_success)
 
 BOOST_AUTO_TEST_CASE(non_owning_state_write_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		const auto text = std::string(BUFSIZ + 100, 'a');
 		auto fh = testaux::open_file("/dev/full", "wb");
 		auto out = minijava::file_output{fh.get()};
@@ -191,7 +195,7 @@ BOOST_AUTO_TEST_CASE(non_owning_state_print_success)
 BOOST_AUTO_TEST_CASE(non_owning_state_print_failure)
 {
 	const auto aaa = std::string(std::size_t{BUFSIZ}, 'a');
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto fh = testaux::open_file("/dev/full", "wb");
 		auto out = minijava::file_output{fh.get()};
 		REQUIRE_SYSTEM_ERROR_WITH_ERRNO(
@@ -218,7 +222,7 @@ BOOST_AUTO_TEST_CASE(non_owning_state_flush_success)
 
 BOOST_AUTO_TEST_CASE(non_owning_state_flush_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto fh = testaux::open_file("/dev/full", "wb");
 		auto out = minijava::file_output{fh.get()};
 		out.write("a");  // BUFFERED, I HOPE HOPE HOPE
@@ -241,7 +245,7 @@ BOOST_AUTO_TEST_CASE(non_owning_state_close_success)
 
 BOOST_AUTO_TEST_CASE(non_owning_state_close_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto fh = testaux::open_file("/dev/full", "wb");
 		auto out = minijava::file_output{fh.release()};
 		out.write("a");  // BUFFERED, I HOPE HOPE HOPE
@@ -266,7 +270,7 @@ BOOST_AUTO_TEST_CASE(non_owning_state_finalize_success)
 
 BOOST_AUTO_TEST_CASE(non_owning_state_finalize_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto fh = testaux::open_file("/dev/full", "wb");
 		auto out = minijava::file_output{fh.get()};
 		out.write("a");  // BUFFERED, I HOPE HOPE HOPE
@@ -336,7 +340,7 @@ BOOST_AUTO_TEST_CASE(owning_state_write_2nd_success)
 
 BOOST_AUTO_TEST_CASE(owning_state_write_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		const auto text = std::string(BUFSIZ + 100, 'a');
 		auto out = minijava::file_output{"/dev/full"};
 		REQUIRE_SYSTEM_ERROR_WITH_ERRNO(out.write(text), ENOSPC);
@@ -360,7 +364,7 @@ BOOST_AUTO_TEST_CASE(owning_state_print_success)
 BOOST_AUTO_TEST_CASE(owning_state_print_failure)
 {
 	const auto aaa = std::string(std::size_t{BUFSIZ}, 'a');
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto out = minijava::file_output{"/dev/full"};
 		REQUIRE_SYSTEM_ERROR_WITH_ERRNO(
 			out.print("%s%s", aaa.c_str(), aaa.c_str()),
@@ -385,7 +389,7 @@ BOOST_AUTO_TEST_CASE(owning_state_flush_success)
 
 BOOST_AUTO_TEST_CASE(owning_state_flush_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto out = minijava::file_output{"/dev/full"};
 		out.write("a");  // BUFFERED, I HOPE HOPE HOPE
 		REQUIRE_SYSTEM_ERROR_WITH_ERRNO(out.flush(), ENOSPC);
@@ -406,7 +410,7 @@ BOOST_AUTO_TEST_CASE(owning_state_close_success)
 
 BOOST_AUTO_TEST_CASE(owning_state_close_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto out = minijava::file_output{"/dev/full"};
 		out.write("a");  // BUFFERED, I HOPE HOPE HOPE
 		REQUIRE_SYSTEM_ERROR_WITH_ERRNO(out.close(), ENOSPC);
@@ -427,7 +431,7 @@ BOOST_AUTO_TEST_CASE(owning_state_finalize_success)
 
 BOOST_AUTO_TEST_CASE(owning_state_finalize_failure)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		auto out = minijava::file_output{"/dev/full"};
 		out.write("a");  // BUFFERED, I HOPE HOPE HOPE
 		REQUIRE_SYSTEM_ERROR_WITH_ERRNO(out.finalize(), ENOSPC);
