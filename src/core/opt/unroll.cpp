@@ -510,7 +510,7 @@ namespace /* anonymous */
 		}
 	}
 
-	void optimize_loop(firm::ir_graph *irg, firm::ir_loop *loop) {
+	bool optimize_loop(firm::ir_graph *irg, firm::ir_loop *loop) {
 		auto info = loop_info();
 		info.loop = loop;
 
@@ -518,15 +518,15 @@ namespace /* anonymous */
 
 		// only one head allowed
 		if (info.head.size() != 1) {
-			return;
+			return false;
 		}
 		if (info.branches > MAX_LOOP_BRANCHES
 		    || info.node_count > MAX_LOOP_SIZE) {
-			return;
+			return false;
 		}
 
 		auto unroll_nr = is_const_loop(info);
-		if (unroll_nr > 0 && unroll_nr <= static_cast<long>(MAX_LOOP_ITERATIONS)) {
+		if (unroll_nr > 0 && unroll_nr < static_cast<long>(MAX_LOOP_ITERATIONS)) {
 			auto head = info.head[0].node;
 			for (auto &pred : get_in_nodes(head)) {
 				if (firm::is_backedge(head, pred.first) && is_in_loop(pred.second, info.loop)) {
@@ -535,12 +535,15 @@ namespace /* anonymous */
 			}
 
 			do_unroll(info);
-			return;
+			return true;
 		}
+
+		return false;
 	}
 }
 
 bool unroll::optimize(firm_ir &) {
+	_changed = false;
 	size_t n = firm::get_irp_n_irgs();
 	for (size_t i = 0; i < n; i++) {
 		auto irg = firm::get_irp_irg(i);
@@ -554,7 +557,9 @@ bool unroll::optimize(firm_ir &) {
 
 		auto loops = find_loops(irg);
 		for (auto loop : loops) {
-			optimize_loop(irg, loop);
+			if (optimize_loop(irg, loop)) {
+				_changed = true;
+			}
 			//assert(false);
 		}
 
@@ -563,5 +568,5 @@ bool unroll::optimize(firm_ir &) {
 		firm::edges_deactivate(irg);
 		firm::ir_free_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
 	}
-	return false;
+	return _changed;
 }
