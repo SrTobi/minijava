@@ -102,9 +102,9 @@ namespace minijava
 		}
 
 		auto arity = firm::get_irn_arity(n);
-		firm::ir_node** inputs = new firm::ir_node*[firm::get_irn_arity(n)];
+		auto inputs = std::vector<firm::ir_node*>();
 		for (int i = 0; i < arity; i++) {
-			inputs[i] = (firm::ir_node*)firm::get_irn_link(firm::get_irn_n(n, i));
+			inputs.push_back((firm::ir_node*)firm::get_irn_link(firm::get_irn_n(n, i)));
 		}
 		nn = firm::new_ir_node(
 				firm::get_irn_dbg_info(n),
@@ -113,7 +113,7 @@ namespace minijava
 				firm::get_irn_op(n),
 				firm::get_irn_mode(n),
 				arity,
-				inputs
+				inputs.data()
 		);
 		firm::set_irn_link(n, nn);
 		firm::copy_node_attr(irg, n, nn);
