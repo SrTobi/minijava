@@ -56,6 +56,7 @@ namespace /* anonymous */
 
 		firm::ir_node *loop_phi;
 		firm::ir_node *loop_cmp;
+		firm::ir_node *loop_expr;
 
 		// loop counter info
 		loop_info_counter counter;
@@ -299,7 +300,7 @@ namespace /* anonymous */
 		firm::dump_ir_graph(current_irg, "unroll");
 
 		while (firm::tarval_cmp(val, info.counter.upper_bound) & info.counter.relation) {
-			val = firm::is_Add(info.loop_cmp)
+			val = firm::is_Add(info.loop_expr)
 					? firm::tarval_add(val, info.counter.step)
 					: firm::tarval_sub(val, info.counter.step);
 
@@ -429,6 +430,7 @@ namespace /* anonymous */
 		if (!firm::is_Sub(expr) && !firm::is_Add(expr)) {
 			return 0;
 		}
+		info.loop_expr = expr;
 		if (firm::is_Const(firm::get_irn_n(expr, 0))) {
 			if (firm::get_irn_n(expr, 1) != phi) {
 				return 0;
