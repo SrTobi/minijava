@@ -6,6 +6,7 @@
 #include <numeric>
 #include <utility>
 
+#include "asm/instruction.hpp"
 #include "exceptions.hpp"
 
 
@@ -174,14 +175,21 @@ namespace /* anonymous*/
 	 * @param op2   second operatnd
 	 */
 	void add_instruction(std::vector<be::real_instruction>& code,
-						 be::opcode opc, be::bit_width width, operand op1,
+						 const be::virtual_instruction& instr, operand op1,
 						 operand op2)
 	{
 		if (is_address(op1) && is_address(op2)) {
-			code.emplace_back(be::opcode::op_mov, be::bit_width::lxiv, std::move(op1), tmp_register);
-			code.emplace_back(opc, width, tmp_register, std::move(op2));
+			code.emplace_back(
+					be::opcode::op_mov, be::get_operand_widths(instr).first,
+					std::move(op1), tmp_register
+			);
+			code.emplace_back(
+					instr.code, instr.width, tmp_register, std::move(op2)
+			);
 		} else {
-			code.emplace_back(opc, width, std::move(op1), std::move(op2));
+			code.emplace_back(
+					instr.code, instr.width, std::move(op1), std::move(op2)
+			);
 		}
 	}
 
@@ -236,7 +244,7 @@ namespace minijava
 				realasm.blocks.push_back(std::move(prologue));
 			}
 			// for keeping track of function arguments
-			auto next_call_args = std::map<int, operand<real_register>>{};
+			auto next_call_args = std::map<int, std::pair<operand<real_register>, bit_width>>{};
 			auto assert_args_empty = [&next_call_args]() {
 				if (!next_call_args.empty()) {
 					MINIJAVA_THROW_ICE_MSG(
@@ -279,12 +287,13 @@ namespace minijava
 						}
 						// push stack arguments (RTL)
 						for (int i = call_argc; i > 6; --i) {
-							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, next_call_args.at(i));
+							const auto& arg = next_call_args.at(i);
+							real_block.code.emplace_back(opcode::op_push, arg.second, arg.first);
 						}
 						// set register arguments
 						for (int i = std::min(call_argc, 6); i > 0; --i) {
-							// TODO: get actual bit width
-							real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, next_call_args.at(i), get_argument_register(i));
+							const auto& arg = next_call_args.at(i);
+							real_block.code.emplace_back(opcode::op_mov, arg.second, arg.first, get_argument_register(i));
 						}
 						// perform actual call
 						auto target = get_name(instr.op1);
@@ -313,13 +322,18 @@ namespace minijava
 						if (is_argument(instr.op2)) {
 							auto reg = get_register(instr.op2);
 							assert(reg);
-							next_call_args.emplace(number(*reg), op1);
+							next_call_args.emplace(
+									number(*reg),
+									std::make_pair(
+											operand<real_register>{op1},
+											instr.width
+									)
+							);
 						} else {
 							assert_args_empty();
 							auto op2 = instr.op2.apply_visitor(visitor);
 							add_instruction(
-									real_block.code, opcode::op_mov,
-									instr.width, std::move(op1),
+									real_block.code, instr, std::move(op1),
 									std::move(op2)
 							);
 						}
@@ -332,8 +346,7 @@ namespace minijava
 						auto op1 = instr.op1.apply_visitor(visitor);
 						auto op2 = instr.op2.apply_visitor(visitor);
 						add_instruction(
-								real_block.code, instr.code,
-								instr.width, std::move(op1),
+								real_block.code, instr, std::move(op1),
 								std::move(op2)
 						);
 						break;
@@ -349,7 +362,7 @@ namespace minijava
 								std::move(op1), tmp_register
 						);
 						real_block.code.emplace_back(
-								opcode::op_mov, bit_width::lxiv, // TODO: get actual bit width
+								opcode::op_mov, bit_width::lxiv,
 								tmp_register, std::move(op2)
 						);
 						break;
@@ -365,7 +378,7 @@ namespace minijava
 						auto op1 = instr.op1.apply_visitor(visitor);
 						auto op2 = instr.op2.apply_visitor(visitor);
 						add_instruction(
-								real_block.code, instr.code, instr.width,
+								real_block.code, instr,
 								std::move(op1), std::move(op2)
 						);
 						break;
@@ -385,7 +398,7 @@ namespace minijava
 						auto op1 = instr.op1.apply_visitor(visitor);
 						auto op2 = instr.op2.apply_visitor(visitor);
 						add_instruction(
-								real_block.code, instr.code, instr.width,
+								real_block.code, instr,
 								std::move(op1), std::move(op2)
 						);
 						break;

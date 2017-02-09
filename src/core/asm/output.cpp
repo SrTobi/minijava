@@ -8,6 +8,7 @@
 #include <boost/utility/string_ref.hpp>
 #include <boost/variant/apply_visitor.hpp>
 
+#include "asm/instruction.hpp"
 #include "exceptions.hpp"
 #include "global.hpp"
 
@@ -146,29 +147,6 @@ namespace minijava
 
 				};
 				return boost::apply_visitor(visitor{width}, op);
-			}
-
-			template <typename RegT>
-			std::pair<bit_width, bit_width> get_operand_widths(const instruction<RegT>& instr)
-			{
-				switch (instr.code) {
-				case opcode::op_movslq:
-					assert(instr.width == bit_width{});
-					return std::make_pair(bit_width::xxxii, bit_width::lxiv);
-				case opcode::op_lea:
-					assert(instr.width == bit_width{});
-					return std::make_pair(bit_width::lxiv, bit_width::lxiv);
-				case opcode::op_seta:
-				case opcode::op_setae:
-				case opcode::op_setb:
-				case opcode::op_setbe:
-				case opcode::op_sete:
-				case opcode::op_setne:
-					return std::make_pair(bit_width::viii, bit_width{});
-					// TODO: Add other cases here even though we don't need them?
-				default:
-					return std::make_pair(instr.width, instr.width);
-				}
 			}
 
 			void write_label(const boost::string_ref label, file_output& out)

@@ -266,6 +266,28 @@ namespace minijava
 		/** @brief Type for x64 instructions using real registers. */
 		using real_instruction = instruction<real_register>;
 
+		/**
+		 * @brief
+		 *     Returns the bit widths of the operands of the given instruction.
+		 *
+		 * @tparam RegT
+		 *     register type (virtual or real)
+		 *
+		 * @param instr
+		 *     instruction
+		 *
+		 * @return
+		 *     pair of bit widths representing the widths of the two operands
+		 *
+		 */
+		template <typename RegT>
+		std::pair<bit_width, bit_width> get_operand_widths(const instruction<RegT>& instr);
+
 	}  // namespace backend
 
 }  // namespace minijava
+
+
+#define MINIJAVA_ASM_INCLUDED_FROM_INSTRUCTION_HPP
+#include "asm/instruction.tpp"
+#undef MINIJAVA_ASM_INCLUDED_FROM_INSTRUCTION_HPP
