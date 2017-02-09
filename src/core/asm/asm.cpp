@@ -21,6 +21,7 @@ namespace minijava
 		assert(ir);
 		const auto guard = make_irp_guard(*ir->second, ir->first);
 		backend::write_data_segment(firm::get_glob_type(), out);
+		out.write("\n\t.text\n");
 		out.print("\t.globl %s\n", "minijava_main");
 		const auto n = firm::get_irp_n_irgs();
 		for (std::size_t i = 0; i < n; ++i) {
