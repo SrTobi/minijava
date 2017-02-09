@@ -268,9 +268,9 @@ namespace minijava
 				dump_firm_ir(ir);  // TODO: allow setting directory
 				return;
 			}
-			// From now on, output defaults to 'a.out' not to stdout.
+			// From now on, output defaults to 'a.out'/'a.exe', not to stdout.
 			if (out.filename().empty()) {
-				out = file_output{"a.out"};
+				out = file_output{MINIJAVA_WINDOWS_ASSEMBLY ? "a.exe" : "a.out"};
 			}
 			const auto tempdir = fs::temp_directory_path();
 			const auto asmname = fs::unique_path(tempdir / "%%%%%%%%%%%%.s").string();

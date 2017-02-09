@@ -9,6 +9,7 @@
 #include <boost/variant/apply_visitor.hpp>
 
 #include "exceptions.hpp"
+#include "global.hpp"
 
 
 namespace minijava
@@ -183,7 +184,11 @@ namespace minijava
 			template <typename RegT>
 			void write_text_impl(const assembly<RegT>& assembly, file_output& out)
 			{
-				out.print("\t.type %s, @function\n", assembly.ldname.c_str());
+				if (MINIJAVA_WINDOWS_ASSEMBLY) {
+					out.print("\t.def %s; .scl 2; .type 32; .endef\n", assembly.ldname.c_str());
+				} else {
+					out.print("\t.type %s, @function\n", assembly.ldname.c_str());
+				}
 				write_label(assembly.ldname, out);
 				for (const auto& bb : assembly.blocks) {
 					write_label(bb.label, out);
@@ -211,7 +216,9 @@ namespace minijava
 						}
 					}
 				}
-				out.print("\t.size %s, .-%s\n", assembly.ldname.c_str(), assembly.ldname.c_str());
+				if (!MINIJAVA_WINDOWS_ASSEMBLY) {
+					out.print("\t.size %s, .-%s\n", assembly.ldname.c_str(), assembly.ldname.c_str());
+				}
 			}
 
 		}  // namespace /* anonymous */
