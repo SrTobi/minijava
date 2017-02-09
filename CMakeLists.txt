@@ -74,6 +74,7 @@ set(COMPONENTS
 	opt/inline
 	opt/unroll
 	opt/load_store
+	opt/tailrec
 	opt/unused_method
 	opt/unused_params
 	parser/ast
