@@ -135,7 +135,7 @@ namespace minijava
 
 					std::string operator()(const address_type& addr) const
 					{
-						return format(addr, this->width);
+						return format(addr, bit_width::lxiv);
 					}
 
 					std::string operator()(const boost::string_ref name) const
