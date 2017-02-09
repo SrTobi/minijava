@@ -332,7 +332,7 @@ namespace minijava
 						auto op1 = instr.op1.apply_visitor(visitor);
 						auto op2 = instr.op2.apply_visitor(visitor);
 						add_instruction(
-								real_block.code, opcode::op_mov,
+								real_block.code, instr.code,
 								instr.width, std::move(op1),
 								std::move(op2)
 						);
