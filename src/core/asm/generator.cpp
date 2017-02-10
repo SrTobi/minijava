@@ -304,17 +304,17 @@ namespace minijava
 
 				void _visit_start(firm::ir_node* irn)
 				{
-                    assert(firm::is_Start(irn));
+                    assert(firm::is_Start(irn)); (void) irn;
 				}
 
 				void _visit_end(firm::ir_node* irn)
 				{
-                    assert(firm::is_End(irn));
+                    assert(firm::is_End(irn)); (void) irn;
 				}
 
 				void _visit_block(firm::ir_node* irn)
 				{
-                    assert(firm::is_Block(irn));
+                    assert(firm::is_Block(irn)); (void) irn;
 				}
 
 				void _visit_const(firm::ir_node* irn)
