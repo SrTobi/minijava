@@ -11,6 +11,9 @@ import sys
 import tempfile
 
 
+COMPILER_TIMEOUT = 10.0
+EXECUTABLE_TIMEOUT = 10.0
+
 def main(args):
     ap = argparse.ArgumentParser(
         add_help=False,
@@ -145,7 +148,12 @@ def run_compiler(program, ns, pragmas, directory=None):
         stderr=subprocess.PIPE,
         cwd=directory
     )
-    (out, err) = proc.communicate(input=program.encode('ascii'))
+    try:
+        (out, err) = proc.communicate(input=program.encode('ascii'), timeout=COMPILER_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        raise Failure("Compiler did not complete within {:.2f} seconds".format(COMPILER_TIMEOUT))
     if ns.debug:
         log_popen_result(proc, out, err)
     expected = pragmas.get('status', 0)
@@ -174,7 +182,12 @@ def run_executable(ns, pragmas, directory=None):
         cwd=directory
     )
     with open(pragmas.get('stdin', os.devnull), 'rb') as istr:
-        (out, err) = proc.communicate(istr.read())
+        try:
+            (out, err) = proc.communicate(input=istr.read(), timeout=EXECUTABLE_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.communicate()
+            raise Failure("Executable did not complete within {:.2f} seconds".format(EXECUTABLE_TIMEOUT))
     if ns.debug:
         log_popen_result(proc, out, err)
     check_exec_status(pragmas, proc.returncode)
@@ -367,11 +380,10 @@ def abscmd(cmd):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
-    # try:
-    #     sys.exit(main(sys.argv[1:]))
-    # except (AssertionError, TypeError, NameError):
-    #     raise
-    # except Exception as e:
-    #     print("error:", e, file=sys.stderr)
-    #     sys.exit(1)
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except (AssertionError, TypeError, NameError):
+        raise
+    except Exception as e:
+        print("error:", e, file=sys.stderr)
+        sys.exit(1)
