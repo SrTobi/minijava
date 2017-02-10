@@ -71,17 +71,30 @@ namespace /* anonymous */
 		size_t index;
 	};
 
+	struct keep_alive_walker_env {
+		firm::ir_node *node;
+		bool found{false};
+	};
+
 	/**
 	 * @brief
-	 *     Removes "keep alive" edge from irg end node and replace it with a new bad-node.
+	 *     Removes the keep alive edge from End, if an path exists from End to `node`.
 	 * @param node
 	 */
-	void remove_keep_alive(firm::ir_node *node)
+	void remove_keep_alive_to(firm::ir_node *node)
 	{
 		auto irg = firm::get_irn_irg(node);
 		auto end = firm::get_irg_end(irg);
 		for (int i = 0, n = firm::get_irn_arity(end); i < n; i++) {
-			if (firm::get_irn_n(end, i) == node) {
+			auto info = keep_alive_walker_env();
+			info.node = node;
+			firm::irg_walk(firm::get_irn_n(end, i), [](firm::ir_node *node, void *env) {
+				auto info = (keep_alive_walker_env*)env;
+				if (node == info->node) {
+					info->found = true;
+				}
+			}, nullptr, &info);
+			if (info.found) {
 				firm::set_irn_n(end, i, firm::new_r_Bad(irg, firm::get_irn_mode(node)));
 			}
 		}
@@ -312,11 +325,6 @@ namespace /* anonymous */
 			assert(copies <= MAX_LOOP_ITERATIONS);
 		}
 
-		if (copies == 0) {
-			// TODO: Remove
-			remove_keep_alive(info.head[0].node);
-		}
-
 		// rewire the copied loop bodies
 		assert(info.head.size() == 1);
 
@@ -360,6 +368,7 @@ namespace /* anonymous */
 
 		for (auto &tail : info.tail) {
 			auto pred = get_node_copy(tail.pred, copies);
+			remove_keep_alive_to(get_other_cond_proj(pred));
 			firm::exchange(pred, firm::new_r_Jmp(firm::get_nodes_block(pred)));
 		}
 
@@ -522,10 +531,14 @@ namespace /* anonymous */
 		if (info.head.size() != 1) {
 			return false;
 		}
+		if (info.tail.size() != 1) {
+			return false;
+		}
 		if (info.branches > MAX_LOOP_BRANCHES
 		    || info.node_count > MAX_LOOP_SIZE) {
 			return false;
 		}
+
 
 		auto unroll_nr = is_const_loop(info);
 		if (unroll_nr > 0 && unroll_nr < static_cast<long>(MAX_LOOP_ITERATIONS)) {
@@ -565,10 +578,13 @@ bool unroll::optimize(firm_ir &) {
 			//assert(false);
 		}
 
-		//firm::remove_bads(irg);
-		//firm::remove_unreachable_code(irg);
 		firm::edges_deactivate(irg);
 		firm::ir_free_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
+
+		firm::remove_bads(irg);
+		firm::remove_unreachable_code(irg);
+
+		assert(firm::irg_verify(irg));
 	}
 	return _changed;
 }
