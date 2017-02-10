@@ -1,13 +1,13 @@
 // pragma output 0 2212 0 43 0 43 0 42
 
-class a {
+class Test {
 
 	public static void main(String[]ar) {
-	    a a = new a();
-		a.function(0);
-		a.function(1);
-		a.function(2);
-		a.function(3);
+		Test test = new Test();
+		test.function(0);
+		test.function(1);
+		test.function(2);
+		test.function(3);
 	}
 
 	public void function(int x) {
