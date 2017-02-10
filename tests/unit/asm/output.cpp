@@ -51,8 +51,8 @@ BOOST_AUTO_TEST_CASE(empty_labels_are_not_printed)
 		+ "\t.size func, .-func\n";
 	const auto expected_widows = ""s
 		+ "\t.def func; .scl 2; .type 32; .endef\n"
-		+ ".L0:\n"
-		+ "func:\n";
+		+ "func:\n"
+		+ ".L0:\n";
 	const auto expected = MINIJAVA_WINDOWS_ASSEMBLY
 		? expected_widows
 		: expected_posix;
