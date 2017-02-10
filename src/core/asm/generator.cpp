@@ -86,15 +86,18 @@ namespace minijava
 					}
 					const auto argv = firm::get_irn_out(start, 1);
 					const auto argc = firm::get_irn_n_outs(argv);
-					const auto ldname = firm::get_entity_ld_name(entity);
-					std::fprintf(stderr, "%s (%zu parameters, %u used):\n", ldname, arity, argc);
+					// const auto ldname = firm::get_entity_ld_name(entity);
+					// std::fprintf(stderr, "%s (%zu parameters, %u used):\n", ldname, arity, argc);
 					assert(argc <= arity);
 					auto argument_nodes = std::vector<firm::ir_node*>(arity);
 					for (auto i = 0u; i < argc; ++i) {
 						const auto irn = firm::get_irn_out(argv, i);
-						const auto idx = firm::get_Proj_num(irn);
-						assert(idx < arity);
-						argument_nodes[idx] = irn;
+						// TODO: How can this be not a Proj node?
+						if (firm::is_Proj(irn)) {
+							const auto idx = firm::get_Proj_num(irn);
+							assert(idx < arity);
+							argument_nodes[idx] = irn;
+						}
 					}
 					auto argreg = virtual_register::argument;
 					for (auto irn : argument_nodes) {
@@ -126,13 +129,13 @@ namespace minijava
 				void visit_second_pass(firm::ir_node*const irn)
 				{
 					_current_block = _blockmap.at(irn);
-					std::fprintf(
-						stderr,
-						"%10lu %p %10s  -->  ",
-						firm::get_irn_node_nr(irn),
-						static_cast<void*>(irn),
-						firm::get_irn_opname(irn)
-					);
+					// std::fprintf(
+					//  stderr,
+					//  "%10lu %p %10s  -->  ",
+					//  firm::get_irn_node_nr(irn),
+					//  static_cast<void*>(irn),
+					//  firm::get_irn_opname(irn)
+					// );
 					switch (firm::get_irn_opcode(irn)) {
 					case firm::iro_Start:
 						_visit_start(irn);
@@ -203,7 +206,7 @@ namespace minijava
 							firm::get_irn_opname(irn)
 						);
 					}
-					std::fprintf(stderr, "%4d\n", static_cast<int>(_get_register(irn, true)));
+					// std::fprintf(stderr, "%4d\n", static_cast<int>(_get_register(irn, true)));
 				}
 
 				virtual_assembly get() &&
@@ -236,13 +239,13 @@ namespace minijava
 						if (dummyok) {
 							return virtual_register::dummy;
 						}
-						std::fprintf(
-							stderr,
-							"%s node %lu (%p) has dummy register!\n",
-							firm::get_irn_opname(irn),
-							firm::get_irn_node_nr(irn),
-							static_cast<void*>(irn)
-						);
+						// std::fprintf(
+						//  stderr,
+						//  "%s node %lu (%p) has dummy register!\n",
+						//  firm::get_irn_opname(irn),
+						//  firm::get_irn_node_nr(irn),
+						//  static_cast<void*>(irn)
+						// );
 						MINIJAVA_THROW_ICE(internal_compiler_error);
 					}
 					return pos->second;
