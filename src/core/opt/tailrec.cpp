@@ -31,6 +31,17 @@ namespace /* anonymous */
 			auto callee = firm::get_Call_callee(call);
 			if (callee == nullptr || firm::get_entity_linktime_irg(callee) != irg) continue;
 
+			// we only allow tailrec, if there is max 1 return value and this value
+			// have to be connected directly to the call node(with projs)
+			auto n_ret = firm::get_Return_n_ress(ret);
+			if (n_ret > 1) continue;
+			else if (n_ret == 1) {
+				auto pred = firm::get_Return_res(ret, 0);
+				if (!firm::is_Proj(pred)) continue;
+				auto res_pred = firm::get_Proj_pred(pred);
+				if (!firm::is_Proj(res_pred) || firm::get_Proj_pred(res_pred) != call) continue;
+			}
+
 			// found tailrec -> replace it
 			returns.push_back(ret);
 			// store a link to the call in the return node
