@@ -12,10 +12,16 @@
 namespace firm
 {
 
-	extern "C" {
-		#include "libfirm/firm.h"
-	}
+	extern "C"
+	{
 
-}
+#include "libfirm/firm.h"
 
-#endif
+// The `get_nodes_block` function is very bad.  Don't use it.
+#pragma GCC poison get_nodes_block
+
+	}  // extern "C"
+
+}  // namespace firm
+
+#endif  // MINIJAVA_PARSED_BY_DOXYGEN
