@@ -120,12 +120,12 @@ namespace minijava
 					const auto n = firm::get_irn_n_outs(start);
 					for (auto i = 0u; i < n; ++i) {
 						const auto out = firm::get_irn_out(start, i);
-						std::clog << "[outer] " << to_string(out) << std::endl;
+						//std::clog << "[outer] " << to_string(out) << std::endl;
 						if (firm::is_Proj(out)) {
 							const auto m = firm::get_irn_n_outs(out);
 							for (auto j = 0u; j < m; ++j) {
 								const auto irn = firm::get_irn_out(out, j);
-								std::clog << "[inner] " << to_string(irn) << std::endl;
+								//std::clog << "[inner] " << to_string(irn) << std::endl;
 								if (firm::is_Proj(irn)) {
 									const auto idx = firm::get_Proj_num(irn);
 									assert(idx < arity);
@@ -139,9 +139,9 @@ namespace minijava
 						const auto irn = argument_nodes[i];
 						if (irn != nullptr) {
 							_set_register(irn, argreg);
-							std::clog << "\tParameter #" << i << " is in register " << number(argreg) << std::endl;
+							//std::clog << "\tParameter #" << i << " is in register " << number(argreg) << std::endl;
 						} else {
-							std::clog << "\tParameter #" << i << " is unused" << std::endl;
+							//std::clog << "\tParameter #" << i << " is unused" << std::endl;
 						}
 						argreg = next_argument_register(argreg);
 					}
@@ -168,7 +168,7 @@ namespace minijava
 				void visit_second_pass(firm::ir_node*const irn)
 				{
 					_current_block = _blockmap.at(irn);
-					std::clog << "\t" << to_string(irn) << "\t --> " << std::flush;
+					//std::clog << "\t" << to_string(irn) << "\t --> " << std::flush;
 					switch (firm::get_irn_opcode(irn)) {
 					case firm::iro_Start:
 						_visit_start(irn);
@@ -239,7 +239,7 @@ namespace minijava
 							firm::get_irn_opname(irn)
 						);
 					}
-					std::clog << static_cast<int>(_get_register(irn, true)) << " (" << static_cast<int>(get_width(irn)) << " bit)" << std::endl;
+					//std::clog << static_cast<int>(_get_register(irn, true)) << " (" << static_cast<int>(get_width(irn)) << " bit)" << std::endl;
 				}
 
 				virtual_assembly get() &&
