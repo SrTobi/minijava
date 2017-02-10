@@ -58,14 +58,14 @@ namespace minijava
 				{"spl",  "sp",   "esp",  "rsp"},
 				{"sil",  "si",   "esi",  "rsi"},
 				{"dil",  "di",   "edi",  "rdi"},
-				{"r8l",  "r8w",  "r8d",  "r8" },
-				{"r9l",  "r9w",  "r9d",  "r9" },
-				{"r10l", "r10w", "r10d", "r10"},
-				{"r11l", "r11w", "r11d", "r11"},
-				{"r12l", "r12w", "r12d", "r12"},
-				{"r13l", "r13w", "r13d", "r13"},
-				{"r14l", "r14w", "r14d", "r14"},
-				{"r15l", "r15w", "r15d", "r15"},
+				{"r8b",  "r8w",  "r8d",  "r8" },
+				{"r9b",  "r9w",  "r9d",  "r9" },
+				{"r10b", "r10w", "r10d", "r10"},
+				{"r11b", "r11w", "r11d", "r11"},
+				{"r12b", "r12w", "r12d", "r12"},
+				{"r13b", "r13w", "r13d", "r13"},
+				{"r14b", "r14w", "r14d", "r14"},
+				{"r15b", "r15w", "r15d", "r15"},
 			};
 			const auto i = number(reg);
 			const auto j = get_table_index(width);

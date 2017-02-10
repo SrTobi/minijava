@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(real_registers_name)
 			minijava::backend::bit_width::viii,
 			{
 				"al", "bl", "cl", "dl", "bpl", "spl", "sil", "dil",
-				"r8l", "r9l", "r10l", "r11l", "r12l", "r13l", "r14l", "r15l"
+				"r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"
 			}
 		},
 	};
