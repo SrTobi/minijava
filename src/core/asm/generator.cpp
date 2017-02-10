@@ -79,10 +79,10 @@ namespace minijava
 					const auto type = firm::get_entity_type(entity);
 					const auto arity = firm::get_method_n_params(type);
 					const auto start = firm::get_irg_start(irg);
-					switch (const auto n = firm::get_irn_n_outs(start)) {
-					case 1: return;
-					case 2: break;
-					default: MINIJAVA_NOT_REACHED_MSG(std::to_string(n));
+					switch (firm::get_irn_n_outs(start)) {
+					case 0: case 1:  return;
+					case 2:          break;
+					default:         MINIJAVA_NOT_REACHED();
 					}
 					const auto argv = firm::get_irn_out(start, 1);
 					const auto argc = firm::get_irn_n_outs(argv);
