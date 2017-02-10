@@ -156,7 +156,7 @@ namespace minijava
 						_visit_binop(irn, opcode::op_sub);
 						break;
 					case firm::iro_Mul:
-						_visit_binop(irn, opcode::op_mul);
+						_visit_binop(irn, opcode::op_imul);
 						break;
 					case firm::iro_Div:
 						_visit_div(irn);

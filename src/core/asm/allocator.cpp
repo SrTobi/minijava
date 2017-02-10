@@ -345,10 +345,22 @@ namespace minijava
 						assert(!is_argument(instr.op2));
 						auto op1 = instr.op1.apply_visitor(visitor);
 						auto op2 = instr.op2.apply_visitor(visitor);
-						add_instruction(
-								real_block.code, instr, std::move(op1),
-								std::move(op2)
-						);
+						if (is_address(op2)) {
+							real_block.code.emplace_back(
+									instr.code, instr.width,
+									std::move(op1), tmp_register
+							);
+							real_block.code.emplace_back(
+									opcode::op_mov,
+									get_operand_widths(instr).second,
+									tmp_register, std::move(op2)
+							);
+						} else {
+							real_block.code.emplace_back(
+									instr.code, instr.width,
+									std::move(op1), std::move(op2)
+							);
+						}
 						break;
 					}
 					case opcode::op_lea:
@@ -369,7 +381,6 @@ namespace minijava
 					}
 					case opcode::op_add:
 					case opcode::op_sub:
-					case opcode::op_mul:
 					case opcode::mac_div:
 					case opcode::mac_mod:
 					{
@@ -381,6 +392,34 @@ namespace minijava
 								real_block.code, instr,
 								std::move(op1), std::move(op2)
 						);
+						break;
+					}
+					case opcode::op_imul:
+					{
+						assert_args_empty();
+						assert(!is_argument(instr.op2));
+						auto op1 = instr.op1.apply_visitor(visitor);
+						auto op2 = instr.op2.apply_visitor(visitor);
+						if (is_address(op2)) {
+							auto op2_width = get_operand_widths(instr).second;
+							real_block.code.emplace_back(
+									opcode::op_mov, op2_width,
+									op2, tmp_register
+							);
+							real_block.code.emplace_back(
+									instr.code, instr.width,
+									std::move(op1), tmp_register
+							);
+							real_block.code.emplace_back(
+									opcode::op_mov, op2_width,
+									tmp_register, std::move(op2)
+							);
+						} else {
+							real_block.code.emplace_back(
+									instr.code, instr.width,
+									std::move(op1), std::move(op2)
+							);
+						}
 						break;
 					}
 					case opcode::op_neg:
