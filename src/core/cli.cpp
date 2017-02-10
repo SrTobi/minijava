@@ -187,11 +187,17 @@ namespace minijava
 		// Reports invalid optimization names
 		void check_optimizations(const std::vector<std::string>& opts, file_output& out)
 		{
+			bool error = false;
 			const auto& available_opts = get_optimization_names();
 			for (const auto& opt : opts) {
 				if(!std::count(available_opts.begin(), available_opts.end(), opt)) {
 					out.print("unknown optimization: %s!\n", opt.c_str());
+					error = true;
 				}
+			}
+			if(error) {
+				out.print("Use --opts-list for a list of available optimizations\n");
+				throw std::runtime_error("Unknown optimizations specified");
 			}
 		}
 
