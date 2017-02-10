@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "lexer/token.hpp"
+#include "source_error.hpp"
 
 
 namespace minijava
@@ -25,24 +26,29 @@ namespace minijava
 	 *     Exception indicating a lexical error in the input.
 	 *
 	 */
-	struct lexical_error : std::runtime_error
+	struct lexical_error : source_error
 	{
 		/**
 		 * @brief
-		 *     Creates an exception object with a generic error message.
+		 *     Creates a new exception object with a generic error message and
+		 *     no source location information.
 		 *
 		 */
 		lexical_error();
 
 		/**
 		 * @brief
-		 *     Creates an exception object with the provided error message.
+		 *     Creates a new exception object with a custom error message and
+		 *     optional source location information.
 		 *
 		 * @param msg
-		 *     error message
+		 *     custom error message
+		 *
+		 * @param pos
+		 *     parser-defined error location
 		 *
 		 */
-		explicit lexical_error(const std::string& msg);
+		explicit lexical_error(const std::string& msg, minijava::position pos = {});
 	};
 
 	/**
@@ -204,6 +210,16 @@ namespace minijava
 		 *
 		 */
 		void advance();
+
+	private:
+		/**
+		 * @brief
+		 *     Returns the current position of the lexer in the input file.
+		 *
+		 * @returns
+		 *     the current position
+		 */
+		position _position() const;
 
 	private:
 

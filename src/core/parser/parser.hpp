@@ -15,6 +15,7 @@
 #include "parser/ast.hpp"
 #include "parser/ast_factory.hpp"
 #include "position.hpp"
+#include "source_error.hpp"
 
 
 namespace minijava
@@ -25,7 +26,7 @@ namespace minijava
 	 *     Exception used to report syntacitcal errors from within the parser.
 	 *
 	 */
-	struct syntax_error: std::runtime_error
+	struct syntax_error: source_error
 	{
 
 		/**
@@ -49,25 +50,6 @@ namespace minijava
 		 *
 		 */
 		syntax_error(const std::string& msg, minijava::position pos = {});
-
-		/**
-		 * @brief
-		 *     `return`s the position of the parser-defined error location.
-		 *
-		 * If the error location is unknown, 0 is `return`ed.
-		 *
-		 * @returns
-		 *     position
-		 *
-		 */
-		minijava::position position() const noexcept;
-
-	private:
-
-		/** @brief Position of the parser-defined error token. */
-		minijava::position _position{0, 0};
-
-
 	};  // struct syntax_error
 
 

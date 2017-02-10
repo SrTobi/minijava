@@ -6,9 +6,11 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -24,7 +26,9 @@
 #include "parser/parser.hpp"
 #include "runtime/host_cc.hpp"
 #include "semantic/semantic.hpp"
+#include "source_error.hpp"
 #include "symbol/symbol_pool.hpp"
+#include "system/logger.hpp"
 #include "system/system.hpp"
 
 
@@ -65,6 +69,9 @@ namespace minijava
 
 			// Name of the C compiler executable (for linking the runtime)
 			std::string cc{};
+
+			// Prevent output to the log?
+			bool quiet = false;
 		};
 
 
@@ -92,7 +99,7 @@ namespace minijava
 		// Prints the version text to `out`.
 		void print_version(file_output& out)
 		{
-			out.print("%s %s\n", MINIJAVA_PROJECT_NAME, MINIJAVA_PROJECT_VERSION);
+			out.print("%s %s (%s)\n", MINIJAVA_PROJECT_NAME, MINIJAVA_PROJECT_VERSION, "https://minij.slixe.de/");
 			out.write(
 				"Copyright (C) 2016 T. Kahlert, P.J. Serrer, M. Baumann and M. Klammler\n"
 				"This is free software; see the source for copying conditions.  There is NO\n"
@@ -164,7 +171,8 @@ namespace minijava
 			auto generic = po::options_description{"Generic Options"};
 			generic.add_options()
 				("help", "show help text and exit")
-				("version", "show version text and exit");
+				("version", "show version text and exit")
+				("quiet", "prevent log output");
 			auto interception = po::options_description{"Intercepting the Compilation at Specific Stages"};
 			interception.add_options()
 				("echo", "stop after reading input and output it verbatim")
@@ -197,6 +205,9 @@ namespace minijava
 				print_version(out);
 				return false;
 			}
+			if (varmap.count("quiet")) {
+				setup.quiet = true;
+			}
 			po::notify(varmap);
 			check_mutex_option_group(interception, varmap);
 			setup.stage = get_interception_stage(varmap);
@@ -217,17 +228,9 @@ namespace minijava
 		}
 
 
-		// Runs the compiler reading input from `istr`, writing output to
-		// `ostr` and optionally intercepting compilation at `stage`.
-		void run_compiler(file_data& in, file_output& out,
-		                  const compilation_stage stage, const std::string& cc)
+		void run_compiler_stages(file_data& in, file_output& out,
+		                         const compilation_stage stage, const std::string& cc, symbol_pool<>& pool)
 		{
-			using namespace std::string_literals;
-			if (stage == compilation_stage::input) {
-				out.write(in.data(), in.size());
-				return;
-			}
-			auto pool = symbol_pool<>{};  // TODO: Use an appropriate allocator
 			auto lex = make_lexer(std::begin(in), std::end(in), pool, pool);
 			const auto tokfirst = token_begin(lex);
 			const auto toklast = token_end(lex);
@@ -269,13 +272,116 @@ namespace minijava
 			throw not_implemented_error{"The rest of the compiler has yet to be written"};
 		}
 
+		std::tuple<std::size_t, std::size_t, std::string>
+			get_line_section_by_position(file_data& data, const position& pos,
+			                             const std::size_t max_length, const std::size_t min_skip)
+		{
+			assert(pos.line() >= 1);
+			std::size_t line = 1;
+			auto cur = data.begin();
+			while(line < pos.line()) {
+				while(*cur != '\n') {
+					++cur;
+				}
+				++cur; // skip \n
+				++line;
+			}
+			const auto line_begin = cur;
+
+			while(cur != data.end() && *cur != '\n') {
+				++cur;
+			}
+			const auto line_end = cur;
+
+			const std::size_t line_length = static_cast<std::size_t>(std::distance(line_begin, line_end));
+			if (line_length <= max_length) {
+				return std::make_tuple(0, 0, std::string(line_begin, line_end));
+			} else {
+				const std::size_t column_position_in_section = max_length / 2;
+				const std::size_t skip_suggestion = pos.column() < column_position_in_section? 0 : pos.column() - column_position_in_section;
+				const std::size_t skip = (skip_suggestion >= min_skip? skip_suggestion : 0);
+				auto section_begin = line_begin + skip;
+				auto section_end = std::min(line_end, section_begin + max_length);
+				const std::size_t skip_after = static_cast<std::size_t>(section_end - section_begin);
+				return std::make_tuple(skip, skip_after, std::string(section_begin,  section_end));
+			}
+		}
+
+		void print_source_error(logger& log, const source_error& e, file_data& in, const char* stage_verb)
+		{
+			log.printf("Error while %s %s:\n", stage_verb, in.filename().c_str());
+			const position pos = e.position();
+			if(pos == position{0, 0})
+			{
+				log.printf("  At an unknown location: %s\n", e.what());
+			} else {
+				log.printf("  In line %zu at column %zu: %s\n", pos.line(), pos.column(), e.what());
+
+				std::size_t skip_chars;
+				std::size_t skip_after;
+				std::string section;
+				std::tie(skip_chars, skip_after, section) = get_line_section_by_position(in, pos, 100, 10);
+
+				// adjust section to support tabs
+				int indent = static_cast<int>(pos.column() - skip_chars);
+				indent += static_cast<int>(std::count(section.begin(), section.end(), '\t'));  // 2 spaces per tab
+				boost::replace_all(section, "\t", "  ");
+
+				auto print_after_skip = [&] {
+					if(skip_after > 0) {
+						log.printf(" <%zu skipped>", skip_after);
+					}
+				};
+
+				if(skip_chars > 0) {
+					indent += static_cast<int>(std::to_string(skip_chars).size());
+					log.printf("  <%zu skipped> %s", skip_chars, section.c_str());
+					print_after_skip();
+					log.printf("\n             %*s\n", indent, "^");
+				}else{
+					log.printf("  %s", section.c_str());
+					print_after_skip();
+					log.printf("\n  %*s\n", indent, "^");
+				}
+			}
+		}
+
+		// Runs the compiler reading input from `istr`, writing output to
+		// `ostr` and optionally intercepting compilation at `stage`.
+		void run_compiler(file_data& in, file_output& out, logger& log,
+		                  const compilation_stage stage, const std::string& cc)
+		{
+			using namespace std::string_literals;
+			if (stage == compilation_stage::input) {
+				out.write(in.data(), in.size());
+				return;
+			}
+			auto pool = symbol_pool<>{};  // TODO: Use an appropriate allocator
+
+			try {
+				run_compiler_stages(in, out, stage, cc, pool);
+			} catch(lexical_error& e) {
+				print_source_error(log, e, in, "tokenizing");
+				throw;
+			} catch(syntax_error& e) {
+				print_source_error(log, e, in, "parsing");
+				throw;
+			} catch(semantic_error& e) {
+				print_source_error(log, e, in, "analysing the semantics of");
+				throw;
+			} catch(source_error& e) {
+				print_source_error(log, e, in, "compiling");
+				throw;
+			}
+		}
+
 
 		// Checks the environment variable `MINIJAVA_STACK_LIMIT` and
 		// `return`s its value.  If the variable is set in the environment and
 		// has a valid value, its value is `return`ed.  Otherwise, 0 (which is
 		// not a valid value) is `return`ed.  If it is set to an invalid value,
 		// a warning is printed to `err`.
-		std::ptrdiff_t get_stack_limit(std::FILE* err)
+		std::ptrdiff_t get_stack_limit(logger& log)
 		{
 			const auto envval = std::getenv(MINIJAVA_ENVVAR_STACK_LIMIT);
 			if (envval == nullptr) {
@@ -296,8 +402,7 @@ namespace minijava
 			} catch (const boost::bad_lexical_cast&) { /* fall through */ }
 			// TODO: Once we have a logging facility, we should use it here
 			// instead of printing directly.
-			std::fprintf(
-				err, "%s: warning: %s: %s: %s\n",
+			log.printf("%s: warning: %s: %s: %s\n",
 				MINIJAVA_PROJECT_NAME, MINIJAVA_ENVVAR_STACK_LIMIT,
 			    "not a valid stack size in bytes", envval
 			);
@@ -308,16 +413,16 @@ namespace minijava
 		// is set, adjust the resource limt accordingly.  This function handles
 		// erros by printing a warning to `err` and otherwise ignoring them,
 		// letting the stack limit as it is.
-		void try_adjust_stack_limit(std::FILE* err)
+		void try_adjust_stack_limit(logger& log)
 		{
-			if (const auto limit = get_stack_limit(err)) {
+			if (const auto limit = get_stack_limit(log)) {
 				try {
 					set_max_stack_size_limit(limit);
 				} catch (const std::system_error& e) {
 					// TODO: Once we have a logging facility, we should use it
 					// here instead of printing directly.
-					std::fprintf(
-						err, "%s: warning: %s\n",
+					log.printf(
+						"%s: warning: %s\n",
 						MINIJAVA_PROJECT_NAME, e.what()
 					);
 				}
@@ -340,14 +445,17 @@ namespace minijava
 				return;
 			}
 		}
-		try_adjust_stack_limit(thestderr);
+
+		logger log = setup.quiet? logger{} : logger{thestderr};
+
+		try_adjust_stack_limit(log);
 		auto in = (setup.input == "-")
 			? file_data{thestdin, "stdin"}
 			: file_data{setup.input};
 		auto out = (setup.output == "-")
 			? file_output{thestdout, "stdout"}
 			: file_output{setup.output};
-		run_compiler(in, out, setup.stage, setup.cc);
+		run_compiler(in, out, log, setup.stage, setup.cc);
 		out.finalize();
 	}
 

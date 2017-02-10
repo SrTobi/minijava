@@ -11,6 +11,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "source_error.hpp"
+
 
 namespace minijava
 {
@@ -20,7 +22,7 @@ namespace minijava
 	 *     Exception used to report errors from the semantic analysis.
 	 *
 	 */
-	struct semantic_error: std::runtime_error
+	struct semantic_error: source_error
 	{
 
 		/**
@@ -34,13 +36,16 @@ namespace minijava
 		/**
 		 * @brief
 		 *     Creates a new exception object with a custom error message and
-		 *     no source location information.
+		 *     optional source location information.
 		 *
 		 * @param msg
 		 *     custom error message
 		 *
+		 * @param pos
+		 *     parser-defined error location
+		 *
 		 */
-		semantic_error(const std::string& msg);
+		semantic_error(const std::string& msg, minijava::position pos = {});
 
 	};  // struct semantic_error
 

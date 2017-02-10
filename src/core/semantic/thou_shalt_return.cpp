@@ -69,7 +69,8 @@ namespace minijava
 				if (can_complete_normally(mthd.body())) {
 					throw semantic_error{
 							"Control-flow possibly reaches end of non-void function "s
-									+ "'"s + mthd.name().c_str() + "'"
+									+ "'"s + mthd.name().c_str() + "'",
+							mthd.position()
 					};
 				}
 			}
