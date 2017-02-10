@@ -9,6 +9,8 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -66,6 +68,9 @@ namespace minijava
 
 			// Name of the C compiler executable (for linking the runtime)
 			std::string cc{};
+
+			// Ordered list of optimizations
+			std::vector<std::string> optimizations{};
 		};
 
 
@@ -117,6 +122,18 @@ namespace minijava
 				"input or output stream respectively\n"
 			);
 		}
+		// Prints a list of available optimizations to `out`.
+		void print_opts_list(file_output& out)
+		{
+			const auto& opts = get_optimization_names();
+
+			int i = 1;
+			for(const auto& name : opts)
+			{
+				out.print("%i. %s\n", i, name.c_str());
+				++i;
+			}
+		}
 
 
 		// Determines the compilation stage at which to intercept from the
@@ -148,6 +165,71 @@ namespace minijava
 				return compilation_stage::compile_firm;
 			}
 			return compilation_stage{};
+		}
+
+		// Sorts a list of optimizations according to the available optimizations.
+		// Duplications will be ereased
+		void sort_optimizations(std::vector<std::string>& opts)
+		{
+			const auto& available_opts = get_optimization_names();
+
+			std::vector<std::string> ordered{};
+			for(const auto& opt : available_opts)
+			{
+				if(std::count(opts.begin(), opts.end(), opt)) {
+					ordered.push_back(opt);
+				}
+			}
+			opts = std::move(ordered);
+		}
+
+		// Checks if a list contains names that are not optimizations.
+		// Reports invalid optimization names
+		void check_optimizations(const std::vector<std::string>& opts, file_output& out)
+		{
+			bool error = false;
+			const auto& available_opts = get_optimization_names();
+			for (const auto& opt : opts) {
+				if(!std::count(available_opts.begin(), available_opts.end(), opt)) {
+					out.print("unknown optimization: %s!\n", opt.c_str());
+					error = true;
+				}
+			}
+			if(error) {
+				out.print("Use --opts-list for a list of available optimizations\n");
+				throw std::runtime_error("Unknown optimizations specified");
+			}
+		}
+
+		std::vector<std::string> get_optimizations(const po::variables_map& varmap, file_output& out)
+		{
+			const auto& default_opts = get_optimization_names();
+
+			if (varmap.count("O")) {
+				switch(varmap["O"].as<unsigned int>())
+				{
+				case 0:
+					return {};
+				case 1:
+					return {"folding"};
+				default:
+				case 2:
+					return default_opts;
+				};
+			} else if (varmap.count("opts")) {
+				std::vector<std::string> opts;
+				boost::split(opts, varmap["opts"].as<std::string>(), boost::is_any_of(","));
+				check_optimizations(opts, out);
+				sort_optimizations(opts);
+				return opts;
+			} else if (varmap.count("opts-ordered")) {
+				std::vector<std::string> opts;
+				boost::split(opts, varmap["opts-ordered"].as<std::string>(), boost::is_any_of(","));
+				check_optimizations(opts, out);
+				return opts;
+			}
+
+			return default_opts;
 		}
 
 
@@ -182,8 +264,14 @@ namespace minijava
 			auto inputfiles = po::options_description{"Input Files"};
 			inputfiles.add_options()
 				("input", po::value<std::string>(&setup.input)->default_value("-"), "");
+			auto opts = po::options_description{"Optimization"};
+			opts.add_options()
+				("O,O", po::value<unsigned int>(), "Optimization level (-O0, -O1, -O3)")
+				("opts-list", "list available optimizations")
+				("opts", po::value<std::string>(), "turn on specific optimizations")
+				("opts-ordered", po::value<std::string>(), "turn on specific optimizations in defined order");
 			auto options = po::options_description{};
-			options.add(generic).add(interception).add(other).add(inputfiles);
+			options.add(generic).add(interception).add(other).add(inputfiles).add(opts);
 			auto positional = po::positional_options_description{};
 			positional.add("input", 1);
 			auto varmap = po::variables_map{};
@@ -191,16 +279,21 @@ namespace minijava
 			po::store(po::command_line_parser(argc, args.data())
 			         .options(options).positional(positional).run(), varmap);
 			if (varmap.count("help")) {
-				print_help(out, {&generic, &interception, &other});
+				print_help(out, {&generic, &interception, &opts, &other});
 				return false;
 			}
 			if (varmap.count("version")) {
 				print_version(out);
 				return false;
 			}
+			if (varmap.count("opts-list")) {
+				print_opts_list(out);
+				return false;
+			}
 			po::notify(varmap);
 			check_mutex_option_group(interception, varmap);
 			setup.stage = get_interception_stage(varmap);
+			setup.optimizations = get_optimizations(varmap, out);
 			return true;
 		}
 
@@ -221,7 +314,8 @@ namespace minijava
 		// Runs the compiler reading input from `istr`, writing output to
 		// `ostr` and optionally intercepting compilation at `stage`.
 		void run_compiler(file_data& in, file_output& out,
-		                  const compilation_stage stage, const std::string& cc)
+		                  const compilation_stage stage, const std::string& cc,
+						  const std::vector<std::string>& optimizations)
 		{
 			using namespace std::string_literals;
 			if (stage == compilation_stage::input) {
@@ -256,7 +350,9 @@ namespace minijava
 				return;
 			}
 			// optimize
-			minijava::register_all_optimizations();
+			for(const auto& opt_name : optimizations) {
+				register_optimization(opt_name);
+			}
 			minijava::optimize(ir);
 			if (stage == compilation_stage::compile_firm) {
 				namespace fs = boost::filesystem;
@@ -351,7 +447,7 @@ namespace minijava
 		auto out = (setup.output == "-")
 			? file_output{thestdout, "stdout"}
 			: file_output{setup.output};
-		run_compiler(in, out, setup.stage, setup.cc);
+		run_compiler(in, out, setup.stage, setup.cc, setup.optimizations);
 		out.finalize();
 	}
 
