@@ -42,7 +42,7 @@ namespace minijava
 				case bit_width::xxxii: return 2;
 				case bit_width::lxiv:  return 3;
 				}
-				MINIJAVA_NOT_REACHED();
+				MINIJAVA_NOT_REACHED_MSG(std::to_string(static_cast<int>(width)));
 			}
 
 		}  // namespace /* anonymous */
