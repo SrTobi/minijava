@@ -29,7 +29,7 @@ def main(args):
         help="command-line to invoke the compiler"
     )
     ap.add_argument(
-        '--input', metavar='PATTERN', dest='pattern', type=str, required=True,
+        '--input', metavar='PATTERN', dest='patterns', action='append', required=True,
         help="POSIX globbing expression to select input files"
     )
     ap.add_argument(
@@ -49,7 +49,7 @@ def main(args):
         help="show this help message and exit"
     )
     ns = do_parse_args(ap, args)
-    inputs = sorted(glob.glob(ns.pattern))
+    inputs = sorted([name for pattern in ns.patterns for name in glob.glob(pattern)])
     ppsymbols = frozenset(ns.define) if ns.define else frozenset()
     if ns.define is not None and len(ppsymbols) != len(ns.define):
         raise SetupError("Duplicate pre-defined symbols")
