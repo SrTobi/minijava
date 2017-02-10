@@ -14,7 +14,7 @@ using namespace minijava::opt;
 namespace /* anonymous */
 {
 
-// TODO: find useful values for this two consts
+	// TODO: find useful values for this two consts
 	const int max_nodes = 1024;
 	const int max_inline_count = 100;
 	const int inline_threshold = 1024;
@@ -26,13 +26,13 @@ namespace /* anonymous */
 		firm::ir_graph *irg;
 	};
 
-/**
- * Calculates the benefice, to inline a specific call node
- * @param call_node
- *     call node to calculate the benefice
- * @return
- *     benefice to inline the call node - the bigger, the better
- */
+	/**
+	 * Calculates the benefice, to inline a specific call node
+	 * @param call_node
+	 *     call node to calculate the benefice
+	 * @return
+	 *     benefice to inline the call node - the bigger, the better
+	 */
 	int get_benefice(firm::ir_node *call_node) {
 		assert(firm::is_Call(call_node));
 		auto irg = firm::get_entity_irg(firm::get_Call_callee(call_node));
@@ -67,14 +67,14 @@ namespace /* anonymous */
 		return benefice;
 	}
 
-/**
- * @brief
- *     Simple check against a call node with, if it could be inlined.
- * @param call
- *     The call node, which should be inlined
- * @return
- *     True, if it could be inlined
- */
+	/**
+	 * @brief
+	 *     Simple check against a call node with, if it could be inlined.
+	 * @param call
+	 *     The call node, which should be inlined
+	 * @return
+	 *     True, if it could be inlined
+	 */
 	bool can_inline(firm::ir_node *call) {
 		assert(firm::is_Call(call));
 		auto call_entity = firm::get_Call_callee(call);
@@ -89,43 +89,43 @@ namespace /* anonymous */
 		return true;
 	}
 
-/**
- * @brief
- *     Links a node with it's new copy and mark it as visited
- * @param node
- *     Node
- * @param new_node
- *     New node
- */
+	/**
+	 * @brief
+	 *     Links a node with it's new copy and mark it as visited
+	 * @param node
+	 *     Node
+	 * @param new_node
+	 *     New node
+	 */
 	void set_new_node(firm::ir_node *node, firm::ir_node *new_node) {
 		firm::set_irn_link(node, new_node);
 		firm::mark_irn_visited(node);
 	}
 
-/**
- * @brief
- *     Returns for a node it's copy.
- * @see
- *     set_new_node
- * @param node
- *     The node
- * @return
- *     The copy
- */
+	/**
+	 * @brief
+	 *     Returns for a node it's copy.
+	 * @see
+	 *     set_new_node
+	 * @param node
+	 *     The node
+	 * @return
+	 *     The copy
+	 */
 	firm::ir_node *get_new_node(firm::ir_node *node) {
 		assert(firm::irn_visited(node));
 		return (firm::ir_node *) firm::get_irn_link(node);
 	}
 
-/**
- * @brief
- *     Creates a copy of the given node.
- *     Used inside irg_walk_core walker function
- * @param node
- *     Node to copy
- * @param env
- *     Pointer to the new `ir_graph`
- */
+	/**
+	 * @brief
+	 *     Creates a copy of the given node.
+	 *     Used inside irg_walk_core walker function
+	 * @param node
+	 *     Node to copy
+	 * @param env
+	 *     Pointer to the new `ir_graph`
+	 */
 	void copy_node_inline(firm::ir_node *node, void *env) {
 		auto new_irg = (firm::ir_graph *) env;
 		auto op = firm::get_irn_op(node);
@@ -149,15 +149,15 @@ namespace /* anonymous */
 		firm::set_irn_link(node, new_node);
 	}
 
-/**
- * @brief
- *     Rewires the ins and block of the newly created node with its preds.
- *     Used inside irg_walk_core walker function.
- * @param node
- *     Node to set it's ins
- * @see
- *     set_preds_inline
- */
+	/**
+	 * @brief
+	 *     Rewires the ins and block of the newly created node with its preds.
+	 *     Used inside irg_walk_core walker function.
+	 * @param node
+	 *     Node to set it's ins
+	 * @see
+	 *     set_preds_inline
+	 */
 	void rewire_inputs(firm::ir_node *node) {
 		auto new_node = get_new_node(node);
 		// set block of non block nodes
@@ -173,14 +173,14 @@ namespace /* anonymous */
 					}
 	}
 
-/**
- * @brief
- *     Sets the ins and block if the given node.
- * @param node
- *     Node to set the ins and block
- * @param env
- *     Pointer to the new `ir_graph`
- */
+	/**
+	 * @brief
+	 *     Sets the ins and block if the given node.
+	 * @param node
+	 *     Node to set the ins and block
+	 * @param env
+	 *     Pointer to the new `ir_graph`
+	 */
 	void set_preds_inline(firm::ir_node *node, void *env) {
 		rewire_inputs(node);
 		// move consts into start block
@@ -192,14 +192,14 @@ namespace /* anonymous */
 		}
 	}
 
-/**
- * @brief
- *     Walker function, which collects information about the structure of a given `ir_graph`
- * @param node
- *     Current node
- * @param env
- *     Contains a pointer to an `walker_env`
- */
+	/**
+	 * @brief
+	 *     Walker function, which collects information about the structure of a given `ir_graph`
+	 * @param node
+	 *     Current node
+	 * @param env
+	 *     Contains a pointer to an `walker_env`
+	 */
 	void collect_calls(firm::ir_node *node, void *env) {
 		auto w_env = (walker_env *) env;
 		auto info = w_env->info;
@@ -238,6 +238,80 @@ namespace /* anonymous */
 		auto call_info = inliner::call_node_info(node);
 		call_info.benefice = get_benefice(call_info.call);
 		info->call_nodes.push_back(call_info);
+	}
+
+	void move_node(firm::ir_node *node, firm::ir_node *to)
+	{
+		assert(firm::is_Block(to));
+		firm::set_nodes_block(node, to);
+		if (firm::get_irn_mode(node) == firm::mode_T && !firm::is_Bad(node)) {
+			for (auto proj = (firm::ir_node*)firm::get_irn_link(node); proj; proj = (firm::ir_node*)firm::get_irn_link(proj)) {
+				firm::set_nodes_block(proj, to);
+			}
+		}
+	}
+
+	/**
+	 * @brief
+	 *     Moves `node` and all it's preds(excpect for phi nodes!) to `to`-block
+	 * @param node
+	 * @param from
+	 * @param to
+	 */
+	void move(firm::ir_node *node, firm::ir_node *from, firm::ir_node *to)
+	{
+		assert(firm::is_Block(to));
+		// move the node itself
+		move_node(node, to);
+		// move it's preds
+		if (!firm::is_Phi(node)) {
+			foreach_irn_in(node, i, pred) {
+				if (firm::get_nodes_block(pred) == from) {
+					move(pred, from, to);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @brief
+	 *     Splits the block in two parts at the given `node`.
+	 *     A new pred-block is created and `node` and all it's preds from
+	 *     the same block are moved to the newly created block.
+	 *     In addition, a jmp is added from the new block to the old block.
+	 *
+	 * @param node
+	 */
+	void split_block(firm::ir_node *node)
+	{
+		auto irg = firm::get_irn_irg(node);
+		auto block = firm::get_nodes_block(node);
+		auto new_block = firm::new_r_Block(irg, firm::get_irn_arity(block), firm::get_Block_cfgpred_arr(block));
+
+		auto jmp = firm::new_r_Jmp(new_block);
+		firm::set_irn_in(block, 1, &jmp);
+
+		// move node and its predecessors to new_block
+		move(node, block, new_block);
+
+		// move Phi nodes to new_block
+		auto phi = firm::get_Block_phis(block);
+		firm::set_Block_phis(new_block, phi);
+		firm::set_Block_phis(block, nullptr);
+		for (; phi; phi = firm::get_Phi_next(phi)) {
+			set_nodes_block(phi, new_block);
+		}
+
+		// the block was the start block? Move constants and start to the new start block
+		if (block == firm::get_irg_start_block(irg)) {
+			firm::set_irg_start_block(irg, new_block);
+			auto end = get_irg_end(irg);
+			for (auto cons = (firm::ir_node*)get_irn_link(end); cons != end; cons = (firm::ir_node*)firm::get_irn_link(cons)) {
+				move_node(cons, new_block);
+			}
+			auto start = firm::get_irg_start(irg);
+			move_node(start, new_block);
+		}
 	}
 
 }
@@ -309,7 +383,7 @@ bool inliner::inline_method(firm::ir_node *call, firm::ir_graph *called_irg)
 	auto pre_call = firm::new_r_Tuple(post_block, 3, in);
 
 	// split block into two
-	firm::part_block(pre_call);
+	split_block(pre_call);
 
 	firm::inc_irg_visited(called_irg);
 
