@@ -48,15 +48,17 @@ add_test(
 		"${minijava_exec}" --dump-ir
 )
 
-add_test(
-		NAME comptest-compile-firm
-		COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
-		"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
-		"--define=LEXER,PARSER,CHECK,FIRM"
-		--execute
-		--
-		"${minijava_exec}" --compile-firm
-)
+if(NOT WIN32)
+	add_test(
+			NAME comptest-compile-firm
+			COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
+			"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
+			"--define=LEXER,PARSER,CHECK,FIRM"
+			--execute
+			--
+			"${minijava_exec}" --compile-firm
+	)
+endif()
 
 add_test(
 		NAME comptest-asm-noexec
