@@ -99,7 +99,7 @@ namespace minijava
 		// Prints the version text to `out`.
 		void print_version(file_output& out)
 		{
-			out.print("%s %s\n", MINIJAVA_PROJECT_NAME, MINIJAVA_PROJECT_VERSION);
+			out.print("%s %s (%s)\n", MINIJAVA_PROJECT_NAME, MINIJAVA_PROJECT_VERSION, "https://minij.slixe.de/");
 			out.write(
 				"Copyright (C) 2016 T. Kahlert, P.J. Serrer, M. Baumann and M. Klammler\n"
 				"This is free software; see the source for copying conditions.  There is NO\n"
