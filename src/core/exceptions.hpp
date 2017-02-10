@@ -53,12 +53,25 @@
  * have the effect of interrupting the linear control flow; possibly by
  * terminating the application.
  *
+ * @param Msg
+ *     debug message what made the impossible happen
+ *
  */
-#define MINIJAVA_NOT_REACHED()                                                \
+#define MINIJAVA_NOT_REACHED_MSG(Msg)                                         \
 	MINIJAVA_THROW_ICE_MSG(                                                   \
 		::minijava::internal_compiler_error,                                  \
-		"The impossible has happened"                                         \
+		Msg                                                                   \
 	)
+
+
+/**
+ * @brief
+ *     Convenience macro that calls `MINIJAVA_NOT_REACHED_MSG` with a generic
+ *     message.
+ *
+ */
+#define MINIJAVA_NOT_REACHED()                                                \
+	MINIJAVA_NOT_REACHED_MSG("The impossible has happened")
 
 
 /**
