@@ -75,42 +75,33 @@ namespace minijava
 
 				void handle_parameters(firm::ir_graph* irg)
 				{
-					const auto method_entity = firm::get_irg_entity(irg);
-					const auto method_type = firm::get_entity_type(method_entity);
-					const auto method_arity = firm::get_method_n_params(method_type);
-					const auto ldname = firm::get_entity_ld_name(method_entity);
-					std::fprintf(stderr, "%s (%zu parameters):\n", ldname, method_arity);
-					const auto args = firm::get_irg_args(irg);
-					auto argument_nodes = std::vector<firm::ir_node*>(method_arity);
-					for (auto edge = firm::get_irn_out_edge_first(args);
-						 edge != nullptr;
-						 edge = firm::get_irn_out_edge_next(args, edge, firm::EDGE_KIND_NORMAL)
-					) {
-						const auto param_node = firm::get_edge_src_irn(edge);
-						if (firm::is_Proj(param_node)) {
-							const auto param_numb = firm::get_Proj_num(param_node);
-							assert(param_numb < method_arity);
-							assert(argument_nodes[param_numb] == nullptr);
-							argument_nodes[param_numb] = param_node;
-							//std::fprintf(stderr, "\tParameter #%u is a %s node (%p)\n", param_numb, firm::get_irn_opname(param_node), (void*)param_node);
-						}
+					const auto entity = firm::get_irg_entity(irg);
+					const auto type = firm::get_entity_type(entity);
+					const auto arity = firm::get_method_n_params(type);
+					const auto start = firm::get_irg_start(irg);
+					switch (const auto n = firm::get_irn_n_outs(start)) {
+					case 1: return;
+					case 2: break;
+					default: MINIJAVA_NOT_REACHED_MSG(std::to_string(n));
+					}
+					const auto argv = firm::get_irn_out(start, 1);
+					const auto argc = firm::get_irn_n_outs(argv);
+					const auto ldname = firm::get_entity_ld_name(entity);
+					std::fprintf(stderr, "%s (%zu parameters, %u used):\n", ldname, arity, argc);
+					assert(argc <= arity);
+					auto argument_nodes = std::vector<firm::ir_node*>(arity);
+					for (auto i = 0u; i < argc; ++i) {
+						const auto irn = firm::get_irn_out(argv, i);
+						const auto idx = firm::get_Proj_num(irn);
+						assert(idx < arity);
+						argument_nodes[idx] = irn;
 					}
 					auto argreg = virtual_register::argument;
-					for (auto p : argument_nodes) {
-						if (p != nullptr) {
-							_set_register(p, argreg);
+					for (auto irn : argument_nodes) {
+						if (irn != nullptr) {
+							_set_register(irn, argreg);
 						}
 						argreg = next_argument_register(argreg);
-					}
-					for (std::size_t i = 0; i < method_arity; ++i) {
-						const auto p = argument_nodes[i];
-						if (p == nullptr) {
-							std::fprintf(stderr, "\t#%zu is never used\n", i);
-						} else {
-							const auto reg = (p == nullptr) ? virtual_register::dummy : _get_register(p);
-							const auto regno = number(reg);
-							std::fprintf(stderr, "\t#%zu (node %lu) is in register %d\n", i, firm::get_irn_node_nr(p), regno);
-						}
 					}
 				}
 
@@ -137,7 +128,7 @@ namespace minijava
 					_current_block = _blockmap.at(irn);
 					std::fprintf(
 						stderr,
-						"%10lu %p %s\n",
+						"%10lu %p %10s  -->  ",
 						firm::get_irn_node_nr(irn),
 						static_cast<void*>(irn),
 						firm::get_irn_opname(irn)
@@ -212,6 +203,7 @@ namespace minijava
 							firm::get_irn_opname(irn)
 						);
 					}
+					std::fprintf(stderr, "%4d\n", static_cast<int>(_get_register(irn, true)));
 				}
 
 				virtual_assembly get() &&
@@ -555,8 +547,10 @@ namespace minijava
 					for (auto i = 0; i < arity; ++i) {
 						const auto predirn = firm::get_Phi_pred(irn, i);
 						const auto predblk = _blockmap.at(predirn);
-						const auto predreg = _get_register(predirn);
-						_emplace_instruction_before_jmp(predblk, phiblk, opcode::op_mov, width, predreg, phireg);
+						const auto predreg = _get_register(predirn, true);
+						if (predreg != virtual_register::dummy) {
+							_emplace_instruction_before_jmp(predblk, phiblk, opcode::op_mov, width, predreg, phireg);
+						}
 						//std::fprintf(stderr, "\tValue %d comes from register %d\n", i, number(predreg));
 					}
 				}
