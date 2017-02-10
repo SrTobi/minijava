@@ -4,13 +4,13 @@ class a {
 
 	public static void main(String[]ar) {
 	    a a = new a();
-		a.print(0);
-		a.print(1);
-		a.print(2);
-		a.print(3);
+		a.function(0);
+		a.function(1);
+		a.function(2);
+		a.function(3);
 	}
 
-	public void print(int x) {
+	public void function(int x) {
 		if (true) System.out.println(0);
 		if (x == 0) {
 			System.out.println(2212);
