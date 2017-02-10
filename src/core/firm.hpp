@@ -17,9 +17,6 @@ namespace firm
 
 #include "libfirm/firm.h"
 
-// The `get_nodes_block` function is very bad.  Don't use it.
-#pragma GCC poison get_nodes_block
-
 	}  // extern "C"
 
 }  // namespace firm
