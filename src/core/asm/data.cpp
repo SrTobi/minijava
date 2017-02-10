@@ -29,7 +29,7 @@ namespace minijava
 				out.write("mj_System_v6:\n");
 				out.write("\t.quad _mj_g1\n");
 			} else {
-				out.write("\t.rodata\n");
+				out.write("\t.data\n");
 				out.write("\t.p2align 3\n");
 				out.write("\t.type .mj_g1, @object\n");
 				out.write("\t.size .mj_g1, 16\n");
