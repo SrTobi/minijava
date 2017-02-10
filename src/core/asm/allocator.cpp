@@ -381,8 +381,6 @@ namespace minijava
 					}
 					case opcode::op_add:
 					case opcode::op_sub:
-					case opcode::mac_div:
-					case opcode::mac_mod:
 					{
 						assert_args_empty();
 						assert(!is_argument(instr.op2));
@@ -395,6 +393,8 @@ namespace minijava
 						break;
 					}
 					case opcode::op_imul:
+					case opcode::mac_div:
+					case opcode::mac_mod:
 					{
 						assert_args_empty();
 						assert(!is_argument(instr.op2));
