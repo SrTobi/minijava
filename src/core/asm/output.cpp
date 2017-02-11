@@ -29,8 +29,11 @@ namespace minijava
 				case virtual_register::dummy:
 					regname = "Dummy";
 					break;
+				case virtual_register::flags:
+					regname = "Flags";
+					break;
 				case virtual_register::result:
-					regname = "RES";
+					regname = "Result";
 					break;
 				default:
 				{

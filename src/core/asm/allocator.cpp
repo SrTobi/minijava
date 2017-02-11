@@ -458,12 +458,14 @@ namespace minijava
 						break;
 					case opcode::op_jmp:
 					case opcode::op_je:
+					case opcode::op_jb:
+					case opcode::op_ja:
+					case opcode::op_jle:
+					case opcode::op_jae:
+					case opcode::op_jne:
 						assert_args_empty();
-						assert(empty(instr.op2));
-						real_block.code.emplace_back(
-								instr.code, instr.width,
-								instr.op1.apply_visitor(visitor), boost::blank{}
-						);
+						assert(!empty(instr.op1) && empty(instr.op2));
+						real_block.code.emplace_back(instr.code, instr.width, *get_name(instr.op1));
 						break;
 					case opcode::op_ret:
 						assert_args_empty();
@@ -471,6 +473,8 @@ namespace minijava
 						real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, real_register::bp, real_register::sp);
 						real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::bp);
 						real_block.code.emplace_back(opcode::op_ret);
+						break;
+					case opcode::op_nop:
 						break;
 					default:
 						MINIJAVA_THROW_ICE_MSG(

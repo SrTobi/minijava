@@ -32,6 +32,7 @@ namespace minijava
 		{
 			argument = -1,  ///< first argument register
 			dummy = 0,      ///< garbage register (value is never read)
+			flags,          ///< internal flags register (accessed via special instructions)
 			result,         ///< function return value
 			general,        ///< first general-purpose register
 		};

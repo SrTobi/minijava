@@ -275,11 +275,11 @@ namespace minijava
 		{
 			static const auto instance = [](){
 				auto pt = primitive_types{};
+				pt.boolean_mode = firm::mode_Bs;
 				pt.int_mode = firm::mode_Is;
-				pt.boolean_mode = firm::new_int_mode("B", firm::irma_twos_complement, 8, 0, 1);
 				pt.pointer_mode = firm::mode_P;
-				pt.int_type = firm::new_type_primitive(pt.int_mode);
 				pt.boolean_type = firm::new_type_primitive(pt.boolean_mode);
+				pt.int_type = firm::new_type_primitive(pt.int_mode);
 				pt.pointer_type = firm::new_type_primitive(pt.pointer_mode);
 				return pt;
 			}();

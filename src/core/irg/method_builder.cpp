@@ -39,11 +39,11 @@ namespace minijava
 
 			firm::ir_node* unmaterialize(firm::ir_node* value)
 			{
-				auto mode_B = primitive_types::get_instance().boolean_mode;
-				if (firm::get_irn_mode(value) == mode_B) {
+				const auto boolean_mode = primitive_types::get_instance().boolean_mode;
+				if (firm::get_irn_mode(value) == boolean_mode) {
 					return firm::new_Cmp(
 							value,
-							firm::new_Const_long(mode_B, 1),
+							firm::new_Const_long(boolean_mode, 1),
 							firm::ir_relation_equal
 					);
 				}
