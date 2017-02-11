@@ -27,6 +27,7 @@ namespace minijava
 			virtual std::size_t size() const noexcept = 0;
 			virtual bool good() const noexcept = 0;
 			virtual void dispose() noexcept = 0;
+			virtual ~file_data_impl() = default;
 		};
 
 		struct file_data_impl_none final : file_data_impl

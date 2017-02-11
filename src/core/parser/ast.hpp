@@ -339,6 +339,12 @@ namespace minijava
 			 */
 			virtual void visit(const program& node);
 
+			/**
+			 * @brief
+			 *     Defaulted destructor.
+			 */
+			virtual ~visitor() = default;
+
 		};
 
 		/**
