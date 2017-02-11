@@ -1,8 +1,9 @@
 #include <firm.hpp>
 #include "opt/unroll.hpp"
 
+#include <cassert>
 #include <map>
-#include <iostream>
+#include <memory>
 
 using namespace minijava::opt;
 
@@ -10,21 +11,16 @@ using namespace minijava::opt;
 namespace /* anonymous */
 {
 
-	static const int MAX_LOOP_BRANCHES = 20;
-	static const int MAX_LOOP_SIZE = 200;
-	static const size_t MAX_LOOP_ITERATIONS = 10;
-
+	const int MAX_LOOP_BRANCHES = 20;
+	const int MAX_LOOP_SIZE = 200;
+	const size_t MAX_LOOP_ITERATIONS = 10;
 
 	static firm::ir_graph *current_irg;
 
-	struct copy_node
+	static std::map<firm::ir_node*, std::vector<firm::ir_node*>> copy_node_map{};
+
+	struct loop_edge
 	{
-		std::vector<firm::ir_node*> copies;
-	};
-
-	static std::map<firm::ir_node*, copy_node*> copy_node_map;
-
-	struct loop_edge {
 		loop_edge(firm::ir_node *node, firm::ir_node *pred, int pos) : node{node}, pred{pred}, pos{pos}
 		{}
 
@@ -33,7 +29,8 @@ namespace /* anonymous */
 		int pos;
 	};
 
-	struct loop_info_counter {
+	struct loop_info_counter
+	{
 		bool valid{false};
 		firm::ir_tarval *initial_value;
 		firm::ir_tarval *upper_bound;
@@ -71,7 +68,8 @@ namespace /* anonymous */
 		size_t index;
 	};
 
-	struct keep_alive_walker_env {
+	struct keep_alive_walker_env
+	{
 		firm::ir_node *node;
 		bool found{false};
 	};
@@ -100,14 +98,16 @@ namespace /* anonymous */
 		}
 	}
 
-	bool is_in_loop(firm::ir_node *node, firm::ir_loop *loop) {
+	bool is_in_loop(firm::ir_node *node, firm::ir_loop *loop)
+	{
 		if (firm::is_Block(node)) {
 			return firm::get_irn_loop(node) == loop;
 		}
 		return firm::get_irn_loop(firm::get_nodes_block(node)) == loop;
 	}
 
-	void find_inner_loops(firm::ir_loop *loop, std::vector<firm::ir_loop *> *list) {
+	void find_inner_loops(firm::ir_loop *loop, std::vector<firm::ir_loop *> *list)
+	{
 		for (size_t i = 0, n = firm::get_loop_n_elements(loop); i < n; i++) {
 			auto element = firm::get_loop_element(loop, i);
 			if (*element.kind == firm::k_ir_loop) {
@@ -117,7 +117,8 @@ namespace /* anonymous */
 		list->push_back(loop);
 	}
 
-	std::vector<firm::ir_loop *> find_loops(firm::ir_graph *irg) {
+	std::vector<firm::ir_loop *> find_loops(firm::ir_graph *irg)
+	{
 		auto loops = std::vector<firm::ir_loop *>();
 		auto loop = firm::get_irg_loop(irg);
 		auto elements = firm::get_loop_n_elements(loop);
@@ -189,8 +190,8 @@ namespace /* anonymous */
 	firm::ir_node* get_node_copy(firm::ir_node *node, size_t index)
 	{
 		if (copy_node_map.find(node) != copy_node_map.end()) {
-			if (index < copy_node_map[node]->copies.size()) {
-				return copy_node_map[node]->copies[index];
+			if (index < copy_node_map[node].size()) {
+				return copy_node_map[node][index];
 			}
 		}
 		return nullptr;
@@ -200,22 +201,13 @@ namespace /* anonymous */
 	{
 		assert(index > 0);
 		if (copy_node_map.find(node) == copy_node_map.end()) {
-			copy_node_map[node] = new copy_node();
+			copy_node_map.emplace(node, std::vector<firm::ir_node*>{});
 		}
-		if (index >= copy_node_map[node]->copies.size()) {
-			copy_node_map[node]->copies.resize(static_cast<size_t>(index + 1));
+		if (index >= copy_node_map[node].size()) {
+			copy_node_map[node].resize(static_cast<size_t>(index + 1));
 		}
-		copy_node_map[node]->copies[0] = node;
-		copy_node_map[node]->copies[index] = copy;
-	}
-
-	void free_copy_node_map()
-	{
-		for (auto &kv : copy_node_map) {
-			auto entry = kv.second;
-			delete entry;
-		}
-		copy_node_map.clear();
+		copy_node_map[node][0] = node;
+		copy_node_map[node][index] = copy;
 	}
 
 	void copy_into_loop(firm::ir_node *node, void *env)
@@ -280,7 +272,8 @@ namespace /* anonymous */
 		}
 	}
 
-	void remove_irn_edge(firm::ir_node *node, int pos) {
+	void remove_irn_edge(firm::ir_node *node, int pos)
+	{
 		auto ins = std::vector<firm::ir_node*>();
 		auto arity = firm::get_irn_arity(node);
 		// remove in edge
@@ -309,8 +302,7 @@ namespace /* anonymous */
 	{
 		size_t copies = 0;
 		auto val = info.counter.initial_value;
-		copy_node_map = std::map<firm::ir_node*, copy_node*>();
-		firm::dump_ir_graph(current_irg, "unroll");
+		assert(copy_node_map.empty());
 
 		while (firm::tarval_cmp(val, info.counter.upper_bound) & info.counter.relation) {
 			val = firm::is_Add(info.loop_expr)
@@ -382,8 +374,7 @@ namespace /* anonymous */
 		// remove backedge from head block
 		remove_irn_edge(head, info.backedge.first);
 
-		free_copy_node_map();
-		firm::dump_ir_graph(current_irg, "unrolled");
+		copy_node_map.clear();
 	}
 
 	long is_const_loop(loop_info &info)
@@ -476,7 +467,8 @@ namespace /* anonymous */
 		return firm::get_tarval_long(count_tar);
 	}
 
-	void collect_loop_info(firm::ir_node *node, void *env) {
+	void collect_loop_info(firm::ir_node *node, void *env)
+	{
 		auto info = (loop_info *) env;
 		auto node_in_loop = is_in_loop(node, info->loop);
 		// count nodes in loop
@@ -521,7 +513,8 @@ namespace /* anonymous */
 		}
 	}
 
-	bool optimize_loop(firm::ir_graph *irg, firm::ir_loop *loop) {
+	bool optimize_loop(firm::ir_graph *irg, firm::ir_loop *loop)
+	{
 		auto info = loop_info();
 		info.loop = loop;
 
@@ -557,34 +550,45 @@ namespace /* anonymous */
 	}
 }
 
-bool unroll::optimize(firm_ir &) {
-	_changed = false;
-	size_t n = firm::get_irp_n_irgs();
-	for (size_t i = 0; i < n; i++) {
-		auto irg = firm::get_irp_irg(i);
-		current_irg = irg;
+namespace minijava
+{
 
-		firm::assure_irg_properties(irg, firm::IR_GRAPH_PROPERTY_CONSISTENT_LOOPINFO);
-		firm::edges_activate(irg);
+	namespace opt
+	{
 
-		firm::ir_reserve_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
-		firm::collect_phiprojs_and_start_block_nodes(irg);
+		bool unroll::optimize(firm_ir &)
+		{
+			_changed = false;
+			size_t n = firm::get_irp_n_irgs();
+			for (size_t i = 0; i < n; i++) {
+				auto irg = firm::get_irp_irg(i);
+				current_irg = irg;
 
-		auto loops = find_loops(irg);
-		for (auto loop : loops) {
-			if (optimize_loop(irg, loop)) {
-				_changed = true;
+				firm::assure_irg_properties(irg, firm::IR_GRAPH_PROPERTY_CONSISTENT_LOOPINFO);
+				firm::edges_activate(irg);
+
+				firm::ir_reserve_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
+				firm::collect_phiprojs_and_start_block_nodes(irg);
+
+				auto loops = find_loops(irg);
+				for (auto loop : loops) {
+					if (optimize_loop(irg, loop)) {
+						_changed = true;
+					}
+					//assert(false);
+				}
+
+				firm::edges_deactivate(irg);
+				firm::ir_free_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
+
+				firm::remove_bads(irg);
+				firm::remove_unreachable_code(irg);
+
+				assert(firm::irg_verify(irg));
 			}
-			//assert(false);
+			return _changed;
 		}
 
-		firm::edges_deactivate(irg);
-		firm::ir_free_resources(irg, firm::IR_RESOURCE_IRN_LINK | firm::IR_RESOURCE_PHI_LIST);
+	}  // namespace opt
 
-		firm::remove_bads(irg);
-		firm::remove_unreachable_code(irg);
-
-		assert(firm::irg_verify(irg));
-	}
-	return _changed;
-}
+}  // namespace minijava
