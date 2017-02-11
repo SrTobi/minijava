@@ -9,10 +9,24 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from distutils.util import strtobool
 
 
-COMPILER_TIMEOUT = 10.0
-EXECUTABLE_TIMEOUT = 10.0
+COMPILER_TIMEOUT = 10.0  # seconds
+
+EXECUTABLE_TIMEOUT = 10.0  # seconds
+
+USE_ANSI_COLOR = (
+    os.name == 'posix' and os.isatty(sys.stdout.fileno()) and os.isatty(sys.stderr.fileno())
+)
+
+try:
+    USE_ANSI_COLOR = (
+        lambda s : bool(strtobool(s)) if s is not None else USE_ANSI_COLOR
+    )(os.getenv('USE_ANSI_COLOR'))
+except ValueError:
+    print("warning: Cannot convert value of environment variable USE_ANSI_COLOR to boolean")
+
 
 def main(args):
     ap = argparse.ArgumentParser(
@@ -103,6 +117,15 @@ class SetupError(Exception):
 def run_all(inputs, ppsymbols, ns):
     width = max(map(len, map(os.path.basename, inputs)))
     statusfmt = '{:' + str(width) + 's}   {:s}'
+    failurefmt = 'failure: {:s}'
+    xfailurefmt = 'failure (known issue): {:s}'
+    if USE_ANSI_COLOR:
+        statusfmt_fail = '\033[31m' + statusfmt + '\033[39m'
+        statusfmt_pass = '\033[32m' + statusfmt + '\033[39m'
+        statusfmt_skip = '\033[33m' + statusfmt + '\033[39m'
+        failurefmt = '\033[1m' + failurefmt + '\033[22m'
+    else:
+        (statusfmt_fail, statusfmt_pass, statusfmt_skip) = (statusfmt, statusfmt, statusfmt)
     failures = 0
     for src in inputs:
         (dirname, basename) = os.path.split(src)
@@ -111,18 +134,18 @@ def run_all(inputs, ppsymbols, ns):
         with open(src) as istr:
             (program, pragmas) = load_program(istr, ppsymbols, ns.debug, basedir=dirname)
         if 'skip' in pragmas:
-            print(statusfmt.format(basename, 'SKIPPED'))
+            print(statusfmt_skip.format(basename, 'SKIPPED'))
             continue
         try:
             run_single(program, ns, pragmas)
-            print(statusfmt.format(basename, 'PASSED'))
+            print(statusfmt_pass.format(basename, 'PASSED'))
         except Failure as e:
-            print(statusfmt.format(basename, 'FAILED'))
+            print(statusfmt_fail.format(basename, 'FAILED'))
             if 'failure' not in pragmas:
                 failures += 1
-                print("failure:", e, file=sys.stderr)
+                print(failurefmt.format(str(e)), file=sys.stderr)
             else:
-                print("failure (known issue):", e, file=sys.stderr)
+                print(xfailurefmt.format(str(e)), file=sys.stderr)
         if ns.debug:
             print("DEBUG:")
     return failures
