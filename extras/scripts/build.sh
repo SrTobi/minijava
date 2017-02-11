@@ -20,7 +20,7 @@ The following test-runners are available:
 
   None            do nothing
   CMake           run 'cmake --build . --target test'
-  CTest           run 'ctest -T test --output-on-failure'
+  CTest           run 'ctest -T test'
 
 If no configurations are selected, this script will build whatever
 configuration directories it finds.  It is assumed that configuration '\${cfg}'
@@ -146,7 +146,7 @@ do
 				cmake --build . --target test || exit
 				;;
 			CTest)
-				ctest -T test --output-on-failure || exit
+				ctest -T test || exit
 				;;
 			None)
 				;;
