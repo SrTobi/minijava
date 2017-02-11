@@ -35,6 +35,7 @@ specified) therefore excludes these two.
 function cmake_gcc_release {
 	ln -s "${prefix}/gcc-release/lib/" dynlib
 	cmake -DCMAKE_BUILD_TYPE=Release                                          \
+	      -DMAINTAINER_MODE=ON                                                \
 	      -DCMAKE_C_COMPILER="gcc"                                            \
 	      -DCMAKE_CXX_COMPILER="g++"                                          \
 	      -DCMAKE_INCLUDE_PATH="${prefix}/gcc-release/include/"               \
@@ -45,6 +46,7 @@ function cmake_gcc_release {
 function cmake_gcc_debug {
 	ln -s "${prefix}/gcc-debug/lib/" dynlib
 	cmake -DCMAKE_BUILD_TYPE=Debug                                            \
+	      -DMAINTAINER_MODE=ON                                                \
 	      -DCMAKE_C_COMPILER="gcc"                                            \
 	      -DCMAKE_CXX_COMPILER="g++"                                          \
 	      -DCMAKE_CXX_FLAGS="-D_GLIBCXX_DEBUG"                                \
@@ -56,6 +58,7 @@ function cmake_gcc_debug {
 function cmake_clang {
 	ln -s "${prefix}/clang/lib/" dynlib
 	cmake -DCMAKE_BUILD_TYPE=None                                             \
+	      -DMAINTAINER_MODE=ON                                                \
 	      -DCMAKE_C_COMPILER="clang"                                          \
 	      -DCMAKE_CXX_COMPILER="clang++"                                      \
 	      -DCMAKE_INCLUDE_PATH="${prefix}/clang/include/"                     \
@@ -68,6 +71,7 @@ function cmake_clang {
 function gen_cmake_sanitize {
 	local tool; tool="$1"; shift
 	cmake -DCMAKE_BUILD_TYPE=Debug                                            \
+	      -DMAINTAINER_MODE=ON                                                \
 	      -DCMAKE_C_FLAGS="-fsanitize=${tool} -fno-sanitize-recover=all"      \
 	      -DCMAKE_CXX_FLAGS="-fsanitize=${tool} -fno-sanitize-recover=all"    \
 	       "$@"
