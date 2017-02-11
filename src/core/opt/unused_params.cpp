@@ -62,19 +62,19 @@ namespace /* anonymous */
 
 	void replace_call_node(firm::ir_node *call_node, std::vector<unsigned int> params_to_keep,
 	                       firm::ir_entity *new_method_entity) {
-		auto params = new firm::ir_node *[params_to_keep.size()];
+		auto params = std::vector<firm::ir_node*>();
+		//auto params = new firm::ir_node *[params_to_keep.size()];
 		for (unsigned int i = 0; i < params_to_keep.size(); i++) {
-			params[i] = firm::get_Call_param(call_node, (int) params_to_keep[i]);
+			params.push_back(firm::get_Call_param(call_node, static_cast<int>(params_to_keep[i])));
 		}
 		auto new_call_node = firm::new_r_Call(
 				firm::get_nodes_block(call_node),
 				firm::get_Call_mem(call_node),
 				firm::new_r_Address(firm::get_irn_irg(call_node), new_method_entity),
-				(int) params_to_keep.size(),
-				params,
+				static_cast<int>(params.size()),
+				params.data(),
 				firm::get_entity_type(new_method_entity)
 		);
-		delete[] params;
 		firm::exchange(call_node, new_call_node);
 	}
 
