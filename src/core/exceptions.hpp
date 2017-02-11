@@ -79,6 +79,19 @@
  *     Use this macro to annotate places in the code that require handling by
  *     code that is not yet written.
  *
+ * @param Msg
+ *     detailed message what is not implemented
+ *
+ */
+#define MINIJAVA_NOT_IMPLEMENTED_MSG(Msg)                                     \
+	MINIJAVA_THROW_ICE_MSG(::minijava::not_implemented_error, Msg)
+
+
+/**
+ * @brief
+ *     Use this macro to annotate places in the code that require handling by
+ *     code that is not yet written.
+ *
  */
 #define MINIJAVA_NOT_IMPLEMENTED()                                            \
 	MINIJAVA_THROW_ICE(::minijava::not_implemented_error)

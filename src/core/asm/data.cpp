@@ -87,8 +87,9 @@ namespace minijava
 				case firm::IR_INITIALIZER_CONST:
 					{
 						const auto val = get_initializer_const_value(initializer);
-						// we can only output address values
-						assert(firm::get_irn_opcode(val) == firm::iro_Address);
+						if (firm::get_irn_opcode(val) != firm::iro_Address) {
+							MINIJAVA_NOT_IMPLEMENTED_MSG("Cannot handle global variables of non-address type");
+						}
 						const auto member_name = firm::get_entity_ld_name(entity);
 						const auto target_name = firm::get_entity_ld_name(firm::get_Address_entity(val));
 						out.print("\t.quad %s\t\t# %s\n", target_name, member_name);
@@ -102,8 +103,9 @@ namespace minijava
 						std::size_t n_members = firm::get_compound_n_members(type);
 						for (std::size_t i = 0; i < n_members; ++i) {
 							const auto member = firm::get_compound_member(type, i);
-							// We cannot handle spaces in between member -> check that they are next to each other
-							assert(offset == static_cast<std::size_t>(firm::get_entity_offset(member)));
+							if (offset != static_cast<std::size_t>(firm::get_entity_offset(member))) {
+								MINIJAVA_NOT_IMPLEMENTED_MSG("Cannot handle padding");
+							}
 							assert(0 == firm::get_entity_bitfield_size(member));
 							assert(i < firm::get_initializer_compound_n_entries(initializer));
 							const auto sub_initializer = firm::get_initializer_compound_value(initializer, i);
@@ -132,6 +134,9 @@ namespace minijava
 				if (firm::is_method_entity(entity)) {
 					return;
 				}
+				if (firm::get_entity_visibility(entity) != firm::ir_visibility_local) {
+					MINIJAVA_NOT_IMPLEMENTED_MSG("Cannot handle non-local visibility");
+				}
 				const auto name = firm::get_entity_ld_name(entity);
 				const auto size = determine_size(entity);
 				const auto alignment = determine_alignment(entity);
@@ -157,7 +162,7 @@ namespace minijava
 
 		void write_data_segment(firm::ir_type*const glob, file_output& out)
 		{
-			assert(glob != nullptr);  (void) glob;
+			assert(glob != nullptr);
 			if (MINIJAVA_WINDOWS_ASSEMBLY) {
 				out.write("\t.section .rdata,\"dr\"\n");
 				out.write("\t.p2align 3\n");
