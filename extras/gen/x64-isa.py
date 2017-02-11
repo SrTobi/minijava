@@ -72,6 +72,7 @@ INSTRUCTIONS = [
     ('CDQ',       "Convert doubleword to quadword"),
     ('CBW',       "Convert byte to word"),
     ('CWDE',      "Convert word to doubleword in EAX register"),
+    ('CQO',       "Sign-extend quad in RAX to octuple in RDX:RAX (x86-64 only)"),
     ('MOVSLQ',    "Move and sign extend 32 bit to 64 bit register"),
 
     # 5.1.2 Binary Arithmetic Instructions

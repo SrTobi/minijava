@@ -37,8 +37,8 @@ namespace minijava
 				}
 				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::a);
 				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::d);
-				dst.code.emplace_back(opcode::op_mov, div.width, div.op1, real_register::d);
-				dst.code.emplace_back(opcode::op_cdq);
+				dst.code.emplace_back(opcode::op_mov, div.width, div.op1, real_register::a);
+				dst.code.emplace_back(opcode::op_cqo);
 				dst.code.emplace_back(opcode::op_idiv, div.width, *dst_reg);
 				dst.code.emplace_back(opcode::op_mov, div.width, real_register::a, *dst_reg);
 				dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::d);
@@ -55,8 +55,8 @@ namespace minijava
 				}
 				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::a);
 				dst.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::d);
-				dst.code.emplace_back(opcode::op_mov, mod.width, mod.op1, real_register::d);
-				dst.code.emplace_back(opcode::op_cdq);
+				dst.code.emplace_back(opcode::op_mov, mod.width, mod.op1, real_register::a);
+				dst.code.emplace_back(opcode::op_cqo);
 				dst.code.emplace_back(opcode::op_idiv, mod.width, *dst_reg);
 				dst.code.emplace_back(opcode::op_mov, mod.width, real_register::d, *dst_reg);
 				dst.code.emplace_back(opcode::op_pop, bit_width::lxiv, real_register::d);
