@@ -39,6 +39,13 @@ namespace minijava
 			 *     Returns true, if something has changed in the IRG, otherwhise false
 			 */
 			virtual bool optimize(firm_ir& ir) = 0;
+
+			/**
+			 * @brief
+			 *     Virtual default destructor.
+			 *
+			 */
+			virtual ~optimization() = default;
 		};
 
 		/**
