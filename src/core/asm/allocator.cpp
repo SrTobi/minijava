@@ -288,7 +288,7 @@ namespace minijava
 						// push stack arguments (RTL)
 						for (int i = call_argc; i > 6; --i) {
 							const auto& arg = next_call_args.at(i);
-							real_block.code.emplace_back(opcode::op_push, arg.second, arg.first);
+							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, arg.first);
 						}
 						// set register arguments
 						for (int i = std::min(call_argc, 6); i > 0; --i) {
