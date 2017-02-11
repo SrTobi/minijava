@@ -54,6 +54,7 @@ add_test(
 		"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
 		"--define=LEXER,PARSER,CHECK,FIRM"
 		--execute
+		--debug
 		--
 		"${minijava_exec}" --compile-firm
 )
