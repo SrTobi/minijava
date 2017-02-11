@@ -1,0 +1,17 @@
+// pragma output 1 4
+
+class Test {
+
+	public int select(boolean p, int a, int b) {
+		if (p) { return b; } else { return a; }
+	}
+
+	public static void main(String[] args) {
+		Test test = new Test();
+		boolean bot = (System.id(0) != 0);
+		boolean top = (System.id(1) != 0);
+		System.out.println(test.select(bot, 1, 2));
+		System.out.println(test.select(top, 3, 4));
+	}
+
+}
