@@ -12,7 +12,9 @@ namespace minijava
 
 	namespace backend
 	{
-		namespace {
+		namespace
+		{
+
 			void write_data_segment_header(file_output& out)
 			{
 				out.write("\t.data\n");
@@ -21,8 +23,9 @@ namespace minijava
 			constexpr std::size_t log2_floor(std::size_t v)
 			{
 				std::size_t result = 0;
-				while (v >>= 1)
+				while (v >>= 1) {
 					++result;
+				}
 				return result;
 			}
 
@@ -49,25 +52,30 @@ namespace minijava
 				switch (firm::get_initializer_kind(initializer)) {
 				case firm::IR_INITIALIZER_NULL:
 					return true;
-				case firm::IR_INITIALIZER_TARVAL: {
-					auto tv = firm::get_initializer_tarval_value(initializer);
-					return firm::tarval_is_null(tv);
-				}
-				case firm::IR_INITIALIZER_CONST: {
-					auto value = firm::get_initializer_const_value(initializer);
-					if (!is_Const(value))
-						return false;
-					return firm::is_Const_null(value);
-				}
-				case firm::IR_INITIALIZER_COMPOUND: {
-					for (size_t i = 0, n = firm::get_initializer_compound_n_entries(initializer); i < n; ++i) {
-						const auto subinitializer = firm::get_initializer_compound_value(initializer, i);
-						if (!initializer_is_null(subinitializer))
-							return false;
+				case firm::IR_INITIALIZER_TARVAL:
+					{
+						auto tv = firm::get_initializer_tarval_value(initializer);
+						return firm::tarval_is_null(tv);
 					}
-					return true;
+				case firm::IR_INITIALIZER_CONST:
+					{
+						auto value = firm::get_initializer_const_value(initializer);
+						if (!is_Const(value)) {
+							return false;
+						}
+						return firm::is_Const_null(value);
+					}
+				case firm::IR_INITIALIZER_COMPOUND:
+					{
+						for (size_t i = 0, n = firm::get_initializer_compound_n_entries(initializer); i < n; ++i) {
+							const auto subinitializer = firm::get_initializer_compound_value(initializer, i);
+							if (!initializer_is_null(subinitializer)) {
+								return false;
+							}
+						}
+						return true;
+					}
 				}
-				};
 				MINIJAVA_NOT_REACHED();
 			}
 
@@ -76,38 +84,34 @@ namespace minijava
 				const auto type = firm::get_entity_type(entity);
 
 				switch (firm::get_initializer_kind(initializer)) {
-				case firm::IR_INITIALIZER_CONST: {
-					const auto val = get_initializer_const_value(initializer);
-
-					// we can only output address values
-					assert(firm::get_irn_opcode(val) == firm::iro_Address);
-
-					const auto member_name = firm::get_entity_ld_name(entity);
-					const auto target_name = firm::get_entity_ld_name(firm::get_Address_entity(val));
-					out.print("\t.quad %s\t\t# %s\n", target_name, member_name);
-					return;
-				}
-
-				case firm::IR_INITIALIZER_COMPOUND: {
-					assert(!firm::is_Array_type(type));
-					assert(firm::is_compound_type(type));
-					std::size_t offset = 0;
-					std::size_t n_members = firm::get_compound_n_members(type);
-					for (std::size_t i = 0; i < n_members; ++i) {
-						const auto member = firm::get_compound_member(type, i);
-
-						// we can not handle spaces in between member -> check that they are next to each other
-						assert(offset == static_cast<std::size_t>(firm::get_entity_offset(member)));
-						assert(0 == firm::get_entity_bitfield_size(member));
-						assert(i < firm::get_initializer_compound_n_entries(initializer));
-						const auto sub_initializer = firm::get_initializer_compound_value(initializer, i);
-
-						write_initializer(member, sub_initializer, out);
-						offset += firm::get_type_size(firm::get_entity_type(member));
+				case firm::IR_INITIALIZER_CONST:
+					{
+						const auto val = get_initializer_const_value(initializer);
+						// we can only output address values
+						assert(firm::get_irn_opcode(val) == firm::iro_Address);
+						const auto member_name = firm::get_entity_ld_name(entity);
+						const auto target_name = firm::get_entity_ld_name(firm::get_Address_entity(val));
+						out.print("\t.quad %s\t\t# %s\n", target_name, member_name);
+						return;
 					}
-
-					return;
-				}
+				case firm::IR_INITIALIZER_COMPOUND:
+					{
+						assert(!firm::is_Array_type(type));
+						assert(firm::is_compound_type(type));
+						std::size_t offset = 0;
+						std::size_t n_members = firm::get_compound_n_members(type);
+						for (std::size_t i = 0; i < n_members; ++i) {
+							const auto member = firm::get_compound_member(type, i);
+							// We cannot handle spaces in between member -> check that they are next to each other
+							assert(offset == static_cast<std::size_t>(firm::get_entity_offset(member)));
+							assert(0 == firm::get_entity_bitfield_size(member));
+							assert(i < firm::get_initializer_compound_n_entries(initializer));
+							const auto sub_initializer = firm::get_initializer_compound_value(initializer, i);
+							write_initializer(member, sub_initializer, out);
+							offset += firm::get_type_size(firm::get_entity_type(member));
+						}
+						return;
+					}
 				default:
 					MINIJAVA_NOT_REACHED();
 				}
@@ -117,31 +121,29 @@ namespace minijava
 			{
 				// do not write stuff, that shall not be linked
 				const auto linkage = firm::get_entity_linkage(entity);
-				if (linkage & firm::IR_LINKAGE_NO_CODEGEN)
+				if (linkage & firm::IR_LINKAGE_NO_CODEGEN) {
 					return;
-
+				}
 				// writen data shall have a definition
-				if (!entity_has_definition(entity))
+				if (!entity_has_definition(entity)) {
 					return;
-
+				}
 				// do not write methods in the data segment
-				if(firm::is_method_entity(entity))
+				if (firm::is_method_entity(entity)) {
 					return;
-
+				}
 				const auto name = firm::get_entity_ld_name(entity);
 				const auto size = determine_size(entity);
 				const auto alignment = determine_alignment(entity);
-
 				// do not write entities that do not have a initializer
 				const auto initializer = firm::get_entity_initializer(entity);
-				if(initializer_is_null(initializer))
-				{
+				if (initializer_is_null(initializer)) {
 					out.print("\t# Global %s (no definition)\n", name);
 					out.print("\t.local %s\n", name);
 					out.print("\t.comm %s, %zu, %zu\n", name, size, alignment);
 				} else {
 					assert(alignment > 0);
-					assert((std::size_t(1) << log2_floor(alignment)) == alignment);
+					assert((std::size_t{1} << log2_floor(alignment)) == alignment);
 					out.print("\t# Global %s\n", name);
 					out.print("\t.p2align %zu\n", log2_floor(alignment));
 					out.print("\t.type %s, @object\n", name);
