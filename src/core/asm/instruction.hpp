@@ -92,6 +92,12 @@ namespace minijava
 		template <typename RegT>
 		using operand = boost::variant<boost::blank, std::int64_t, RegT, address<RegT>, std::string>;
 
+		/** @brief Type for operandes using virtual registers. */
+		using virtual_operand = operand<virtual_register>;
+
+		/** @brief Type for operandes using real registers. */
+		using real_operand = operand<real_register>;
+
 		/**
 		 * @brief
 		 *     Tests whether an operand is empty (absent).

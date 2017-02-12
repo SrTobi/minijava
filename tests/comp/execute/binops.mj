@@ -1,0 +1,51 @@
+// pragma output 10 20 30 40 50 0 1 1 1 0 0 10 20 30 40 50
+
+class Printer {
+
+	public void printInteger(int a) {
+		System.out.println(a);
+	}
+
+	public void printBoolean(boolean b) {
+		if (b) {
+			System.out.println(1);
+		} else {
+			System.out.println(0);
+		}
+	}
+
+}
+
+class Test {
+
+	public static void main(String[] args) {
+		Printer printer = new Printer();
+		/* Constants */
+		printer.printInteger( 4 +  6);
+		printer.printInteger(21 -  1);
+		printer.printInteger(15 *  2);
+		printer.printInteger(81 /  2);
+		printer.printInteger(50 % 51);
+		printer.printBoolean(5 < 5);
+		printer.printBoolean(5 <= 5);
+		printer.printBoolean(5 == 5);
+		printer.printBoolean(5 >= 5);
+		printer.printBoolean(5 > 5);
+		printer.printBoolean(5 != 5);
+		/* Run-time values */
+		printer.printInteger(System.id( 4) + System.id( 6));
+		printer.printInteger(System.id(21) - System.id( 1));
+		printer.printInteger(System.id(15) * System.id( 2));
+		printer.printInteger(System.id(81) / System.id( 2));
+		printer.printInteger(System.id(50) % System.id(51));
+		/*
+		printer.printBoolean(System.id(5) < System.id(5));
+		printer.printBoolean(System.id(5) <= System.id(5));
+		printer.printBoolean(System.id(5) == System.id(5));
+		printer.printBoolean(System.id(5) >= System.id(5));
+		printer.printBoolean(System.id(5) > System.id(5));
+		printer.printBoolean(System.id(5) != System.id(5));
+		*/
+	}
+
+}

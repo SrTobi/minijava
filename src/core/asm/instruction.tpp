@@ -22,11 +22,11 @@ namespace minijava
 			case opcode::op_lea:
 				assert(instr.width == bit_width{});
 				return std::make_pair(bit_width::lxiv, bit_width::lxiv);
-			case opcode::op_seta:
-			case opcode::op_setae:
-			case opcode::op_setb:
-			case opcode::op_setbe:
 			case opcode::op_sete:
+			case opcode::op_setl:
+			case opcode::op_setg:
+			case opcode::op_setle:
+			case opcode::op_setge:
 			case opcode::op_setne:
 				return std::make_pair(bit_width::viii, bit_width{});
 				// TODO: Add other cases here even though we don't need them?

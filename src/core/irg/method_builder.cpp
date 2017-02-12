@@ -43,8 +43,8 @@ namespace minijava
 				if (firm::get_irn_mode(value) == boolean_mode) {
 					return firm::new_Cmp(
 							value,
-							firm::new_Const_long(boolean_mode, 1),
-							firm::ir_relation_equal
+							firm::new_Const_long(boolean_mode, 0),
+							firm::ir_relation_less_greater
 					);
 				}
 				return value;
