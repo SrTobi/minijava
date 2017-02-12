@@ -1,5 +1,7 @@
 #include "opt/load_store.hpp"
 
+#include <set>
+
 using namespace minijava::opt;
 
 namespace /* anonymous */
@@ -56,6 +58,24 @@ namespace /* anonymous */
 		return is_always_different_target(firm::get_irn_n(first, 1), firm::get_irn_n(second, 1));
 	}
 
+	bool never_interferes_with_load_store(firm::ir_node* node) {
+		if(!firm::is_Call(node))
+			return false;
+
+		static std::set<std::string> funcs = {
+			"mj_runtime_new",
+			"mj_runtime_id",
+			"mj_runtime_exit",
+			"mj_runtime_println",
+			"mj_runtime_write",
+			"mj_runtime_flush",
+			"mj_runtime_read"
+		};
+		std::string name = firm::get_entity_name(firm::get_Call_callee(node));
+
+		return funcs.count(name);
+	}
+
 
 	firm::ir_node *get_res_node(firm::ir_node *node) {
 		for (auto &out : get_out_edges_safe(node)) {
@@ -107,7 +127,8 @@ namespace /* anonymous */
 			if (!firm::is_Proj(pred_proj))
 				return false;
 			pred_node = firm::get_irn_n(pred_proj, 0);
-		} while(is_mem_access(pred_node) && have_always_different_target(node, pred_node));
+		} while(never_interferes_with_load_store(pred_node)
+		     || (is_mem_access(pred_node) && have_always_different_target(node, pred_node)));
 
 
 		if (firm::is_Load(pred_node)) {
@@ -161,7 +182,8 @@ namespace /* anonymous */
 			if (!firm::is_Proj(pred_proj))
 				return false;
 			pred_node = firm::get_irn_n(pred_proj, 0);
-		} while(is_mem_access(pred_node) && have_always_different_target(node, pred_node));
+		} while(never_interferes_with_load_store(pred_node)
+		     || (is_mem_access(pred_node) && have_always_different_target(node, pred_node)));
 
 		if (firm::is_Load(pred_node)) {
 			return handle_load_store(pred_node, node);
