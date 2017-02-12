@@ -752,8 +752,15 @@ namespace minijava
 					assert(firm::is_Cond(irn));
 					assert(firm::get_irn_n_outs(irn) == 2);
 					const auto selector = firm::get_Cond_selector(irn);
-					const auto thenproj = firm::get_irn_out(irn, firm::pn_Cond_true);
-					const auto elseproj = firm::get_irn_out(irn, firm::pn_Cond_false);
+					firm::ir_node* thenproj;
+					firm::ir_node* elseproj;
+					if (firm::get_Proj_num(firm::get_irn_out(irn, 0)) == firm::pn_Cond_true) {
+						thenproj = firm::get_irn_out(irn, 0);
+						elseproj = firm::get_irn_out(irn, 1);
+					} else {
+						thenproj = firm::get_irn_out(irn, 1);
+						elseproj = firm::get_irn_out(irn, 0);
+					}
 					assert(firm::is_Proj(thenproj));
 					assert(is_exec(thenproj));
 					assert(firm::is_Proj(elseproj));
