@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <boost/variant/apply_visitor.hpp>
+#include <iostream>
 
 #include "exceptions.hpp"
 
@@ -384,7 +385,7 @@ namespace minijava
 						return pos->second;
 					}
 					const auto idx = _assembly.blocks.size();
-					auto label = ".L"s + _assembly.ldname + "." + std::to_string(idx);
+					auto label = ".L"s + _assembly.ldname + "." + std::to_string(firm::get_irn_node_nr(blk));
 					_assembly.blocks.emplace_back(std::move(label));
 					return _metamap.insert({blk, bb_meta{idx}}).first->second;
 				}
@@ -787,6 +788,10 @@ namespace minijava
 							const auto tarval = firm::get_Const_tarval(irn);
 							const auto jumpto = !firm::tarval_is_null(tarval) ? thenlab : elselab;
 							_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, jumpto);
+						} else if (firm::is_Phi(selector)) {
+							// TODO use previously moved value to create a cmp and jmp
+						} else {
+							MINIJAVA_NOT_REACHED();
 						}
 					}
 				}
@@ -801,13 +806,21 @@ namespace minijava
 					assert(can_be_in_register(irn, phireg));
 					const auto phiblk = _blockmap.at(irn);
 					const auto arity = firm::get_Phi_n_preds(irn);
-					for (auto i = 0; i < arity; ++i) {
-						const auto predirn = firm::get_Phi_pred(irn, i);
-						//const auto predblk = _blockmap.at(predirn);
-						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
-						//std::clog << "\t\t#" << i << ": " << to_string(predirn) << " in " << to_string(predblk) << std::endl;
-						if (is_flag(irn)) {
-						} else {
+					if (is_flag(irn)) {
+						for (auto i = 0; i < arity; ++i) {
+							const auto predirn = firm::get_Phi_pred(irn, i);
+							assert(firm::is_Const(predirn));
+							if (firm::get_Const_tarval(predirn) == firm::tarval_b_true) {
+								std::cout << "Phi b true:" << firm::get_irn_node_nr(predirn) << std::endl;
+							} else {
+								std::cout << "Phi b false:" << firm::get_irn_node_nr(predirn) << std::endl;
+								// TODO insert mov 0 in predblek
+							}
+						}
+					} else {
+						for (auto i = 0; i < arity; ++i) {
+							const auto predirn = firm::get_Phi_pred(irn, i);
+							const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
 							const auto predval = _get_irn_as_operand(predirn);
 							const auto width = get_width(irn);
 							_emplace_instruction_before_jmp(
@@ -885,6 +898,7 @@ namespace minijava
 		virtual_assembly assemble_function(firm::ir_graph*const irg)
 		{
 			assert(irg != nullptr);
+			firm::dump_ir_graph(irg, "asm");
 			const auto backedge_guard = make_backedge_guard(irg);
 			const auto entity = firm::get_irg_entity(irg);
 			const auto ldname = firm::get_entity_ld_name(entity);
