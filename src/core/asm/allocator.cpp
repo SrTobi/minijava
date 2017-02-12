@@ -475,6 +475,7 @@ namespace minijava
 						real_block.code.emplace_back(opcode::op_ret);
 						break;
 					case opcode::op_nop:
+						real_block.code.emplace_back(opcode::op_nop);
 						break;
 					default:
 						MINIJAVA_THROW_ICE_MSG(

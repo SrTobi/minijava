@@ -10,8 +10,8 @@ class Test {
 		Test test = new Test();
 		boolean bot = (System.id(0) != 0);
 		boolean top = (System.id(1) != 0);
-		System.out.println(test.select(bot, 1, 2));
-		System.out.println(test.select(top, 3, 4));
+		System.out.println(test.select(false, 1, 2));
+		System.out.println(test.select(true, 3, 4));
 	}
 
 }

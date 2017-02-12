@@ -57,8 +57,6 @@ namespace minijava
 			/** Consecutive instructions in the block. */
 			std::vector<instruction_type> code{};
 
-			/** Scratch space for construction. */
-			std::vector<instruction_type> scratch{};
 		};
 
 		/** @brief Basic block in virtual assembly. */
