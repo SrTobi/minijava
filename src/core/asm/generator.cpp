@@ -137,13 +137,13 @@ namespace minijava
 				case firm::ir_relation_equal:
 					return opcode::op_je;
 				case firm::ir_relation_less:
-					return opcode::op_jb;
+					return opcode::op_jl;
 				case firm::ir_relation_greater:
-					return opcode::op_ja;
+					return opcode::op_jg;
 				case firm::ir_relation_less_equal:
 					return opcode::op_jle;
 				case firm::ir_relation_greater_equal:
-					return opcode::op_jae;
+					return opcode::op_jge;
 				case firm::ir_relation_less_greater:  // a.k.a. "not equal"
 					return opcode::op_jne;
 				case firm::ir_relation_true:

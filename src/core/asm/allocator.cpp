@@ -458,10 +458,10 @@ namespace minijava
 						break;
 					case opcode::op_jmp:
 					case opcode::op_je:
-					case opcode::op_jb:
-					case opcode::op_ja:
+					case opcode::op_jl:
+					case opcode::op_jg:
 					case opcode::op_jle:
-					case opcode::op_jae:
+					case opcode::op_jge:
 					case opcode::op_jne:
 						assert_args_empty();
 						assert(!empty(instr.op1) && empty(instr.op2));
