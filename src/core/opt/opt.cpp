@@ -37,7 +37,7 @@ namespace minijava
 
 		std::vector<std::pair<std::string, opt_constructor>> optConstructors = {
 			// should run at first, because after inlining, we couldn't remove them
-			{ "unused_params", opt_constr_impl<opt::unused_params>{}},
+			//{ "unused_params", opt_constr_impl<opt::unused_params>{}},
 			// important to get rid of unnecessary methods - no need to optimize them or even create code
 			// they might be created from unused_params opt
 			{ "unused_method", opt_constr_impl<opt::unused_method>{}},
