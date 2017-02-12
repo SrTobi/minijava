@@ -67,20 +67,20 @@ namespace minijava
 				return can_be_in_register(mode);
 			}
 
-			bool can_be_in_register(firm::ir_mode*const irm, const virtual_register reg) noexcept
-			{
-				if (!can_be_in_register(irm)) {
-					return false;
-				}
-				const auto is_modeb = (irm == firm::mode_b);
-				const auto is_flags = (reg == virtual_register::flags);
-				return (is_modeb == is_flags);
-			}
-
 			bool can_be_in_register(firm::ir_node*const irn, const virtual_register reg) noexcept
 			{
+				assert(reg != virtual_register::dummy);
 				const auto mode = get_effective_irn_mode(irn);
-				return can_be_in_register(mode, reg);
+				if (!can_be_in_register(irn)) {
+					return false;
+				}
+				if (firm::is_Phi(irn)) {
+					// Phis are always in data registers, regardless their mode.
+					return (reg >= virtual_register::general);
+				}
+				const auto is_modeb = (mode == firm::mode_b);
+				const auto is_flags = (reg == virtual_register::flags);
+				return (is_modeb == is_flags);
 			}
 
 			bool is_flag(firm::ir_node*const irn) noexcept
@@ -130,6 +130,40 @@ namespace minijava
 				return get_width(get_effective_irn_mode(irn));
 			}
 
+			struct cond_target_blocks
+			{
+				firm::ir_node* then_block{};
+				firm::ir_node* else_block{};
+			};
+
+			cond_target_blocks get_cond_targets(firm::ir_node*const irn)
+			{
+				assert(firm::is_Cond(irn));
+				assert(firm::get_irn_n_outs(irn) == 2);
+				const auto lhsproj = firm::get_irn_out(irn, 0);
+				const auto rhsproj = firm::get_irn_out(irn, 1);
+				assert(firm::is_Proj(lhsproj));
+				assert(is_exec(lhsproj));
+				assert(firm::is_Proj(rhsproj));
+				assert(is_exec(rhsproj));
+				assert(firm::get_irn_n_outs(lhsproj) == 1);
+				assert(firm::get_irn_n_outs(rhsproj) == 1);
+				const auto lhsblk = firm::get_irn_out(lhsproj, 0);
+				const auto rhsblk = firm::get_irn_out(rhsproj, 0);
+				assert(firm::is_Block(lhsblk));
+				assert(firm::is_Block(rhsblk));
+				const auto lhsprojnum = firm::get_Proj_num(lhsproj);
+				const auto rhsprojnum = firm::get_Proj_num(rhsproj);
+				if ((lhsprojnum == firm::pn_Cond_true) && (rhsprojnum == firm::pn_Cond_false)) {
+					return {lhsblk, rhsblk};
+				}
+				if ((lhsprojnum == firm::pn_Cond_false) && (rhsprojnum == firm::pn_Cond_true)) {
+					return {rhsblk, lhsblk};
+				}
+				MINIJAVA_NOT_REACHED();
+			}
+
+
 			opcode get_conditional_jump_op(const firm::ir_relation rel)
 			{
 				switch (rel) {
@@ -153,6 +187,27 @@ namespace minijava
 					MINIJAVA_NOT_IMPLEMENTED_MSG(firm::get_relation_string(rel));
 				}
 			}
+
+			opcode get_conditional_set_op(const firm::ir_relation rel)
+			{
+				switch (rel) {
+				case firm::ir_relation_equal:
+					return opcode::op_sete;
+				case firm::ir_relation_less:
+					return opcode::op_setl;
+				case firm::ir_relation_greater:
+					return opcode::op_setg;
+				case firm::ir_relation_less_equal:
+					return opcode::op_setle;
+				case firm::ir_relation_greater_equal:
+					return opcode::op_setge;
+				case firm::ir_relation_less_greater:  // a.k.a. "not equal"
+					return opcode::op_setne;
+				default:
+					MINIJAVA_NOT_IMPLEMENTED_MSG(firm::get_relation_string(rel));
+				}
+			}
+
 
 			class bb_meta
 			{
@@ -261,26 +316,21 @@ namespace minijava
 					}
 					if (firm::is_Phi(irn) && can_be_in_register(irn)) {
 						// Phi nodes are used before visited so we must
-						// allocate a register now.
-						const auto reg = is_flag(irn)
-							? virtual_register::flags
-							: _next_data_register();
+						// allocate a register now.  Phis are always in data
+						// registers because the flags register cannot be
+						// preserved.  Special code is needed to move the value
+						// in and out again.
+						const auto reg = _next_data_register();
 						_set_register(irn, reg);
 					} else if (firm::is_Jmp(irn)) {
 						assert(firm::get_irn_n_outs(irn) == 1);
 						const auto targirn = firm::get_irn_out(irn, 0);
 						_provide_bb(_current_block).set_succ_fall_through(targirn);
 					} else if (firm::is_Cond(irn)) {
-						assert(firm::get_irn_n_outs(irn) == 2);
-						const auto thenproj = firm::get_irn_out(irn, firm::pn_Cond_true);
-						const auto elseproj = firm::get_irn_out(irn, firm::pn_Cond_false);
-						assert(firm::get_irn_n_outs(thenproj) == 1);
-						const auto thenirn = firm::get_irn_out(thenproj, 0);
-						assert(firm::get_irn_n_outs(elseproj) == 1);
-						const auto elseirn = firm::get_irn_out(elseproj, 0);
+						const auto targets = get_cond_targets(irn);
 						_provide_bb(_current_block)
-							.set_succ_cond_branch(thenirn)
-							.set_succ_fall_through(elseirn);
+							.set_succ_cond_branch(targets.then_block)
+							.set_succ_fall_through(targets.else_block);
 					}
 					_blockmap[irn] = _current_block;
 				}
@@ -474,8 +524,23 @@ namespace minijava
 						return (p != nullptr) && (_blockmap.at(p) == blkdst);
 					};
 					const auto go_ahead_emplace_it = [&](auto& vec){
-						const auto end = std::end(vec);
-						const auto pos = vec.empty() ? end : std::prev(end);
+						const auto pos = [&vec, end = vec.end()](){
+							if (vec.empty()) {
+								return vec.end();
+							}
+							const auto op = (vec.size() > 1)
+								? vec[vec.size() - 2].code
+								: opcode::none;
+							switch (op) {
+							case opcode::op_cmp:
+							case opcode::op_test:
+								// Don't clobber flags register between CMP /
+								// TEST and conditional jump.
+								return vec.end() - 2;
+							default:
+								return vec.end() - 1;
+							}
+						}();
 						vec.emplace(pos, std::forward<ArgTs>(args)...);
 					};
 					auto& srcmeta = _provide_bb(blksrc);
@@ -496,6 +561,9 @@ namespace minijava
 				{
 					assert(can_be_in_register(irn));
 					if (is_flag(irn)) {
+						if (firm::is_Phi(irn)) {
+							MINIJAVA_NOT_IMPLEMENTED();
+						}
 						return _get_flags_register(irn);
 					} else if (firm::is_Const(irn)) {
 						const auto tarval = firm::get_Const_tarval(irn);
@@ -510,6 +578,9 @@ namespace minijava
 				{
 					assert(can_be_in_register(irn));
 					if (is_flag(irn)) {
+						if (firm::is_Phi(irn)) {
+							MINIJAVA_NOT_IMPLEMENTED();
+						}
 						return _get_flags_register(irn);
 					}
 					const auto oldreg = _get_register_or_dummy(irn);
@@ -522,6 +593,38 @@ namespace minijava
 					_emplace_instruction(opcode::op_mov, width, value, newreg);
 					_set_register(irn, newreg);
 					return newreg;
+				}
+
+				void _do_append_cmp_to_blk(std::vector<virtual_instruction>& vec, firm::ir_node*const cmpirn)
+				{
+					const auto lhsirn = firm::get_Cmp_left(cmpirn);
+					const auto rhsirn = firm::get_Cmp_right(cmpirn);
+					const auto lhsval = _get_irn_as_register_operand(lhsirn);
+					const auto rhsval = _get_irn_as_operand(rhsirn);
+					const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
+					vec.emplace_back(opcode::op_cmp, width, rhsval, lhsval);
+				}
+
+				void _append_cmp_to_blk(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
+				{
+					assert(firm::is_Block(blkirn));
+					assert(firm::is_Cmp(cmpirn));
+					const auto idx = _provide_bb(blkirn).index();
+					_do_append_cmp_to_blk(_assembly.blocks[idx].code, cmpirn);
+				}
+
+				void _append_cmp_to_blk_cond_branch(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
+				{
+					assert(firm::is_Block(blkirn));
+					assert(firm::is_Cmp(cmpirn));
+					_do_append_cmp_to_blk(_provide_bb(blkirn).code_on_cond_branch, cmpirn);
+				}
+
+				void _append_cmp_to_blk_fall_through(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
+				{
+					assert(firm::is_Block(blkirn));
+					assert(firm::is_Cmp(cmpirn));
+					_do_append_cmp_to_blk(_provide_bb(blkirn).code_on_fall_through, cmpirn);
 				}
 
 				void _visit_start(firm::ir_node*const USELESS irn)
@@ -726,13 +829,6 @@ namespace minijava
 				void _visit_cmp(firm::ir_node*const irn)
 				{
 					assert(firm::is_Cmp(irn));
-					assert(is_flag(irn));
-					const auto lhsirn = firm::get_Cmp_left(irn);
-					const auto rhsirn = firm::get_Cmp_right(irn);
-					const auto lhsval = _get_irn_as_register_operand(lhsirn);
-					const auto rhsval = _get_irn_as_operand(rhsirn);
-					const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
-					_emplace_instruction(opcode::op_cmp, width, rhsval, lhsval);
 					_set_register(irn, virtual_register::flags);
 				}
 
@@ -751,82 +847,111 @@ namespace minijava
 				void _visit_cond(firm::ir_node*const irn)
 				{
 					assert(firm::is_Cond(irn));
-					assert(firm::get_irn_n_outs(irn) == 2);
-					const auto selector = firm::get_Cond_selector(irn);
-					firm::ir_node* thenproj;
-					firm::ir_node* elseproj;
-					if (firm::get_Proj_num(firm::get_irn_out(irn, 0)) == firm::pn_Cond_true) {
-						thenproj = firm::get_irn_out(irn, 0);
-						elseproj = firm::get_irn_out(irn, 1);
-					} else {
-						thenproj = firm::get_irn_out(irn, 1);
-						elseproj = firm::get_irn_out(irn, 0);
-					}
-					assert(firm::is_Proj(thenproj));
-					assert(is_exec(thenproj));
-					assert(firm::is_Proj(elseproj));
-					assert(is_exec(elseproj));
-					const auto thenirn = firm::get_irn_out(thenproj, 0);
-					const auto elseirn = firm::get_irn_out(elseproj, 0);
-					assert(firm::is_Block(thenirn));
-					assert(firm::is_Block(elseirn));
-					const auto thenlab = _get_basic_block(thenirn).label;
-					const auto elselab = _get_basic_block(elseirn).label;
+					const auto targets = get_cond_targets(irn);
+					const auto thenlab = _get_basic_block(targets.then_block).label;
+					const auto elselab = _get_basic_block(targets.else_block).label;
 					assert(!thenlab.empty());
 					assert(!elselab.empty());
-					switch (_get_flags_register(selector)) {
-					default:
+					const auto selector = firm::get_Cond_selector(irn);
+					if (firm::is_Cmp(selector)) {
+						const auto relation = firm::get_Cmp_relation(selector);
+						const auto jumpop = get_conditional_jump_op(relation);
+						_append_cmp_to_blk_cond_branch(_current_block, selector);
+						_emplace_instruction_cond_branch(jumpop, bit_width{}, thenlab);
+						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
+					} else if (firm::is_Const(selector)) {
+						// This is actually an unconditional jump.
+						const auto tarval = firm::get_Const_tarval(irn);
+						const auto jumpto = !firm::tarval_is_null(tarval) ? thenlab : elselab;
+						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, jumpto);
+					} else if (firm::is_Phi(selector)) {
+						// Restore the result of a previous compare.
+						const auto memoreg = _get_data_register(selector);
+						_emplace_instruction_cond_branch(opcode::op_test, bit_width::viii, memoreg, memoreg);
+						_emplace_instruction_cond_branch(opcode::op_jnz, bit_width{}, thenlab);
+						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
+					} else {
 						MINIJAVA_NOT_REACHED();
-					case virtual_register::flags:
-						if (firm::is_Cmp(selector)) {
-							const auto cmpirn = firm::get_Cmp_relation(selector);
-							const auto jumpop = get_conditional_jump_op(cmpirn);
-							_emplace_instruction_cond_branch(jumpop, bit_width{}, thenlab);
-							_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
-						} else if (firm::is_Const(selector)) {
-							// This is actually an unconditional jump.
-							const auto tarval = firm::get_Const_tarval(irn);
-							const auto jumpto = !firm::tarval_is_null(tarval) ? thenlab : elselab;
-							_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, jumpto);
-						} else if (firm::is_Phi(selector)) {
-							// TODO use previously moved value to create a cmp and jmp
-						} else {
-							MINIJAVA_NOT_REACHED();
-						}
 					}
+				}
+
+				bool const_mode_b_as_bool(firm::ir_tarval* tv)
+				{
+					assert(tv != nullptr);
+					if (tv == firm::tarval_b_false) {
+						return false;
+					}
+					if (tv == firm::tarval_b_true) {
+						return true;
+					}
+					MINIJAVA_NOT_REACHED();
 				}
 
 				void _visit_phi(firm::ir_node*const irn)
 				{
 					assert(firm::is_Phi(irn));
 					const auto phireg = _get_register_or_dummy(irn);
-					if (phireg == virtual_register::dummy) {
-						return;
+					if (phireg != virtual_register::dummy) {
+						if (is_flag(irn)) {
+							_visit_flags_phi(irn);
+						} else {
+							_visit_data_phi(irn);
+						}
 					}
-					assert(can_be_in_register(irn, phireg));
+				}
+
+				void _visit_data_phi(firm::ir_node*const irn)
+				{
+					assert(firm::is_Phi(irn) && !is_flag(irn));
+					const auto phireg = _get_data_register(irn);
 					const auto phiblk = _blockmap.at(irn);
 					const auto arity = firm::get_Phi_n_preds(irn);
-					if (is_flag(irn)) {
-						for (auto i = 0; i < arity; ++i) {
-							const auto predirn = firm::get_Phi_pred(irn, i);
-							assert(firm::is_Const(predirn));
-							if (firm::get_Const_tarval(predirn) == firm::tarval_b_true) {
-								std::cout << "Phi b true:" << firm::get_irn_node_nr(predirn) << std::endl;
-							} else {
-								std::cout << "Phi b false:" << firm::get_irn_node_nr(predirn) << std::endl;
-								// TODO insert mov 0 in predblek
-							}
-						}
-					} else {
-						for (auto i = 0; i < arity; ++i) {
-							const auto predirn = firm::get_Phi_pred(irn, i);
-							const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
-							const auto predval = _get_irn_as_operand(predirn);
-							const auto width = get_width(irn);
+					for (auto i = 0; i < arity; ++i) {
+						const auto predirn = firm::get_Phi_pred(irn, i);
+						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
+						const auto predval = _get_irn_as_operand(predirn);
+						const auto width = get_width(irn);
+						_emplace_instruction_before_jmp(
+							predblk, phiblk,
+							opcode::op_mov, width, predval, phireg
+						);
+					}
+				}
+
+				void _visit_flags_phi(firm::ir_node*const irn)
+				{
+					assert(firm::is_Phi(irn) && is_flag(irn));
+					const auto phireg = _get_data_register(irn);  // sic
+					const auto phiblk = _blockmap.at(irn);
+					const auto arity = firm::get_Phi_n_preds(irn);
+					for (auto i = 0; i < arity; ++i) {
+						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
+						const auto predirn = firm::get_Phi_pred(irn, i);
+						if (firm::is_Const(predirn)) {
+							const auto tarval = firm::get_Const_tarval(predirn);
+							const auto byte = std::int64_t{const_mode_b_as_bool(tarval)};
 							_emplace_instruction_before_jmp(
 								predblk, phiblk,
-								opcode::op_mov, width, predval, phireg
+								opcode::op_mov, bit_width::viii, byte, phireg
 							);
+						} else if (firm::is_Cmp(predirn)) {
+							const auto relation = firm::get_Cmp_relation(predirn);
+							const auto lhsirn = firm::get_Cmp_left(predirn);
+							const auto rhsirn = firm::get_Cmp_right(predirn);
+							const auto lhsreg = _get_irn_as_register_operand(lhsirn);
+							const auto rhsval = _get_irn_as_operand(rhsirn);
+							const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
+							const auto setop = get_conditional_set_op(relation);
+							_emplace_instruction_before_jmp(
+								predblk, phiblk,
+								opcode::op_cmp, width, rhsval, lhsreg
+							);
+							_emplace_instruction_before_jmp(
+								predblk, phiblk,
+								setop, bit_width{}, phireg
+							);
+						} else {
+							MINIJAVA_NOT_REACHED_MSG(firm::get_irn_opname(predirn));
 						}
 					}
 				}
@@ -848,6 +973,7 @@ namespace minijava
 					for (auto&& kv : _metamap) {
 						auto& meta = kv.second;
 						auto& code = _assembly.blocks[meta.index()].code;
+						assert(code.empty() || !meta.code_on_fall_through.empty());
 						std::copy(
 							std::begin(meta.code_on_cond_branch),
 							std::end(meta.code_on_cond_branch),

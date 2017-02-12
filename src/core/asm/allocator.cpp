@@ -432,6 +432,7 @@ namespace minijava
 						);
 						break;
 					case opcode::op_cmp:
+					case opcode::op_test:
 					{
 						assert_args_empty();
 						auto op1 = instr.op1.apply_visitor(visitor);
@@ -442,11 +443,11 @@ namespace minijava
 						);
 						break;
 					}
-					case opcode::op_seta:
-					case opcode::op_setae:
-					case opcode::op_setb:
-					case opcode::op_setbe:
 					case opcode::op_sete:
+					case opcode::op_setl:
+					case opcode::op_setg:
+					case opcode::op_setle:
+					case opcode::op_setge:
 					case opcode::op_setne:
 						assert_args_empty();
 						assert(!is_argument(instr.op1));
@@ -463,6 +464,8 @@ namespace minijava
 					case opcode::op_jle:
 					case opcode::op_jge:
 					case opcode::op_jne:
+					case opcode::op_jz:
+					case opcode::op_jnz:
 						assert_args_empty();
 						assert(!empty(instr.op1) && empty(instr.op2));
 						real_block.code.emplace_back(instr.code, instr.width, *get_name(instr.op1));
