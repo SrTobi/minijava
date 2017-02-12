@@ -631,7 +631,7 @@ namespace minijava
 					const auto lhsreg = _get_data_register(lhsirn);
 					const auto rhsreg = _get_data_register(rhsirn);
 					const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
-					_emplace_instruction(opcode::op_cmp, width, lhsreg, rhsreg);
+					_emplace_instruction(opcode::op_cmp, width, rhsreg, lhsreg);
 					_set_register(irn, virtual_register::flags);
 				}
 
