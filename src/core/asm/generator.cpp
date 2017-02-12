@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <iostream>
+//#include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
@@ -174,12 +174,12 @@ namespace minijava
 					const auto n = firm::get_irn_n_outs(start);
 					for (auto i = 0u; i < n; ++i) {
 						const auto out = firm::get_irn_out(start, i);
-						std::clog << "\t[outer] " << to_string(out) << std::endl;
+						//std::clog << "\t[outer] " << to_string(out) << std::endl;
 						if (firm::is_Proj(out)) {
 							const auto m = firm::get_irn_n_outs(out);
 							for (auto j = 0u; j < m; ++j) {
 								const auto irn = firm::get_irn_out(out, j);
-								std::clog << "\t\t[inner] " << to_string(irn) << std::endl;
+								//std::clog << "\t\t[inner] " << to_string(irn) << std::endl;
 								if (firm::is_Proj(irn)) {
 									const auto idx = firm::get_Proj_num(irn);
 									assert(idx < arity);
@@ -192,10 +192,10 @@ namespace minijava
 					for (std::size_t i = 0; i < arity; ++i) {
 						const auto irn = argument_nodes[i];
 						if (irn != nullptr) {
-							std::clog << "\tParameter #" << i << " is in register " << number(argreg) << " " << to_string(irn) << std::endl;
+							//std::clog << "\tParameter #" << i << " is in register " << number(argreg) << " " << to_string(irn) << std::endl;
 							_set_register(irn, argreg);
 						} else {
-							std::clog << "\tParameter #" << i << " is unused" << std::endl;
+							//std::clog << "\tParameter #" << i << " is unused" << std::endl;
 						}
 						argreg = next_argument_register(argreg);
 					}
@@ -203,7 +203,7 @@ namespace minijava
 
 				void visit_first_pass(firm::ir_node*const irn)
 				{
-					std::clog << "\t1st pass: " << to_string(irn) << std::endl;
+					//std::clog << "\t1st pass: " << to_string(irn) << std::endl;
 					if (firm::is_Block(irn)) {
 						_current_block = irn;
 					} else {
@@ -225,7 +225,7 @@ namespace minijava
 				{
 					_current_block = _blockmap.at(irn);
 					_ensure_basic_block(_current_block);
-					std::clog << "\t2nd pass: " << to_string(irn) << "\t --> " << std::flush;
+					//std::clog << "\t2nd pass: " << to_string(irn) << "\t --> " << std::flush;
 					switch (firm::get_irn_opcode(irn)) {
 					case firm::iro_Start:
 						_visit_start(irn);
@@ -293,7 +293,7 @@ namespace minijava
 					default:
 						MINIJAVA_NOT_REACHED_MSG(firm::get_irn_opname(irn));
 					}
-					std::clog << static_cast<int>(_get_register_or_dummy(irn)) << std::endl;
+					//std::clog << static_cast<int>(_get_register_or_dummy(irn)) << std::endl;
 				}
 
 				virtual_assembly get() &&
@@ -334,7 +334,7 @@ namespace minijava
 					assert(reg != virtual_register::dummy);
 					const auto info = _registers.insert({irn, reg});
 					if (!info.second) {
-						MINIJAVA_THROW_ICE(internal_compiler_error);
+						assert(reg == info.first->second);
 					}
 				}
 
@@ -449,15 +449,16 @@ namespace minijava
 					if (is_flag(irn)) {
 						return _get_flags_register(irn);
 					}
-					const auto val = _get_irn_as_operand(irn);
-					if (const auto regptr = get_register(val)) {
-						return *regptr;
+					const auto oldreg = _get_register_or_dummy(irn);
+					if (oldreg != virtual_register::dummy) {
+						return oldreg;
 					}
+					const auto value = _get_irn_as_operand(irn);
 					const auto width = get_width(irn);
-					const auto reg = _next_data_register();
-					_emplace_instruction(opcode::op_mov, width, val, reg);
-					_set_register(irn, reg);
-					return reg;
+					const auto newreg = _next_data_register();
+					_emplace_instruction(opcode::op_mov, width, value, newreg);
+					_set_register(irn, newreg);
+					return newreg;
 				}
 
 				void _visit_start(firm::ir_node*const USELESS irn)
@@ -492,9 +493,6 @@ namespace minijava
 					const auto lhs = firm::get_binop_left(irn);
 					const auto rhs = firm::get_binop_right(irn);
 					const auto width = get_width(irn);
-					//std::clog << to_string(irn) << std::endl;
-					//std::clog << "\tLHS: " << to_string(irn) << std::endl;
-					//std::clog << "\tRHS: " << to_string(irn) << std::endl;
 					assert(get_width(lhs) == width);
 					assert(get_width(rhs) == width);
 					const auto dstreg = _next_data_register();
@@ -662,8 +660,8 @@ namespace minijava
 					assert(is_flag(irn));
 					const auto lhsirn = firm::get_Cmp_left(irn);
 					const auto rhsirn = firm::get_Cmp_right(irn);
-					const auto lhsval = _get_irn_as_operand(lhsirn);
-					const auto rhsval = _get_irn_as_register_operand(rhsirn);
+					const auto lhsval = _get_irn_as_register_operand(lhsirn);
+					const auto rhsval = _get_irn_as_operand(rhsirn);
 					const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
 					_emplace_instruction(opcode::op_cmp, width, rhsval, lhsval);
 					_set_register(irn, virtual_register::flags);
@@ -800,7 +798,7 @@ namespace minijava
 			const auto backedge_guard = make_backedge_guard(irg);
 			const auto entity = firm::get_irg_entity(irg);
 			const auto ldname = firm::get_entity_ld_name(entity);
-			std::clog << "Assembling function '" << ldname << "' ..." << std::endl;
+			//std::clog << "Assembling function '" << ldname << "' ..." << std::endl;
 			auto gen = generator{ldname};
 			firm::irg_walk_blkwise_graph(
 				irg,
@@ -814,7 +812,7 @@ namespace minijava
 				visit_second_pass,
 				&gen
 			);
-			std::clog << std::endl;
+			//std::clog << std::endl;
 			return std::move(gen).get();
 		}
 
