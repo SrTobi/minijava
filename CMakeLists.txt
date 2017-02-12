@@ -72,8 +72,17 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	opt/conditional
+	opt/control_flow
+	opt/folding
+	opt/inline
+	opt/load_store
 	opt/lowering
 	opt/opt
+	opt/unroll
+	opt/unused_method
+	opt/unused_params
+	opt/tailrec
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc

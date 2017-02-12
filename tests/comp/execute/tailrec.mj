@@ -1,0 +1,24 @@
+// pragma output 42
+class tailrec {
+
+	public static void main(String[] args) {
+		tailrec t = new tailrec();
+		int i = 0;
+		while (i < 100000) {
+			t.run();
+			i = i + 1;
+		}
+		System.out.println(42);
+	}
+
+	public void run() {
+		f(10000, 1);
+	}
+
+	public int f(int i, int n) {
+		if (i > 0)
+			return f(i - 1, n+1);
+		return n;
+	}
+
+}
