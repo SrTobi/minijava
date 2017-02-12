@@ -75,6 +75,7 @@ set(COMPONENTS
 	opt/conditional
 	opt/control_flow
 	opt/folding
+	opt/gc
 	opt/inline
 	opt/load_store
 	opt/lowering

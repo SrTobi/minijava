@@ -9,6 +9,7 @@
 #include "opt/conditional.hpp"
 #include "opt/control_flow.hpp"
 #include "opt/folding.hpp"
+#include "opt/gc.hpp"
 #include "opt/inline.hpp"
 #include "opt/load_store.hpp"
 #include "opt/lowering.hpp"
@@ -46,7 +47,8 @@ namespace minijava
 			{ "unroll", opt_constr_impl<opt::unroll>{}},
 			{ "control_flow", opt_constr_impl<opt::control_flow>{}},
 			{ "tailrec", opt_constr_impl<opt::tailrec>{}},
-			{ "inliner", opt_constr_impl<opt::inliner>{}}
+			{ "inliner", opt_constr_impl<opt::inliner>{}},
+			{ "gc", opt_constr_impl<opt::gc>{}},
 		};
 
 		const std::unordered_map<std::string, opt_constructor>& get_opt_constr_mapping()
