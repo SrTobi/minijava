@@ -58,6 +58,16 @@ if(NOT WIN32)
 			--
 			"${minijava_exec}" --compile-firm
 	)
+
+	add_test(
+			NAME comptest-compile-firm-opt
+			COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
+			"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
+			"--define=LEXER,PARSER,CHECK,FIRM"
+			--execute
+			--
+			"${minijava_exec}" -O3 --compile-firm
+	)
 endif()
 
 add_test(
@@ -76,7 +86,16 @@ add_test(
 		"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
 		"--define=LEXER,PARSER,CHECK,FIRM,ASM"
 		--execute
-		--debug
 		--
 		"${minijava_exec}"
+)
+
+add_test(
+		NAME comptest-asm-opt
+		COMMAND "${PYTHON_EXECUTABLE}" "${comptest_exec}"
+		"--input=${CMAKE_CURRENT_SOURCE_DIR}/execute/*.mj"
+		"--define=LEXER,PARSER,CHECK,FIRM,ASM"
+		--execute
+		--
+		"${minijava_exec}" -O3
 )
