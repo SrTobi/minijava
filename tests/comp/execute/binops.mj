@@ -1,0 +1,20 @@
+// pragma output 10 20 30 40 50 10 20 30 40 50
+
+class Test {
+
+	public static void main(String[] args) {
+		/* Constants */
+		System.out.println( 4 +  6);
+		System.out.println(21 -  1);
+		System.out.println(15 *  2);
+		System.out.println(81 /  2);
+		System.out.println(50 % 51);
+		/* Run-time values */
+		System.out.println(System.id( 4) + System.id( 6));
+		System.out.println(System.id(21) - System.id( 1));
+		System.out.println(System.id(15) * System.id( 2));
+		System.out.println(System.id(81) / System.id( 2));
+		System.out.println(System.id(50) % System.id(51));
+	}
+
+}
