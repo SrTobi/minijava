@@ -9,6 +9,23 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from distutils.util import strtobool
+
+
+COMPILER_TIMEOUT = 10.0  # seconds
+
+EXECUTABLE_TIMEOUT = 10.0  # seconds
+
+USE_ANSI_COLOR = (
+    os.name == 'posix' and os.isatty(sys.stdout.fileno()) and os.isatty(sys.stderr.fileno())
+)
+
+try:
+    USE_ANSI_COLOR = (
+        lambda s : bool(strtobool(s)) if s is not None else USE_ANSI_COLOR
+    )(os.getenv('USE_ANSI_COLOR'))
+except ValueError:
+    print("warning: Cannot convert value of environment variable USE_ANSI_COLOR to boolean")
 
 
 def main(args):
@@ -29,7 +46,7 @@ def main(args):
         help="command-line to invoke the compiler"
     )
     ap.add_argument(
-        '--input', metavar='PATTERN', dest='pattern', type=str, required=True,
+        '--input', metavar='PATTERN', dest='patterns', action='append', required=True,
         help="POSIX globbing expression to select input files"
     )
     ap.add_argument(
@@ -49,7 +66,7 @@ def main(args):
         help="show this help message and exit"
     )
     ns = do_parse_args(ap, args)
-    inputs = sorted(glob.glob(ns.pattern))
+    inputs = sorted([name for pattern in ns.patterns for name in glob.glob(pattern)])
     ppsymbols = frozenset(ns.define) if ns.define else frozenset()
     if ns.define is not None and len(ppsymbols) != len(ns.define):
         raise SetupError("Duplicate pre-defined symbols")
@@ -100,6 +117,15 @@ class SetupError(Exception):
 def run_all(inputs, ppsymbols, ns):
     width = max(map(len, map(os.path.basename, inputs)))
     statusfmt = '{:' + str(width) + 's}   {:s}'
+    failurefmt = 'failure: {:s}'
+    xfailurefmt = 'failure (known issue): {:s}'
+    if USE_ANSI_COLOR:
+        statusfmt_fail = '\033[31m' + statusfmt + '\033[39m'
+        statusfmt_pass = '\033[32m' + statusfmt + '\033[39m'
+        statusfmt_skip = '\033[33m' + statusfmt + '\033[39m'
+        failurefmt = '\033[1m' + failurefmt + '\033[22m'
+    else:
+        (statusfmt_fail, statusfmt_pass, statusfmt_skip) = (statusfmt, statusfmt, statusfmt)
     failures = 0
     for src in inputs:
         (dirname, basename) = os.path.split(src)
@@ -108,18 +134,18 @@ def run_all(inputs, ppsymbols, ns):
         with open(src) as istr:
             (program, pragmas) = load_program(istr, ppsymbols, ns.debug, basedir=dirname)
         if 'skip' in pragmas:
-            print(statusfmt.format(basename, 'SKIPPED'))
+            print(statusfmt_skip.format(basename, 'SKIPPED'))
             continue
         try:
             run_single(program, ns, pragmas)
-            print(statusfmt.format(basename, 'PASSED'))
+            print(statusfmt_pass.format(basename, 'PASSED'))
         except Failure as e:
-            print(statusfmt.format(basename, 'FAILED'))
+            print(statusfmt_fail.format(basename, 'FAILED'))
             if 'failure' not in pragmas:
                 failures += 1
-                print("failure:", e, file=sys.stderr)
+                print(failurefmt.format(str(e)), file=sys.stderr)
             else:
-                print("failure (known issue):", e, file=sys.stderr)
+                print(xfailurefmt.format(str(e)), file=sys.stderr)
         if ns.debug:
             print("DEBUG:")
     return failures
@@ -145,7 +171,12 @@ def run_compiler(program, ns, pragmas, directory=None):
         stderr=subprocess.PIPE,
         cwd=directory
     )
-    (out, err) = proc.communicate(input=program.encode('ascii'))
+    try:
+        (out, err) = proc.communicate(input=program.encode('ascii'), timeout=COMPILER_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        raise Failure("Compiler did not complete within {:.2f} seconds".format(COMPILER_TIMEOUT))
     if ns.debug:
         log_popen_result(proc, out, err)
     expected = pragmas.get('status', 0)
@@ -174,7 +205,12 @@ def run_executable(ns, pragmas, directory=None):
         cwd=directory
     )
     with open(pragmas.get('stdin', os.devnull), 'rb') as istr:
-        (out, err) = proc.communicate(istr.read())
+        try:
+            (out, err) = proc.communicate(input=istr.read(), timeout=EXECUTABLE_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.communicate()
+            raise Failure("Executable did not complete within {:.2f} seconds".format(EXECUTABLE_TIMEOUT))
     if ns.debug:
         log_popen_result(proc, out, err)
     check_exec_status(pragmas, proc.returncode)
@@ -367,11 +403,10 @@ def abscmd(cmd):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
-    # try:
-    #     sys.exit(main(sys.argv[1:]))
-    # except (AssertionError, TypeError, NameError):
-    #     raise
-    # except Exception as e:
-    #     print("error:", e, file=sys.stderr)
-    #     sys.exit(1)
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except (AssertionError, TypeError, NameError):
+        raise
+    except Exception as e:
+        print("error:", e, file=sys.stderr)
+        sys.exit(1)

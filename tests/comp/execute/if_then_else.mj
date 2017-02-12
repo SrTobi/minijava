@@ -1,16 +1,16 @@
 // pragma output 0 2212 0 43 0 43 0 42
 
-class a {
+class Test {
 
 	public static void main(String[]ar) {
-	    a a = new a();
-		a.print(0);
-		a.print(1);
-		a.print(2);
-		a.print(3);
+		Test test = new Test();
+		test.function(0);
+		test.function(1);
+		test.function(2);
+		test.function(3);
 	}
 
-	public void print(int x) {
+	public void function(int x) {
 		if (true) System.out.println(0);
 		if (x == 0) {
 			System.out.println(2212);

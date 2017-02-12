@@ -8,20 +8,25 @@
 #include <vector>
 #include <tuple>
 
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
+#include "asm/asm.hpp"
+#include "asm/firm_backend.hpp"
 #include "exceptions.hpp"
 #include "global.hpp"
-#include "irg/irg.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
+#include "irg/irg.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/token_iterator.hpp"
+#include "opt/opt.hpp"
 #include "parser/ast_misc.hpp"
 #include "parser/parser.hpp"
 #include "runtime/host_cc.hpp"
@@ -46,12 +51,13 @@ namespace minijava
 		enum class compilation_stage
 		{
 			input = 1,
-			lexer = 2,
-			parser = 3,
-			print_ast = 4,
-			semantic = 5,
-			dump_ir = 6,
-			compile_firm = 7,
+			lexer,
+			parser,
+			print_ast,
+			semantic,
+			dump_ir,
+			dump_ir_opt,
+			compile_firm,
 		};
 
 
@@ -72,6 +78,9 @@ namespace minijava
 
 			// Prevent output to the log?
 			bool quiet = false;
+
+			// Ordered list of optimizations
+			std::vector<std::string> optimizations{};
 		};
 
 
@@ -123,6 +132,18 @@ namespace minijava
 				"input or output stream respectively\n"
 			);
 		}
+		// Prints a list of available optimizations to `out`.
+		void print_opts_list(file_output& out)
+		{
+			const auto& opts = get_optimization_names();
+
+			int i = 1;
+			for(const auto& name : opts)
+			{
+				out.print("%i. %s\n", i, name.c_str());
+				++i;
+			}
+		}
 
 
 		// Determines the compilation stage at which to intercept from the
@@ -150,10 +171,78 @@ namespace minijava
 			if (varmap.count("dump-ir")) {
 				return compilation_stage::dump_ir;
 			}
+			if (varmap.count("dump-ir-opt")) {
+				return compilation_stage::dump_ir_opt;
+			}
 			if (varmap.count("compile-firm")) {
 				return compilation_stage::compile_firm;
 			}
 			return compilation_stage{};
+		}
+
+		// Sorts a list of optimizations according to the available optimizations.
+		// Duplications will be ereased
+		void sort_optimizations(std::vector<std::string>& opts)
+		{
+			const auto& available_opts = get_optimization_names();
+
+			std::vector<std::string> ordered{};
+			for(const auto& opt : available_opts)
+			{
+				if(std::count(opts.begin(), opts.end(), opt)) {
+					ordered.push_back(opt);
+				}
+			}
+			opts = std::move(ordered);
+		}
+
+		// Checks if a list contains names that are not optimizations.
+		// Reports invalid optimization names
+		void check_optimizations(const std::vector<std::string>& opts, file_output& out)
+		{
+			bool error = false;
+			const auto& available_opts = get_optimization_names();
+			for (const auto& opt : opts) {
+				if(!std::count(available_opts.begin(), available_opts.end(), opt)) {
+					out.print("unknown optimization: %s!\n", opt.c_str());
+					error = true;
+				}
+			}
+			if(error) {
+				out.print("Use --opts-list for a list of available optimizations\n");
+				throw std::runtime_error("Unknown optimizations specified");
+			}
+		}
+
+		std::vector<std::string> get_optimizations(const po::variables_map& varmap, file_output& out)
+		{
+			const auto& default_opts = get_optimization_names();
+
+			if (varmap.count("O")) {
+				switch(varmap["O"].as<unsigned int>())
+				{
+				case 0:
+					return {};
+				case 1:
+					return {"folding"};
+				default:
+				case 2:
+					return default_opts;
+				};
+			} else if (varmap.count("opts")) {
+				std::vector<std::string> opts;
+				boost::split(opts, varmap["opts"].as<std::string>(), boost::is_any_of(","));
+				check_optimizations(opts, out);
+				sort_optimizations(opts);
+				return opts;
+			} else if (varmap.count("opts-ordered")) {
+				std::vector<std::string> opts;
+				boost::split(opts, varmap["opts-ordered"].as<std::string>(), boost::is_any_of(","));
+				check_optimizations(opts, out);
+				return opts;
+			}
+
+			return default_opts;
 		}
 
 
@@ -181,6 +270,7 @@ namespace minijava
 				("print-ast", "stop after parsing and print the parsed ast")
 				("check", "stop after semantic analysis and report semantic errors")
 				("dump-ir", "stop after IR creation and dump the intermediate representation into the current directory")
+				("dump-ir-opt", "same as --dump-ir but only stop after optimizing / lowering")
 				("compile-firm", "stop after IR creation and compile the input using the firm backend");
 			auto other = po::options_description{"Other Options"};
 			other.add_options()
@@ -189,8 +279,14 @@ namespace minijava
 			auto inputfiles = po::options_description{"Input Files"};
 			inputfiles.add_options()
 				("input", po::value<std::string>(&setup.input)->default_value("-"), "");
+			auto opts = po::options_description{"Optimization"};
+			opts.add_options()
+				("O,O", po::value<unsigned int>(), "Optimization level (-O0, -O1, -O3)")
+				("opts-list", "list available optimizations")
+				("opts", po::value<std::string>(), "turn on specific optimizations")
+				("opts-ordered", po::value<std::string>(), "turn on specific optimizations in defined order");
 			auto options = po::options_description{};
-			options.add(generic).add(interception).add(other).add(inputfiles);
+			options.add(generic).add(interception).add(other).add(inputfiles).add(opts);
 			auto positional = po::positional_options_description{};
 			positional.add("input", 1);
 			auto varmap = po::variables_map{};
@@ -198,19 +294,26 @@ namespace minijava
 			po::store(po::command_line_parser(argc, args.data())
 			         .options(options).positional(positional).run(), varmap);
 			if (varmap.count("help")) {
-				print_help(out, {&generic, &interception, &other});
+				print_help(out, {&generic, &interception, &opts, &other});
 				return false;
 			}
 			if (varmap.count("version")) {
 				print_version(out);
 				return false;
 			}
+
 			if (varmap.count("quiet")) {
 				setup.quiet = true;
+			}
+
+			if (varmap.count("opts-list")) {
+				print_opts_list(out);
+				return false;
 			}
 			po::notify(varmap);
 			check_mutex_option_group(interception, varmap);
 			setup.stage = get_interception_stage(varmap);
+			setup.optimizations = get_optimizations(varmap, out);
 			return true;
 		}
 
@@ -227,10 +330,13 @@ namespace minijava
 			}
 		}
 
-
 		void run_compiler_stages(file_data& in, file_output& out,
-		                         const compilation_stage stage, const std::string& cc, symbol_pool<>& pool)
+		                         const compilation_stage stage, const std::string& cc, symbol_pool<>& pool,
+		                         const std::vector<std::string>& optimizations)
 		{
+			namespace fs = boost::filesystem;
+			using namespace std::string_literals;
+
 			auto lex = make_lexer(std::begin(in), std::end(in), pool, pool);
 			const auto tokfirst = token_begin(lex);
 			const auto toklast = token_end(lex);
@@ -254,22 +360,34 @@ namespace minijava
 			auto firm = initialize_firm();
 			auto ir = create_firm_ir(*firm, *ast, sem_info, in.filename());
 			if (stage == compilation_stage::dump_ir) {
-				dump_firm_ir(ir); // TODO: allow setting directory
+				dump_firm_ir(ir);  // TODO: allow setting directory
 				return;
 			}
+			// optimize
+			for(const auto& opt_name : optimizations) {
+				register_optimization(opt_name);
+			}
+			optimize(ir);
+			if (stage == compilation_stage::dump_ir_opt) {
+				dump_firm_ir(ir);  // TODO: allow setting directory
+				return;
+			}
+			// From now on, output defaults to 'a.out'/'a.exe', not to stdout.
+			if (out.filename().empty()) {
+				out = file_output{MINIJAVA_WINDOWS_ASSEMBLY ? "a.exe" : "a.out"};
+			}
+			const auto tempdir = fs::temp_directory_path();
+			const auto asmname = fs::unique_path(tempdir / "%%%%%%%%%%%%.s").string();
+			std::fprintf(stderr, "Writing assembly to file: %s\n", asmname.c_str());  // TODO: FIXME: Remove again!
+			auto asmout = file_output{asmname};
 			if (stage == compilation_stage::compile_firm) {
-				namespace fs = boost::filesystem;
-				const auto pattern = fs::temp_directory_path() / "%%%%%%%%%%%%.s";
-				const auto tmp_path = fs::unique_path(pattern);
-				const auto assembly_filename = tmp_path.string();
-				auto assembly_file = file_output{assembly_filename};
-				emit_x64_assembly_firm(ir, assembly_file);
-				assembly_file.close();
-				link_runtime(cc, "a.out", assembly_filename);
-				return;
+				emit_x64_assembly_firm(ir, asmout);
+			} else {
+				assert(stage == compilation_stage{});
+				assemble(ir, asmout);
 			}
-			// If we get until here, we have a problem...
-			throw not_implemented_error{"The rest of the compiler has yet to be written"};
+			asmout.close();
+			link_runtime(cc, out.filename(), asmname);
 		}
 
 		std::tuple<std::size_t, std::size_t, std::string>
@@ -349,7 +467,8 @@ namespace minijava
 		// Runs the compiler reading input from `istr`, writing output to
 		// `ostr` and optionally intercepting compilation at `stage`.
 		void run_compiler(file_data& in, file_output& out, logger& log,
-		                  const compilation_stage stage, const std::string& cc)
+		                  const compilation_stage stage, const std::string& cc,
+		                  const std::vector<std::string>& optimizations)
 		{
 			using namespace std::string_literals;
 			if (stage == compilation_stage::input) {
@@ -359,7 +478,7 @@ namespace minijava
 			auto pool = symbol_pool<>{};  // TODO: Use an appropriate allocator
 
 			try {
-				run_compiler_stages(in, out, stage, cc, pool);
+				run_compiler_stages(in, out, stage, cc, pool, optimizations);
 			} catch(lexical_error& e) {
 				print_source_error(log, e, in, "tokenizing");
 				throw;
@@ -450,12 +569,12 @@ namespace minijava
 
 		try_adjust_stack_limit(log);
 		auto in = (setup.input == "-")
-			? file_data{thestdin, "stdin"}
+			? file_data{thestdin}
 			: file_data{setup.input};
 		auto out = (setup.output == "-")
-			? file_output{thestdout, "stdout"}
+			? file_output{thestdout}
 			: file_output{setup.output};
-		run_compiler(in, out, log, setup.stage, setup.cc);
+		run_compiler(in, out, log, setup.stage, setup.cc, setup.optimizations);
 		out.finalize();
 	}
 

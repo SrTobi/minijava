@@ -12,10 +12,13 @@
 namespace firm
 {
 
-	extern "C" {
-		#include "libfirm/firm.h"
-	}
+	extern "C"
+	{
 
-}
+#include "libfirm/firm.h"
 
-#endif
+	}  // extern "C"
+
+}  // namespace firm
+
+#endif  // MINIJAVA_PARSED_BY_DOXYGEN

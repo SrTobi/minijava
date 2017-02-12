@@ -123,6 +123,14 @@ responsibility to keep the local mirror up to date.
     $ git clone --mirror http://pp.ipd.kit.edu/git/libfirm.git
     $ export LIBFIRM_GIT_URL="${PWD}/libfirm.git"
 
+By default, we use a specific version (commit) of Firm.  You can override this
+via the environment variable `LIBFIRM_GIT_REVISION` which should be set to a
+commit-ish.  In particular, using `LIBFIRM_GIT_REVISION=master` will put you on
+the bleeding edge.
+
+**Warning:** On Windows, the update functionality is broken and will silently
+do nothing.  If you want to switch to another Firm version, you'll have to do a
+clean build.
 
 ### Building for Humans
 

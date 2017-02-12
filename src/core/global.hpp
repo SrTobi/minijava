@@ -46,6 +46,17 @@
 #define MINIJAVA_ENVVAR_NO_MMAP "MINIJAVA_NO_MMAP"
 
 
+#if defined (_WIN32) || MINIJAVA_PARSED_BY_DOXYGEN
+/**
+ * @brief
+ *     Controls whether assembly for Windows should be produced
+ */
+#   define MINIJAVA_WINDOWS_ASSEMBLY 1
+#else
+#   define MINIJAVA_WINDOWS_ASSEMBLY 0
+#endif
+
+
 /**
  * @brief
  *     Top-level `namespace` for everything in this project.

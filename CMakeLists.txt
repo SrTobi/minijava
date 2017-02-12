@@ -41,12 +41,18 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # mark as system due to https:
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(COMPONENTS
+	asm/allocator
 	asm/asm
+	asm/assembly
+	asm/basic_block
 	asm/data
+	asm/firm_backend
+	asm/generator
 	asm/instruction
+	asm/macros
 	asm/opcode
+	asm/output
 	asm/register
-	asm/text
 	cli
 	exceptions
 	global
@@ -56,7 +62,6 @@ set(COMPONENTS
 	irg/global_firm_state
 	irg/globals
 	irg/irg
-	irg/lowering
 	irg/mangle
 	irg/method_builder
 	irg/type_builder
@@ -68,7 +73,18 @@ set(COMPONENTS
 	lexer/token_iterator
 	lexer/token_type
 	lexer/token_type_set
+	opt/conditional
+	opt/control_flow
+	opt/folding
+	opt/gc
+	opt/inline
+	opt/load_store
+	opt/lowering
 	opt/opt
+	opt/unroll
+	opt/unused_method
+	opt/unused_params
+	opt/tailrec
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc

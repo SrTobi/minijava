@@ -17,13 +17,17 @@
 #define BOOST_TEST_MODULE  cli
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
+#include <boost/filesystem.hpp>
 
-#ifdef __unix__
-#  define POSIX_EH  true
-#else
-#  define POSIX_EH  false
-#endif
-
+namespace
+{
+	bool have_dev_full()
+	{
+		namespace fs = boost::filesystem;
+		static const bool result = fs::exists(fs::path("/dev/full"));
+		return result;
+	}
+}
 
 // List of all options that select a specific compilier action.
 static const std::string all_action_options[] = {
@@ -84,7 +88,7 @@ BOOST_DATA_TEST_CASE(diagnostic_options_produce_output_on_stdout,
 BOOST_DATA_TEST_CASE(if_stdout_not_writable_diagnostic_options_throw,
                      all_diagnostic_options)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		using namespace std::string_literals;
 		testaux::temporary_file in{};
 		testaux::temporary_file err{};
@@ -392,7 +396,7 @@ BOOST_DATA_TEST_CASE(if_stdin_is_not_readable_all_actions_throw_and_output_nothi
 BOOST_DATA_TEST_CASE(if_stdout_is_not_writeable_all_actions_throw,
                      all_action_options)
 {
-	if (POSIX_EH) {
+	if (have_dev_full()) {
 		using namespace std::string_literals;
 		testaux::temporary_file in{valid_program_data};
 		testaux::temporary_file err{};

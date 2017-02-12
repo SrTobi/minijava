@@ -4,7 +4,6 @@
 
 #include "firm.hpp"
 #include "irg/globals.hpp"
-#include "irg/lowering.hpp"
 #include "irg/method_builder.hpp"
 #include "irg/type_builder.hpp"
 
@@ -78,15 +77,6 @@ namespace minijava
 			firm::ir_set_dump_path(directory.c_str());
 		}
 		firm::dump_all_ir_graphs("");
-	}
-
-	void emit_x64_assembly_firm(firm_ir& ir, file_output& output_file)
-	{
-		assert(ir);
-		const auto guard = make_irp_guard(*ir->second, ir->first);
-		irg::lower();
-		firm::be_parse_arg("isa=amd64");
-		firm::be_main(output_file.handle(), output_file.filename().c_str());
 	}
 
 }  // namespace minijava

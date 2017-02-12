@@ -49,6 +49,7 @@ namespace minijava
 					 * The easiest way to disable this behavior in a portable
 					 * manner is to link everything statically. */
 					"-static",
+					"-m64",
 					"-o",
 					output_filename,
 					assembly_filename,

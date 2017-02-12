@@ -16,6 +16,7 @@
 #include "semantic/semantic.hpp"
 #include "firm.hpp"
 
+
 namespace minijava
 {
 
@@ -104,22 +105,5 @@ namespace minijava
 	 *
 	 */
 	void dump_firm_ir(firm_ir& ir, const std::string& directory = "");
-
-	/**
-	 * @brief
-	 *     Converts the given intermediate representation into x64 assembly
-	 *     using Firm's own backend and writes it to the given file.
-	 *
-	 * @param ir
-	 *     intermediate representation
-	 *
-	 * @param output_file
-	 *     assembly file
-	 *
-	 * @throws std::logic_error
-	 *     if `libfirm`'s global state is not what is expected
-	 *
-	 */
-	void emit_x64_assembly_firm(firm_ir& ir, file_output& output_file);
 
 }  // namespace minijava

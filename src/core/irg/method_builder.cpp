@@ -39,11 +39,11 @@ namespace minijava
 
 			firm::ir_node* unmaterialize(firm::ir_node* value)
 			{
-				auto mode_B = primitive_types::get_instance().boolean_mode;
-				if (firm::get_irn_mode(value) == mode_B) {
+				const auto boolean_mode = primitive_types::get_instance().boolean_mode;
+				if (firm::get_irn_mode(value) == boolean_mode) {
 					return firm::new_Cmp(
 							value,
-							firm::new_Const_long(mode_B, 1),
+							firm::new_Const_long(boolean_mode, 1),
 							firm::ir_relation_equal
 					);
 				}
@@ -702,23 +702,10 @@ namespace minijava
 
 				void visit(const ast::main_method& node) override
 				{
-					auto irg = firm::get_current_ir_graph();
-					auto method_entity = _firm_types.methodmap.at(node);
-					auto method_type = firm::get_entity_type(method_entity);
 					auto locals = _sem_info.locals_annotations().at(node);
-					auto args = firm::get_irg_args(irg);
-					auto num_params = static_cast<int>(node.parameters().size());
+					assert(node.parameters().size() == 0);
 					auto current_id = int{0};
 					for (const auto& local : locals) {
-						if (current_id < num_params) {
-							auto param_type = firm::get_method_param_type(method_type, static_cast<size_t>(current_id));
-							auto param_mode = firm::get_type_mode(param_type);
-							firm::set_value(current_id, firm::new_Proj(
-									args,
-									param_mode,
-									static_cast<unsigned int>(current_id - 1)
-							));
-						}
 						_var_ids.insert(std::make_pair(local, current_id++));
 					}
 					node.body().accept(*this);
@@ -839,6 +826,7 @@ namespace minijava
 		                        const ast::main_method& method)
 		{
 			auto irg = firm::get_current_ir_graph();
+			firm::set_irp_main_irg(irg);
 			method_generator generator{sem_info, firm_types};
 			method.accept(generator);
 			// main has no return value - so we don't need method_generator.current_node()

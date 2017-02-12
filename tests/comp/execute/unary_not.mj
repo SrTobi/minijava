@@ -1,4 +1,4 @@
-// pragma output 1 1 1
+// pragma output 1 1 1 1
 class a {
 
     public static void main(String[] args) {
@@ -14,6 +14,9 @@ class a {
         if (!(2 == x())) System.out.println(1);
         if (!(true)) System.out.println(0);
         if (!(false)) System.out.println(1);
+        boolean a = !(1 == 2);
+        if (!a) System.out.println(0);
+        if (a) System.out.println(1);
     }
 
     public int x() { return 42; }

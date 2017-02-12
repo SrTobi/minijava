@@ -6,10 +6,12 @@
 #include <setjmp.h>
 #include <string.h>
 
+
+__attribute__ ((sysv_abi))
 extern void minijava_main(void);
 
-static const char* program_name;
 
+static const char* program_name;
 static jmp_buf exception_jump_buffer;
 
 
@@ -18,6 +20,7 @@ static inline int32_t maximum(const int32_t a, const int32_t b)
 	return (a > b) ? a : b;
 }
 
+__attribute__ ((sysv_abi))
 void* mj_runtime_new(const int32_t nmemb, const int32_t size)
 {
 	if (nmemb < 0) {
@@ -37,16 +40,19 @@ void* mj_runtime_new(const int32_t nmemb, const int32_t size)
 	return memory;
 }
 
+__attribute__ ((sysv_abi))
 int32_t mj_runtime_id(const int32_t x)
 {
 	return x;
 }
 
+__attribute__ ((sysv_abi))
 void mj_runtime_exit(const int32_t status)
 {
 	exit((int) status);
 }
 
+__attribute__ ((sysv_abi))
 void mj_runtime_println(const int32_t n)
 {
 	const long promoted = n;  /* long is guaranteed to be at least 32 bit */
@@ -56,6 +62,7 @@ void mj_runtime_println(const int32_t n)
 	}
 }
 
+__attribute__ ((sysv_abi))
 void mj_runtime_write(const int32_t b)
 {
 	/*
@@ -69,6 +76,7 @@ void mj_runtime_write(const int32_t b)
 	}
 }
 
+__attribute__ ((sysv_abi))
 void mj_runtime_flush(void)
 {
 	if (fflush(stdout) < 0) {
@@ -77,6 +85,7 @@ void mj_runtime_flush(void)
 	}
 }
 
+__attribute__ ((sysv_abi))
 int32_t mj_runtime_read(void)
 {
 	const int c = fgetc(stdin);
