@@ -1,0 +1,25 @@
+// pragma output 2
+
+class Test {
+    public int mem;
+
+    public static void main(String[] args) {
+
+        Test t = new Test();
+        t.run();
+    }
+
+    public void run() {
+		int x = System.id(0);
+
+
+		/* check that this store is not optimized away */
+        mem = 2;
+
+        if (x == 1) {
+            mem = 3;
+        }
+
+        System.out.println(mem);
+    }
+}

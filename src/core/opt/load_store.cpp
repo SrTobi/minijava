@@ -173,21 +173,29 @@ namespace /* anonymous */
 		return true;
 	}
 
+	bool has_multiple_mem_outputs(firm::ir_node* node) {
+		return firm::get_irn_mode(node) == firm::mode_M && get_out_edges_safe(node).size() > 1;
+	}
+
 	bool handle_store(firm::ir_node* node) {
 		// go the memory chain up and search a load or store that
 		// maybe has the same memory target as node.
+		bool mem_branched = false;
 		auto pred_node = node;
 		do {
 			const auto pred_proj = firm::get_irn_n(pred_node, 0);
 			if (!firm::is_Proj(pred_proj))
 				return false;
 			pred_node = firm::get_irn_n(pred_proj, 0);
+			mem_branched = mem_branched || has_multiple_mem_outputs(pred_proj);
 		} while(never_interferes_with_load_store(pred_node)
 		     || (is_mem_access(pred_node) && have_always_different_target(node, pred_node)));
 
 		if (firm::is_Load(pred_node)) {
 			return handle_load_store(pred_node, node);
-		} else if (firm::is_Store(pred_node)) {
+		} else if (firm::is_Store(pred_node) && !mem_branched) {
+			// do not do try to optimize the first store,
+			// when the control flow branched away in between both stores
 			return handle_store_store(pred_node, node);
 		}
 		return false;
