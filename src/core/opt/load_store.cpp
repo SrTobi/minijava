@@ -21,8 +21,12 @@ namespace /* anonymous */
 		replace_node(node, nullptr);
 	}
 
+	bool is_mem_access(firm::ir_node* node) {
+		return firm::is_Load(node) || firm::is_Store(node);
+	}
+
 	// checks if two address nodes point to the same memory
-	bool is_same_target(firm::ir_node* first, firm::ir_node* second) {
+	bool is_always_same_target(firm::ir_node* first, firm::ir_node* second) {
 		if (first == second)
 			return true;
 
@@ -32,6 +36,26 @@ namespace /* anonymous */
 		}
 		return false;
 	}
+
+	bool have_always_same_target(firm::ir_node* first, firm::ir_node* second) {
+		assert(is_mem_access(first));
+		assert(is_mem_access(second));
+
+		return is_always_same_target(firm::get_irn_n(first, 1), firm::get_irn_n(second, 1));
+	}
+
+	bool is_always_different_target(firm::ir_node* first, firm::ir_node* second) {
+		return firm::is_Member(first) && is_Member(second)
+		    && firm::get_Member_entity(first) != firm::get_Member_entity(second);
+	}
+
+	bool have_always_different_target(firm::ir_node* first, firm::ir_node* second) {
+		assert(is_mem_access(first));
+		assert(is_mem_access(second));
+
+		return is_always_different_target(firm::get_irn_n(first, 1), firm::get_irn_n(second, 1));
+	}
+
 
 	firm::ir_node *get_res_node(firm::ir_node *node) {
 		for (auto &out : get_out_edges_safe(node)) {
@@ -44,7 +68,7 @@ namespace /* anonymous */
 
 	bool handle_load_load(firm::ir_node* first, firm::ir_node* second) {
 		// check if they both load the same target
-		if (!is_same_target(firm::get_irn_n(first, 1), firm::get_irn_n(second, 1)))
+		if (!have_always_same_target(first, second))
 			return false;
 
 		// remove second load and wire all children to the result of the first load (if that exists)
@@ -58,7 +82,7 @@ namespace /* anonymous */
 
 	bool handle_store_load(firm::ir_node* store, firm::ir_node* load) {
 		// check if the load loads the same target as the store
-		if (!is_same_target(firm::get_irn_n(load, 1), firm::get_irn_n(store, 1)))
+		if (!have_always_same_target(store, load))
 			return false;
 
 		// remove load and wire all children to the input of the store
@@ -75,8 +99,16 @@ namespace /* anonymous */
 			return true;
 		}
 
-		const auto pred_proj = firm::get_irn_n(node, 0);
-		const auto pred_node = firm::get_irn_n(pred_proj, 0);
+		// go the memory chain up and search a load or store that
+		// maybe has the same memory target as node.
+		auto pred_node = node;
+		do {
+			const auto pred_proj = firm::get_irn_n(pred_node, 0);
+			if (!firm::is_Proj(pred_proj))
+				return false;
+			pred_node = firm::get_irn_n(pred_proj, 0);
+		} while(is_mem_access(pred_node) && have_always_different_target(node, pred_node));
+
 
 		if (firm::is_Load(pred_node)) {
 			return handle_load_load(pred_node, node);
@@ -89,7 +121,7 @@ namespace /* anonymous */
 
 	bool handle_store_store(firm::ir_node* first, firm::ir_node* second) {
 		// check if both store to the same memory location
-		if (!is_same_target(firm::get_irn_n(first, 1), firm::get_irn_n(second, 1)))
+		if (!have_always_same_target(first, second))
 			return false;
 
 		const auto mem_origin = firm::get_irn_n(first, 0);
@@ -102,13 +134,13 @@ namespace /* anonymous */
 		// because it is overwritten by the second store.
 
 		// remove first store
-		firm::set_irn_n(second, 0, mem_origin);
+		remove_node(first);
 		return true;
 	}
 
 	bool handle_load_store(firm::ir_node* load, firm::ir_node* store) {
 		// check if both store to the same memory location
-		if (!is_same_target(firm::get_irn_n(load, 1), firm::get_irn_n(store, 1)))
+		if (!have_always_same_target(load, store))
 			return false;
 
 		// check if the store stores the value, that the load loaded
@@ -121,8 +153,15 @@ namespace /* anonymous */
 	}
 
 	bool handle_store(firm::ir_node* node) {
-		const auto pred_proj = firm::get_irn_n(node, 0);
-		const auto pred_node = firm::get_irn_n(pred_proj, 0);
+		// go the memory chain up and search a load or store that
+		// maybe has the same memory target as node.
+		auto pred_node = node;
+		do {
+			const auto pred_proj = firm::get_irn_n(pred_node, 0);
+			if (!firm::is_Proj(pred_proj))
+				return false;
+			pred_node = firm::get_irn_n(pred_proj, 0);
+		} while(is_mem_access(pred_node) && have_always_different_target(node, pred_node));
 
 		if (firm::is_Load(pred_node)) {
 			return handle_load_store(pred_node, node);
