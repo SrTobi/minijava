@@ -6,13 +6,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-//#include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include <boost/variant/apply_visitor.hpp>
 #include <iostream>
@@ -48,9 +48,16 @@ namespace minijava
 				return buffer;
 			}
 
-			firm::ir_mode* get_effective_irn_mode(firm::ir_node*const irn) noexcept
+			bool const_mode_b_as_bool(firm::ir_tarval* tv)
 			{
-				return firm::get_irn_mode(irn);
+				assert(tv != nullptr);
+				if (tv == firm::tarval_b_false) {
+					return false;
+				}
+				if (tv == firm::tarval_b_true) {
+					return true;
+				}
+				MINIJAVA_NOT_REACHED();
 			}
 
 			bool can_be_in_register(firm::ir_mode*const mode) noexcept
@@ -63,14 +70,14 @@ namespace minijava
 
 			bool can_be_in_register(firm::ir_node*const irn) noexcept
 			{
-				const auto mode = get_effective_irn_mode(irn);
+				const auto mode = firm::get_irn_mode(irn);
 				return can_be_in_register(mode);
 			}
 
 			bool can_be_in_register(firm::ir_node*const irn, const virtual_register reg) noexcept
 			{
 				assert(reg != virtual_register::dummy);
-				const auto mode = get_effective_irn_mode(irn);
+				const auto mode = firm::get_irn_mode(irn);
 				if (!can_be_in_register(irn)) {
 					return false;
 				}
@@ -127,7 +134,7 @@ namespace minijava
 				if (firm::is_Load(irn)) {
 					return get_width(firm::get_Load_mode(irn));
 				}
-				return get_width(get_effective_irn_mode(irn));
+				return get_width(firm::get_irn_mode(irn));
 			}
 
 			struct cond_target_blocks
@@ -514,15 +521,13 @@ namespace minijava
 				}
 
 				template <typename... ArgTs>
-				void _emplace_instruction_before_jmp(firm::ir_node*const blksrc,
+				void _emplace_instruction_before_jmp(const bool taken,
+													 firm::ir_node*const blksrc,
 				                                     firm::ir_node*const blkdst,
 				                                     ArgTs&&... args)
 				{
 					assert(firm::is_Block(blksrc));
 					assert(firm::is_Block(blkdst));
-					const auto should_we_do_it = [&](const auto p){
-						return (p != nullptr) && (_blockmap.at(p) == blkdst);
-					};
 					const auto go_ahead_emplace_it = [&](auto& vec){
 						const auto pos = [&vec, end = vec.end()](){
 							if (vec.empty()) {
@@ -544,17 +549,13 @@ namespace minijava
 						vec.emplace(pos, std::forward<ArgTs>(args)...);
 					};
 					auto& srcmeta = _provide_bb(blksrc);
-					if (should_we_do_it(srcmeta.get_succ_cond_branch())) {
+					if (taken) {
+						assert(srcmeta.get_succ_cond_branch() == blkdst);
 						go_ahead_emplace_it(srcmeta.code_on_cond_branch);
-						return;
-					}
-					if (should_we_do_it(srcmeta.get_succ_fall_through())) {
+					} else {
+						assert(srcmeta.get_succ_fall_through() == blkdst);
 						go_ahead_emplace_it(srcmeta.code_on_fall_through);
-						return;
 					}
-					MINIJAVA_NOT_REACHED_MSG(
-						"No jump from " + to_string(blksrc) + " to " + to_string(blkdst)
-					);
 				}
 
 				virtual_operand _get_irn_as_operand(firm::ir_node*const irn)
@@ -723,8 +724,8 @@ namespace minijava
 					assert(firm::is_Conv(irn));
 					const auto srcirn = firm::get_irn_n(irn, 0);
 					const auto srcreg = _get_irn_as_register_operand(srcirn);
-					const auto srcmod = get_effective_irn_mode(srcirn);
-					const auto dstmod = get_effective_irn_mode(irn);
+					const auto srcmod = firm::get_irn_mode(srcirn);
+					const auto dstmod = firm::get_irn_mode(irn);
 					if (get_width(srcmod) >= get_width(dstmod)) {
 						_set_register(irn, srcreg);
 					} else if ((srcmod == firm::mode_Is) && (dstmod == firm::mode_Ls)) {
@@ -854,9 +855,9 @@ namespace minijava
 					assert(!elselab.empty());
 					const auto selector = firm::get_Cond_selector(irn);
 					if (firm::is_Cmp(selector)) {
+						_append_cmp_to_blk_cond_branch(_current_block, selector);
 						const auto relation = firm::get_Cmp_relation(selector);
 						const auto jumpop = get_conditional_jump_op(relation);
-						_append_cmp_to_blk_cond_branch(_current_block, selector);
 						_emplace_instruction_cond_branch(jumpop, bit_width{}, thenlab);
 						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
 					} else if (firm::is_Const(selector)) {
@@ -875,18 +876,6 @@ namespace minijava
 					}
 				}
 
-				bool const_mode_b_as_bool(firm::ir_tarval* tv)
-				{
-					assert(tv != nullptr);
-					if (tv == firm::tarval_b_false) {
-						return false;
-					}
-					if (tv == firm::tarval_b_true) {
-						return true;
-					}
-					MINIJAVA_NOT_REACHED();
-				}
-
 				void _visit_phi(firm::ir_node*const irn)
 				{
 					assert(firm::is_Phi(irn));
@@ -900,60 +889,73 @@ namespace minijava
 					}
 				}
 
-				void _visit_data_phi(firm::ir_node*const irn)
+				template <typename OpT>
+				void _visit_phi_generic(firm::ir_node*const irn, OpT&& foreach)
 				{
-					assert(firm::is_Phi(irn) && !is_flag(irn));
-					const auto phireg = _get_data_register(irn);
+					assert(firm::is_Phi(irn));
 					const auto phiblk = _blockmap.at(irn);
 					const auto arity = firm::get_Phi_n_preds(irn);
 					for (auto i = 0; i < arity; ++i) {
 						const auto predirn = firm::get_Phi_pred(irn, i);
+						const auto cfgpred = firm::get_Block_cfgpred(phiblk, i);
 						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
-						const auto predval = _get_irn_as_operand(predirn);
+						const auto taken = firm::is_Proj(cfgpred)
+							? (firm::get_Proj_num(cfgpred) == firm::pn_Cond_true)
+							: false;
+						foreach(taken, predblk, predirn);
+					}
+				}
+
+				void _visit_data_phi(firm::ir_node*const irn)
+				{
+					assert(firm::is_Phi(irn) && !is_flag(irn));
+					const auto foreach = [irn, me = this](auto taken, auto predblk, auto predirn){
+						const auto phireg = me->_get_data_register(irn);
+						const auto phiblk = me->_blockmap.at(irn);
+						const auto predval = me->_get_irn_as_operand(predirn);
 						const auto width = get_width(irn);
-						_emplace_instruction_before_jmp(
-							predblk, phiblk,
+						me->_emplace_instruction_before_jmp(
+							taken, predblk, phiblk,
 							opcode::op_mov, width, predval, phireg
 						);
-					}
+					};
+					_visit_phi_generic(irn, foreach);
 				}
 
 				void _visit_flags_phi(firm::ir_node*const irn)
 				{
 					assert(firm::is_Phi(irn) && is_flag(irn));
-					const auto phireg = _get_data_register(irn);  // sic
-					const auto phiblk = _blockmap.at(irn);
-					const auto arity = firm::get_Phi_n_preds(irn);
-					for (auto i = 0; i < arity; ++i) {
-						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
-						const auto predirn = firm::get_Phi_pred(irn, i);
+					const auto foreach = [irn, me = this](auto taken, auto predblk, auto predirn){
+						const auto phireg = me->_get_data_register(irn);
+						const auto phiblk = me->_blockmap.at(irn);
 						if (firm::is_Const(predirn)) {
 							const auto tarval = firm::get_Const_tarval(predirn);
-							const auto byte = std::int64_t{const_mode_b_as_bool(tarval)};
-							_emplace_instruction_before_jmp(
-								predblk, phiblk,
+							const auto byte = const_mode_b_as_bool(tarval);
+							me->_emplace_instruction_before_jmp(
+								taken, predblk, phiblk,
 								opcode::op_mov, bit_width::viii, byte, phireg
 							);
 						} else if (firm::is_Cmp(predirn)) {
 							const auto relation = firm::get_Cmp_relation(predirn);
 							const auto lhsirn = firm::get_Cmp_left(predirn);
 							const auto rhsirn = firm::get_Cmp_right(predirn);
-							const auto lhsreg = _get_irn_as_register_operand(lhsirn);
-							const auto rhsval = _get_irn_as_operand(rhsirn);
+							const auto lhsreg = me->_get_irn_as_register_operand(lhsirn);
+							const auto rhsval = me->_get_irn_as_operand(rhsirn);
 							const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
 							const auto setop = get_conditional_set_op(relation);
-							_emplace_instruction_before_jmp(
-								predblk, phiblk,
+							me->_emplace_instruction_before_jmp(
+								taken, predblk, phiblk,
 								opcode::op_cmp, width, rhsval, lhsreg
 							);
-							_emplace_instruction_before_jmp(
-								predblk, phiblk,
+							me->_emplace_instruction_before_jmp(
+								taken, predblk, phiblk,
 								setop, bit_width{}, phireg
 							);
 						} else {
 							MINIJAVA_NOT_REACHED_MSG(firm::get_irn_opname(predirn));
 						}
-					}
+					};
+					_visit_phi_generic(irn, foreach);
 				}
 
 				void _visit_proj(firm::ir_node* irn)

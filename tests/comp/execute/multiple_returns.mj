@@ -1,0 +1,48 @@
+/* Shamelessly copied from the public test repository... */
+
+// pragma output 0 120 20 0 43 120
+
+class MultipleReturns {
+
+	public static void main(String[] args) {
+		MultipleReturns multipleReturns=new MultipleReturns();
+		int c=multipleReturns.complexFunction(5, false, 12, true);
+		int b=multipleReturns.complexFunction(423423, true, -554, false&&true);
+		System.out.println(c);
+		System.out.println(b);
+		System.out.println(multipleReturns.complexFunction(10, true, 4, false));
+		System.out.println(multipleReturns.complexFunction(c, c<b, b*c, c+b*12==12312));
+		multipleReturns.complexFunctionVoid(5, false, 12, true);
+		multipleReturns.complexFunctionVoid(423423, true, -554, false&&true);
+	}
+
+	public int complexFunction(int a, boolean b, int c, boolean d) {
+		if (a > c && b != d) {
+			if (!b == d || a / 10 <= 15) {
+				if (a / 10 < c) {
+					return 5 * c;
+				}
+				return 120;
+			}
+			return 12 * a + c;
+		}
+		return 0;
+	}
+
+	public void complexFunctionVoid(int a, boolean b, int c, boolean d) {
+		if (a > c && b != d) {
+			if (!b == d || a / 10 <= 15) {
+				if (a / 10 < c) {
+					System.out.println(5 * c);
+					return;
+				}
+				System.out.println(120);
+				return;
+			}
+			System.out.println(12345);
+		}
+		System.out.println(43);
+		return;
+	}
+
+}
