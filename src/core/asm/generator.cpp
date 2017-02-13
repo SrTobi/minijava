@@ -6,13 +6,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-//#include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include <boost/variant/apply_visitor.hpp>
 #include <iostream>
@@ -48,9 +48,16 @@ namespace minijava
 				return buffer;
 			}
 
-			firm::ir_mode* get_effective_irn_mode(firm::ir_node*const irn) noexcept
+			bool const_mode_b_as_bool(firm::ir_tarval* tv)
 			{
-				return firm::get_irn_mode(irn);
+				assert(tv != nullptr);
+				if (tv == firm::tarval_b_false) {
+					return false;
+				}
+				if (tv == firm::tarval_b_true) {
+					return true;
+				}
+				MINIJAVA_NOT_REACHED();
 			}
 
 			bool can_be_in_register(firm::ir_mode*const mode) noexcept
@@ -63,14 +70,14 @@ namespace minijava
 
 			bool can_be_in_register(firm::ir_node*const irn) noexcept
 			{
-				const auto mode = get_effective_irn_mode(irn);
+				const auto mode = firm::get_irn_mode(irn);
 				return can_be_in_register(mode);
 			}
 
-			bool can_be_in_register(firm::ir_node*const irn, const virtual_register reg) noexcept
+			USELESS bool can_be_in_register(firm::ir_node*const irn, const virtual_register reg) noexcept
 			{
 				assert(reg != virtual_register::dummy);
-				const auto mode = get_effective_irn_mode(irn);
+				const auto mode = firm::get_irn_mode(irn);
 				if (!can_be_in_register(irn)) {
 					return false;
 				}
@@ -88,7 +95,7 @@ namespace minijava
 				return (firm::get_irn_mode(irn) == firm::mode_b);
 			}
 
-			bool is_exec(firm::ir_node*const irn) noexcept
+			USELESS bool is_exec(firm::ir_node*const irn) noexcept
 			{
 				return (firm::get_irn_mode(irn) == firm::mode_X);
 			}
@@ -127,7 +134,7 @@ namespace minijava
 				if (firm::is_Load(irn)) {
 					return get_width(firm::get_Load_mode(irn));
 				}
-				return get_width(get_effective_irn_mode(irn));
+				return get_width(firm::get_irn_mode(irn));
 			}
 
 			struct cond_target_blocks
@@ -213,8 +220,10 @@ namespace minijava
 			{
 			public:
 
-				std::vector<virtual_instruction> code_on_cond_branch{};
-				std::vector<virtual_instruction> code_on_fall_through{};
+				std::vector<virtual_instruction> phis_on_cond_branch{};
+				std::vector<virtual_instruction> jump_on_cond_branch{};
+				std::vector<virtual_instruction> phis_on_fall_through{};
+				std::vector<virtual_instruction> jump_on_fall_through{};
 
 				bb_meta(const std::size_t index) noexcept : _index{index}
 				{
@@ -279,7 +288,6 @@ namespace minijava
 					const auto n = firm::get_irn_n_outs(start);
 					for (auto i = 0u; i < n; ++i) {
 						const auto out = firm::get_irn_out(start, i);
-						//std::clog << "\t[outer] " << to_string(out) << std::endl;
 						if (firm::is_Proj(out)) {
 							const auto m = firm::get_irn_n_outs(out);
 							for (auto j = 0u; j < m; ++j) {
@@ -297,10 +305,8 @@ namespace minijava
 					for (std::size_t i = 0; i < arity; ++i) {
 						const auto irn = argument_nodes[i];
 						if (irn != nullptr) {
-							//std::clog << "\tParameter #" << i << " is in register " << number(argreg) << " " << to_string(irn) << std::endl;
+							// parameter was used
 							_set_register(irn, argreg);
-						} else {
-							//std::clog << "\tParameter #" << i << " is unused" << std::endl;
 						}
 						argreg = next_argument_register(argreg);
 					}
@@ -308,7 +314,6 @@ namespace minijava
 
 				void visit_first_pass(firm::ir_node*const irn)
 				{
-					//std::clog << "\t1st pass: " << to_string(irn) << std::endl;
 					if (firm::is_Block(irn)) {
 						_current_block = irn;
 					} else {
@@ -339,7 +344,6 @@ namespace minijava
 				{
 					_current_block = _blockmap.at(irn);
 					_provide_bb(_current_block);
-					//std::clog << "\t2nd pass: " << to_string(irn) << std::endl;
 					switch (firm::get_irn_opcode(irn)) {
 					case firm::iro_Start:
 						_visit_start(irn);
@@ -435,7 +439,7 @@ namespace minijava
 						return pos->second;
 					}
 					const auto idx = _assembly.blocks.size();
-					auto label = ".L"s + _assembly.ldname + "." + std::to_string(firm::get_irn_node_nr(blk));
+					auto label = ".L"s + std::to_string(firm::get_irn_node_nr(blk));
 					_assembly.blocks.emplace_back(std::move(label));
 					return _metamap.insert({blk, bb_meta{idx}}).first->second;
 				}
@@ -498,63 +502,37 @@ namespace minijava
 				}
 
 				template <typename... ArgTs>
-				void _emplace_instruction_cond_branch(ArgTs&&... args)
+				void _emplace_cond_branch_jump(ArgTs&&... args)
 				{
-					_metamap.at(_current_block).code_on_cond_branch.emplace_back(
+					_metamap.at(_current_block).jump_on_cond_branch.emplace_back(
 						std::forward<ArgTs>(args)...
 					);
 				}
 
 				template <typename... ArgTs>
-				void _emplace_instruction_fall_through(ArgTs&&... args)
+				void _emplace_fall_through_jump(ArgTs&&... args)
 				{
-					_metamap.at(_current_block).code_on_fall_through.emplace_back(
+					_metamap.at(_current_block).jump_on_fall_through.emplace_back(
 						std::forward<ArgTs>(args)...
 					);
 				}
 
 				template <typename... ArgTs>
-				void _emplace_instruction_before_jmp(firm::ir_node*const blksrc,
-				                                     firm::ir_node*const blkdst,
+				void _emplace_instruction_before_jmp(const bool taken,
+													 firm::ir_node*const blksrc,
+				                                     USELESS firm::ir_node*const blkdst,
 				                                     ArgTs&&... args)
 				{
 					assert(firm::is_Block(blksrc));
 					assert(firm::is_Block(blkdst));
-					const auto should_we_do_it = [&](const auto p){
-						return (p != nullptr) && (_blockmap.at(p) == blkdst);
-					};
-					const auto go_ahead_emplace_it = [&](auto& vec){
-						const auto pos = [&vec, end = vec.end()](){
-							if (vec.empty()) {
-								return vec.end();
-							}
-							const auto op = (vec.size() > 1)
-								? vec[vec.size() - 2].code
-								: opcode::none;
-							switch (op) {
-							case opcode::op_cmp:
-							case opcode::op_test:
-								// Don't clobber flags register between CMP /
-								// TEST and conditional jump.
-								return vec.end() - 2;
-							default:
-								return vec.end() - 1;
-							}
-						}();
-						vec.emplace(pos, std::forward<ArgTs>(args)...);
-					};
 					auto& srcmeta = _provide_bb(blksrc);
-					if (should_we_do_it(srcmeta.get_succ_cond_branch())) {
-						go_ahead_emplace_it(srcmeta.code_on_cond_branch);
-						return;
+					if (taken) {
+						assert(srcmeta.get_succ_cond_branch() == blkdst);
+						srcmeta.phis_on_cond_branch.emplace_back(std::forward<ArgTs>(args)...);
+					} else {
+						assert(srcmeta.get_succ_fall_through() == blkdst);
+						srcmeta.phis_on_fall_through.emplace_back(std::forward<ArgTs>(args)...);
 					}
-					if (should_we_do_it(srcmeta.get_succ_fall_through())) {
-						go_ahead_emplace_it(srcmeta.code_on_fall_through);
-						return;
-					}
-					MINIJAVA_NOT_REACHED_MSG(
-						"No jump from " + to_string(blksrc) + " to " + to_string(blkdst)
-					);
 				}
 
 				virtual_operand _get_irn_as_operand(firm::ir_node*const irn)
@@ -595,39 +573,7 @@ namespace minijava
 					return newreg;
 				}
 
-				void _do_append_cmp_to_blk(std::vector<virtual_instruction>& vec, firm::ir_node*const cmpirn)
-				{
-					const auto lhsirn = firm::get_Cmp_left(cmpirn);
-					const auto rhsirn = firm::get_Cmp_right(cmpirn);
-					const auto lhsval = _get_irn_as_register_operand(lhsirn);
-					const auto rhsval = _get_irn_as_operand(rhsirn);
-					const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
-					vec.emplace_back(opcode::op_cmp, width, rhsval, lhsval);
-				}
-
-				void _append_cmp_to_blk(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
-				{
-					assert(firm::is_Block(blkirn));
-					assert(firm::is_Cmp(cmpirn));
-					const auto idx = _provide_bb(blkirn).index();
-					_do_append_cmp_to_blk(_assembly.blocks[idx].code, cmpirn);
-				}
-
-				void _append_cmp_to_blk_cond_branch(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
-				{
-					assert(firm::is_Block(blkirn));
-					assert(firm::is_Cmp(cmpirn));
-					_do_append_cmp_to_blk(_provide_bb(blkirn).code_on_cond_branch, cmpirn);
-				}
-
-				void _append_cmp_to_blk_fall_through(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
-				{
-					assert(firm::is_Block(blkirn));
-					assert(firm::is_Cmp(cmpirn));
-					_do_append_cmp_to_blk(_provide_bb(blkirn).code_on_fall_through, cmpirn);
-				}
-
-				void _visit_start(firm::ir_node*const USELESS irn)
+				void _visit_start(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_Start(irn));
 					const auto& label = _get_basic_block(irn).label;
@@ -636,18 +582,18 @@ namespace minijava
 					);
 				}
 
-				void _visit_end(firm::ir_node*const USELESS irn)
+				void _visit_end(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_End(irn));
 				}
 
-				void _visit_block(firm::ir_node*const USELESS irn)
+				void _visit_block(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_Block(irn));
 					assert(irn == _current_block);
 				}
 
-				void _visit_const(firm::ir_node*const USELESS irn)
+				void _visit_const(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_Const(irn));
 					// Flag constants must be handled at their point of use
@@ -723,8 +669,8 @@ namespace minijava
 					assert(firm::is_Conv(irn));
 					const auto srcirn = firm::get_irn_n(irn, 0);
 					const auto srcreg = _get_irn_as_register_operand(srcirn);
-					const auto srcmod = get_effective_irn_mode(srcirn);
-					const auto dstmod = get_effective_irn_mode(irn);
+					const auto srcmod = firm::get_irn_mode(srcirn);
+					const auto dstmod = firm::get_irn_mode(irn);
 					if (get_width(srcmod) >= get_width(dstmod)) {
 						_set_register(irn, srcreg);
 					} else if ((srcmod == firm::mode_Is) && (dstmod == firm::mode_Ls)) {
@@ -819,11 +765,11 @@ namespace minijava
 						const auto resirn = firm::get_Return_res(irn, 0);
 						const auto resval = _get_irn_as_operand(resirn);
 						const auto width = get_width(resirn);
-						_emplace_instruction_fall_through(
+						_emplace_fall_through_jump(
 							opcode::op_mov, width, resval, virtual_register::result
 						);
 					}
-					_emplace_instruction_fall_through(opcode::op_ret);
+					_emplace_fall_through_jump(opcode::op_ret);
 				}
 
 				void _visit_cmp(firm::ir_node*const irn)
@@ -838,7 +784,7 @@ namespace minijava
 					assert(firm::get_irn_n_outs(irn) == 1);
 					const auto targirn = firm::get_irn_out(irn, 0);
 					const auto targblk = _blockmap.at(targirn);
-					_emplace_instruction_fall_through(
+					_emplace_fall_through_jump(
 						opcode::op_jmp, bit_width{},
 						_get_basic_block(targblk).label
 					);
@@ -854,37 +800,30 @@ namespace minijava
 					assert(!elselab.empty());
 					const auto selector = firm::get_Cond_selector(irn);
 					if (firm::is_Cmp(selector)) {
+						const auto lhsirn = firm::get_Cmp_left(selector);
+						const auto rhsirn = firm::get_Cmp_right(selector);
+						const auto lhsval = _get_irn_as_register_operand(lhsirn);
+						const auto rhsval = _get_irn_as_operand(rhsirn);
+						const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
+						_emplace_cond_branch_jump(opcode::op_cmp, width, rhsval, lhsval);
 						const auto relation = firm::get_Cmp_relation(selector);
 						const auto jumpop = get_conditional_jump_op(relation);
-						_append_cmp_to_blk_cond_branch(_current_block, selector);
-						_emplace_instruction_cond_branch(jumpop, bit_width{}, thenlab);
-						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
+						_emplace_cond_branch_jump(jumpop, bit_width{}, thenlab);
+						_emplace_fall_through_jump(opcode::op_jmp, bit_width{}, elselab);
 					} else if (firm::is_Const(selector)) {
 						// This is actually an unconditional jump.
 						const auto tarval = firm::get_Const_tarval(irn);
 						const auto jumpto = !firm::tarval_is_null(tarval) ? thenlab : elselab;
-						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, jumpto);
+						_emplace_fall_through_jump(opcode::op_jmp, bit_width{}, jumpto);
 					} else if (firm::is_Phi(selector)) {
 						// Restore the result of a previous compare.
 						const auto memoreg = _get_data_register(selector);
-						_emplace_instruction_cond_branch(opcode::op_test, bit_width::viii, memoreg, memoreg);
-						_emplace_instruction_cond_branch(opcode::op_jnz, bit_width{}, thenlab);
-						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
+						_emplace_cond_branch_jump(opcode::op_test, bit_width::viii, memoreg, memoreg);
+						_emplace_cond_branch_jump(opcode::op_jnz, bit_width{}, thenlab);
+						_emplace_fall_through_jump(opcode::op_jmp, bit_width{}, elselab);
 					} else {
 						MINIJAVA_NOT_REACHED();
 					}
-				}
-
-				bool const_mode_b_as_bool(firm::ir_tarval* tv)
-				{
-					assert(tv != nullptr);
-					if (tv == firm::tarval_b_false) {
-						return false;
-					}
-					if (tv == firm::tarval_b_true) {
-						return true;
-					}
-					MINIJAVA_NOT_REACHED();
 				}
 
 				void _visit_phi(firm::ir_node*const irn)
@@ -900,60 +839,73 @@ namespace minijava
 					}
 				}
 
-				void _visit_data_phi(firm::ir_node*const irn)
+				template <typename OpT>
+				void _visit_phi_generic(firm::ir_node*const irn, OpT&& foreach)
 				{
-					assert(firm::is_Phi(irn) && !is_flag(irn));
-					const auto phireg = _get_data_register(irn);
+					assert(firm::is_Phi(irn));
 					const auto phiblk = _blockmap.at(irn);
 					const auto arity = firm::get_Phi_n_preds(irn);
 					for (auto i = 0; i < arity; ++i) {
 						const auto predirn = firm::get_Phi_pred(irn, i);
+						const auto cfgpred = firm::get_Block_cfgpred(phiblk, i);
 						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
-						const auto predval = _get_irn_as_operand(predirn);
+						const auto taken = firm::is_Proj(cfgpred)
+							? (firm::get_Proj_num(cfgpred) == firm::pn_Cond_true)
+							: false;
+						foreach(taken, predblk, predirn);
+					}
+				}
+
+				void _visit_data_phi(firm::ir_node*const irn)
+				{
+					assert(firm::is_Phi(irn) && !is_flag(irn));
+					const auto foreach = [irn, me = this](auto taken, auto predblk, auto predirn){
+						const auto phireg = me->_get_data_register(irn);
+						const auto phiblk = me->_blockmap.at(irn);
+						const auto predval = me->_get_irn_as_operand(predirn);
 						const auto width = get_width(irn);
-						_emplace_instruction_before_jmp(
-							predblk, phiblk,
+						me->_emplace_instruction_before_jmp(
+							taken, predblk, phiblk,
 							opcode::op_mov, width, predval, phireg
 						);
-					}
+					};
+					_visit_phi_generic(irn, foreach);
 				}
 
 				void _visit_flags_phi(firm::ir_node*const irn)
 				{
 					assert(firm::is_Phi(irn) && is_flag(irn));
-					const auto phireg = _get_data_register(irn);  // sic
-					const auto phiblk = _blockmap.at(irn);
-					const auto arity = firm::get_Phi_n_preds(irn);
-					for (auto i = 0; i < arity; ++i) {
-						const auto predblk = firm::get_Block_cfgpred_block(phiblk, i);
-						const auto predirn = firm::get_Phi_pred(irn, i);
+					const auto foreach = [irn, me = this](auto taken, auto predblk, auto predirn){
+						const auto phireg = me->_get_data_register(irn);
+						const auto phiblk = me->_blockmap.at(irn);
 						if (firm::is_Const(predirn)) {
 							const auto tarval = firm::get_Const_tarval(predirn);
-							const auto byte = std::int64_t{const_mode_b_as_bool(tarval)};
-							_emplace_instruction_before_jmp(
-								predblk, phiblk,
+							const auto byte = const_mode_b_as_bool(tarval);
+							me->_emplace_instruction_before_jmp(
+								taken, predblk, phiblk,
 								opcode::op_mov, bit_width::viii, byte, phireg
 							);
 						} else if (firm::is_Cmp(predirn)) {
 							const auto relation = firm::get_Cmp_relation(predirn);
 							const auto lhsirn = firm::get_Cmp_left(predirn);
 							const auto rhsirn = firm::get_Cmp_right(predirn);
-							const auto lhsreg = _get_irn_as_register_operand(lhsirn);
-							const auto rhsval = _get_irn_as_operand(rhsirn);
+							const auto lhsreg = me->_get_irn_as_register_operand(lhsirn);
+							const auto rhsval = me->_get_irn_as_operand(rhsirn);
 							const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
 							const auto setop = get_conditional_set_op(relation);
-							_emplace_instruction_before_jmp(
-								predblk, phiblk,
+							me->_emplace_instruction_before_jmp(
+								taken, predblk, phiblk,
 								opcode::op_cmp, width, rhsval, lhsreg
 							);
-							_emplace_instruction_before_jmp(
-								predblk, phiblk,
+							me->_emplace_instruction_before_jmp(
+								taken, predblk, phiblk,
 								setop, bit_width{}, phireg
 							);
 						} else {
 							MINIJAVA_NOT_REACHED_MSG(firm::get_irn_opname(predirn));
 						}
-					}
+					};
+					_visit_phi_generic(irn, foreach);
 				}
 
 				void _visit_proj(firm::ir_node* irn)
@@ -973,17 +925,17 @@ namespace minijava
 					for (auto&& kv : _metamap) {
 						auto& meta = kv.second;
 						auto& code = _assembly.blocks[meta.index()].code;
-						assert(code.empty() || !meta.code_on_fall_through.empty());
-						std::copy(
-							std::begin(meta.code_on_cond_branch),
-							std::end(meta.code_on_cond_branch),
-							std::back_inserter(code)
-						);
-						std::copy(
-							std::begin(meta.code_on_fall_through),
-							std::end(meta.code_on_fall_through),
-							std::back_inserter(code)
-						);
+						const auto docopy = [&code](auto& vec){
+							std::copy(
+								std::begin(vec),
+								std::end(vec),
+								std::back_inserter(code)
+							);
+						};
+						docopy(meta.phis_on_cond_branch);
+						docopy(meta.jump_on_cond_branch);
+						docopy(meta.phis_on_fall_through);
+						docopy(meta.jump_on_fall_through);
 					}
 				}
 
@@ -1028,7 +980,6 @@ namespace minijava
 			const auto backedge_guard = make_backedge_guard(irg);
 			const auto entity = firm::get_irg_entity(irg);
 			const auto ldname = firm::get_entity_ld_name(entity);
-			//std::clog << "Assembling function '" << ldname << "' ..." << std::endl;
 			auto gen = generator{ldname};
 			firm::irg_walk_blkwise_graph(
 				irg,
@@ -1042,7 +993,6 @@ namespace minijava
 				visit_second_pass,
 				&gen
 			);
-			//std::clog << std::endl;
 			return std::move(gen).get();
 		}
 
