@@ -21,6 +21,7 @@
 #include "asm/firm_backend.hpp"
 #include "exceptions.hpp"
 #include "global.hpp"
+#include "io/file_cleanup.hpp"
 #include "io/file_data.hpp"
 #include "io/file_output.hpp"
 #include "irg/irg.hpp"
@@ -378,6 +379,7 @@ namespace minijava
 			}
 			const auto tempdir = fs::temp_directory_path();
 			const auto asmname = fs::unique_path(tempdir / "%%%%%%%%%%%%.s").string();
+			const file_cleanup asm_cleanup_guard{asmname};
 			auto asmout = file_output{asmname};
 			if (stage == compilation_stage::compile_firm) {
 				emit_x64_assembly_firm(ir, asmout);

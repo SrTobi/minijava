@@ -46,6 +46,14 @@
 #define MINIJAVA_ENVVAR_NO_MMAP "MINIJAVA_NO_MMAP"
 
 
+/**
+ * @brief
+ *     Environment variable that can be used to keep temporary files.
+ *
+ */
+#define MINIJAVA_ENVVAR_KEEP_TEMPORARY_FILES "MINIJAVA_KEEP_TEMPORARY_FILES"
+
+
 #if defined (_WIN32) || MINIJAVA_PARSED_BY_DOXYGEN
 /**
  * @brief

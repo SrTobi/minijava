@@ -6,6 +6,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include "io/file_cleanup.hpp"
 #include "io/file_output.hpp"
 #include "system/subprocess.hpp"
 
@@ -35,6 +36,7 @@ namespace minijava
 		using namespace std::string_literals;
 		const auto pattern = fs::temp_directory_path() / "%%%%%%%%%%%%.c";
 		auto tmp_path = fs::unique_path(pattern);
+		const file_cleanup rtlib_cleanup_guard{tmp_path.string()};
 		auto runtime_filename = tmp_path.string();
 		auto runtime_file = file_output{runtime_filename};
 		runtime_file.write(runtime_source());
