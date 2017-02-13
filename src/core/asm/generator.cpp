@@ -74,7 +74,7 @@ namespace minijava
 				return can_be_in_register(mode);
 			}
 
-			bool can_be_in_register(firm::ir_node*const irn, const virtual_register reg) noexcept
+			USELESS bool can_be_in_register(firm::ir_node*const irn, const virtual_register reg) noexcept
 			{
 				assert(reg != virtual_register::dummy);
 				const auto mode = firm::get_irn_mode(irn);
@@ -95,7 +95,7 @@ namespace minijava
 				return (firm::get_irn_mode(irn) == firm::mode_b);
 			}
 
-			bool is_exec(firm::ir_node*const irn) noexcept
+			USELESS bool is_exec(firm::ir_node*const irn) noexcept
 			{
 				return (firm::get_irn_mode(irn) == firm::mode_X);
 			}
@@ -525,7 +525,7 @@ namespace minijava
 				template <typename... ArgTs>
 				void _emplace_instruction_before_jmp(const bool taken,
 													 firm::ir_node*const blksrc,
-				                                     firm::ir_node*const blkdst,
+				                                     USELESS firm::ir_node*const blkdst,
 				                                     ArgTs&&... args)
 				{
 					assert(firm::is_Block(blksrc));
@@ -578,7 +578,7 @@ namespace minijava
 					return newreg;
 				}
 
-				void _visit_start(firm::ir_node*const USELESS irn)
+				void _visit_start(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_Start(irn));
 					const auto& label = _get_basic_block(irn).label;
@@ -587,18 +587,18 @@ namespace minijava
 					);
 				}
 
-				void _visit_end(firm::ir_node*const USELESS irn)
+				void _visit_end(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_End(irn));
 				}
 
-				void _visit_block(firm::ir_node*const USELESS irn)
+				void _visit_block(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_Block(irn));
 					assert(irn == _current_block);
 				}
 
-				void _visit_const(firm::ir_node*const USELESS irn)
+				void _visit_const(USELESS firm::ir_node*const irn)
 				{
 					assert(firm::is_Const(irn));
 					// Flag constants must be handled at their point of use
