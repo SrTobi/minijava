@@ -42,6 +42,28 @@ namespace minijava
 				return buffer;
 			}
 
+			std::string make_label(firm::ir_node*const blk)
+			{
+				using namespace std::string_literals;
+				assert((blk == nullptr) || firm::is_Block(blk));
+				if (blk == nullptr) {
+					return "";
+				}
+				return ".L"s + std::to_string(firm::get_irn_node_nr(blk));
+			}
+
+			std::string make_label_fall_through_phis(firm::ir_node*const blk)
+			{
+				assert((blk == nullptr) || firm::is_Block(blk));
+				return (blk == nullptr) ? "" : make_label(blk) + "_0";
+			}
+
+			std::string make_label_cond_branch_phis(firm::ir_node*const blk)
+			{
+				assert((blk == nullptr) || firm::is_Block(blk));
+				return (blk == nullptr) ? "" : make_label(blk) + "_1";
+			}
+
 			bool const_mode_b_as_bool(firm::ir_tarval* tv)
 			{
 				assert(tv != nullptr);
@@ -214,6 +236,7 @@ namespace minijava
 			{
 			public:
 
+				std::vector<virtual_instruction> body{};
 				std::vector<virtual_instruction> phis_on_cond_branch{};
 				std::vector<virtual_instruction> jump_on_cond_branch{};
 				std::vector<virtual_instruction> phis_on_fall_through{};
@@ -264,11 +287,11 @@ namespace minijava
 			{
 			public:
 
-				generator(const char*const funcname)
-					: _assembly{funcname}
+				generator(std::string funcname)
+					: _funcname{std::move(funcname)}
 					, _nextreg{virtual_register::general}
 				{
-					_assembly.blocks.emplace_back("");
+					_metamap.insert({nullptr, bb_meta{0}});
 				}
 
 				void handle_parameters(firm::ir_graph*const irg)
@@ -406,34 +429,68 @@ namespace minijava
 					}
 				}
 
-				virtual_assembly get() &&
+				virtual_assembly get()
 				{
-					_finalize();
-					return std::move(_assembly);
+					auto virtasm = virtual_assembly{_funcname};
+					auto iterators = std::vector<decltype(_metamap)::iterator>{};
+					iterators.reserve(_metamap.size());
+					const auto first = std::begin(_metamap);
+					const auto last = std::end(_metamap);
+					for (auto it = first; it != last; ++it) {
+						iterators.push_back(it);
+					}
+					std::sort(
+						std::begin(iterators), std::end(iterators),
+						[](auto p, auto q){
+							return p->second.index() < q->second.index();
+						}
+					);
+					for (auto it : iterators) {
+						auto& meta = it->second;
+						const auto docopy = [](auto& dst, const auto& src){
+							std::copy(
+								std::begin(src),
+								std::end(src),
+								std::back_inserter(dst.code)
+							);
+						};
+						virtasm.blocks.emplace_back(make_label(it->first));
+						docopy(virtasm.blocks.back(), meta.body);
+						docopy(virtasm.blocks.back(), meta.jump_on_cond_branch);
+						virtasm.blocks.emplace_back(make_label_fall_through_phis(it->first));
+						docopy(virtasm.blocks.back(), meta.phis_on_fall_through);
+						docopy(virtasm.blocks.back(), meta.jump_on_fall_through);
+						virtasm.blocks.emplace_back(make_label_cond_branch_phis(it->first));
+						docopy(virtasm.blocks.back(), meta.phis_on_cond_branch);
+						if (meta.get_succ_cond_branch()) {
+							virtasm.blocks.back().code.emplace_back(
+								opcode::op_jmp, bit_width{},
+								make_label(meta.get_succ_cond_branch())
+							);
+						}
+					}
+					return virtasm;
 				}
 
 			private:
 
+				std::string _funcname{};
 				std::map<firm::ir_node*, firm::ir_node*> _blockmap{};
 				std::map<firm::ir_node*, bb_meta> _metamap{};
 				std::map<firm::ir_node*, virtual_register> _registers{};
 				std::map<firm::ir_entity*, virtual_register> _addresses{};
 				firm::ir_node* _current_block{};
-				virtual_assembly _assembly;
 				virtual_register _nextreg;
 
 				bb_meta& _provide_bb(firm::ir_node*const blk)
 				{
-					using namespace std::string_literals;
 					assert(blk != nullptr);
 					assert(firm::is_Block(blk));
 					const auto pos = _metamap.find(blk);
 					if (pos != _metamap.cend()) {
 						return pos->second;
 					}
-					const auto idx = _assembly.blocks.size();
-					auto label = ".L"s + std::to_string(firm::get_irn_node_nr(blk));
-					_assembly.blocks.emplace_back(std::move(label));
+					const auto idx = _metamap.size();
 					return _metamap.insert({blk, bb_meta{idx}}).first->second;
 				}
 
@@ -478,18 +535,10 @@ namespace minijava
 					return current;
 				}
 
-				virtual_basic_block& _get_basic_block(firm::ir_node*const irn)
-				{
-					const auto blk = _blockmap.at(irn);
-					const auto idx = _provide_bb(blk).index();
-					return _assembly.blocks.at(idx);
-				}
-
 				template <typename... ArgTs>
 				void _emplace_instruction(ArgTs&&... args)
 				{
-					const auto idx = _metamap.at(_current_block).index();
-					_assembly.blocks[idx].code.emplace_back(
+					_metamap.at(_current_block).body.emplace_back(
 						std::forward<ArgTs>(args)...
 					);
 				}
@@ -569,9 +618,9 @@ namespace minijava
 				void _visit_start(firm::ir_node*const irn)
 				{
 					assert(firm::is_Start(irn));
-					const auto& label = _get_basic_block(irn).label;
-					_assembly.blocks.front().code.emplace_back(
-						opcode::op_jmp, bit_width{}, label
+					const auto blk = _blockmap.at(irn);
+					_metamap.at(nullptr).jump_on_fall_through.emplace_back(
+						opcode::op_jmp, bit_width{}, make_label(blk)
 					);
 				}
 
@@ -777,8 +826,7 @@ namespace minijava
 					const auto targirn = firm::get_irn_out(irn, 0);
 					const auto targblk = _blockmap.at(targirn);
 					_emplace_fall_through_jump(
-						opcode::op_jmp, bit_width{},
-						_get_basic_block(targblk).label
+						opcode::op_jmp, bit_width{}, make_label(targblk)
 					);
 				}
 
@@ -786,10 +834,8 @@ namespace minijava
 				{
 					assert(firm::is_Cond(irn));
 					const auto targets = get_cond_targets(irn);
-					const auto thenlab = _get_basic_block(targets.then_block).label;
-					const auto elselab = _get_basic_block(targets.else_block).label;
-					assert(!thenlab.empty());
-					assert(!elselab.empty());
+					const auto thenlab = make_label_cond_branch_phis(_current_block);
+					const auto elselab = make_label(targets.else_block);
 					const auto selector = firm::get_Cond_selector(irn);
 					if (firm::is_Cmp(selector)) {
 						const auto lhsirn = firm::get_Cmp_left(selector);
@@ -912,25 +958,6 @@ namespace minijava
 					}
 				}
 
-				void _finalize()
-				{
-					for (auto&& kv : _metamap) {
-						auto& meta = kv.second;
-						auto& code = _assembly.blocks[meta.index()].code;
-						const auto docopy = [&code](auto& vec){
-							std::copy(
-								std::begin(vec),
-								std::end(vec),
-								std::back_inserter(code)
-							);
-						};
-						docopy(meta.phis_on_cond_branch);
-						docopy(meta.jump_on_cond_branch);
-						docopy(meta.phis_on_fall_through);
-						docopy(meta.jump_on_fall_through);
-					}
-				}
-
 			};  // class generator
 
 
@@ -985,7 +1012,7 @@ namespace minijava
 				visit_second_pass,
 				&gen
 			);
-			return std::move(gen).get();
+			return gen.get();
 		}
 
 	}  // namespace backend
