@@ -179,7 +179,6 @@ namespace minijava
 							continue;
 						}
 						const auto width = get_operand_widths(instr);
-						// std::fprintf(stderr, "Emitting %d bit '%s' (op1: %d bit, op2: %d bit)...\n", static_cast<int>(instr.width), mnemotic.c_str(), static_cast<int>(width.first), static_cast<int>(width.second));
 						const auto op1 = format(instr.op1, width.first);
 						const auto op2 = format(instr.op2, width.second);
 						const auto arity = 0 + !op2.empty() + !op1.empty();

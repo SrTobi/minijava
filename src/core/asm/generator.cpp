@@ -288,7 +288,6 @@ namespace minijava
 					const auto n = firm::get_irn_n_outs(start);
 					for (auto i = 0u; i < n; ++i) {
 						const auto out = firm::get_irn_out(start, i);
-						//std::clog << "\t[outer] " << to_string(out) << std::endl;
 						if (firm::is_Proj(out)) {
 							const auto m = firm::get_irn_n_outs(out);
 							for (auto j = 0u; j < m; ++j) {
@@ -306,10 +305,8 @@ namespace minijava
 					for (std::size_t i = 0; i < arity; ++i) {
 						const auto irn = argument_nodes[i];
 						if (irn != nullptr) {
-							//std::clog << "\tParameter #" << i << " is in register " << number(argreg) << " " << to_string(irn) << std::endl;
+							// parameter was used
 							_set_register(irn, argreg);
-						} else {
-							//std::clog << "\tParameter #" << i << " is unused" << std::endl;
 						}
 						argreg = next_argument_register(argreg);
 					}
@@ -317,7 +314,6 @@ namespace minijava
 
 				void visit_first_pass(firm::ir_node*const irn)
 				{
-					//std::clog << "\t1st pass: " << to_string(irn) << std::endl;
 					if (firm::is_Block(irn)) {
 						_current_block = irn;
 					} else {
@@ -348,7 +344,6 @@ namespace minijava
 				{
 					_current_block = _blockmap.at(irn);
 					_provide_bb(_current_block);
-					//std::clog << "\t2nd pass: " << to_string(irn) << std::endl;
 					switch (firm::get_irn_opcode(irn)) {
 					case firm::iro_Start:
 						_visit_start(irn);
@@ -985,7 +980,6 @@ namespace minijava
 			const auto backedge_guard = make_backedge_guard(irg);
 			const auto entity = firm::get_irg_entity(irg);
 			const auto ldname = firm::get_entity_ld_name(entity);
-			//std::clog << "Assembling function '" << ldname << "' ..." << std::endl;
 			auto gen = generator{ldname};
 			firm::irg_walk_blkwise_graph(
 				irg,
@@ -999,7 +993,6 @@ namespace minijava
 				visit_second_pass,
 				&gen
 			);
-			//std::clog << std::endl;
 			return std::move(gen).get();
 		}
 
