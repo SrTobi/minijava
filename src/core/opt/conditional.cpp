@@ -81,7 +81,7 @@ bool minijava::opt::conditional::handle(firm::ir_node* node) {
 				// in this case, we should replace node directly with our sel compare node
 				// the current node is just for conversion
 				// dont wait for cleanup and do it directly here, because we just store tv in link
-				firm::exchange(node, sel);
+				//firm::exchange(node, sel);
 			}
 		}
 	} else if (opcode == firm::iro_Mux) {
