@@ -13,6 +13,7 @@
 #include "opt/inline.hpp"
 #include "opt/load_store.hpp"
 #include "opt/lowering.hpp"
+#include "opt/ssa_helper.hpp"
 #include "opt/unroll.hpp"
 #include "opt/unused_params.hpp"
 #include "opt/unused_method.hpp"
@@ -81,6 +82,8 @@ namespace minijava
 				changed = opt->optimize(ir) || changed;
 			}
 		} while (changed && count++ < max_count);
+		auto helper = opt::ssa_helper();
+		helper.optimize(ir);
 		opt::lower();
 	}
 

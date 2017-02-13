@@ -81,6 +81,7 @@ set(COMPONENTS
 	opt/load_store
 	opt/lowering
 	opt/opt
+	opt/ssa_helper
 	opt/unroll
 	opt/unused_method
 	opt/unused_params
