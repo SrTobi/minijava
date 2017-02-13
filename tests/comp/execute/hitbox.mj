@@ -1,0 +1,17 @@
+// pragma output 180 90
+
+class HitboxTest {
+
+	public static void main(String[] args) {
+		int p_x = 100;
+		int p_y = 50;
+		int b_x = 160;
+		int b_y = 90;
+		while (!(p_x >= b_x && p_y >= b_y)) {
+			p_x = p_x + 2;
+			p_y = p_y + 1;
+		}
+		System.out.println(p_x);
+		System.out.println(p_y);
+	}
+}
