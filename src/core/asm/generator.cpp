@@ -220,8 +220,10 @@ namespace minijava
 			{
 			public:
 
-				std::vector<virtual_instruction> code_on_cond_branch{};
-				std::vector<virtual_instruction> code_on_fall_through{};
+				std::vector<virtual_instruction> phis_on_cond_branch{};
+				std::vector<virtual_instruction> jump_on_cond_branch{};
+				std::vector<virtual_instruction> phis_on_fall_through{};
+				std::vector<virtual_instruction> jump_on_fall_through{};
 
 				bb_meta(const std::size_t index) noexcept : _index{index}
 				{
@@ -442,7 +444,7 @@ namespace minijava
 						return pos->second;
 					}
 					const auto idx = _assembly.blocks.size();
-					auto label = ".L"s + _assembly.ldname + "." + std::to_string(firm::get_irn_node_nr(blk));
+					auto label = ".L"s + std::to_string(firm::get_irn_node_nr(blk));
 					_assembly.blocks.emplace_back(std::move(label));
 					return _metamap.insert({blk, bb_meta{idx}}).first->second;
 				}
@@ -505,17 +507,17 @@ namespace minijava
 				}
 
 				template <typename... ArgTs>
-				void _emplace_instruction_cond_branch(ArgTs&&... args)
+				void _emplace_cond_branch_jump(ArgTs&&... args)
 				{
-					_metamap.at(_current_block).code_on_cond_branch.emplace_back(
+					_metamap.at(_current_block).jump_on_cond_branch.emplace_back(
 						std::forward<ArgTs>(args)...
 					);
 				}
 
 				template <typename... ArgTs>
-				void _emplace_instruction_fall_through(ArgTs&&... args)
+				void _emplace_fall_through_jump(ArgTs&&... args)
 				{
-					_metamap.at(_current_block).code_on_fall_through.emplace_back(
+					_metamap.at(_current_block).jump_on_fall_through.emplace_back(
 						std::forward<ArgTs>(args)...
 					);
 				}
@@ -528,33 +530,13 @@ namespace minijava
 				{
 					assert(firm::is_Block(blksrc));
 					assert(firm::is_Block(blkdst));
-					const auto go_ahead_emplace_it = [&](auto& vec){
-						const auto pos = [&vec, end = vec.end()](){
-							if (vec.empty()) {
-								return vec.end();
-							}
-							const auto op = (vec.size() > 1)
-								? vec[vec.size() - 2].code
-								: opcode::none;
-							switch (op) {
-							case opcode::op_cmp:
-							case opcode::op_test:
-								// Don't clobber flags register between CMP /
-								// TEST and conditional jump.
-								return vec.end() - 2;
-							default:
-								return vec.end() - 1;
-							}
-						}();
-						vec.emplace(pos, std::forward<ArgTs>(args)...);
-					};
 					auto& srcmeta = _provide_bb(blksrc);
 					if (taken) {
 						assert(srcmeta.get_succ_cond_branch() == blkdst);
-						go_ahead_emplace_it(srcmeta.code_on_cond_branch);
+						srcmeta.phis_on_cond_branch.emplace_back(std::forward<ArgTs>(args)...);
 					} else {
 						assert(srcmeta.get_succ_fall_through() == blkdst);
-						go_ahead_emplace_it(srcmeta.code_on_fall_through);
+						srcmeta.phis_on_fall_through.emplace_back(std::forward<ArgTs>(args)...);
 					}
 				}
 
@@ -594,38 +576,6 @@ namespace minijava
 					_emplace_instruction(opcode::op_mov, width, value, newreg);
 					_set_register(irn, newreg);
 					return newreg;
-				}
-
-				void _do_append_cmp_to_blk(std::vector<virtual_instruction>& vec, firm::ir_node*const cmpirn)
-				{
-					const auto lhsirn = firm::get_Cmp_left(cmpirn);
-					const auto rhsirn = firm::get_Cmp_right(cmpirn);
-					const auto lhsval = _get_irn_as_register_operand(lhsirn);
-					const auto rhsval = _get_irn_as_operand(rhsirn);
-					const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
-					vec.emplace_back(opcode::op_cmp, width, rhsval, lhsval);
-				}
-
-				void _append_cmp_to_blk(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
-				{
-					assert(firm::is_Block(blkirn));
-					assert(firm::is_Cmp(cmpirn));
-					const auto idx = _provide_bb(blkirn).index();
-					_do_append_cmp_to_blk(_assembly.blocks[idx].code, cmpirn);
-				}
-
-				void _append_cmp_to_blk_cond_branch(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
-				{
-					assert(firm::is_Block(blkirn));
-					assert(firm::is_Cmp(cmpirn));
-					_do_append_cmp_to_blk(_provide_bb(blkirn).code_on_cond_branch, cmpirn);
-				}
-
-				void _append_cmp_to_blk_fall_through(firm::ir_node*const blkirn, firm::ir_node*const cmpirn)
-				{
-					assert(firm::is_Block(blkirn));
-					assert(firm::is_Cmp(cmpirn));
-					_do_append_cmp_to_blk(_provide_bb(blkirn).code_on_fall_through, cmpirn);
 				}
 
 				void _visit_start(firm::ir_node*const USELESS irn)
@@ -820,11 +770,11 @@ namespace minijava
 						const auto resirn = firm::get_Return_res(irn, 0);
 						const auto resval = _get_irn_as_operand(resirn);
 						const auto width = get_width(resirn);
-						_emplace_instruction_fall_through(
+						_emplace_fall_through_jump(
 							opcode::op_mov, width, resval, virtual_register::result
 						);
 					}
-					_emplace_instruction_fall_through(opcode::op_ret);
+					_emplace_fall_through_jump(opcode::op_ret);
 				}
 
 				void _visit_cmp(firm::ir_node*const irn)
@@ -839,7 +789,7 @@ namespace minijava
 					assert(firm::get_irn_n_outs(irn) == 1);
 					const auto targirn = firm::get_irn_out(irn, 0);
 					const auto targblk = _blockmap.at(targirn);
-					_emplace_instruction_fall_through(
+					_emplace_fall_through_jump(
 						opcode::op_jmp, bit_width{},
 						_get_basic_block(targblk).label
 					);
@@ -855,22 +805,27 @@ namespace minijava
 					assert(!elselab.empty());
 					const auto selector = firm::get_Cond_selector(irn);
 					if (firm::is_Cmp(selector)) {
-						_append_cmp_to_blk_cond_branch(_current_block, selector);
+						const auto lhsirn = firm::get_Cmp_left(selector);
+						const auto rhsirn = firm::get_Cmp_right(selector);
+						const auto lhsval = _get_irn_as_register_operand(lhsirn);
+						const auto rhsval = _get_irn_as_operand(rhsirn);
+						const auto width = std::max(get_width(lhsirn), get_width(rhsirn));
+						_emplace_cond_branch_jump(opcode::op_cmp, width, rhsval, lhsval);
 						const auto relation = firm::get_Cmp_relation(selector);
 						const auto jumpop = get_conditional_jump_op(relation);
-						_emplace_instruction_cond_branch(jumpop, bit_width{}, thenlab);
-						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
+						_emplace_cond_branch_jump(jumpop, bit_width{}, thenlab);
+						_emplace_fall_through_jump(opcode::op_jmp, bit_width{}, elselab);
 					} else if (firm::is_Const(selector)) {
 						// This is actually an unconditional jump.
 						const auto tarval = firm::get_Const_tarval(irn);
 						const auto jumpto = !firm::tarval_is_null(tarval) ? thenlab : elselab;
-						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, jumpto);
+						_emplace_fall_through_jump(opcode::op_jmp, bit_width{}, jumpto);
 					} else if (firm::is_Phi(selector)) {
 						// Restore the result of a previous compare.
 						const auto memoreg = _get_data_register(selector);
-						_emplace_instruction_cond_branch(opcode::op_test, bit_width::viii, memoreg, memoreg);
-						_emplace_instruction_cond_branch(opcode::op_jnz, bit_width{}, thenlab);
-						_emplace_instruction_fall_through(opcode::op_jmp, bit_width{}, elselab);
+						_emplace_cond_branch_jump(opcode::op_test, bit_width::viii, memoreg, memoreg);
+						_emplace_cond_branch_jump(opcode::op_jnz, bit_width{}, thenlab);
+						_emplace_fall_through_jump(opcode::op_jmp, bit_width{}, elselab);
 					} else {
 						MINIJAVA_NOT_REACHED();
 					}
@@ -975,17 +930,17 @@ namespace minijava
 					for (auto&& kv : _metamap) {
 						auto& meta = kv.second;
 						auto& code = _assembly.blocks[meta.index()].code;
-						assert(code.empty() || !meta.code_on_fall_through.empty());
-						std::copy(
-							std::begin(meta.code_on_cond_branch),
-							std::end(meta.code_on_cond_branch),
-							std::back_inserter(code)
-						);
-						std::copy(
-							std::begin(meta.code_on_fall_through),
-							std::end(meta.code_on_fall_through),
-							std::back_inserter(code)
-						);
+						const auto docopy = [&code](auto& vec){
+							std::copy(
+								std::begin(vec),
+								std::end(vec),
+								std::back_inserter(code)
+							);
+						};
+						docopy(meta.phis_on_cond_branch);
+						docopy(meta.jump_on_cond_branch);
+						docopy(meta.phis_on_fall_through);
+						docopy(meta.jump_on_fall_through);
 					}
 				}
 
