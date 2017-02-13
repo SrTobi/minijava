@@ -133,7 +133,7 @@ namespace /* anonymous*/
 				} else {
 					auto addr = be::real_address{};
 					addr.base = be::real_register::bp;
-					addr.constant = (num - 6) * std::int64_t{8};
+					addr.constant = (num - 5) * std::int64_t{8};
 					return std::move(addr);
 				}
 			} else if (be::is_general_register(reg)) {
@@ -223,9 +223,8 @@ namespace minijava
 										}
 									}
 									if (auto reg = get_register(cur_instr.op2)) {
-										if (is_argument_register(*reg)) {
-											argc = std::max(argc, number(*reg));
-										} else if (is_general_register(*reg)) {
+										// destination argument registers don't count
+										if (is_general_register(*reg)) {
 											regc = std::max(regc, number(*reg));
 										}
 									}
@@ -285,6 +284,12 @@ namespace minijava
 						for (int i = saved_registers; i > 0; --i) {
 							real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, get_argument_register(i));
 						}
+						// ensure alignment
+						auto atsp = real_address{};
+						atsp.base = real_register::sp;
+						real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, real_register::sp);
+						real_block.code.emplace_back(opcode::op_push, bit_width::lxiv, atsp);
+						real_block.code.emplace_back(opcode::op_and, bit_width::lxiv, -16, real_register::sp);
 						// push stack arguments (RTL)
 						for (int i = call_argc; i > 6; --i) {
 							const auto& arg = next_call_args.at(i);
@@ -303,11 +308,14 @@ namespace minijava
 								"call without target encountered"
 							);
 						}
-						real_block.code.emplace_back(instr.code, instr.width, *target);
+						real_block.code.emplace_back(opcode::op_call, bit_width{}, *target);
 						// reset stack pointer (remove stack arguments)
 						if (call_argc > 6) {
 							real_block.code.emplace_back(opcode::op_add, bit_width::lxiv, std::int64_t{8} * (call_argc - 6), real_register::sp);
 						}
+						// alignment magic
+						atsp.constant = 8;
+						real_block.code.emplace_back(opcode::op_mov, bit_width::lxiv, atsp, real_register::sp);
 						// restore own argument registers (LTR)
 						for (int i = 1; i <= saved_registers; ++i) {
 							real_block.code.emplace_back(opcode::op_pop, bit_width::lxiv, get_argument_register(i));
