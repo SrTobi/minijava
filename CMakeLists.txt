@@ -56,6 +56,7 @@ set(COMPONENTS
 	cli
 	exceptions
 	global
+	io/file_cleanup
 	io/file_data
 	io/file_output
 	io/misc
@@ -82,10 +83,10 @@ set(COMPONENTS
 	opt/lowering
 	opt/opt
 	opt/ssa_helper
+	opt/tailrec
 	opt/unroll
 	opt/unused_method
 	opt/unused_params
-	opt/tailrec
 	parser/ast
 	parser/ast_factory
 	parser/ast_misc
